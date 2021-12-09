@@ -22,3 +22,14 @@ pub fn dorun(run: Run) {
     println!("Result: {}", result);
 }
 
+pub fn parse_list_of_numbers(input: String) -> Vec<i32> {
+    return input
+        .trim()
+        .split("\n")
+        .map(|line| {
+            line.trim()
+                .parse()
+                .unwrap_or_else(|_| panic!("Unable to parse line {:?}.", line))
+        })
+        .collect();
+}
