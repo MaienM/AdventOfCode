@@ -52,7 +52,8 @@ fn parse_input(input: String) -> (Vec<i32>, Vec<Board>) {
                 .split(" ")
                 .map(str::trim)
                 .filter(|p| !p.is_empty())
-                .map(|p| p.parse().unwrap())
+                .map(str::parse)
+                .map(Result::unwrap)
                 .collect::<Vec<i32>>()
                 .try_into()
                 .unwrap(),
