@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 use std::time::Instant;
 
-type Runnable = fn(String) -> i32;
+type Runnable = fn(String) -> i64;
 
 fn do_runnable(name: &'static str, runnable: Runnable, input: &String) {
     if runnable == missing {
@@ -34,6 +34,6 @@ pub fn run(part1: Runnable, part2: Runnable) {
     do_runnable("Part 2", part2, &input);
 }
 
-pub fn missing(_data: String) -> i32 {
+pub fn missing(_data: String) -> i64 {
     return -1;
 }

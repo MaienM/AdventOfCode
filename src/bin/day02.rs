@@ -33,7 +33,7 @@ fn parse_input(input: String) -> Vec<Instruction> {
         .collect();
 }
 
-fn part1(input: String) -> i32 {
+fn part1(input: String) -> i64 {
     let instructions = parse_input(input);
     let mut hpos = 0;
     let mut vpos = 0;
@@ -45,10 +45,10 @@ fn part1(input: String) -> i32 {
             Direction::Up => vpos -= distance,
         }
     }
-    return hpos * vpos;
+    return (hpos * vpos).into();
 }
 
-fn part2(input: String) -> i32 {
+fn part2(input: String) -> i64 {
     let instructions = parse_input(input);
     let mut aim = 0;
     let mut hpos = 0;
@@ -64,7 +64,7 @@ fn part2(input: String) -> i32 {
             Direction::Up => aim -= distance,
         }
     }
-    return hpos * vpos;
+    return (hpos * vpos).into();
 }
 
 fn main() {

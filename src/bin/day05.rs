@@ -70,7 +70,7 @@ fn get_points(linedef: LineDef) -> Vec<Point> {
     }
 }
 
-fn count_overlapping_points(linedefs: Vec<LineDef>) -> i32 {
+fn count_overlapping_points(linedefs: Vec<LineDef>) -> i64 {
     let mut once: HashSet<Point> = HashSet::new();
     let mut more: HashSet<Point> = HashSet::new();
     let mut count = 0;
@@ -89,7 +89,7 @@ fn count_overlapping_points(linedefs: Vec<LineDef>) -> i32 {
     return count;
 }
 
-fn part1(input: String) -> i32 {
+fn part1(input: String) -> i64 {
     let linedefs = parse_input(input)
         .into_iter()
         .filter(|linedef| linedef.0.x == linedef.1.x || linedef.0.y == linedef.1.y)
@@ -97,7 +97,7 @@ fn part1(input: String) -> i32 {
     return count_overlapping_points(linedefs);
 }
 
-fn part2(input: String) -> i32 {
+fn part2(input: String) -> i64 {
     let linedefs = parse_input(input);
     return count_overlapping_points(linedefs);
 }

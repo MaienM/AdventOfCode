@@ -102,7 +102,7 @@ fn get_unmarked_sum(state: &BoardState) -> i32 {
         .sum();
 }
 
-fn part1(input: String) -> i32 {
+fn part1(input: String) -> i64 {
     let (draws, boards) = parse_input(input);
     let mut states: Vec<BoardState> = boards.into_iter().map(init_board_state).collect();
     for draw in draws {
@@ -110,14 +110,14 @@ fn part1(input: String) -> i32 {
             mark_number(state, draw);
             if is_winner(state) {
                 let sum = get_unmarked_sum(state);
-                return sum * draw;
+                return (sum * draw).into();
             }
         }
     }
     panic!("Bingo night ended, no one won.");
 }
 
-fn part2(input: String) -> i32 {
+fn part2(input: String) -> i64 {
     let (draws, boards) = parse_input(input);
     let mut states: Vec<BoardState> = boards.into_iter().map(init_board_state).collect();
     for draw in draws {
@@ -131,7 +131,7 @@ fn part2(input: String) -> i32 {
 
         if states.len() == 1 && winners.len() == 1 {
             let sum = get_unmarked_sum(&states[0]);
-            return sum * draw;
+            return (sum * draw).into();
         }
 
         for idx in winners.iter().rev() {
