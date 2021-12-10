@@ -56,35 +56,54 @@ fn get_points(linedef: LineDef) -> Vec<Point> {
         return range(linedef.0.x, linedef.1.x)
             .map(|x| Point::new(x, linedef.0.y))
             .collect();
+    } else if (linedef.0.x - linedef.1.x).abs() == (linedef.0.y - linedef.1.y).abs() {
+        let xmul = (linedef.1.x - linedef.0.x) / (linedef.1.x - linedef.0.x).abs();
+        let ymul = (linedef.1.y - linedef.0.y) / (linedef.1.y - linedef.0.y).abs();
+        return range(0, (linedef.0.x - linedef.1.x).abs())
+            .map(|i| Point::new(linedef.0.x + i * xmul, linedef.0.y + i * ymul))
+            .collect();
     } else {
-        panic!("Cannot handle diagonal lines ({:?})", linedef);
+        panic!(
+            "Cannot handle diagonal lines at a non-45 degree angle ({:?})",
+            linedef
+        );
     }
 }
 
-fn part1(input: String) -> i32 {
-    let linedefs = parse_input(input);
+fn count_overlapping_points(linedefs: Vec<LineDef>) -> i32 {
     let mut once: HashSet<Point> = HashSet::new();
     let mut more: HashSet<Point> = HashSet::new();
     let mut count = 0;
     for linedef in linedefs {
-        if linedef.0.x == linedef.1.x || linedef.0.y == linedef.1.y {
-            for point in get_points(linedef) {
-                if more.contains(&point) {
-                } else if once.contains(&point) {
-                    once.remove(&point);
-                    more.insert(point);
-                    count += 1;
-                } else {
-                    once.insert(point);
-                }
+        for point in get_points(linedef) {
+            if more.contains(&point) {
+            } else if once.contains(&point) {
+                once.remove(&point);
+                more.insert(point);
+                count += 1;
+            } else {
+                once.insert(point);
             }
         }
     }
     return count;
 }
 
+fn part1(input: String) -> i32 {
+    let linedefs = parse_input(input)
+        .into_iter()
+        .filter(|linedef| linedef.0.x == linedef.1.x || linedef.0.y == linedef.1.y)
+        .collect();
+    return count_overlapping_points(linedefs);
+}
+
+fn part2(input: String) -> i32 {
+    let linedefs = parse_input(input);
+    return count_overlapping_points(linedefs);
+}
+
 fn main() {
-    run(part1, missing);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -131,6 +150,14 @@ mod tests {
         assert_eq!(
             get_points((Point::new(9, 7), Point::new(7, 7))),
             vec![Point::new(7, 7), Point::new(8, 7), Point::new(9, 7)]
+        );
+        assert_eq!(
+            get_points((Point::new(1, 1), Point::new(3, 3))),
+            vec![Point::new(1, 1), Point::new(2, 2), Point::new(3, 3)]
+        );
+        assert_eq!(
+            get_points((Point::new(9, 7), Point::new(7, 9))),
+            vec![Point::new(9, 7), Point::new(8, 8), Point::new(7, 9)]
         );
     }
 
