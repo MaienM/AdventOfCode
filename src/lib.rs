@@ -37,3 +37,13 @@ pub fn run(part1: Runnable, part2: Runnable) {
 pub fn missing(_data: String) -> i64 {
     return -1;
 }
+
+pub fn parse_number_list(input: String, sep: &str) -> Vec<i32> {
+    return input
+        .trim()
+        .split(sep)
+        .map(str::trim)
+        .map(str::parse)
+        .map(Result::unwrap)
+        .collect();
+}

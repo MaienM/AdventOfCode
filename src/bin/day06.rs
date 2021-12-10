@@ -2,16 +2,6 @@ use aoc::*;
 
 type State = [i64; 9];
 
-fn parse_input(input: String) -> Vec<i32> {
-    return input
-        .trim()
-        .split(",")
-        .map(str::trim)
-        .map(str::parse)
-        .map(Result::unwrap)
-        .collect();
-}
-
 fn get_state(input: Vec<i32>) -> State {
     let mut state = [0; 9];
     for num in input {
@@ -43,13 +33,13 @@ fn pass_days(state: State, days: i64) -> State {
 }
 
 fn part1(input: String) -> i64 {
-    let mut state = get_state(parse_input(input));
+    let mut state = get_state(parse_number_list(input, ","));
     state = pass_days(state, 80);
     return state.iter().sum();
 }
 
 fn part2(input: String) -> i64 {
-    let mut state = get_state(parse_input(input));
+    let mut state = get_state(parse_number_list(input, ","));
     state = pass_days(state, 256);
     return state.iter().sum();
 }
@@ -63,11 +53,6 @@ mod tests {
     use super::*;
 
     const EXAMPLE_INPUT: &'static str = "3,4,3,1,2";
-
-    #[test]
-    fn example_parse() {
-        assert_eq!(parse_input(EXAMPLE_INPUT.to_string()), vec![3, 4, 3, 1, 2]);
-    }
 
     #[test]
     fn example_pass_days() {

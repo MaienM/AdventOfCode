@@ -16,7 +16,9 @@ fn parse_point(input: &str) -> Point {
     let parts: [i32; 2] = input
         .trim()
         .splitn(2, ",")
-        .map(|p| p.trim().parse().unwrap())
+        .map(str::trim)
+        .map(str::parse)
+        .map(Result::unwrap)
         .collect::<Vec<i32>>()
         .try_into()
         .unwrap();

@@ -10,7 +10,7 @@ enum Direction {
 type Instruction = (Direction, i32);
 
 fn parse_input(input: String) -> Vec<Instruction> {
-    let lines = input.trim().split("\n").map(|l| l.trim());
+    let lines = input.trim().split("\n").map(str::trim);
     return lines
         .map(|line| {
             let mut parts = line.splitn(2, " ");
