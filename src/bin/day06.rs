@@ -1,6 +1,6 @@
 use aoc::*;
 
-type State = [i32; 9];
+type State = [i64; 9];
 
 fn parse_input(input: String) -> Vec<i32> {
     return input
@@ -34,7 +34,7 @@ fn pass_day(state: State) -> State {
     ];
 }
 
-fn pass_days(state: State, days: i32) -> State {
+fn pass_days(state: State, days: i64) -> State {
     let mut state = state;
     for _ in 0..days {
         state = pass_day(state);
@@ -42,14 +42,20 @@ fn pass_days(state: State, days: i32) -> State {
     return state;
 }
 
-fn part1(input: String) -> i32 {
+fn part1(input: String) -> i64 {
     let mut state = get_state(parse_input(input));
     state = pass_days(state, 80);
     return state.iter().sum();
 }
 
+fn part2(input: String) -> i64 {
+    let mut state = get_state(parse_input(input));
+    state = pass_days(state, 256);
+    return state.iter().sum();
+}
+
 fn main() {
-    run(part1, missing);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -82,5 +88,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 5934);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 26984457539);
     }
 }
