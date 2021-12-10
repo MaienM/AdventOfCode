@@ -1,7 +1,13 @@
 use aoc::*;
 
-type BoardSpace = (i32, bool);
-type Board = [[BoardSpace; 5]; 5];
+type BaseBoard<T> = [[T; 5]; 5];
+type Board = BaseBoard<i32>;
+
+struct BoardSpaceState {
+    num: i32,
+    drawn: bool,
+}
+type BoardState = BaseBoard<BoardSpaceState>;
 
 const WINNING_LINES: [[(usize, usize); 5]; 10] = [
     // Rows.
@@ -29,7 +35,7 @@ fn parse_input(input: String) -> (Vec<i32>, Vec<Board>) {
         .collect();
 
     let mut boards: Vec<Board> = Vec::new();
-    let mut current_block: Vec<[BoardSpace; 5]> = Vec::new();
+    let mut current_block: Vec<[i32; 5]> = Vec::new();
     let mut expect_empty = true;
     for line in lines {
         if line.trim().is_empty() {
@@ -47,8 +53,7 @@ fn parse_input(input: String) -> (Vec<i32>, Vec<Board>) {
                 .map(str::trim)
                 .filter(|p| !p.is_empty())
                 .map(|p| p.parse().unwrap())
-                .map(|n| (n, false))
-                .collect::<Vec<BoardSpace>>()
+                .collect::<Vec<i32>>()
                 .try_into()
                 .unwrap(),
         );
@@ -63,39 +68,48 @@ fn parse_input(input: String) -> (Vec<i32>, Vec<Board>) {
     return (draws, boards);
 }
 
-fn mark_number(board: &mut Board, draw: i32) {
-    for space in board.iter_mut().flatten() {
-        if space.0 == draw {
-            space.1 = true;
+fn init_board_state(board: Board) -> BoardState {
+    return board.map(|row| {
+        return row.map(|num| {
+            return BoardSpaceState { num, drawn: false };
+        });
+    });
+}
+
+fn mark_number(state: &mut BoardState, draw: i32) {
+    for space in state.iter_mut().flatten() {
+        if space.num == draw {
+            space.drawn = true;
         }
     }
 }
 
-fn is_winner(board: &Board) -> bool {
+fn is_winner(state: &BoardState) -> bool {
     for coords in WINNING_LINES {
-        if coords.iter().all(|c| board[c.0][c.1].1) {
+        if coords.iter().all(|c| state[c.0][c.1].drawn) {
             return true;
         }
     }
     return false;
 }
 
-fn get_unmarked_sum(board: &Board) -> i32 {
-    return board
+fn get_unmarked_sum(state: &BoardState) -> i32 {
+    return state
         .iter()
         .flatten()
-        .filter(|space| !space.1)
-        .map(|space| space.0)
+        .filter(|space| !space.drawn)
+        .map(|space| space.num)
         .sum();
 }
 
 fn part1(input: String) -> i32 {
-    let (draws, mut boards) = parse_input(input);
+    let (draws, boards) = parse_input(input);
+    let mut states: Vec<BoardState> = boards.into_iter().map(init_board_state).collect();
     for draw in draws {
-        for board in boards.iter_mut() {
-            mark_number(board, draw);
-            if is_winner(board) {
-                let sum = get_unmarked_sum(board);
+        for state in states.iter_mut() {
+            mark_number(state, draw);
+            if is_winner(state) {
+                let sum = get_unmarked_sum(state);
                 return sum * draw;
             }
         }
@@ -104,23 +118,24 @@ fn part1(input: String) -> i32 {
 }
 
 fn part2(input: String) -> i32 {
-    let (draws, mut boards) = parse_input(input);
+    let (draws, boards) = parse_input(input);
+    let mut states: Vec<BoardState> = boards.into_iter().map(init_board_state).collect();
     for draw in draws {
         let mut winners: Vec<usize> = Vec::new();
-        for (i, board) in boards.iter_mut().enumerate() {
-            mark_number(board, draw);
-            if is_winner(board) {
+        for (i, state) in states.iter_mut().enumerate() {
+            mark_number(state, draw);
+            if is_winner(state) {
                 winners.push(i)
             }
         }
 
-        if boards.len() == 1 && winners.len() == 1 {
-            let sum = get_unmarked_sum(&boards[0]);
+        if states.len() == 1 && winners.len() == 1 {
+            let sum = get_unmarked_sum(&states[0]);
             return sum * draw;
         }
 
         for idx in winners.iter().rev() {
-            boards.swap_remove(idx.to_owned());
+            states.swap_remove(idx.to_owned());
         }
     }
     panic!("Bingo night ended, some boards never won.");
@@ -155,6 +170,40 @@ mod tests {
         22 11 13  6  5
          2  0 12  3  7
     ";
+
+    #[test]
+    fn example_parse() {
+        let (actual_draw, actual_boards) = parse_input(EXAMPLE_INPUT.to_string());
+        let expected_draw = vec![
+            7, 4, 9, 5, 11, 17, 23, 2, 0, 14, 21, 24, 10, 16, 13, 6, 15, 25, 12, 22, 18, 20, 8, 19,
+            3, 26, 1,
+        ];
+        let expected_boards = vec![
+            [
+                [22, 13, 17, 11, 0],
+                [8, 2, 23, 4, 24],
+                [21, 9, 14, 16, 7],
+                [6, 10, 3, 18, 5],
+                [1, 12, 20, 15, 19],
+            ],
+            [
+                [3, 15, 0, 2, 22],
+                [9, 18, 13, 17, 5],
+                [19, 8, 7, 25, 23],
+                [20, 11, 10, 24, 4],
+                [14, 21, 16, 12, 6],
+            ],
+            [
+                [14, 21, 17, 24, 4],
+                [10, 16, 15, 9, 19],
+                [18, 8, 23, 26, 20],
+                [22, 11, 13, 6, 5],
+                [2, 0, 12, 3, 7],
+            ],
+        ];
+        assert_eq!(actual_draw, expected_draw);
+        assert_eq!(actual_boards, expected_boards);
+    }
 
     #[test]
     fn example_part1() {
