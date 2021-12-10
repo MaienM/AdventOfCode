@@ -1,8 +1,21 @@
 use std::env;
 use std::fs;
 use std::panic;
+use std::time::Instant;
 
 type Runnable = fn(String) -> i32;
+
+fn do_runnable(name: &'static str, runnable: Runnable, input: &String) {
+    if runnable == missing {
+        println!("> {} is not implemented.", name);
+        return;
+    }
+
+    let start = Instant::now();
+    let result = runnable(input.to_owned());
+    let duration = start.elapsed();
+    println!("> {}: {} [{:?}]", name, result, duration);
+}
 
 pub fn run(part1: Runnable, part2: Runnable) {
     let args: Vec<String> = env::args().collect();
@@ -18,16 +31,8 @@ pub fn run(part1: Runnable, part2: Runnable) {
     println!("Running {} with input {}...", name, filename);
 
     let input = fs::read_to_string(filename).expect("Unable to read input file.");
-
-    let result1 = part1(input.to_string());
-    println!("> Part 1: {}", result1);
-
-    if part2 == missing {
-        println!("> Part 2 is not implemented.");
-    } else {
-        let result2 = part2(input);
-        println!("> Part 2: {}", result2);
-    }
+    do_runnable("Part 1", part1, &input);
+    do_runnable("Part 2", part2, &input);
 }
 
 pub fn missing(_data: String) -> i32 {
