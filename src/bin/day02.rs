@@ -33,7 +33,7 @@ fn parse_instructions(input: String) -> Vec<Instruction> {
         .collect();
 }
 
-fn part1(input: String) -> String {
+fn part1(input: String) -> i32 {
     let instructions = parse_instructions(input);
     let mut hpos = 0;
     let mut vpos = 0;
@@ -45,10 +45,10 @@ fn part1(input: String) -> String {
             Direction::Up => vpos -= distance,
         }
     }
-    return (hpos * vpos).to_string();
+    return hpos * vpos;
 }
 
-fn part2(input: String) -> String {
+fn part2(input: String) -> i32 {
     let instructions = parse_instructions(input);
     let mut aim = 0;
     let mut hpos = 0;
@@ -64,7 +64,7 @@ fn part2(input: String) -> String {
             Direction::Up => aim -= distance,
         }
     }
-    return (hpos * vpos).to_string();
+    return hpos * vpos;
 }
 
 fn main() {
@@ -100,11 +100,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), "150");
+        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 150);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), "900");
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 900);
     }
 }

@@ -1,6 +1,6 @@
 use aoc::*;
 
-fn part1(input: String) -> String {
+fn part1(input: String) -> i32 {
     let numbers = parse_list_of_numbers(input);
     let mut count = 0;
     let mut last_number = numbers[0];
@@ -10,10 +10,10 @@ fn part1(input: String) -> String {
         }
         last_number = number;
     }
-    return count.to_string();
+    return count;
 }
 
-fn part2(input: String) -> String {
+fn part2(input: String) -> i32 {
     let numbers = parse_list_of_numbers(input);
     let mut count = 0;
     let mut last_numbers = [numbers[0], numbers[1], numbers[2]];
@@ -26,7 +26,7 @@ fn part2(input: String) -> String {
         }
         last_sum = sum;
     }
-    return count.to_string();
+    return count;
 }
 
 fn main() {
@@ -52,11 +52,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), "7");
+        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 7);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), "5");
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 5);
     }
 }
