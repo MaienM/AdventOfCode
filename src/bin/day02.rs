@@ -9,7 +9,7 @@ enum Direction {
 
 type Instruction = (Direction, i32);
 
-fn parse_instructions(input: String) -> Vec<Instruction> {
+fn parse_input(input: String) -> Vec<Instruction> {
     let lines = input.trim().split("\n").map(|l| l.trim());
     return lines
         .map(|line| {
@@ -34,7 +34,7 @@ fn parse_instructions(input: String) -> Vec<Instruction> {
 }
 
 fn part1(input: String) -> i32 {
-    let instructions = parse_instructions(input);
+    let instructions = parse_input(input);
     let mut hpos = 0;
     let mut vpos = 0;
     for instruction in instructions {
@@ -49,7 +49,7 @@ fn part1(input: String) -> i32 {
 }
 
 fn part2(input: String) -> i32 {
-    let instructions = parse_instructions(input);
+    let instructions = parse_input(input);
     let mut aim = 0;
     let mut hpos = 0;
     let mut vpos = 0;
@@ -85,8 +85,8 @@ mod tests {
     ";
 
     #[test]
-    fn example_parse_instructions() {
-        let actual = parse_instructions(EXAMPLE_INPUT.to_string());
+    fn example_parse() {
+        let actual = parse_input(EXAMPLE_INPUT.to_string());
         let expected = vec![
             (Direction::Forward, 5),
             (Direction::Down, 5),

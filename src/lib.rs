@@ -1,6 +1,5 @@
 use std::env;
 use std::fs;
-use std::panic;
 use std::time::Instant;
 
 type Runnable = fn(String) -> i32;
@@ -37,16 +36,4 @@ pub fn run(part1: Runnable, part2: Runnable) {
 
 pub fn missing(_data: String) -> i32 {
     return -1;
-}
-
-pub fn parse_list_of_numbers(input: String) -> Vec<i32> {
-    return input
-        .trim()
-        .split("\n")
-        .map(|line| {
-            line.trim()
-                .parse()
-                .unwrap_or_else(|_| panic!("Unable to parse line {:?}.", line))
-        })
-        .collect();
 }

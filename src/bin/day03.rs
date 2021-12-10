@@ -1,6 +1,8 @@
 use aoc::*;
 
-fn parse_grid_of_bits(input: String) -> Vec<Vec<i32>> {
+type Grid = Vec<Vec<i32>>;
+
+fn parse_input(input: String) -> Grid {
     return input
         .trim()
         .split("\n")
@@ -17,7 +19,7 @@ fn parse_grid_of_bits(input: String) -> Vec<Vec<i32>> {
         .collect();
 }
 
-fn get_most_common_per_position(grid: &Vec<Vec<i32>>) -> Vec<i32> {
+fn get_most_common_per_position(grid: &Grid) -> Vec<i32> {
     let mut count_per_pos: Vec<[i32; 2]> = grid.first().unwrap().iter().map(|_| [0, 0]).collect();
     for line in grid {
         for (i, bit) in line.iter().enumerate() {
@@ -46,7 +48,7 @@ fn bit_list_to_decimal(bits: &Vec<i32>) -> i32 {
 }
 
 fn part1(input: String) -> i32 {
-    let grid = parse_grid_of_bits(input);
+    let grid = parse_input(input);
     let most_common_per_pos = get_most_common_per_position(&grid);
 
     let gamma = bit_list_to_decimal(&most_common_per_pos);
@@ -58,7 +60,7 @@ fn part1(input: String) -> i32 {
 }
 
 fn part2(input: String) -> i32 {
-    let grid = parse_grid_of_bits(input);
+    let grid = parse_input(input);
     let columns = grid.first().unwrap().clone().len();
 
     let mut oxygen_candidates = grid.iter().cloned().collect();
@@ -116,6 +118,26 @@ mod tests {
         00010
         01010
     ";
+
+    #[test]
+    fn example_parse() {
+        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let expected = vec![
+            vec![0, 0, 1, 0, 0],
+            vec![1, 1, 1, 1, 0],
+            vec![1, 0, 1, 1, 0],
+            vec![1, 0, 1, 1, 1],
+            vec![1, 0, 1, 0, 1],
+            vec![0, 1, 1, 1, 1],
+            vec![0, 0, 1, 1, 1],
+            vec![1, 1, 1, 0, 0],
+            vec![1, 0, 0, 0, 0],
+            vec![1, 1, 0, 0, 1],
+            vec![0, 0, 0, 1, 0],
+            vec![0, 1, 0, 1, 0],
+        ];
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     fn example_part1() {
