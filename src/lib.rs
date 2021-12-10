@@ -1,7 +1,8 @@
 use std::env;
 use std::fs;
+use std::panic;
 
-type Runnable = fn(String) -> String;
+type Runnable = fn(String) -> i32;
 
 pub fn run(part1: Runnable, part2: Runnable) {
     let args: Vec<String> = env::args().collect();
@@ -20,12 +21,17 @@ pub fn run(part1: Runnable, part2: Runnable) {
 
     let result1 = part1(input.to_string());
     println!("> Part 1: {}", result1);
-    let result2 = part2(input);
-    println!("> Part 2: {}", result2);
+
+    if part2 == missing {
+        println!("> Part 2 is not implemented.");
+    } else {
+        let result2 = part2(input);
+        println!("> Part 2: {}", result2);
+    }
 }
 
-pub fn missing(_data: String) -> String {
-    return "Not implemented.".to_string();
+pub fn missing(_data: String) -> i32 {
+    return -1;
 }
 
 pub fn parse_list_of_numbers(input: String) -> Vec<i32> {
