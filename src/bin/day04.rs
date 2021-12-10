@@ -63,31 +63,39 @@ fn parse_input(input: String) -> (Vec<i32>, Vec<Board>) {
     return (draws, boards);
 }
 
+fn mark_number(board: &mut Board, draw: i32) {
+    for space in board.iter_mut().flatten() {
+        if space.0 == draw {
+            space.1 = true;
+        }
+    }
+}
+
+fn is_winner(board: &Board) -> bool {
+    for coords in WINNING_LINES {
+        if coords.iter().all(|c| board[c.0][c.1].1) {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn get_unmarked_sum(board: &Board) -> i32 {
+    return board
+        .iter()
+        .flatten()
+        .filter(|space| !space.1)
+        .map(|space| space.0)
+        .sum();
+}
+
 fn part1(input: String) -> i32 {
     let (draws, mut boards) = parse_input(input);
     for draw in draws {
         for board in boards.iter_mut() {
-            for space in board.iter_mut().flatten() {
-                if space.0 == draw {
-                    space.1 = true;
-                }
-            }
-
-            let mut winner = false;
-            for coords in WINNING_LINES {
-                if coords.iter().all(|c| board[c.0][c.1].1) {
-                    winner = true;
-                    break;
-                }
-            }
-
-            if winner {
-                let sum: i32 = board
-                    .iter()
-                    .flatten()
-                    .filter(|space| !space.1)
-                    .map(|space| space.0)
-                    .sum();
+            mark_number(board, draw);
+            if is_winner(board) {
+                let sum = get_unmarked_sum(board);
                 return sum * draw;
             }
         }
@@ -95,8 +103,31 @@ fn part1(input: String) -> i32 {
     panic!("Bingo night ended, no one won.");
 }
 
+fn part2(input: String) -> i32 {
+    let (draws, mut boards) = parse_input(input);
+    for draw in draws {
+        let mut winners: Vec<usize> = Vec::new();
+        for (i, board) in boards.iter_mut().enumerate() {
+            mark_number(board, draw);
+            if is_winner(board) {
+                winners.push(i)
+            }
+        }
+
+        if boards.len() == 1 && winners.len() == 1 {
+            let sum = get_unmarked_sum(&boards[0]);
+            return sum * draw;
+        }
+
+        for idx in winners.iter().rev() {
+            boards.swap_remove(idx.to_owned());
+        }
+    }
+    panic!("Bingo night ended, some boards never won.");
+}
+
 fn main() {
-    run(part1, missing);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -128,5 +159,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 4512);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 1924);
     }
 }
