@@ -12,7 +12,7 @@ fn parse_input(input: String) -> Vec<i32> {
         .collect();
 }
 
-fn part1(input: String) -> i32 {
+fn part1(input: String) -> i64 {
     let numbers = parse_input(input);
     let mut count = 0;
     let mut last_number = numbers[0];
@@ -25,7 +25,7 @@ fn part1(input: String) -> i32 {
     return count;
 }
 
-fn part2(input: String) -> i32 {
+fn part2(input: String) -> i64 {
     let numbers = parse_input(input);
     let mut count = 0;
     let mut last_numbers = [numbers[0], numbers[1], numbers[2]];

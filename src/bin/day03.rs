@@ -47,7 +47,7 @@ fn bit_list_to_decimal(bits: &Vec<i32>) -> i32 {
     return result;
 }
 
-fn part1(input: String) -> i32 {
+fn part1(input: String) -> i64 {
     let grid = parse_input(input);
     let most_common_per_pos = get_most_common_per_position(&grid);
 
@@ -56,10 +56,10 @@ fn part1(input: String) -> i32 {
     let mask = (2 as i32).pow(most_common_per_pos.len() as u32) - 1;
     let epsilon = gamma ^ mask;
 
-    return gamma * epsilon;
+    return (gamma * epsilon).into();
 }
 
-fn part2(input: String) -> i32 {
+fn part2(input: String) -> i64 {
     let grid = parse_input(input);
     let columns = grid.first().unwrap().clone().len();
 
@@ -93,7 +93,7 @@ fn part2(input: String) -> i32 {
     let oxygen = bit_list_to_decimal(oxygen_candidates.first().unwrap());
     let scrubber = bit_list_to_decimal(scrubber_candidates.first().unwrap());
 
-    return oxygen * scrubber;
+    return (oxygen * scrubber).into();
 }
 
 fn main() {
