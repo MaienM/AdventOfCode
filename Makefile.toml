@@ -1,0 +1,41 @@
+[tasks.run-all]
+script_runner = "@duckscript"
+script = '''
+	exit_on_error true
+
+	paths = glob_array ./inputs/day*.txt
+	for path in ${paths}
+		name = substring ${path} 7 12
+		exec cargo --quiet run --bin ${name}
+	end
+'''
+
+[tasks.test-and-run-day]
+dependencies = ["test-lib"]
+script_runner = "@duckscript"
+script = '''
+	exit_on_error true
+	!include_files cargo-quietly.ds
+
+	name = set ${1}
+	fn = join_path src bin "${name}.rs"
+
+	exists = is_path_exists ${fn}
+	assert ${exists} "\nInvalid argument ${name}.\nUsage: test-and-run day01"
+
+	print --color cyan ">>>>> Testing ${name} <<<<<"
+	cargo-quietly "test --bin ${name} -- --nocapture"
+
+	println --color cyan ">>>>> Running ${name} <<<<<"
+	cargo-quietly "run --bin ${name}"
+'''
+
+[tasks.test-lib]
+script_runner = "@duckscript"
+script = '''
+	exit_on_error true
+	!include_files cargo-quietly.ds
+
+	print --color cyan ">>>>> Testing libs <<<<<"
+	cargo-quietly "test --lib -- --nocapture"
+'''
