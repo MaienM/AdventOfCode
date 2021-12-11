@@ -1,14 +1,10 @@
+use aoc::grid::Grid as BaseGrid;
 use aoc::*;
 
-#[derive(Debug, PartialEq)]
-struct Grid {
-    numbers: Vec<Vec<i8>>,
-    width: usize,
-    height: usize,
-}
+type Grid = BaseGrid<i8>;
 
 fn parse_input(input: String) -> Grid {
-    let numbers = input
+    return input
         .trim()
         .split("\n")
         .map(|line| {
@@ -16,33 +12,23 @@ fn parse_input(input: String) -> Grid {
                 .trim()
                 .chars()
                 .map(|c| c.to_digit(10).unwrap() as i8)
-                .collect();
+                .collect::<Vec<i8>>();
         })
-        .collect::<Vec<Vec<i8>>>();
-    let width = numbers[0].len();
-    let height = numbers.len();
-    return Grid {
-        numbers,
-        width,
-        height,
-    };
+        .collect::<Grid>();
 }
 
 fn part1(input: String) -> i64 {
     let grid = parse_input(input);
     let mut sum = 0_i64;
-    for y in 0..grid.height {
-        for x in 0..grid.width {
-            let number = grid.numbers[y][x];
-            if (x > 0 && number >= grid.numbers[y][x - 1])
-                || (x < grid.width - 1 && number >= grid.numbers[y][x + 1])
-                || (y > 0 && number >= grid.numbers[y - 1][x])
-                || (y < grid.height - 1 && number >= grid.numbers[y + 1][x])
-            {
-                continue;
-            }
-            sum += (number + 1) as i64;
+    for (point, value) in grid.by_cell() {
+        if (point.x > 0 && value >= grid.get(point.x - 1, point.y).unwrap())
+            || (point.x < grid.width - 1 && value >= grid.get(point.x + 1, point.y).unwrap())
+            || (point.y > 0 && value >= grid.get(point.x, point.y - 1).unwrap())
+            || (point.y < grid.height - 1 && value >= grid.get(point.x, point.y + 1).unwrap())
+        {
+            continue;
         }
+        sum += (value + 1) as i64;
     }
     return sum;
 }
@@ -66,17 +52,14 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(EXAMPLE_INPUT.to_string());
-        let expected = Grid {
-            numbers: vec![
-                vec![2, 1, 9, 9, 9, 4, 3, 2, 1, 0],
-                vec![3, 9, 8, 7, 8, 9, 4, 9, 2, 1],
-                vec![9, 8, 5, 6, 7, 8, 9, 8, 9, 2],
-                vec![8, 7, 6, 7, 8, 9, 6, 7, 8, 9],
-                vec![9, 8, 9, 9, 9, 6, 5, 6, 7, 8],
-            ],
-            width: 10,
-            height: 5,
-        };
+        let expected = vec![
+            vec![2, 1, 9, 9, 9, 4, 3, 2, 1, 0],
+            vec![3, 9, 8, 7, 8, 9, 4, 9, 2, 1],
+            vec![9, 8, 5, 6, 7, 8, 9, 8, 9, 2],
+            vec![8, 7, 6, 7, 8, 9, 6, 7, 8, 9],
+            vec![9, 8, 9, 9, 9, 6, 5, 6, 7, 8],
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 

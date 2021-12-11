@@ -1,9 +1,8 @@
+use aoc::grid::Grid;
 use aoc::*;
 
-type Grid = Vec<Vec<i32>>;
-
 fn parse_input(input: String) -> Grid {
-    return input
+    let grid = input
         .trim()
         .split("\n")
         .map(|line| {
@@ -17,14 +16,13 @@ fn parse_input(input: String) -> Grid {
                 .collect()
         })
         .collect();
+    return Grid::new(grid).unwrap();
 }
 
 fn get_most_common_per_position(grid: &Grid) -> Vec<i32> {
-    let mut count_per_pos: Vec<[i32; 2]> = grid.first().unwrap().iter().map(|_| [0, 0]).collect();
-    for line in grid {
-        for (i, bit) in line.iter().enumerate() {
-            count_per_pos[i][bit.to_owned() as usize] += 1;
-        }
+    let mut count_per_pos: Vec<[i32; 2]> = (0..grid.width).map(|_| [0, 0]).collect();
+    for (point, bit) in grid.by_cell() {
+        count_per_pos[point.x][bit.to_owned() as usize] += 1;
     }
     return count_per_pos
         .iter()
@@ -61,37 +59,36 @@ fn part1(input: String) -> i64 {
 
 fn part2(input: String) -> i64 {
     let grid = parse_input(input);
-    let columns = grid.first().unwrap().clone().len();
 
-    let mut oxygen_candidates = grid.iter().cloned().collect();
-    let mut scrubber_candidates = grid;
+    let mut oxygen_candidates = grid.clone();
+    let mut scrubber_candidates = grid.clone();
 
-    for i in 0..columns {
+    for i in 0..grid.width {
         let oxygen_most_common = get_most_common_per_position(&oxygen_candidates);
         let oxygen_criteria = oxygen_most_common[i];
         oxygen_candidates = oxygen_candidates
             .into_iter()
             .filter(|bits| bits[i] == oxygen_criteria)
             .collect();
-        if oxygen_candidates.len() == 1 {
+        if oxygen_candidates.height == 1 {
             break;
         }
     }
 
-    for i in 0..columns {
+    for i in 0..grid.width {
         let scrubber_most_common = get_most_common_per_position(&scrubber_candidates);
         let scrubber_criteria = 1 - scrubber_most_common[i];
         scrubber_candidates = scrubber_candidates
             .into_iter()
             .filter(|bits| bits[i] == scrubber_criteria)
             .collect();
-        if scrubber_candidates.len() == 1 {
+        if scrubber_candidates.height == 1 {
             break;
         }
     }
 
-    let oxygen = bit_list_to_decimal(oxygen_candidates.first().unwrap());
-    let scrubber = bit_list_to_decimal(scrubber_candidates.first().unwrap());
+    let oxygen = bit_list_to_decimal(&oxygen_candidates.into_iter().next().unwrap());
+    let scrubber = bit_list_to_decimal(&scrubber_candidates.into_iter().next().unwrap());
 
     return (oxygen * scrubber).into();
 }
@@ -136,7 +133,7 @@ mod tests {
             vec![0, 0, 0, 1, 0],
             vec![0, 1, 0, 1, 0],
         ];
-        assert_eq!(actual, expected);
+        assert_eq!(actual, expected.into());
     }
 
     #[test]

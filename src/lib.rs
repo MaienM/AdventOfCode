@@ -1,3 +1,8 @@
+pub mod grid;
+
+#[macro_use]
+extern crate derive_new;
+
 use std::env;
 use std::fs;
 use std::time::Instant;
