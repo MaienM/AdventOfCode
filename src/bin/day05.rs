@@ -1,15 +1,8 @@
+use aoc::grid::Point as BasePoint;
 use aoc::*;
 use std::{collections::HashSet, ops::Range};
 
-#[macro_use]
-extern crate derive_new;
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, new)]
-struct Point {
-    x: i32,
-    y: i32,
-}
-
+type Point = BasePoint<i32>;
 type LineDef = (Point, Point);
 
 fn parse_point(input: &str) -> Point {
