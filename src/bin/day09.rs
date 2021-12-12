@@ -20,27 +20,10 @@ fn parse_input(input: String) -> Grid {
         .collect::<Grid>();
 }
 
-fn get_neighbours(grid: &Grid, point: Point) -> Vec<Point> {
-    let mut results: Vec<Point> = Vec::new();
-    if point.x > 0 {
-        results.push(Point::new(point.x - 1, point.y));
-    }
-    if point.x < grid.width - 1 {
-        results.push(Point::new(point.x + 1, point.y));
-    }
-    if point.y > 0 {
-        results.push(Point::new(point.x, point.y - 1));
-    }
-    if point.y < grid.height - 1 {
-        results.push(Point::new(point.x, point.y + 1));
-    }
-    return results;
-}
-
 fn get_low_points(grid: &Grid) -> Vec<Point> {
     let mut results: Vec<Point> = Vec::new();
     'points: for (point, value) in grid.by_cell() {
-        for neighbour in get_neighbours(&grid, point) {
+        for neighbour in grid.neighbours(point, false) {
             if grid.getp(neighbour).unwrap() <= value {
                 continue 'points;
             }
@@ -55,7 +38,7 @@ fn expand_basin(grid: &Grid, basin: &mut Basin, point: Point) {
         return;
     }
     basin.insert(point);
-    for neighbour in get_neighbours(grid, point) {
+    for neighbour in grid.neighbours(point, false) {
         expand_basin(grid, basin, neighbour);
     }
 }
