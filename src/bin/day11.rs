@@ -66,8 +66,20 @@ fn part1(input: String) -> i64 {
     return flashes;
 }
 
+fn part2(input: String) -> i64 {
+    let mut grid = parse_input(input);
+    for round in 1.. {
+        let (new_grid, new_flashes) = do_round(&grid);
+        grid = new_grid;
+        if new_flashes == 100 {
+            return round;
+        }
+    }
+    panic!("How did you get here?");
+}
+
 fn main() {
-    run(part1, missing);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -521,5 +533,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 1656);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 195);
     }
 }
