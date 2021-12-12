@@ -55,6 +55,40 @@ impl<T> Grid<T> {
     pub fn setp(&mut self, point: Point, value: T) {
         self.set(point.x, point.y, value);
     }
+
+    pub fn neighbours(&self, point: Point, include_diagonals: bool) -> Vec<Point> {
+        let mut results: Vec<Point> = Vec::new();
+
+        if point.x > 0 {
+            results.push(Point::new(point.x - 1, point.y));
+        }
+        if point.x < self.width - 1 {
+            results.push(Point::new(point.x + 1, point.y));
+        }
+        if point.y > 0 {
+            results.push(Point::new(point.x, point.y - 1));
+        }
+        if point.y < self.height - 1 {
+            results.push(Point::new(point.x, point.y + 1));
+        }
+
+        if include_diagonals {
+            if point.x > 0 && point.y > 0 {
+                results.push(Point::new(point.x - 1, point.y - 1));
+            }
+            if point.x > 0 && point.y < self.height - 1 {
+                results.push(Point::new(point.x - 1, point.y + 1));
+            }
+            if point.x < self.width - 1 && point.y > 0 {
+                results.push(Point::new(point.x + 1, point.y - 1));
+            }
+            if point.x < self.width - 1 && point.y < self.height - 1 {
+                results.push(Point::new(point.x + 1, point.y + 1));
+            }
+        }
+
+        return results;
+    }
 }
 
 impl<T> From<Vec<Vec<T>>> for Grid<T> {
@@ -363,6 +397,126 @@ mod tests {
                 return input.into_iter().collect::<Grid<i32>>();
             },
             "Expected point (1, 1), got (2, 1).",
+        );
+    }
+
+    #[test]
+    fn neighbours_no_diagonal() {
+        let grid = basic_grid();
+        assert_eq!(
+            grid.neighbours(Point::new(0, 0), false),
+            vec![Point::new(1, 0), Point::new(0, 1)]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(1, 0), false),
+            vec![Point::new(0, 0), Point::new(2, 0), Point::new(1, 1)]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(2, 0), false),
+            vec![Point::new(1, 0), Point::new(2, 1)]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(0, 1), false),
+            vec![Point::new(1, 1), Point::new(0, 0), Point::new(0, 2)]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(1, 1), false),
+            vec![
+                Point::new(0, 1),
+                Point::new(2, 1),
+                Point::new(1, 0),
+                Point::new(1, 2)
+            ]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(2, 1), false),
+            vec![Point::new(1, 1), Point::new(2, 0), Point::new(2, 2)]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(0, 3), false),
+            vec![Point::new(1, 3), Point::new(0, 2)]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(1, 3), false),
+            vec![Point::new(0, 3), Point::new(2, 3), Point::new(1, 2),]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(2, 3), false),
+            vec![Point::new(1, 3), Point::new(2, 2)]
+        );
+    }
+
+    #[test]
+    fn neighbours_diagonal() {
+        let grid = basic_grid();
+        assert_eq!(
+            grid.neighbours(Point::new(0, 0), true),
+            vec![Point::new(1, 0), Point::new(0, 1), Point::new(1, 1)]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(1, 0), true),
+            vec![
+                Point::new(0, 0),
+                Point::new(2, 0),
+                Point::new(1, 1),
+                Point::new(0, 1),
+                Point::new(2, 1)
+            ]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(2, 0), true),
+            vec![Point::new(1, 0), Point::new(2, 1), Point::new(1, 1)]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(0, 1), true),
+            vec![
+                Point::new(1, 1),
+                Point::new(0, 0),
+                Point::new(0, 2),
+                Point::new(1, 0),
+                Point::new(1, 2)
+            ]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(1, 1), true),
+            vec![
+                Point::new(0, 1),
+                Point::new(2, 1),
+                Point::new(1, 0),
+                Point::new(1, 2),
+                Point::new(0, 0),
+                Point::new(0, 2),
+                Point::new(2, 0),
+                Point::new(2, 2)
+            ]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(2, 1), true),
+            vec![
+                Point::new(1, 1),
+                Point::new(2, 0),
+                Point::new(2, 2),
+                Point::new(1, 0),
+                Point::new(1, 2)
+            ]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(0, 3), true),
+            vec![Point::new(1, 3), Point::new(0, 2), Point::new(1, 2)]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(1, 3), true),
+            vec![
+                Point::new(0, 3),
+                Point::new(2, 3),
+                Point::new(1, 2),
+                Point::new(0, 2),
+                Point::new(2, 2)
+            ]
+        );
+        assert_eq!(
+            grid.neighbours(Point::new(2, 3), true),
+            vec![Point::new(1, 3), Point::new(2, 2), Point::new(1, 2)]
         );
     }
 
