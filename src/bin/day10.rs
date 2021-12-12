@@ -48,8 +48,44 @@ fn part1(input: String) -> i64 {
     return score;
 }
 
+fn part2(input: String) -> i64 {
+    let lines = parse_input(input);
+    let mut scores: Vec<i64> = Vec::new();
+    'lines: for line in lines {
+        let mut stack: Vec<char> = Vec::new();
+        for chr in line.chars() {
+            let closing = get_matching_closing(chr);
+            if closing.is_some() {
+                stack.push(closing.unwrap());
+            } else {
+                let expected = stack.pop().unwrap_or('!');
+                if chr != expected {
+                    continue 'lines;
+                }
+            }
+        }
+
+        let mut score = 0_i64;
+        for chr in stack.into_iter().rev() {
+            score *= 5;
+            score += match chr {
+                ')' => 1,
+                ']' => 2,
+                '}' => 3,
+                '>' => 4,
+                _ => {
+                    panic!("Invalid character {}.", chr);
+                }
+            };
+        }
+        scores.push(score);
+    }
+    scores.sort();
+    return scores[scores.len() / 2];
+}
+
 fn main() {
-    run(part1, missing);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -91,5 +127,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 26397);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 288957);
     }
 }
