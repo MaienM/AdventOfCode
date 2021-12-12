@@ -1,3 +1,6 @@
+[env]
+RUST_BACKTRACE = { value = 0, env_set = ["PREFER_EXISTING"] }
+
 [tasks.run-all]
 script_runner = "@duckscript"
 script = '''
