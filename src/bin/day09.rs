@@ -1,7 +1,10 @@
-use aoc::grid::Grid as BaseGrid;
+use std::collections::HashSet;
+
+use aoc::grid::{Grid as BaseGrid, Point};
 use aoc::*;
 
 type Grid = BaseGrid<i8>;
+type Basin = HashSet<Point>;
 
 fn parse_input(input: String) -> Grid {
     return input
@@ -17,24 +20,71 @@ fn parse_input(input: String) -> Grid {
         .collect::<Grid>();
 }
 
+fn get_neighbours(grid: &Grid, point: Point) -> Vec<Point> {
+    let mut results: Vec<Point> = Vec::new();
+    if point.x > 0 {
+        results.push(Point::new(point.x - 1, point.y));
+    }
+    if point.x < grid.width - 1 {
+        results.push(Point::new(point.x + 1, point.y));
+    }
+    if point.y > 0 {
+        results.push(Point::new(point.x, point.y - 1));
+    }
+    if point.y < grid.height - 1 {
+        results.push(Point::new(point.x, point.y + 1));
+    }
+    return results;
+}
+
+fn get_low_points(grid: &Grid) -> Vec<Point> {
+    let mut results: Vec<Point> = Vec::new();
+    'points: for (point, value) in grid.by_cell() {
+        for neighbour in get_neighbours(&grid, point) {
+            if grid.getp(neighbour).unwrap() <= value {
+                continue 'points;
+            }
+        }
+        results.push(point);
+    }
+    return results;
+}
+
+fn expand_basin(grid: &Grid, basin: &mut Basin, point: Point) {
+    if basin.contains(&point) || *grid.getp(point).unwrap() == 9 {
+        return;
+    }
+    basin.insert(point);
+    for neighbour in get_neighbours(grid, point) {
+        expand_basin(grid, basin, neighbour);
+    }
+}
+
 fn part1(input: String) -> i64 {
     let grid = parse_input(input);
-    let mut sum = 0_i64;
-    for (point, value) in grid.by_cell() {
-        if (point.x > 0 && value >= grid.get(point.x - 1, point.y).unwrap())
-            || (point.x < grid.width - 1 && value >= grid.get(point.x + 1, point.y).unwrap())
-            || (point.y > 0 && value >= grid.get(point.x, point.y - 1).unwrap())
-            || (point.y < grid.height - 1 && value >= grid.get(point.x, point.y + 1).unwrap())
-        {
-            continue;
-        }
-        sum += (value + 1) as i64;
-    }
-    return sum;
+    return get_low_points(&grid)
+        .into_iter()
+        .map(|point| (grid.getp(point).unwrap() + 1) as i64)
+        .sum();
+}
+
+fn part2(input: String) -> i64 {
+    let grid = parse_input(input);
+    let mut basin_sizes = get_low_points(&grid)
+        .into_iter()
+        .map(|point| {
+            let mut basin = Basin::new();
+            expand_basin(&grid, &mut basin, point);
+            return basin.len();
+        })
+        .collect::<Vec<usize>>();
+    basin_sizes.sort_unstable();
+    return (basin_sizes.pop().unwrap() * basin_sizes.pop().unwrap() * basin_sizes.pop().unwrap())
+        as i64;
 }
 
 fn main() {
-    run(part1, missing);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -66,5 +116,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 15);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 1134);
     }
 }
