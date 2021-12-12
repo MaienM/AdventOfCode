@@ -1,9 +1,14 @@
-use std::vec::IntoIter;
+use std::{fmt::Debug, vec::IntoIter};
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, new)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq, new)]
 pub struct Point<T = usize> {
     pub x: T,
     pub y: T,
+}
+impl<T: Debug> Debug for Point<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        return f.write_str(&format!("Point({:?}, {:?})", self.x, self.y));
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -12,7 +17,7 @@ pub struct Grid<T = i32> {
     pub width: usize,
     pub height: usize,
 }
-impl<T> Grid<T> {
+impl<T: Debug> Grid<T> {
     pub fn new(items: Vec<Vec<T>>) -> Result<Self, String> {
         let height = items.len();
         if height == 0 {
@@ -56,6 +61,18 @@ impl<T> Grid<T> {
         self.set(point.x, point.y, value);
     }
 
+    pub fn mutate<F: Fn(T) -> T>(&mut self, x: usize, y: usize, mutator: F) {
+        let row = &mut self.items[y];
+        row.swap(x, self.width - 1);
+        let value = row.pop().unwrap();
+        row.push(mutator(value));
+        row.swap(x, self.width - 1);
+    }
+
+    pub fn mutatep<F: Fn(T) -> T>(&mut self, point: Point, mutator: F) {
+        self.mutate(point.x, point.y, mutator);
+    }
+
     pub fn neighbours(&self, point: Point, include_diagonals: bool) -> Vec<Point> {
         let mut results: Vec<Point> = Vec::new();
 
@@ -89,25 +106,32 @@ impl<T> Grid<T> {
 
         return results;
     }
+
+    pub fn pprint(&self) {
+        println!("Grid({}x{})", self.width, self.height);
+        for row in &self.items {
+            println!("{:?}", row);
+        }
+    }
 }
 
-impl<T> From<Vec<Vec<T>>> for Grid<T> {
+impl<T: Debug> From<Vec<Vec<T>>> for Grid<T> {
     fn from(items: Vec<Vec<T>>) -> Self {
         return Self::new(items).unwrap();
     }
 }
-impl<T> Into<Vec<Vec<T>>> for Grid<T> {
+impl<T: Debug> Into<Vec<Vec<T>>> for Grid<T> {
     fn into(self) -> Vec<Vec<T>> {
         return self.items;
     }
 }
-impl<T> FromIterator<Vec<T>> for Grid<T> {
+impl<T: Debug> FromIterator<Vec<T>> for Grid<T> {
     fn from_iter<I: IntoIterator<Item = Vec<T>>>(iter: I) -> Grid<T> {
         let items = iter.into_iter().collect::<Vec<Vec<T>>>();
         return Self::new(items).unwrap();
     }
 }
-impl<T> IntoIterator for Grid<T> {
+impl<T: Debug> IntoIterator for Grid<T> {
     type Item = Vec<T>;
     type IntoIter = IntoIter<Self::Item>;
 
@@ -134,7 +158,7 @@ impl<T> Grid<T> {
         });
     }
 }
-impl<T> FromIterator<GridCell<T>> for Grid<T> {
+impl<T: Debug> FromIterator<GridCell<T>> for Grid<T> {
     fn from_iter<I: IntoIterator<Item = GridCell<T>>>(iter: I) -> Grid<T> {
         let mut next_x = 0_usize;
         let mut next_y = 0_usize;
