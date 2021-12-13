@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use aoc::*;
 
@@ -55,38 +55,34 @@ impl Graph {
     }
 }
 
-fn get_paths_from_to(
+fn count_paths_to_end(
     graph: &Graph,
-    name: &String,
-    to: &String,
-    visited: &mut HashSet<String>,
-) -> Vec<Vec<String>> {
-    let mut results: Vec<Vec<String>> = Vec::new();
-    if visited.contains(name) {
-        return results;
-    }
-
-    let is_small = NodeType::get(name) == NodeType::Small;
-    if is_small {
-        visited.insert(name.clone());
-    }
-
-    for connection in graph.get_connections(name) {
-        if connection == to {
-            results.push(vec![connection.clone()]);
-        }
-        if NodeType::get(connection) == NodeType::Special {
+    path: &mut Vec<String>,
+    node: &String,
+    did_small_double_visit: bool,
+) -> i64 {
+    let mut results = 0_i64;
+    for connected_node in graph.get_connections(node) {
+        if connected_node == NAME_START {
+            continue;
+        } else if connected_node == NAME_END {
+            results += 1;
             continue;
         }
 
-        for mut path in get_paths_from_to(graph, connection, to, visited) {
-            path.push(name.clone());
-            results.push(path);
+        let mut did_small_double_visit = did_small_double_visit;
+        if NodeType::get(connected_node) == NodeType::Small && path.contains(connected_node) {
+            if did_small_double_visit {
+                continue;
+            } else {
+                did_small_double_visit = true;
+            }
         }
+
+        path.push(connected_node.clone());
+        results += count_paths_to_end(graph, path, connected_node, did_small_double_visit);
+        path.pop();
     }
-
-    visited.remove(name);
-
     return results;
 }
 
@@ -104,18 +100,18 @@ fn parse_input(input: String) -> Graph {
 
 fn part1(input: String) -> i64 {
     let graph = parse_input(input);
-    let mut visited: HashSet<String> = HashSet::new();
-    let paths = get_paths_from_to(
-        &graph,
-        &NAME_START.to_string(),
-        &NAME_END.to_string(),
-        &mut visited,
-    );
-    return paths.len() as i64;
+    let mut path: Vec<String> = Vec::new();
+    return count_paths_to_end(&graph, &mut path, &NAME_START.to_string(), true);
+}
+
+fn part2(input: String) -> i64 {
+    let graph = parse_input(input);
+    let mut path: Vec<String> = Vec::new();
+    return count_paths_to_end(&graph, &mut path, &NAME_START.to_string(), false);
 }
 
 fn main() {
-    run(part1, missing);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -182,6 +178,16 @@ mod tests {
     }
 
     #[test]
+    fn nodetype() {
+        assert_eq!(NodeType::get(&NAME_START.to_string()), NodeType::Special);
+        assert_eq!(NodeType::get(&NAME_END.to_string()), NodeType::Special);
+        assert_eq!(NodeType::get(&"A".to_string()), NodeType::Big);
+        assert_eq!(NodeType::get(&"b".to_string()), NodeType::Small);
+        assert_eq!(NodeType::get(&"JK".to_string()), NodeType::Big);
+        assert_eq!(NodeType::get(&"hl".to_string()), NodeType::Small);
+    }
+
+    #[test]
     fn example1_part1() {
         assert_eq!(part1(EXAMPLE_INPUT_1.to_string()), 10);
     }
@@ -194,5 +200,20 @@ mod tests {
     #[test]
     fn example3_part1() {
         assert_eq!(part1(EXAMPLE_INPUT_3.to_string()), 226);
+    }
+
+    #[test]
+    fn example1_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT_1.to_string()), 36);
+    }
+
+    #[test]
+    fn example2_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT_2.to_string()), 103);
+    }
+
+    #[test]
+    fn example3_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT_3.to_string()), 3509);
     }
 }
