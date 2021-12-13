@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aoc::*;
+use aoc::runner::*;
 
 const NAME_START: &'static str = "start";
 const NAME_END: &'static str = "end";

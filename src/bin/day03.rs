@@ -1,5 +1,5 @@
 use aoc::grid::Grid;
-use aoc::*;
+use aoc::runner::*;
 
 fn parse_input(input: String) -> Grid {
     let grid = input

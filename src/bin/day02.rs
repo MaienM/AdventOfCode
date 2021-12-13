@@ -1,4 +1,4 @@
-use aoc::*;
+use aoc::runner::*;
 
 #[derive(Debug, PartialEq)]
 enum Direction {

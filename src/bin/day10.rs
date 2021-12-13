@@ -1,4 +1,4 @@
-use aoc::*;
+use aoc::runner::*;
 
 fn parse_input(input: String) -> Vec<String> {
     return input

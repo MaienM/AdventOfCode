@@ -1,4 +1,4 @@
-use aoc::*;
+use aoc::{parse_number_list, runner::*};
 
 type State = [i64; 9];
 

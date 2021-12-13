@@ -1,4 +1,4 @@
-use aoc::*;
+use aoc::runner::*;
 
 type BaseBoard<T> = [[T; 5]; 5];
 type Board = BaseBoard<i32>;

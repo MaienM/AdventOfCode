@@ -1,4 +1,4 @@
-use aoc::*;
+use aoc::{parse_number_list, runner::*};
 
 fn part1(input: String) -> i64 {
     let numbers = parse_number_list(input, "\n");

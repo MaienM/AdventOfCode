@@ -1,4 +1,4 @@
-use aoc::*;
+use aoc::runner::*;
 
 /*
  * Overview:
