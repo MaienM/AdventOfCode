@@ -1,3 +1,4 @@
+use std::slice::Iter;
 use std::{fmt::Debug, vec::IntoIter};
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq, new)]
@@ -71,6 +72,10 @@ impl<T: Debug> Grid<T> {
 
     pub fn mutatep<F: Fn(T) -> T>(&mut self, point: Point, mutator: F) {
         self.mutate(point.x, point.y, mutator);
+    }
+
+    pub fn iter(&self) -> Iter<Vec<T>> {
+        return self.items.iter();
     }
 
     pub fn neighbours(&self, point: Point, include_diagonals: bool) -> Vec<Point> {
