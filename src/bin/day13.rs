@@ -1,6 +1,6 @@
 use aoc::{
     grid::{Grid as BaseGrid, Point},
-    *,
+    runner::*,
 };
 
 type Grid = BaseGrid<bool>;
@@ -89,14 +89,34 @@ fn do_fold(grid: Grid, instruction: Instruction) -> Grid {
     }
 }
 
+fn format_grid(grid: &Grid) -> String {
+    let mut result = String::new();
+    for line in grid.iter() {
+        for cell in line {
+            result += if *cell { "#" } else { "." };
+        }
+        result += "\n";
+    }
+    result.pop();
+    return result;
+}
+
 fn part1(input: String) -> i64 {
     let (mut grid, instructions) = parse_input(input);
     grid = do_fold(grid, instructions.into_iter().next().unwrap());
     return grid.into_by_cell().filter(|(_, value)| *value).count() as i64;
 }
 
+fn part2(input: String) -> String {
+    let (mut grid, instructions) = parse_input(input);
+    for instruction in instructions {
+        grid = do_fold(grid, instruction);
+    }
+    return format_grid(&grid);
+}
+
 fn main() {
-    run(part1, missing);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -186,5 +206,13 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 17);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(
+            part2(EXAMPLE_INPUT.to_string()),
+            "#####\n#...#\n#...#\n#...#\n#####\n.....\n....."
+        );
     }
 }
