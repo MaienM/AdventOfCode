@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use aoc::grid::{Grid as BaseGrid, Point};
-use aoc::*;
+use aoc::runner::*;
 
 type Grid = BaseGrid<i8>;
 

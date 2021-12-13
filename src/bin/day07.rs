@@ -1,4 +1,4 @@
-use aoc::*;
+use aoc::{parse_number_list, runner::*};
 
 fn mean(numbers: &Vec<i32>) -> i32 {
     let mut sorted = numbers.clone();

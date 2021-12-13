@@ -1,5 +1,5 @@
 use aoc::grid::Point as BasePoint;
-use aoc::*;
+use aoc::runner::*;
 use std::{collections::HashSet, ops::Range};
 
 type Point = BasePoint<i32>;
