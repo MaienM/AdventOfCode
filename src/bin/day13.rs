@@ -93,7 +93,7 @@ fn format_grid(grid: &Grid) -> String {
     let mut result = String::new();
     for line in grid.iter() {
         for cell in line {
-            result += if *cell { "#" } else { "." };
+            result += if *cell { "█" } else { " " };
         }
         result += "\n";
     }
@@ -213,7 +213,7 @@ mod tests {
     fn example_part2() {
         assert_eq!(
             part2(EXAMPLE_INPUT.to_string()),
-            "#####\n#...#\n#...#\n#...#\n#####\n.....\n....."
+            "█████\n█   █\n█   █\n█   █\n█████\n     \n     "
         );
     }
 }
