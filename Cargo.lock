@@ -15,6 +15,7 @@ dependencies = [
 name = "aoc"
 version = "0.1.0"
 dependencies = [
+ "ansi_term",
  "derive-new",
  "pretty_assertions",
 ]

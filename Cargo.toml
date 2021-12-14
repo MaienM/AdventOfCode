@@ -9,4 +9,5 @@ edition = "2021"
 pretty_assertions = "1.0.0"
 
 [dependencies]
+ansi_term = "0.12.1"
 derive-new = "0.5"
