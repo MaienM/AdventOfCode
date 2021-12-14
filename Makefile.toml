@@ -27,7 +27,7 @@ script = '''
 	assert ${exists} "\nInvalid argument ${name}.\nUsage: test-and-run day01"
 
 	print --color cyan ">>>>> Testing ${name} <<<<<"
-	cargo-quietly "test --bin ${name} -- --nocapture"
+	cargo-quietly "test --bin ${name} --no-fail-fast -- --nocapture"
 
 	println --color cyan ">>>>> Running ${name} <<<<<"
 	cargo-quietly "run --bin ${name}"
@@ -40,5 +40,5 @@ script = '''
 	!include_files cargo-quietly.ds
 
 	print --color cyan ">>>>> Testing libs <<<<<"
-	cargo-quietly "test --lib -- --nocapture"
+	cargo-quietly "test --lib --no-fail-fast -- --nocapture"
 '''
