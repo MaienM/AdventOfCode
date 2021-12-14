@@ -84,8 +84,17 @@ fn part1(input: String) -> i64 {
     return counts.values().max().unwrap() - counts.values().min().unwrap();
 }
 
+fn part2(input: String) -> i64 {
+    let (mut polymer, rules) = parse_input(input);
+    for _ in 0..40 {
+        polymer = do_step(polymer, &rules);
+    }
+    let counts = get_polymer_char_counts(&polymer);
+    return counts.values().max().unwrap() - counts.values().min().unwrap();
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -222,5 +231,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 1588);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 2188189693529);
     }
 }
