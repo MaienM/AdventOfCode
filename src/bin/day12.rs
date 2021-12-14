@@ -117,6 +117,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     const EXAMPLE_INPUT_1: &'static str = "
         start-A
