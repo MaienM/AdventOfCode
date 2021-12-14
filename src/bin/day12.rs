@@ -12,7 +12,7 @@ enum NodeType {
     Small,
 }
 impl NodeType {
-    pub fn get(name: &String) -> NodeType {
+    pub fn get(name: &str) -> NodeType {
         if name == NAME_START || name == NAME_END {
             return NodeType::Special;
         } else if name == &name.to_uppercase() {
@@ -24,17 +24,17 @@ impl NodeType {
 }
 
 #[derive(Debug, PartialEq)]
-struct Graph {
-    edges: HashMap<String, Vec<String>>,
+struct Graph<'a> {
+    edges: HashMap<&'a str, Vec<&'a str>>,
 }
-impl Graph {
+impl<'a> Graph<'a> {
     pub fn new() -> Self {
         return Self {
             edges: HashMap::new(),
         };
     }
 
-    pub fn add_connection(&mut self, left: &String, right: &String) {
+    pub fn add_connection(&mut self, left: &'a str, right: &'a str) {
         if NodeType::get(left) == NodeType::Big && NodeType::get(right) == NodeType::Big {
             panic!("Big caves may not be directly connected as this would create infinite paths, but {} and {} are.", left, right);
         }
@@ -50,22 +50,22 @@ impl Graph {
         self.edges.get_mut(right).unwrap().push(left.clone());
     }
 
-    pub fn get_connections(&self, name: &String) -> &Vec<String> {
+    pub fn get_connections(&self, name: &'a str) -> &Vec<&'a str> {
         return &self.edges.get(name).unwrap();
     }
 }
 
-fn count_paths_to_end(
-    graph: &Graph,
-    path: &mut Vec<String>,
-    node: &String,
+fn count_paths_to_end<'a>(
+    graph: &'a Graph,
+    mut path: Vec<&'a str>,
+    node: &'a str,
     did_small_double_visit: bool,
-) -> i64 {
+) -> (Vec<&'a str>, i64) {
     let mut results = 0_i64;
     for connected_node in graph.get_connections(node) {
-        if connected_node == NAME_START {
+        if *connected_node == NAME_START {
             continue;
-        } else if connected_node == NAME_END {
+        } else if *connected_node == NAME_END {
             results += 1;
             continue;
         }
@@ -80,34 +80,34 @@ fn count_paths_to_end(
         }
 
         path.push(connected_node.clone());
-        results += count_paths_to_end(graph, path, connected_node, did_small_double_visit);
+        let (new_path, new_result) =
+            count_paths_to_end(graph, path, connected_node, did_small_double_visit);
+        results += new_result;
+        path = new_path;
         path.pop();
     }
-    return results;
+    return (path, results);
 }
 
-fn parse_input(input: String) -> Graph {
+fn parse_input<'a>(input: &'a String) -> Graph<'a> {
     let mut graph = Graph::new();
     for line in input.trim().split("\n").map(str::trim) {
         let mut parts = line.splitn(2, "-");
-        graph.add_connection(
-            &parts.next().unwrap().to_string(),
-            &parts.next().unwrap().to_string(),
-        );
+        graph.add_connection(&parts.next().unwrap(), &parts.next().unwrap());
     }
     return graph;
 }
 
 fn part1(input: String) -> i64 {
-    let graph = parse_input(input);
-    let mut path: Vec<String> = Vec::new();
-    return count_paths_to_end(&graph, &mut path, &NAME_START.to_string(), true);
+    let graph = parse_input(&input);
+    let path: Vec<&str> = Vec::new();
+    return count_paths_to_end(&graph, path, NAME_START, true).1;
 }
 
 fn part2(input: String) -> i64 {
-    let graph = parse_input(input);
-    let mut path: Vec<String> = Vec::new();
-    return count_paths_to_end(&graph, &mut path, &NAME_START.to_string(), false);
+    let graph = parse_input(&input);
+    let path: Vec<&str> = Vec::new();
+    return count_paths_to_end(&graph, path, NAME_START, false).1;
 }
 
 fn main() {
@@ -163,29 +163,24 @@ mod tests {
 
     #[test]
     fn example1_parse() {
-        let graph = parse_input(EXAMPLE_INPUT_1.to_string());
-        assert_eq!(graph.get_connections(&"start".to_string()), &vec!["A", "b"]);
-        assert_eq!(graph.get_connections(&"end".to_string()), &vec!["A", "b"]);
-        assert_eq!(
-            graph.get_connections(&"A".to_string()),
-            &vec!["start", "c", "b", "end"]
-        );
-        assert_eq!(
-            graph.get_connections(&"b".to_string()),
-            &vec!["start", "A", "d", "end"]
-        );
-        assert_eq!(graph.get_connections(&"c".to_string()), &vec!["A"]);
-        assert_eq!(graph.get_connections(&"d".to_string()), &vec!["b"]);
+        let input = EXAMPLE_INPUT_1.to_string();
+        let graph = parse_input(&input);
+        assert_eq!(graph.get_connections("start"), &vec!["A", "b"]);
+        assert_eq!(graph.get_connections("end"), &vec!["A", "b"]);
+        assert_eq!(graph.get_connections("A"), &vec!["start", "c", "b", "end"]);
+        assert_eq!(graph.get_connections("b"), &vec!["start", "A", "d", "end"]);
+        assert_eq!(graph.get_connections("c"), &vec!["A"]);
+        assert_eq!(graph.get_connections("d"), &vec!["b"]);
     }
 
     #[test]
     fn nodetype() {
-        assert_eq!(NodeType::get(&NAME_START.to_string()), NodeType::Special);
-        assert_eq!(NodeType::get(&NAME_END.to_string()), NodeType::Special);
-        assert_eq!(NodeType::get(&"A".to_string()), NodeType::Big);
-        assert_eq!(NodeType::get(&"b".to_string()), NodeType::Small);
-        assert_eq!(NodeType::get(&"JK".to_string()), NodeType::Big);
-        assert_eq!(NodeType::get(&"hl".to_string()), NodeType::Small);
+        assert_eq!(NodeType::get(NAME_START), NodeType::Special);
+        assert_eq!(NodeType::get(NAME_END), NodeType::Special);
+        assert_eq!(NodeType::get("A"), NodeType::Big);
+        assert_eq!(NodeType::get("b"), NodeType::Small);
+        assert_eq!(NodeType::get("JK"), NodeType::Big);
+        assert_eq!(NodeType::get("hl"), NodeType::Small);
     }
 
     #[test]
