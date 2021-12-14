@@ -74,6 +74,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     const EXAMPLE_INPUT: &'static str = "
         forward 5
