@@ -18,21 +18,30 @@ pub struct RunnableRunOk {
     pub duration: Duration,
 }
 
-type RunnableRun = Result<RunnableRunOk, String>;
+pub type RunnableRun = Result<RunnableRunOk, String>;
 
-pub fn print_runnable_run(name: String, run: RunnableRun) {
+pub struct DurationThresholds {
+    pub good: Duration,
+    pub acceptable: Duration,
+}
+const THRESHOLDS_DEFAULT: DurationThresholds = DurationThresholds {
+    good: Duration::from_millis(1),
+    acceptable: Duration::from_secs(1),
+};
+
+pub fn print_runnable_run(name: String, run: RunnableRun, thresholds: &DurationThresholds) {
     let name = Purple.paint(name);
     match run {
         Err(err) => {
             println!("> {}: {}", name, Red.paint(err));
         }
         Ok(run) => {
-            let duration_colour = if run.duration.as_secs() > 0 {
-                Red
-            } else if run.duration.as_millis() > 0 {
+            let duration_colour = if run.duration < thresholds.good {
+                Green
+            } else if run.duration < thresholds.acceptable {
                 Blue
             } else {
-                Green
+                Red
             };
             let duration_formatted = duration_colour.paint(format!("{:?}", run.duration));
 
@@ -97,8 +106,8 @@ pub fn run<T1: ToString, T2: ToString>(part1: Runnable<T1>, part2: Runnable<T2>)
         Cyan.paint(filename)
     );
     let (run1, run2) = run_day(filename, part1, part2).unwrap();
-    print_runnable_run("Part 1".to_string(), run1);
-    print_runnable_run("Part 2".to_string(), run2);
+    print_runnable_run("Part 1".to_string(), run1, &THRESHOLDS_DEFAULT);
+    print_runnable_run("Part 2".to_string(), run2, &THRESHOLDS_DEFAULT);
 }
 
 pub fn missing<T: ToString>(_data: String) -> T {
