@@ -16,8 +16,18 @@ name = "aoc"
 version = "0.1.0"
 dependencies = [
  "ansi_term",
+ "aoc_derive",
  "derive-new",
  "pretty_assertions",
+]
+
+[[package]]
+name = "aoc_derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

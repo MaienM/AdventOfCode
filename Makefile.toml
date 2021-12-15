@@ -5,12 +5,9 @@ RUST_BACKTRACE = { value = 0, env_set = ["PREFER_EXISTING"] }
 script_runner = "@duckscript"
 script = '''
 	exit_on_error true
+	!include_files cargo-quietly.ds
 
-	paths = glob_array ./inputs/day*.txt
-	for path in ${paths}
-		name = substring ${path} 7 12
-		exec cargo --quiet run --bin ${name}
-	end
+	cargo-quietly "run --bin aoc --release"
 '''
 
 [tasks.test-and-run-day]
