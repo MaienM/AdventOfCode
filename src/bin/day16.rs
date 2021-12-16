@@ -100,6 +100,38 @@ fn parse_packet(bits: &mut Bits) -> Packet {
     }
 }
 
+fn resolve(packet: Packet) -> u128 {
+    match packet {
+        Packet::Literal(p) => {
+            return p.value;
+        }
+        Packet::Operator(p) => {
+            let mut values = p
+                .subpackets
+                .into_iter()
+                .map(|sp| resolve(sp))
+                .collect::<Vec<u128>>();
+            return match p.type_id {
+                0 => values.iter().sum::<u128>(),
+                1 => {
+                    // product
+                    let mut result = values.pop().unwrap();
+                    while !values.is_empty() {
+                        result *= values.pop().unwrap();
+                    }
+                    return result;
+                }
+                2 => *values.iter().min().unwrap(),
+                3 => *values.iter().max().unwrap(),
+                5 => (values[0] > values[1]) as u128,
+                6 => (values[0] < values[1]) as u128,
+                7 => (values[0] == values[1]) as u128,
+                _ => 0,
+            };
+        }
+    }
+}
+
 fn part1(input: String) -> u128 {
     let mut bits = parse_input(input);
     let mut remaining = vec![parse_packet(&mut bits)];
@@ -119,8 +151,14 @@ fn part1(input: String) -> u128 {
     return result;
 }
 
+fn part2(input: String) -> u128 {
+    let mut bits = parse_input(input);
+    let packet = parse_packet(&mut bits);
+    return resolve(packet);
+}
+
 fn main() {
-    run(part1, missing::<i8>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -207,5 +245,45 @@ mod tests {
     #[test]
     fn example4_part1() {
         assert_eq!(part1("A0016C880162017C3686B18A3D4780".to_string()), 31);
+    }
+
+    #[test]
+    fn example1_part2() {
+        assert_eq!(part2("C200B40A82".to_string()), 3);
+    }
+
+    #[test]
+    fn example2_part2() {
+        assert_eq!(part2("04005AC33890".to_string()), 54);
+    }
+
+    #[test]
+    fn example3_part2() {
+        assert_eq!(part2("880086C3E88112".to_string()), 7);
+    }
+
+    #[test]
+    fn example4_part2() {
+        assert_eq!(part2("CE00C43D881120".to_string()), 9);
+    }
+
+    #[test]
+    fn example5_part2() {
+        assert_eq!(part2("D8005AC2A8F0".to_string()), 1);
+    }
+
+    #[test]
+    fn example6_part2() {
+        assert_eq!(part2("F600BC2D8F".to_string()), 0);
+    }
+
+    #[test]
+    fn example7_part2() {
+        assert_eq!(part2("9C005AC2F8F0".to_string()), 0);
+    }
+
+    #[test]
+    fn example8_part2() {
+        assert_eq!(part2("9C0141080250320F1802104A08".to_string()), 1);
     }
 }
