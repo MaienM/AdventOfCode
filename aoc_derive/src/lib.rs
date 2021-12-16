@@ -1,4 +1,7 @@
-use std::fs::{self, DirEntry};
+use std::{
+    collections::HashMap,
+    fs::{self, DirEntry},
+};
 
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
@@ -60,7 +63,8 @@ fn load_bin_as_mod(path: &str) -> BinMod {
 pub fn part_finder_derive(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, .. } = parse_macro_input!(input);
 
-    let mut toplevel: Vec<TokenStream2> = Vec::new();
+    let mut uses: Vec<TokenStream2> = Vec::new();
+    let mut externs: HashMap<String, ItemExternCrate> = HashMap::new();
     let mut runnables: Vec<TokenStream2> = Vec::new();
 
     let mut entries: Vec<DirEntry> = fs::read_dir("./src/bin")
@@ -81,14 +85,16 @@ pub fn part_finder_derive(input: TokenStream) -> TokenStream {
 
         let binmod = load_bin_as_mod(entry.path().to_str().unwrap());
         let modfile = binmod.file;
-        let externs = binmod.externs;
 
-        toplevel.push(quote! {
-            #(#externs)*
+        uses.push(quote! {
             mod #modident {
                 #modfile
             }
         });
+
+        for ex in binmod.externs {
+            externs.insert(ex.ident.to_string(), ex);
+        }
 
         let part1ident = quote! { |i| #modident::part1(i).to_string() };
         let part2ident = if binmod.has_part_2 {
@@ -99,9 +105,11 @@ pub fn part_finder_derive(input: TokenStream) -> TokenStream {
         runnables.push(quote! { (#modname, #part1ident, #part2ident) });
     }
 
+    let externs = externs.values();
     let output = quote! {
         use aoc::runner::{missing, RunnableList};
-        #(#toplevel)*
+        #(#uses)*
+        #(#externs)*
         impl RunnableListProvider for #ident {
             fn get() -> RunnableList {
                 return vec![
