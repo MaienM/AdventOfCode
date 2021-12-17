@@ -33,6 +33,22 @@ fn parse_input(input: String) -> TargetArea {
     return TargetArea::new(ranges.next().unwrap(), ranges.next().unwrap());
 }
 
+fn ends_up_at_target(mut xvel: i32, mut yvel: i32, target: &TargetArea) -> bool {
+    let mut x = 0;
+    let mut y = 0;
+    while x <= target.x.1 && y >= target.y.0 {
+        x += xvel;
+        y += yvel;
+        xvel = (xvel - 1).max(0);
+        yvel -= 1;
+
+        if target.contains_x(x) && target.contains_y(y) {
+            return true;
+        }
+    }
+    return false;
+}
+
 fn part1(input: String) -> i32 {
     let target = parse_input(input);
     /*
@@ -51,8 +67,26 @@ fn part1(input: String) -> i32 {
     return y;
 }
 
+fn part2(input: String) -> i32 {
+    let target = parse_input(input);
+    /*
+     * Despite having instructions on how to handle negative X velocities these will never get us to our goal, so we need not consider them. The highest x velocity that could be suitable is one that would get us to the right edge in one step, which is target.x.1.
+     *
+     * The logic used in part 1 gives us the bounds for yvel for upwards trajectories (-target.y.0 - 1). For downward trajectories we are essentially only considering the last step, giving us a bound of (target.y.0).
+     */
+    let mut count = 0;
+    for xvel in 0..(target.x.1 + 1) {
+        for yvel in (target.y.0)..(-target.y.0) {
+            if ends_up_at_target(xvel, yvel, &target) {
+                count += 1;
+            }
+        }
+    }
+    return count;
+}
+
 fn main() {
-    run(part1, missing::<i8>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -73,5 +107,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 45);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 112);
     }
 }
