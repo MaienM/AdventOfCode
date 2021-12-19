@@ -1,11 +1,13 @@
 use std::{
-    collections::HashSet,
+    collections::{BTreeSet, HashSet},
     ops::{Add, Mul, Sub},
 };
 
 use aoc::runner::*;
 
-#[derive(Debug, Eq, PartialEq)]
+const MATCH_THRESHOLD: usize = 12;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct Matrix((i32, i32, i32), (i32, i32, i32), (i32, i32, i32));
 impl Mul<&Matrix> for &Matrix {
     type Output = Matrix;
@@ -90,6 +92,32 @@ impl Mul<&Matrix> for PointDelta {
         return Self(c0, c1, c2);
     }
 }
+impl PartialOrd for PointDelta {
+    fn lt(&self, other: &Self) -> bool {
+        return self.size().lt(&other.size());
+    }
+
+    fn le(&self, other: &Self) -> bool {
+        return self.size().le(&other.size());
+    }
+
+    fn gt(&self, other: &Self) -> bool {
+        return self.size().gt(&other.size());
+    }
+
+    fn ge(&self, other: &Self) -> bool {
+        return self.size().ge(&other.size());
+    }
+
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        return self.size().partial_cmp(&other.size());
+    }
+}
+impl Ord for PointDelta {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        return self.size().cmp(&other.size());
+    }
+}
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct Point(i32, i32, i32);
@@ -124,48 +152,35 @@ impl Mul<&Matrix> for &Point {
 #[derive(Debug, Eq, PartialEq)]
 struct ScannerInput(u8, Vec<Point>);
 
-// Anchors are points in the outer regions of the scanner with as much space between them as possible. If a different scanner has overlap with this scanner's range it will always include at least one of these, so these are the only points of existing scanners that need to be considered when finding which scanners match the one we're currently considering.
-#[derive(Clone, Debug)]
-struct Anchor {
-    pub point: Point,
-    pub relative_beacons: Vec<PointDelta>,
-}
-impl Anchor {
-    fn new(point: Point, beacons: &Vec<Point>) -> Self {
-        return Self {
-            point,
-            relative_beacons: beacons
-                .iter()
-                .filter(|p| *p != &point)
-                .map(|p| p - &point)
-                .collect(),
-        };
-    }
-}
-
 // Scanners that have not yet been connected to the main frame of reference. The points in these are all in the original frame of reference (as in the input).
 #[derive(Debug)]
 struct ScannerIncomplete {
     pub num: u8,
-    pub anchors: Vec<Anchor>,
     pub beacons: Vec<Point>,
+    pub deltas: Vec<(PointDelta, Point, Point)>,
 }
 impl ScannerIncomplete {
     fn new(scanner: ScannerInput) -> Self {
         let beacons = scanner.1;
-        let mut anchors: Vec<Anchor> = Vec::new();
-        while anchors.len() < 8 {
-            // TODO: Is 8 always enough? Is there a better way to pick the anchor points?
-            let point = beacons
-                .iter()
-                .filter(|p| anchors.iter().find(|a| &a.point == *p).is_none())
-                .max_by_key(|p| anchors.iter().map(|a| (*p - &a.point).size()).sum::<i32>())
-                .unwrap();
-            anchors.push(Anchor::new(*point, &beacons));
-        }
+        // Make a preselection of deltas, largest first since larger deltas are more likely to involve points on the edge of the scanner area, which are in turn more likely to be found inside another scanner area.
+        let mut deltas = beacons
+            .iter()
+            .flat_map(|l| {
+                beacons
+                    .iter()
+                    .filter(|r| r != &l)
+                    .map(|r| (l - r, *l, *r))
+                    .collect::<Vec<(PointDelta, Point, Point)>>()
+            })
+            .collect::<Vec<(PointDelta, Point, Point)>>();
+        deltas.sort_unstable_by_key(|d| d.0);
+        deltas.resize(
+            beacons.len() * 2,
+            (PointDelta(0, 0, 0), Point(0, 0, 0), Point(0, 0, 0)),
+        );
         return Self {
             num: scanner.0,
-            anchors,
+            deltas,
             beacons,
         };
     }
@@ -176,8 +191,8 @@ impl ScannerIncomplete {
 struct Scanner {
     pub num: u8,
     pub offset: PointDelta,
-    pub anchors: Vec<Anchor>,
     pub beacons: Vec<Point>,
+    pub deltas: Vec<(PointDelta, Point, Point)>,
 }
 impl Scanner {
     fn new(scanner: &ScannerIncomplete, matrix: Matrix, offset: PointDelta) -> Self {
@@ -187,16 +202,20 @@ impl Scanner {
             .into_iter()
             .map(|p| p.apply(&matrix, &offset))
             .collect();
-        let anchors = scanner
-            .anchors
+        let deltas = scanner
+            .deltas
             .iter()
-            .map(|a| Anchor::new(a.point.apply(&matrix, &offset), &beacons))
+            .map(|(_, l, r)| {
+                let l = l.apply(&matrix, &offset);
+                let r = r.apply(&matrix, &offset);
+                return (&l - &r, l, r);
+            })
             .collect();
         return Self {
             num: scanner.num,
             offset,
-            anchors,
             beacons,
+            deltas,
         };
     }
 }
@@ -233,58 +252,51 @@ fn parse_input(input: String) -> Vec<ScannerInput> {
         .collect();
 }
 
-fn get_overlapping_deltas<'a>(
-    left: &'a Anchor,
-    right: &Anchor,
+fn get_overlapping_deltas(
+    existing: &Scanner,
+    candidate: &ScannerIncomplete,
     matrix: &Matrix,
-) -> Vec<&'a PointDelta> {
-    return left
-        .relative_beacons
+) -> Vec<(PointDelta, Point, Point)> {
+    return candidate
+        .deltas
         .iter()
-        .filter(|ld| {
-            return right
-                .relative_beacons
+        .flat_map(|(cd, cp, _)| {
+            existing
+                .deltas
                 .iter()
-                .find(|rd| ld.matches(rd, matrix))
-                .is_some();
+                .find(|(ed, _, _)| cd.matches(ed, matrix))
+                .map(|(_, ep, _)| (*cd, *cp, *ep))
         })
         .collect();
 }
 
-// Try to match a candidate incomplet scanner by comparing achors. It's unlikely that the anchors of two different scanners refer to the same points (though it is possible, so we do need to account for it), so start by checking if any of the deltas of the two anchors match. If they do then these might be referring to the same point, so build a set of deltas for the existing anchor and see if there is sufficient overlap these. Pretty simple stuff really.
+// Try to match a candidate incomplete scanner by comparing deltas. If any deltas match for a found matrix, go through the points and check if the overlap is large enough to fine a definitive match.
 fn find_matrix_and_offset(
     existing: &Scanner,
     candidate: &ScannerIncomplete,
 ) -> Option<(Matrix, PointDelta)> {
-    for ca in &candidate.anchors {
-        for ea in &existing.anchors {
-            for matrix in &ROTATION_MATRICES {
-                let overlapping_deltas = get_overlapping_deltas(ca, ea, matrix);
+    for matrix in &ROTATION_MATRICES {
+        let overlapping_deltas = get_overlapping_deltas(&existing, &candidate, matrix);
 
-                let matching_ca = if overlapping_deltas.len() >= 11 {
-                    // We got lucky and ended up with the same point as an achor.
-                    Some(ca.clone())
-                } else {
-                    // We might have found one of our anchors in one of their anchors's lists, but we'll need to rebuild our deltas from the correct point to check.
-                    overlapping_deltas
-                        .iter()
-                        .map(|od| Anchor::new(&ca.point + *od, &candidate.beacons))
-                        .find(|ca| {
-                            let overlapping_deltas = get_overlapping_deltas(ca, ea, matrix);
-                            return overlapping_deltas.len() >= 11;
-                        })
-                };
+        if overlapping_deltas.len() < MATCH_THRESHOLD - 1 {
+            continue;
+        }
 
-                match matching_ca {
-                    Some(mca) => {
-                        let offset = &ea.point - &(&mca.point * matrix);
-                        // let matrix = matrix * &existing.matrix;
-                        let matrix = matrix * &IDENTITY_MATRIX;
-                        return Some((matrix, offset));
-                    }
-                    _ => {}
-                }
-                if matching_ca.is_some() {}
+        let pairs: HashSet<(Point, Point)> = overlapping_deltas
+            .into_iter()
+            .map(|(_, l, r)| (l, r))
+            .collect();
+        for (cp, ep) in &pairs {
+            let cd: BTreeSet<PointDelta> = candidate
+                .beacons
+                .iter()
+                .map(|p| (p - cp) * matrix)
+                .collect();
+            let ed: BTreeSet<PointDelta> = existing.beacons.iter().map(|p| p - ep).collect();
+            let intersection = cd.intersection(&ed);
+            if intersection.count() >= MATCH_THRESHOLD {
+                let offset = ep - &(cp * matrix);
+                return Some((*matrix, offset));
             }
         }
     }
@@ -679,7 +691,6 @@ mod tests {
             Scanner {
                 num: 0,
                 offset: PointDelta(0, 0, 0),
-                anchors: vec![],
                 beacons: vec![
                     Point(404, -588, -901),
                     Point(528, -643, 409),
@@ -687,11 +698,11 @@ mod tests {
                     Point(390, -675, -793),
                     Point(-537, -823, -458),
                 ],
+                deltas: vec![],
             },
             Scanner {
                 num: 1,
                 offset: PointDelta(0, 0, 0),
-                anchors: vec![],
                 beacons: vec![
                     Point(404, -588, -901),
                     Point(-485, -357, 347),
@@ -699,6 +710,7 @@ mod tests {
                     Point(-537, -823, -458),
                     Point(-661, -816, -575),
                 ],
+                deltas: vec![],
             },
         ];
         let actual = get_beacons(&input);
