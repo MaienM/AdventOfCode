@@ -174,6 +174,7 @@ impl ScannerIncomplete {
 #[derive(Debug)]
 struct Scanner {
     pub _num: u8,
+    pub offset: PointDelta,
     pub anchors: Vec<Anchor>,
     pub beacons: Vec<Point>,
 }
@@ -192,6 +193,7 @@ impl Scanner {
             .collect();
         return Self {
             _num: scanner._num,
+            offset,
             anchors,
             beacons,
         };
@@ -338,8 +340,26 @@ fn part1(input: String) -> usize {
     return beacons.len();
 }
 
+fn part2(input: String) -> i32 {
+    let scanners = parse_input(input);
+    let resolved = resolve(scanners);
+    let start = Point(0, 0, 0);
+    let mut max = 0;
+    for s1 in &resolved {
+        let p1 = &start + &s1.offset;
+        for s2 in &resolved {
+            let p2 = &start + &s2.offset;
+            let distance = (&p1 - &p2).size();
+            if distance > max {
+                max = distance;
+            }
+        }
+    }
+    return max;
+}
+
 fn main() {
-    run(part1, missing::<i8>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -651,6 +671,7 @@ mod tests {
         let input = vec![
             Scanner {
                 _num: 0,
+                offset: PointDelta(0, 0, 0),
                 anchors: vec![],
                 beacons: vec![
                     Point(404, -588, -901),
@@ -662,6 +683,7 @@ mod tests {
             },
             Scanner {
                 _num: 1,
+                offset: PointDelta(0, 0, 0),
                 anchors: vec![],
                 beacons: vec![
                     Point(404, -588, -901),
@@ -1012,5 +1034,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 79);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 3621);
     }
 }
