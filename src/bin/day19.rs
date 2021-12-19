@@ -146,7 +146,7 @@ impl Anchor {
 // Scanners that have not yet been connected to the main frame of reference. The points in these are all in the original frame of reference (as in the input).
 #[derive(Debug)]
 struct ScannerIncomplete {
-    pub _num: u8,
+    pub num: u8,
     pub anchors: Vec<Anchor>,
     pub beacons: Vec<Point>,
 }
@@ -155,6 +155,7 @@ impl ScannerIncomplete {
         let beacons = scanner.1;
         let mut anchors: Vec<Anchor> = Vec::new();
         while anchors.len() < 8 {
+            // TODO: Is 8 always enough? Is there a better way to pick the anchor points?
             let point = beacons
                 .iter()
                 .filter(|p| anchors.iter().find(|a| &a.point == *p).is_none())
@@ -163,7 +164,7 @@ impl ScannerIncomplete {
             anchors.push(Anchor::new(*point, &beacons));
         }
         return Self {
-            _num: scanner.0,
+            num: scanner.0,
             anchors,
             beacons,
         };
@@ -173,7 +174,7 @@ impl ScannerIncomplete {
 // Scanners that have been connected to the main frame of reference. The points in these are all transformed to the main frame of reference.
 #[derive(Debug)]
 struct Scanner {
-    pub _num: u8,
+    pub num: u8,
     pub offset: PointDelta,
     pub anchors: Vec<Anchor>,
     pub beacons: Vec<Point>,
@@ -192,7 +193,7 @@ impl Scanner {
             .map(|a| Anchor::new(a.point.apply(&matrix, &offset), &beacons))
             .collect();
         return Self {
-            _num: scanner._num,
+            num: scanner.num,
             offset,
             anchors,
             beacons,
@@ -294,6 +295,7 @@ fn resolve(scanners: Vec<ScannerInput>) -> Vec<Scanner> {
     let mut remaining: Vec<ScannerIncomplete> =
         scanners.into_iter().map(ScannerIncomplete::new).collect();
     let mut solved: Vec<Scanner> = Vec::new();
+    let mut failed: HashSet<(u8, u8)> = HashSet::new();
 
     // Take the first scanner to be fine as-is so we have something to start building against.
     solved.push(Scanner::new(
@@ -305,6 +307,9 @@ fn resolve(scanners: Vec<ScannerInput>) -> Vec<Scanner> {
     'try_match: while !remaining.is_empty() {
         for (ci, candidate) in remaining.iter().enumerate() {
             for existing in &solved {
+                if failed.contains(&(candidate.num, existing.num)) {
+                    continue;
+                }
                 match find_matrix_and_offset(existing, candidate) {
                     Some((matrix, offset)) => {
                         let new_scanner = Scanner::new(candidate.clone(), matrix, offset);
@@ -312,7 +317,9 @@ fn resolve(scanners: Vec<ScannerInput>) -> Vec<Scanner> {
                         remaining.swap_remove(ci);
                         continue 'try_match;
                     }
-                    _ => {}
+                    _ => {
+                        failed.insert((candidate.num, existing.num));
+                    }
                 }
             }
         }
@@ -670,7 +677,7 @@ mod tests {
     fn test_get_beacons() {
         let input = vec![
             Scanner {
-                _num: 0,
+                num: 0,
                 offset: PointDelta(0, 0, 0),
                 anchors: vec![],
                 beacons: vec![
@@ -682,7 +689,7 @@ mod tests {
                 ],
             },
             Scanner {
-                _num: 1,
+                num: 1,
                 offset: PointDelta(0, 0, 0),
                 anchors: vec![],
                 beacons: vec![
