@@ -97,17 +97,22 @@ pub fn run<T1: ToString, T2: ToString>(part1: Runnable<T1>, part2: Runnable<T2>)
         .last()
         .expect("Unable to determine binary name.");
 
-    let filename = get_input_path(name.to_string());
-    let filename = args.get(1).unwrap_or(&filename);
+    let filenames: Vec<String> = if args.len() > 1 {
+        args.iter().skip(1).cloned().collect()
+    } else {
+        vec![get_input_path(name.to_string())]
+    };
 
-    println!(
-        "Running {} using input {}...",
-        Cyan.paint(name),
-        Cyan.paint(filename)
-    );
-    let (run1, run2) = run_day(filename, part1, part2).unwrap();
-    print_runnable_run("Part 1".to_string(), run1, &THRESHOLDS_DEFAULT);
-    print_runnable_run("Part 2".to_string(), run2, &THRESHOLDS_DEFAULT);
+    for filename in &filenames {
+        println!(
+            "Running {} using input {}...",
+            Cyan.paint(name),
+            Cyan.paint(filename)
+        );
+        let (run1, run2) = run_day(filename, part1, part2).unwrap();
+        print_runnable_run("Part 1".to_string(), run1, &THRESHOLDS_DEFAULT);
+        print_runnable_run("Part 2".to_string(), run2, &THRESHOLDS_DEFAULT);
+    }
 }
 
 pub fn missing<T: ToString>(_data: String) -> T {
