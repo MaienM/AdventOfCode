@@ -179,8 +179,9 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     // This example is garbage since its avoids the core challenge, but its what we were given. Bah.
     const EXAMPLE_INPUT: &'static str = "

@@ -1,6 +1,6 @@
-use ansi_term::Colour::*;
 use std::time::Duration;
 
+use ansi_term::Colour::*;
 use aoc::runner::*;
 use aoc_derive::RunnableListProvider;
 

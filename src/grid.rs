@@ -217,11 +217,12 @@ impl<T: Debug> FromIterator<GridCell<T>> for Grid<T> {
 
 #[cfg(test)]
 mod tests {
-    use pretty_assertions::assert_eq;
     use std::{
         fmt::Debug,
         panic::{catch_unwind, UnwindSafe},
     };
+
+    use pretty_assertions::assert_eq;
 
     use super::*;
 

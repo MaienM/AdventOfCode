@@ -1,8 +1,9 @@
-use ansi_term::Colour::*;
 use std::env;
 use std::fs;
 use std::time::Duration;
 use std::time::Instant;
+
+use ansi_term::Colour::*;
 
 type Runnable<T> = fn(String) -> T;
 
