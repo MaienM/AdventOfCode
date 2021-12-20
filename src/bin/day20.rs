@@ -117,15 +117,19 @@ fn do_step(algorithm: &Algorithm, mut state: State) -> State {
 
     // Fill the new space if all cells outside the bounds are on.
     if state.outside_bounds {
-        let old_points = state.bounds.to_points();
-        let new_points = state
-            .bounds
-            .grow(2)
-            .to_points()
-            .into_iter()
-            .filter(|p| !old_points.contains(p));
-        for point in new_points {
-            state.points.insert(point);
+        let fill_bounds = new_bounds.grow(1);
+
+        for x in (fill_bounds.x.0)..(fill_bounds.x.1 + 1) {
+            state.points.insert(Point(x, fill_bounds.y.0));
+            state.points.insert(Point(x, fill_bounds.y.0 + 1));
+            state.points.insert(Point(x, fill_bounds.y.1 - 1));
+            state.points.insert(Point(x, fill_bounds.y.1));
+        }
+        for y in (fill_bounds.y.0)..(fill_bounds.y.1 + 1) {
+            state.points.insert(Point(fill_bounds.x.0, y));
+            state.points.insert(Point(fill_bounds.x.0 + 1, y));
+            state.points.insert(Point(fill_bounds.x.1 - 1, y));
+            state.points.insert(Point(fill_bounds.x.1, y));
         }
     }
 
