@@ -1,6 +1,7 @@
+use std::{collections::HashSet, ops::Range};
+
 use aoc::grid::Point as BasePoint;
 use aoc::runner::*;
-use std::{collections::HashSet, ops::Range};
 
 type Point = BasePoint<i32>;
 type LineDef = (Point, Point);
@@ -103,8 +104,9 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     const EXAMPLE_INPUT: &'static str = "
         0,9 -> 5,9
