@@ -16,6 +16,7 @@ pub trait RunnableListProvider {
 #[derive(Clone)]
 pub struct RunnableRunOk {
     pub result: String,
+    pub solution: Option<String>,
     pub duration: Duration,
 }
 
@@ -46,19 +47,38 @@ pub fn print_runnable_run(name: String, run: RunnableRun, thresholds: &DurationT
             };
             let duration_formatted = duration_colour.paint(format!("{:?}", run.duration));
 
-            if run.result.contains("\n") {
+            let result_formatted = match run.solution {
+                Some(expected) => {
+                    if run.result == expected {
+                        Green.paint(&run.result).to_string()
+                    } else {
+                        if run.result.contains("\n") || expected.contains("\n") {
+                            format!("{}\nShould be:\n{}", Red.paint(&run.result), expected)
+                        } else {
+                            format!("{} (should be {})", Red.paint(&run.result), expected)
+                        }
+                    }
+                }
+                None => run.result.clone(),
+            };
+
+            if result_formatted.contains("\n") {
                 println!("> {}: [{}]", name, duration_formatted);
-                for line in run.result.split("\n") {
+                for line in result_formatted.split("\n") {
                     println!("  {}", line);
                 }
             } else {
-                println!("> {}: {} [{}]", name, run.result, duration_formatted);
+                println!("> {}: {} [{}]", name, result_formatted, duration_formatted);
             }
         }
     }
 }
 
-fn run_runnable<T: ToString>(runnable: Runnable<T>, input: &String) -> RunnableRun {
+fn run_runnable<T: ToString>(
+    runnable: Runnable<T>,
+    input: &String,
+    solution: Option<String>,
+) -> RunnableRun {
     if runnable == missing {
         return Err("Not implemented.".to_string());
     }
@@ -69,11 +89,28 @@ fn run_runnable<T: ToString>(runnable: Runnable<T>, input: &String) -> RunnableR
 
     let result = result.to_string();
 
-    return Ok(RunnableRunOk { result, duration });
+    return Ok(RunnableRunOk {
+        result,
+        duration,
+        solution,
+    });
 }
 
 pub fn get_input_path(name: String) -> String {
     return format!("inputs/{}.txt", name);
+}
+
+pub fn get_output_path(input_path: &String, part: i8) -> String {
+    if input_path.contains(".") {
+        let [tail, head]: [&str; 2] = input_path
+            .rsplitn(2, ".")
+            .collect::<Vec<&str>>()
+            .try_into()
+            .unwrap();
+        return format!("{}.solution{}.{}", head, part, tail);
+    } else {
+        return format!("{}.solution{}", input_path, part);
+    }
 }
 
 pub fn run_day<T1: ToString, T2: ToString>(
@@ -82,7 +119,18 @@ pub fn run_day<T1: ToString, T2: ToString>(
     part2: Runnable<T2>,
 ) -> Result<(RunnableRun, RunnableRun), String> {
     return match fs::read_to_string(filename) {
-        Ok(input) => Ok((run_runnable(part1, &input), run_runnable(part2, &input))),
+        Ok(input) => Ok((
+            run_runnable(
+                part1,
+                &input,
+                fs::read_to_string(get_output_path(filename, 1)).ok(),
+            ),
+            run_runnable(
+                part2,
+                &input,
+                fs::read_to_string(get_output_path(filename, 2)).ok(),
+            ),
+        )),
         Err(err) => Err(format!(
             "Unable to read input file '{}': {}.",
             filename, err
