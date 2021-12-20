@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::fmt::Debug;
+use std::ops::Range;
 
 #[macro_use]
 extern crate derive_new;
@@ -40,15 +41,12 @@ impl Bounds {
         };
     }
 
-    fn to_points(&self) -> Vec<Point> {
-        let yrange = (self.y.0)..(self.y.1 + 1);
-        return yrange
-            .into_iter()
-            .flat_map::<Vec<Point>, _>(|y| {
-                let xrange = (self.x.0)..(self.x.1 + 1);
-                return xrange.into_iter().map(|x| Point(x, y)).collect();
-            })
-            .collect();
+    fn xrange(&self) -> Range<i32> {
+        return (self.x.0)..(self.x.1 + 1);
+    }
+
+    fn yrange(&self) -> Range<i32> {
+        return (self.y.0)..(self.y.1 + 1);
     }
 }
 
@@ -119,13 +117,13 @@ fn do_step(algorithm: &Algorithm, mut state: State) -> State {
     if state.outside_bounds {
         let fill_bounds = new_bounds.grow(1);
 
-        for x in (fill_bounds.x.0)..(fill_bounds.x.1 + 1) {
+        for x in fill_bounds.xrange() {
             state.points.insert(Point(x, fill_bounds.y.0));
             state.points.insert(Point(x, fill_bounds.y.0 + 1));
             state.points.insert(Point(x, fill_bounds.y.1 - 1));
             state.points.insert(Point(x, fill_bounds.y.1));
         }
-        for y in (fill_bounds.y.0)..(fill_bounds.y.1 + 1) {
+        for y in fill_bounds.yrange() {
             state.points.insert(Point(fill_bounds.x.0, y));
             state.points.insert(Point(fill_bounds.x.0 + 1, y));
             state.points.insert(Point(fill_bounds.x.1 - 1, y));
@@ -135,16 +133,19 @@ fn do_step(algorithm: &Algorithm, mut state: State) -> State {
 
     let mut new_lit_points = LitPoints::new();
 
-    for point in new_bounds.to_points() {
-        let mut idx = 0;
-        let block_values = point.block().into_iter().map(|p| state.points.contains(&p));
-        for (i, v) in block_values.enumerate() {
-            if v {
-                idx += 2usize.pow((8 - i) as u32);
+    for x in new_bounds.xrange() {
+        for y in new_bounds.yrange() {
+            let point = Point(x, y);
+            let mut idx = 0;
+            let block_values = point.block().into_iter().map(|p| state.points.contains(&p));
+            for (i, v) in block_values.enumerate() {
+                if v {
+                    idx += 2usize.pow((8 - i) as u32);
+                }
             }
-        }
-        if algorithm[idx] {
-            new_lit_points.insert(point);
+            if algorithm[idx] {
+                new_lit_points.insert(point);
+            }
         }
     }
 
