@@ -155,14 +155,22 @@ fn do_step(algorithm: &Algorithm, mut state: State) -> State {
 
 fn part1(input: String) -> usize {
     let (algorithm, mut state) = parse_input(input);
+    for _ in 0..2 {
+        state = do_step(&algorithm, state);
+    }
+    return state.points.len();
+}
 
-    state = do_step(&algorithm, state);
-    state = do_step(&algorithm, state);
+fn part2(input: String) -> usize {
+    let (algorithm, mut state) = parse_input(input);
+    for _ in 0..50 {
+        state = do_step(&algorithm, state);
+    }
     return state.points.len();
 }
 
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -391,5 +399,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 35);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 3351);
     }
 }
