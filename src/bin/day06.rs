@@ -1,6 +1,6 @@
 use aoc::{parse_number_list, runner::*};
 
-type State = [i64; 9];
+type State = [u64; 9];
 
 fn get_state(input: Vec<i32>) -> State {
     let mut state = [0; 9];
@@ -24,7 +24,7 @@ fn pass_day(state: State) -> State {
     ];
 }
 
-fn pass_days(state: State, days: i64) -> State {
+fn pass_days(state: State, days: u64) -> State {
     let mut state = state;
     for _ in 0..days {
         state = pass_day(state);
@@ -32,13 +32,13 @@ fn pass_days(state: State, days: i64) -> State {
     return state;
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> u64 {
     let mut state = get_state(parse_number_list(input, ","));
     state = pass_days(state, 80);
     return state.iter().sum();
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> u64 {
     let mut state = get_state(parse_number_list(input, ","));
     state = pass_days(state, 256);
     return state.iter().sum();

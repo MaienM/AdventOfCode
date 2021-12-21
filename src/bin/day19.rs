@@ -8,7 +8,7 @@ use aoc::runner::*;
 const MATCH_THRESHOLD: usize = 12;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct Matrix((i32, i32, i32), (i32, i32, i32), (i32, i32, i32));
+struct Matrix((i16, i16, i16), (i16, i16, i16), (i16, i16, i16));
 impl Mul<&Matrix> for &Matrix {
     type Output = Matrix;
 
@@ -62,9 +62,9 @@ const ROTATION_MATRICES: [Matrix; 24] = [
 ];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct PointDelta(i32, i32, i32);
+struct PointDelta(i16, i16, i16);
 impl PointDelta {
-    fn size(&self) -> i32 {
+    fn size(&self) -> i16 {
         return self.0.abs() + self.1.abs() + self.2.abs();
     }
 
@@ -120,7 +120,7 @@ impl Ord for PointDelta {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-struct Point(i32, i32, i32);
+struct Point(i16, i16, i16);
 impl Point {
     fn apply(&self, matrix: &Matrix, offset: &PointDelta) -> Self {
         return &(self * matrix) + offset;
@@ -353,7 +353,7 @@ pub fn part1(input: String) -> usize {
     return beacons.len();
 }
 
-pub fn part2(input: String) -> i32 {
+pub fn part2(input: String) -> i16 {
     let scanners = parse_input(input);
     let resolved = resolve(scanners);
     let start = Point(0, 0, 0);

@@ -110,14 +110,11 @@ fn idx_to_chr(idx: usize) -> char {
 
 // The strings we get are not sorted (e.g. we could get 7 as any of [acf, afc, cfa, caf, fac, fca]).
 // This method converts a string into a number that is based only on the contained characters, not their order.
-fn str_to_id(string: &str) -> i32 {
-    return string
-        .chars()
-        .map(|c| 2_i32.pow(chr_to_idx(c) as u32))
-        .sum();
+fn str_to_id(string: &str) -> u32 {
+    return string.chars().map(|c| 2u32.pow(chr_to_idx(c) as u32)).sum();
 }
 
-fn get_signal_char_used_x_times(signal_chars_uses: [i32; 7], count: i32) -> char {
+fn get_signal_char_used_x_times(signal_chars_uses: [u32; 7], count: u32) -> char {
     return signal_chars_uses
         .into_iter()
         .enumerate()
@@ -192,18 +189,18 @@ fn find_signal_mapping<'a>(signals: Signals) -> OrderedSignals {
     ];
 }
 
-fn calculate_line_number(line: &Line) -> i32 {
-    let mapping_as_ids: [i32; 10] = find_signal_mapping(line.0)
+fn calculate_line_number(line: &Line) -> u32 {
+    let mapping_as_ids: [u32; 10] = find_signal_mapping(line.0)
         .into_iter()
         .map(str_to_id)
-        .collect::<Vec<i32>>()
+        .collect::<Vec<u32>>()
         .try_into()
         .unwrap();
-    let digits_as_ids: [i32; 4] = line
+    let digits_as_ids: [u32; 4] = line
         .1
         .into_iter()
         .map(str_to_id)
-        .collect::<Vec<i32>>()
+        .collect::<Vec<u32>>()
         .try_into()
         .unwrap();
     return [
@@ -225,22 +222,22 @@ fn calculate_line_number(line: &Line) -> i32 {
             .unwrap(),
     ]
     .iter()
-    .sum::<usize>() as i32;
+    .sum::<usize>() as u32;
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> u32 {
     let lines = parse_input(&input);
     return lines
         .iter()
         .flat_map(|line| line.1)
         .map(str::len)
         .filter(|len| [2, 3, 4, 7].contains(len))
-        .count() as i64;
+        .count() as u32;
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> u32 {
     let lines = parse_input(&input);
-    return lines.iter().map(calculate_line_number).sum::<i32>() as i64;
+    return lines.iter().map(calculate_line_number).sum::<u32>() as u32;
 }
 
 fn main() {

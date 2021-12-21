@@ -60,8 +60,8 @@ fn count_paths_to_end<'a>(
     mut path: Vec<&'a str>,
     node: &'a str,
     did_small_double_visit: bool,
-) -> (Vec<&'a str>, i64) {
-    let mut results = 0_i64;
+) -> (Vec<&'a str>, u32) {
+    let mut results = 0u32;
     for connected_node in graph.get_connections(node) {
         if *connected_node == NAME_START {
             continue;
@@ -98,13 +98,13 @@ fn parse_input<'a>(input: &'a String) -> Graph<'a> {
     return graph;
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> u32 {
     let graph = parse_input(&input);
     let path: Vec<&str> = Vec::new();
     return count_paths_to_end(&graph, path, NAME_START, true).1;
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> u32 {
     let graph = parse_input(&input);
     let path: Vec<&str> = Vec::new();
     return count_paths_to_end(&graph, path, NAME_START, false).1;

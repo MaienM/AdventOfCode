@@ -87,7 +87,7 @@ pub fn part2(input: String) -> u64 {
     let mut wins_total = [0, 0];
     let mut round = 0_usize;
     let mut player = 0_usize;
-    let mut universes = 1_u64;
+    let mut universes = 1u64;
 
     while universes > 0 {
         universes *= 27;

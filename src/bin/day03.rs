@@ -19,8 +19,8 @@ fn parse_input(input: String) -> Grid {
     return Grid::new(grid).unwrap();
 }
 
-fn get_most_common_per_position(grid: &Grid) -> Vec<i32> {
-    let mut count_per_pos: Vec<[i32; 2]> = (0..grid.width).map(|_| [0, 0]).collect();
+fn get_most_common_per_position(grid: &Grid) -> Vec<u32> {
+    let mut count_per_pos: Vec<[u32; 2]> = (0..grid.width).map(|_| [0, 0]).collect();
     for (point, bit) in grid.by_cell() {
         count_per_pos[point.x][bit.to_owned() as usize] += 1;
     }
@@ -36,7 +36,7 @@ fn get_most_common_per_position(grid: &Grid) -> Vec<i32> {
         .collect();
 }
 
-fn bit_list_to_decimal(bits: &Vec<i32>) -> i32 {
+fn bit_list_to_decimal(bits: &Vec<u32>) -> u32 {
     let mut result = 0;
     for bit in bits {
         result = result << 1;
@@ -51,7 +51,7 @@ pub fn part1(input: String) -> i64 {
 
     let gamma = bit_list_to_decimal(&most_common_per_pos);
     // Epsilon is really just gamma with all bits flipped, so just calculate it that way.
-    let mask = (2 as i32).pow(most_common_per_pos.len() as u32) - 1;
+    let mask = (2 as u32).pow(most_common_per_pos.len() as u32) - 1;
     let epsilon = gamma ^ mask;
 
     return (gamma * epsilon).into();

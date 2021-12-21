@@ -43,15 +43,15 @@ fn expand_basin(grid: &Grid, basin: &mut Basin, point: Point) {
     }
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> u32 {
     let grid = parse_input(input);
     return get_low_points(&grid)
         .into_iter()
-        .map(|point| (grid.getp(point).unwrap() + 1) as i64)
+        .map(|point| (grid.getp(point).unwrap() + 1) as u32)
         .sum();
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> u32 {
     let grid = parse_input(input);
     let mut basin_sizes = get_low_points(&grid)
         .into_iter()
@@ -63,7 +63,7 @@ pub fn part2(input: String) -> i64 {
         .collect::<Vec<usize>>();
     basin_sizes.sort_unstable();
     return (basin_sizes.pop().unwrap() * basin_sizes.pop().unwrap() * basin_sizes.pop().unwrap())
-        as i64;
+        as u32;
 }
 
 fn main() {

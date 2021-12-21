@@ -7,7 +7,7 @@ enum Direction {
     Up,
 }
 
-type Instruction = (Direction, i32);
+type Instruction = (Direction, u32);
 
 fn parse_input(input: String) -> Vec<Instruction> {
     let lines = input.trim().split("\n").map(str::trim);
@@ -26,7 +26,7 @@ fn parse_input(input: String) -> Vec<Instruction> {
             let distance = parts
                 .next()
                 .unwrap_or_else(|| panic!("Unable to get distance from line {}.", line))
-                .parse::<i32>()
+                .parse::<u32>()
                 .unwrap_or_else(|_| panic!("Unable to parse distance from line {}.", line));
             return (direction, distance);
         })
