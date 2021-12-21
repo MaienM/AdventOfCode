@@ -73,7 +73,7 @@ pub fn part2(input: String) -> i32 {
      * The logic used in part 1 gives us the bounds for yvel for upwards trajectories (-target.y.0 - 1). For downward trajectories we are essentially only considering the last step, giving us a bound of (target.y.0).
      */
     let mut count = 0;
-    for xvel in 0..(target.x.1 + 1) {
+    for xvel in 0..=(target.x.1) {
         for yvel in (target.y.0)..(-target.y.0) {
             if ends_up_at_target(xvel, yvel, &target) {
                 count += 1;

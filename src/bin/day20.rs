@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::ops::Range;
+use std::ops::RangeInclusive;
 
 use aoc::grid::Grid;
 use aoc::runner::*;
@@ -64,12 +64,12 @@ impl Bounds {
         };
     }
 
-    fn xrange(&self) -> Range<usize> {
-        return (self.x.0)..(self.x.1 + 1);
+    fn xrange(&self) -> RangeInclusive<usize> {
+        return (self.x.0)..=(self.x.1);
     }
 
-    fn yrange(&self) -> Range<usize> {
-        return (self.y.0)..(self.y.1 + 1);
+    fn yrange(&self) -> RangeInclusive<usize> {
+        return (self.y.0)..=(self.y.1);
     }
 }
 
@@ -84,8 +84,8 @@ impl<const SIZE: usize> Debug for State<SIZE> {
         if self.outside_bounds {
             write!(f, "Darkness all around me.")?;
         }
-        for y in (self.bounds.y.0)..(self.bounds.y.1 + 1) {
-            for x in (self.bounds.x.0)..(self.bounds.x.1 + 1) {
+        for y in (self.bounds.y.0)..=(self.bounds.y.1) {
+            for x in (self.bounds.x.0)..=(self.bounds.x.1) {
                 if self.points.get(x, y) {
                     write!(f, "█")?;
                 } else {

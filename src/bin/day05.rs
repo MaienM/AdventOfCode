@@ -1,4 +1,5 @@
-use std::{collections::HashSet, ops::Range};
+use std::collections::HashSet;
+use std::ops::RangeInclusive;
 
 use aoc::grid::Point as BasePoint;
 use aoc::runner::*;
@@ -35,11 +36,11 @@ fn parse_input(input: String) -> Vec<LineDef> {
         .collect();
 }
 
-fn range(a: i32, b: i32) -> Range<i32> {
+fn range(a: i32, b: i32) -> RangeInclusive<i32> {
     if a < b {
-        return a..b + 1;
+        return a..=b;
     } else {
-        return b..a + 1;
+        return b..=a;
     }
 }
 
