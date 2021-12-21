@@ -1,38 +1,37 @@
 use aoc::runner::*;
 
-fn parse_input(input: String) -> [u128; 2] {
+fn parse_input(input: String) -> [u64; 2] {
     let mut nums = input
         .trim()
         .splitn(2, "\n")
-        .map(|line| line.chars().last().unwrap().to_digit(10).unwrap() as u128);
+        .map(|line| line.chars().last().unwrap().to_digit(10).unwrap() as u64);
     return [nums.next().unwrap(), nums.next().unwrap()];
 }
 
 trait DiceRoller {
-    fn roll(&self, times: usize) -> u128;
+    fn roll(&self, times: usize) -> u64;
 }
 
-struct DeterministicDiceRoller<T: Iterator<Item = u128>> {
+struct DeterministicDiceRoller<T: Iterator<Item = u64>> {
     iter: T,
 }
-impl<T: Iterator<Item = u128>> DeterministicDiceRoller<T> {
-    fn roll(&mut self, times: usize) -> u128 {
+impl<T: Iterator<Item = u64>> DeterministicDiceRoller<T> {
+    fn roll(&mut self, times: usize) -> u64 {
         let iter = &mut self.iter;
         return iter.take(times).sum();
     }
 }
 
 const DIRAC_MAX_ROUNDS: usize = 12;
-const DIRAC_DICE_WEIGHT: [(u128, u128); 7] =
-    [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)];
+const DIRAC_DICE_WEIGHT: [(u64, u64); 7] = [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)];
 // Tuple of wins / total.
-type DiracWinrateByRound = [(u128, u128); DIRAC_MAX_ROUNDS];
+type DiracWinrateByRound = [(u64, u64); DIRAC_MAX_ROUNDS];
 
 fn _dirac_rounds_to_victory(
-    pos: u128,
-    score: u128,
+    pos: u64,
+    score: u64,
     rounds: usize,
-    universes: u128,
+    universes: u64,
     result: &mut DiracWinrateByRound,
 ) {
     for (roll, roll_universes) in DIRAC_DICE_WEIGHT {
@@ -50,18 +49,18 @@ fn _dirac_rounds_to_victory(
     }
 }
 
-fn dirac_rounds_to_victory(pos: u128) -> DiracWinrateByRound {
+fn dirac_rounds_to_victory(pos: u64) -> DiracWinrateByRound {
     let mut result = [(0, 0); DIRAC_MAX_ROUNDS];
     _dirac_rounds_to_victory(pos, 0, 0, 1, &mut result);
     return result;
 }
 
-pub fn part1(input: String) -> u128 {
+pub fn part1(input: String) -> u64 {
     let mut pos = parse_input(input);
     let mut score = [0, 0];
     let mut rolls = 0;
     let mut roller = DeterministicDiceRoller {
-        iter: (1..=100u128).cycle(),
+        iter: (1..=100u64).cycle(),
     };
 
     for p in (0..=1).cycle() {
@@ -77,7 +76,7 @@ pub fn part1(input: String) -> u128 {
     panic!("Should not happen");
 }
 
-pub fn part2(input: String) -> u128 {
+pub fn part2(input: String) -> u64 {
     let pos = parse_input(input);
     let winrate_by_round: [DiracWinrateByRound; 2] = pos
         .into_iter()
@@ -88,12 +87,12 @@ pub fn part2(input: String) -> u128 {
     let mut wins_total = [0, 0];
     let mut round = 0_usize;
     let mut player = 0_usize;
-    let mut universes = 1_u128;
+    let mut universes = 1_u64;
 
     while universes > 0 {
         universes *= 27;
         let winrate = winrate_by_round[player][round];
-        let wins = universes * winrate.0 / winrate.1;
+        let wins = universes / winrate.1 * winrate.0;
         wins_total[player] += wins;
         universes -= wins;
 
