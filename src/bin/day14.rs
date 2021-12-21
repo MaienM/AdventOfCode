@@ -2,9 +2,7 @@ use std::collections::HashMap;
 
 use aoc::counter::Counter;
 use aoc::runner::*;
-
-#[macro_use]
-extern crate derive_new;
+use derive_new::new;
 
 type Pair = (char, char);
 type Rules = HashMap<Pair, char>;
@@ -75,7 +73,7 @@ fn get_polymer_char_counts(polymer: &Polymer) -> HashMap<char, i64> {
     return char_counts;
 }
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let (mut polymer, rules) = parse_input(input);
     for _ in 0..10 {
         polymer = do_step(polymer, &rules);
@@ -84,7 +82,7 @@ fn part1(input: String) -> i64 {
     return counts.values().max().unwrap() - counts.values().min().unwrap();
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let (mut polymer, rules) = parse_input(input);
     for _ in 0..40 {
         polymer = do_step(polymer, &rules);

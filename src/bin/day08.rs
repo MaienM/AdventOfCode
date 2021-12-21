@@ -228,7 +228,7 @@ fn calculate_line_number(line: &Line) -> i32 {
     .sum::<usize>() as i32;
 }
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let lines = parse_input(&input);
     return lines
         .iter()
@@ -238,7 +238,7 @@ fn part1(input: String) -> i64 {
         .count() as i64;
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let lines = parse_input(&input);
     return lines.iter().map(calculate_line_number).sum::<i32>() as i64;
 }

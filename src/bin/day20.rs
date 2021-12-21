@@ -2,11 +2,9 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 use std::ops::Range;
 
-#[macro_use]
-extern crate derive_new;
-
 use aoc::grid::Grid;
 use aoc::runner::*;
+use derive_new::new;
 
 type Algorithm = [bool; 512];
 
@@ -158,7 +156,7 @@ fn do_step(algorithm: &Algorithm, mut state: State) -> State {
     return State::new(new_lit_points, new_bounds, new_outside_bounds);
 }
 
-fn part1(input: String) -> usize {
+pub fn part1(input: String) -> usize {
     let (algorithm, mut state) = parse_input(input);
     for _ in 0..2 {
         state = do_step(&algorithm, state);
@@ -166,7 +164,7 @@ fn part1(input: String) -> usize {
     return state.points.len();
 }
 
-fn part2(input: String) -> usize {
+pub fn part2(input: String) -> usize {
     let (algorithm, mut state) = parse_input(input);
     for _ in 0..50 {
         state = do_step(&algorithm, state);

@@ -19,7 +19,7 @@ fn get_matching_closing(chr: char) -> Option<char> {
     };
 }
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let lines = parse_input(input);
     let mut score = 0_i64;
     for line in lines {
@@ -48,7 +48,7 @@ fn part1(input: String) -> i64 {
     return score;
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let lines = parse_input(input);
     let mut scores: Vec<i64> = Vec::new();
     'lines: for line in lines {

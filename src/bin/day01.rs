@@ -1,6 +1,6 @@
 use aoc::{parse_number_list, runner::*};
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let numbers = parse_number_list(input, "\n");
     let mut count = 0;
     let mut last_number = numbers[0];
@@ -13,7 +13,7 @@ fn part1(input: String) -> i64 {
     return count;
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let numbers = parse_number_list(input, "\n");
     let mut count = 0;
     let mut last_numbers = [numbers[0], numbers[1], numbers[2]];

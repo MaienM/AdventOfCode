@@ -98,13 +98,13 @@ fn parse_input<'a>(input: &'a String) -> Graph<'a> {
     return graph;
 }
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let graph = parse_input(&input);
     let path: Vec<&str> = Vec::new();
     return count_paths_to_end(&graph, path, NAME_START, true).1;
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let graph = parse_input(&input);
     let path: Vec<&str> = Vec::new();
     return count_paths_to_end(&graph, path, NAME_START, false).1;

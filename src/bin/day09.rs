@@ -43,7 +43,7 @@ fn expand_basin(grid: &Grid, basin: &mut Basin, point: Point) {
     }
 }
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let grid = parse_input(input);
     return get_low_points(&grid)
         .into_iter()
@@ -51,7 +51,7 @@ fn part1(input: String) -> i64 {
         .sum();
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let grid = parse_input(input);
     let mut basin_sizes = get_low_points(&grid)
         .into_iter()

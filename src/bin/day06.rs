@@ -32,13 +32,13 @@ fn pass_days(state: State, days: i64) -> State {
     return state;
 }
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let mut state = get_state(parse_number_list(input, ","));
     state = pass_days(state, 80);
     return state.iter().sum();
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let mut state = get_state(parse_number_list(input, ","));
     state = pass_days(state, 256);
     return state.iter().sum();

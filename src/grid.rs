@@ -1,6 +1,8 @@
 use std::slice::Iter;
 use std::{fmt::Debug, vec::IntoIter};
 
+use derive_new::new;
+
 #[derive(Clone, Copy, Eq, Hash, PartialEq, new)]
 pub struct Point<T = usize> {
     pub x: T,

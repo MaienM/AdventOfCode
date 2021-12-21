@@ -1,7 +1,5 @@
 use aoc::runner::*;
-
-#[macro_use]
-extern crate derive_new;
+use derive_new::new;
 
 #[derive(Debug, PartialEq, new)]
 struct TargetArea {
@@ -49,7 +47,7 @@ fn ends_up_at_target(mut xvel: i32, mut yvel: i32, target: &TargetArea) -> bool 
     return false;
 }
 
-fn part1(input: String) -> i32 {
+pub fn part1(input: String) -> i32 {
     let target = parse_input(input);
     /*
      * X and Y are completely independent, so we can just ignore X for this part.
@@ -67,7 +65,7 @@ fn part1(input: String) -> i32 {
     return y;
 }
 
-fn part2(input: String) -> i32 {
+pub fn part2(input: String) -> i32 {
     let target = parse_input(input);
     /*
      * Despite having instructions on how to handle negative X velocities these will never get us to our goal, so we need not consider them. The highest x velocity that could be suitable is one that would get us to the right edge in one step, which is target.x.1.
