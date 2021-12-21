@@ -3,6 +3,8 @@ use std::fs;
 use std::time::Duration;
 use std::time::Instant;
 
+use ansi_term::unstyle;
+use ansi_term::ANSIStrings;
 use ansi_term::Colour::*;
 
 type Runnable<T> = fn(String) -> T;
@@ -31,7 +33,12 @@ const THRESHOLDS_DEFAULT: DurationThresholds = DurationThresholds {
     acceptable: Duration::from_secs(1),
 };
 
-pub fn print_runnable_run(name: String, run: RunnableRun, thresholds: &DurationThresholds) {
+pub fn print_runnable_run(
+    name: String,
+    run: RunnableRun,
+    thresholds: &DurationThresholds,
+    show_result: bool,
+) {
     let name = Purple.paint(name);
     match run {
         Err(err) => {
@@ -46,6 +53,16 @@ pub fn print_runnable_run(name: String, run: RunnableRun, thresholds: &DurationT
                 Red
             };
             let duration_formatted = duration_colour.paint(format!("{:?}", run.duration));
+
+            if !show_result {
+                let name = if run.solution.map(|s| s == run.result).unwrap_or(true) {
+                    name
+                } else {
+                    Red.paint(unstyle(&ANSIStrings(&[name])))
+                };
+                println!("> {} [{}]", name, duration_formatted);
+                return;
+            }
 
             let result_formatted = match run.solution {
                 Some(expected) => {
@@ -159,8 +176,8 @@ pub fn run<T1: ToString, T2: ToString>(part1: Runnable<T1>, part2: Runnable<T2>)
             Cyan.paint(filename)
         );
         let (run1, run2) = run_day(filename, part1, part2).unwrap();
-        print_runnable_run("Part 1".to_string(), run1, &THRESHOLDS_DEFAULT);
-        print_runnable_run("Part 2".to_string(), run2, &THRESHOLDS_DEFAULT);
+        print_runnable_run("Part 1".to_string(), run1, &THRESHOLDS_DEFAULT, true);
+        print_runnable_run("Part 2".to_string(), run2, &THRESHOLDS_DEFAULT, true);
     }
 }
 

@@ -51,7 +51,7 @@ fn main() {
     for (name, result) in runs {
         match result {
             Ok(run) => {
-                print_runnable_run(name, run, &thresholds);
+                print_runnable_run(name, run, &thresholds, false);
             }
             Err(err) => {
                 println!("> {} failed: {}", Purple.paint(name), Red.paint(err));
