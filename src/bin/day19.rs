@@ -157,27 +157,22 @@ struct ScannerInput(u8, Vec<Point>);
 struct ScannerIncomplete {
     pub num: u8,
     pub beacons: Vec<Point>,
-    pub deltas: Vec<(PointDelta, Point, Point)>,
+    pub deltas: Vec<(PointDelta, Point)>,
 }
 impl ScannerIncomplete {
     fn new(scanner: ScannerInput) -> Self {
         let beacons = scanner.1;
-        // Make a preselection of deltas, largest first since larger deltas are more likely to involve points on the edge of the scanner area, which are in turn more likely to be found inside another scanner area.
-        let mut deltas = beacons
+        // Get the smallest delta for each point. For another scanner to have overlap it must have a bunch of our points that will be close together, which means it must also have this smallest delta. It is possible that the other scanner has additional points that are closer to some of ours, but it is quite unlikely this is true for all of our points.
+        let deltas = beacons
             .iter()
             .flat_map(|l| {
                 beacons
                     .iter()
                     .filter(|r| r != &l)
-                    .map(|r| (l - r, *l, *r))
-                    .collect::<Vec<(PointDelta, Point, Point)>>()
+                    .map(|r| (l - r, *l))
+                    .min_by_key(|(d, ..)| d.size())
             })
-            .collect::<Vec<(PointDelta, Point, Point)>>();
-        deltas.sort_unstable_by_key(|d| d.0);
-        deltas.resize(
-            beacons.len() * 2,
-            (PointDelta(0, 0, 0), Point(0, 0, 0), Point(0, 0, 0)),
-        );
+            .collect::<Vec<(PointDelta, Point)>>();
         return Self {
             num: scanner.0,
             deltas,
@@ -192,7 +187,7 @@ struct Scanner {
     pub num: u8,
     pub offset: PointDelta,
     pub beacons: Vec<Point>,
-    pub deltas: Vec<(PointDelta, Point, Point)>,
+    pub deltas: Vec<(PointDelta, Point)>,
 }
 impl Scanner {
     fn new(scanner: &ScannerIncomplete, matrix: Matrix, offset: PointDelta) -> Self {
@@ -205,10 +200,9 @@ impl Scanner {
         let deltas = scanner
             .deltas
             .iter()
-            .map(|(_, l, r)| {
+            .map(|(d, l)| {
                 let l = l.apply(&matrix, &offset);
-                let r = r.apply(&matrix, &offset);
-                return (&l - &r, l, r);
+                return (*d * &matrix, l);
             })
             .collect();
         return Self {
@@ -260,12 +254,12 @@ fn get_overlapping_deltas(
     return candidate
         .deltas
         .iter()
-        .flat_map(|(cd, cp, _)| {
+        .flat_map(|(cd, cp)| {
             existing
                 .deltas
                 .iter()
-                .find(|(ed, _, _)| cd.matches(ed, matrix))
-                .map(|(_, ep, _)| (*cd, *cp, *ep))
+                .find(|(ed, _)| cd.matches(ed, matrix))
+                .map(|(_, ep)| (*cd, *cp, *ep))
         })
         .collect();
 }
