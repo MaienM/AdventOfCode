@@ -23,7 +23,7 @@ fn get_cost_exponential(numbers: &Vec<i32>, target: i32) -> i32 {
         .into();
 }
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let positions = parse_number_list(input, ",");
     let target = mean(&positions);
     return positions
@@ -33,7 +33,7 @@ fn part1(input: String) -> i64 {
         .into();
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let positions = parse_number_list(input, ",");
 
     // This function assumes a distribution where there is a steady increase in cost when moving away from the optimum result.

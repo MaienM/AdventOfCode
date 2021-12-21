@@ -45,7 +45,7 @@ fn bit_list_to_decimal(bits: &Vec<i32>) -> i32 {
     return result;
 }
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let grid = parse_input(input);
     let most_common_per_pos = get_most_common_per_position(&grid);
 
@@ -57,7 +57,7 @@ fn part1(input: String) -> i64 {
     return (gamma * epsilon).into();
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let grid = parse_input(input);
 
     let mut oxygen_candidates = grid.clone();

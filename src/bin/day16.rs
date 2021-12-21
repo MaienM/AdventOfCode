@@ -1,9 +1,7 @@
 use std::collections::VecDeque;
 
 use aoc::runner::*;
-
-#[macro_use]
-extern crate derive_new;
+use derive_new::new;
 
 type Bits = VecDeque<u8>;
 
@@ -132,7 +130,7 @@ fn resolve(packet: Packet) -> u128 {
     }
 }
 
-fn part1(input: String) -> u128 {
+pub fn part1(input: String) -> u128 {
     let mut bits = parse_input(input);
     let mut remaining = vec![parse_packet(&mut bits)];
     let mut result = 0u128;
@@ -151,7 +149,7 @@ fn part1(input: String) -> u128 {
     return result;
 }
 
-fn part2(input: String) -> u128 {
+pub fn part2(input: String) -> u128 {
     let mut bits = parse_input(input);
     let packet = parse_packet(&mut bits);
     return resolve(packet);

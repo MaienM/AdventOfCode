@@ -352,14 +352,14 @@ fn get_beacons(scanners: &Vec<Scanner>) -> HashSet<Point> {
     return beacons;
 }
 
-fn part1(input: String) -> usize {
+pub fn part1(input: String) -> usize {
     let scanners = parse_input(input);
     let resolved = resolve(scanners);
     let beacons = get_beacons(&resolved);
     return beacons.len();
 }
 
-fn part2(input: String) -> i32 {
+pub fn part2(input: String) -> i32 {
     let scanners = parse_input(input);
     let resolved = resolve(scanners);
     let start = Point(0, 0, 0);

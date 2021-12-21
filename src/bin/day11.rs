@@ -55,7 +55,7 @@ fn do_round(grid: &Grid) -> (Grid, i64) {
     return (new_grid, flashed.len() as i64);
 }
 
-fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i64 {
     let mut grid = parse_input(input);
     let mut flashes = 0_i64;
     for _ in 0..100 {
@@ -66,7 +66,7 @@ fn part1(input: String) -> i64 {
     return flashes;
 }
 
-fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i64 {
     let mut grid = parse_input(input);
     for round in 1.. {
         let (new_grid, new_flashes) = do_round(&grid);

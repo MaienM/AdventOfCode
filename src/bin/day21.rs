@@ -56,7 +56,7 @@ fn dirac_rounds_to_victory(pos: u128) -> DiracWinrateByRound {
     return result;
 }
 
-fn part1(input: String) -> u128 {
+pub fn part1(input: String) -> u128 {
     let mut pos = parse_input(input);
     let mut score = [0, 0];
     let mut rolls = 0;
@@ -77,7 +77,7 @@ fn part1(input: String) -> u128 {
     panic!("Should not happen");
 }
 
-fn part2(input: String) -> u128 {
+pub fn part2(input: String) -> u128 {
     let pos = parse_input(input);
     let winrate_by_round: [DiracWinrateByRound; 2] = pos
         .into_iter()

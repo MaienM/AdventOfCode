@@ -139,14 +139,14 @@ fn grow_grid(grid: InputGrid) -> InputGrid {
     return grid;
 }
 
-fn part1(input: String) -> i16 {
+pub fn part1(input: String) -> i16 {
     let grid = parse_input(input);
     let starting_point = Point::new(0, 0);
     let ending_point = Point::new(grid.width - 1, grid.height - 1);
     return calculate_min_path_cost(grid, starting_point, ending_point);
 }
 
-fn part2(input: String) -> i16 {
+pub fn part2(input: String) -> i16 {
     let grid = parse_input(input);
     let grid = grow_grid(grid);
     let starting_point = Point::new(0, 0);

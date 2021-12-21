@@ -134,7 +134,7 @@ fn get_magnitude(entries: &Entries) -> u32 {
         .sum();
 }
 
-fn part1(input: String) -> u32 {
+pub fn part1(input: String) -> u32 {
     let mut lines = parse_input(input);
     let mut result = lines.remove(0);
     for line in lines {
@@ -143,7 +143,7 @@ fn part1(input: String) -> u32 {
     return get_magnitude(&result);
 }
 
-fn part2(input: String) -> u32 {
+pub fn part2(input: String) -> u32 {
     let lines = parse_input(input);
     let mut highest = 0;
     for line1 in &lines {
