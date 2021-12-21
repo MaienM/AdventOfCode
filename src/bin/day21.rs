@@ -22,28 +22,38 @@ impl<T: Iterator<Item = u128>> DeterministicDiceRoller<T> {
     }
 }
 
+const DIRAC_MAX_ROUNDS: usize = 12;
 const DIRAC_DICE_WEIGHT: [(u128, u128); 7] =
     [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)];
+// Tuple of wins / total.
+type DiracWinrateByRound = [(u128, u128); DIRAC_MAX_ROUNDS];
 
-fn dirac_do_round(
-    player: usize,
-    wins: &mut [u128; 2],
-    pos: [u128; 2],
-    scores: [u128; 2],
+fn _dirac_rounds_to_victory(
+    pos: u128,
+    score: u128,
+    rounds: usize,
     universes: u128,
+    result: &mut DiracWinrateByRound,
 ) {
     for (roll, roll_universes) in DIRAC_DICE_WEIGHT {
-        let mut pos = pos.clone();
-        pos[player] = (pos[player] + roll - 1) % 10 + 1;
-        let mut scores = scores.clone();
-        scores[player] += pos[player];
-        let universes = roll_universes * universes;
-        if scores[player] >= 21 {
-            wins[player] += universes;
+        let pos = (pos + roll - 1) % 10 + 1;
+        let score = score + pos;
+        let universes = universes * roll_universes;
+        if score >= 21 {
+            let old = result[rounds];
+            result[rounds] = (old.0 + universes, old.1 + universes);
         } else {
-            dirac_do_round(1 - player, wins, pos, scores, universes);
+            let old = result[rounds];
+            result[rounds] = (old.0, old.1 + universes);
+            _dirac_rounds_to_victory(pos, score, rounds + 1, universes, result);
         }
     }
+}
+
+fn dirac_rounds_to_victory(pos: u128) -> DiracWinrateByRound {
+    let mut result = [(0, 0); DIRAC_MAX_ROUNDS];
+    _dirac_rounds_to_victory(pos, 0, 0, 1, &mut result);
+    return result;
 }
 
 fn part1(input: String) -> u128 {
@@ -69,9 +79,28 @@ fn part1(input: String) -> u128 {
 
 fn part2(input: String) -> u128 {
     let pos = parse_input(input);
-    let mut wins = [0, 0];
-    dirac_do_round(0, &mut wins, pos, [0, 0], 1);
-    return wins.into_iter().max().unwrap();
+    let winrate_by_round: [DiracWinrateByRound; 2] = pos
+        .into_iter()
+        .map(dirac_rounds_to_victory)
+        .collect::<Vec<DiracWinrateByRound>>()
+        .try_into()
+        .unwrap();
+    let mut wins_total = [0, 0];
+    let mut round = 0_usize;
+    let mut player = 0_usize;
+    let mut universes = 1_u128;
+
+    while universes > 0 {
+        universes *= 27;
+        let winrate = winrate_by_round[player][round];
+        let wins = universes * winrate.0 / winrate.1;
+        wins_total[player] += wins;
+        universes -= wins;
+
+        round += player;
+        player = 1 - player;
+    }
+    return wins_total.into_iter().max().unwrap();
 }
 
 fn main() {
