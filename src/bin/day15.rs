@@ -6,10 +6,10 @@ use aoc::runner::*;
 #[derive(Debug, Eq, PartialEq)]
 struct Cell {
     pub point: Point,
-    pub min_path_cost: i16,
+    pub min_path_cost: u16,
 }
 impl Cell {
-    pub fn new(point: Point, min_path_cost: i16) -> Self {
+    pub fn new(point: Point, min_path_cost: u16) -> Self {
         return Self {
             point,
             min_path_cost,
@@ -45,7 +45,7 @@ impl Ord for Cell {
     }
 }
 
-type InputGrid = BaseGrid<i8>;
+type InputGrid = BaseGrid<u8>;
 
 fn parse_input(input: String) -> InputGrid {
     return input
@@ -55,8 +55,8 @@ fn parse_input(input: String) -> InputGrid {
             return line
                 .trim()
                 .chars()
-                .map(|c| c.to_digit(10).unwrap() as i8)
-                .collect::<Vec<i8>>();
+                .map(|c| c.to_digit(10).unwrap() as u8)
+                .collect::<Vec<u8>>();
         })
         .collect();
 }
@@ -65,8 +65,8 @@ fn calculate_min_path_cost(
     cost_grid: InputGrid,
     starting_point: Point,
     ending_point: Point,
-) -> i16 {
-    let mut min_cost_grid: BaseGrid<Option<i16>> =
+) -> u16 {
+    let mut min_cost_grid: BaseGrid<Option<u16>> =
         cost_grid.by_cell().map(|(p, _)| (p, None)).collect();
     let mut heap: BinaryHeap<Cell> = BinaryHeap::new();
     min_cost_grid.setp(starting_point, Some(0));
@@ -74,25 +74,21 @@ fn calculate_min_path_cost(
 
     while !heap.is_empty() {
         let cell = heap.pop().unwrap();
-        let next = cost_grid
+        let neighbours: Vec<(Point, &u8)> = cost_grid
             .neighbours(cell.point, false)
             .into_iter()
             .filter(|p| min_cost_grid.getp(*p).unwrap().is_none())
-            .map(|p| (p, cost_grid.getp(p)))
-            .min_by_key(|(_, c)| *c);
-        if next.is_none() {
-            continue;
-        }
+            .map(|p| (p, cost_grid.getp(p).unwrap()))
+            .collect();
 
-        let (next_point, next_cost) = next.unwrap();
-        let cost = cell.min_path_cost + *next_cost.unwrap() as i16;
-        if next_point == ending_point {
-            return cost;
+        for (next_point, next_cost) in neighbours {
+            let cost = cell.min_path_cost + *next_cost as u16;
+            if next_point == ending_point {
+                return cost;
+            }
+            min_cost_grid.setp(next_point, Some(cost));
+            heap.push(Cell::new(next_point, cost));
         }
-
-        min_cost_grid.setp(next_point, Some(cost));
-        heap.push(cell);
-        heap.push(Cell::new(next_point, cost));
     }
 
     panic!("Should never happen.");
@@ -109,44 +105,44 @@ fn grow_grid(grid: InputGrid) -> InputGrid {
                 .chain(row.iter().map(|v| (v + 1) % 9 + 1))
                 .chain(row.iter().map(|v| (v + 2) % 9 + 1))
                 .chain(row.iter().map(|v| (v + 3) % 9 + 1))
-                .collect::<Vec<i8>>();
+                .collect::<Vec<u8>>();
         })
         .collect();
     let grid: InputGrid = grid
         .iter()
-        .map(|row| row.iter().map(|v| *v).collect::<Vec<i8>>())
+        .map(|row| row.iter().map(|v| *v).collect::<Vec<u8>>())
         .chain(
             grid.iter()
-                .map(|row| row.iter().map(|v| v % 9 + 1).collect::<Vec<i8>>())
-                .collect::<Vec<Vec<i8>>>(),
+                .map(|row| row.iter().map(|v| v % 9 + 1).collect::<Vec<u8>>())
+                .collect::<Vec<Vec<u8>>>(),
         )
         .chain(
             grid.iter()
-                .map(|row| row.iter().map(|v| (v + 1) % 9 + 1).collect::<Vec<i8>>())
-                .collect::<Vec<Vec<i8>>>(),
+                .map(|row| row.iter().map(|v| (v + 1) % 9 + 1).collect::<Vec<u8>>())
+                .collect::<Vec<Vec<u8>>>(),
         )
         .chain(
             grid.iter()
-                .map(|row| row.iter().map(|v| (v + 2) % 9 + 1).collect::<Vec<i8>>())
-                .collect::<Vec<Vec<i8>>>(),
+                .map(|row| row.iter().map(|v| (v + 2) % 9 + 1).collect::<Vec<u8>>())
+                .collect::<Vec<Vec<u8>>>(),
         )
         .chain(
             grid.iter()
-                .map(|row| row.iter().map(|v| (v + 3) % 9 + 1).collect::<Vec<i8>>())
-                .collect::<Vec<Vec<i8>>>(),
+                .map(|row| row.iter().map(|v| (v + 3) % 9 + 1).collect::<Vec<u8>>())
+                .collect::<Vec<Vec<u8>>>(),
         )
         .collect();
     return grid;
 }
 
-pub fn part1(input: String) -> i16 {
+pub fn part1(input: String) -> u16 {
     let grid = parse_input(input);
     let starting_point = Point::new(0, 0);
     let ending_point = Point::new(grid.width - 1, grid.height - 1);
     return calculate_min_path_cost(grid, starting_point, ending_point);
 }
 
-pub fn part2(input: String) -> i16 {
+pub fn part2(input: String) -> u16 {
     let grid = parse_input(input);
     let grid = grow_grid(grid);
     let starting_point = Point::new(0, 0);
@@ -179,7 +175,7 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(EXAMPLE_INPUT.to_string());
-        let expected: BaseGrid<i8> = vec![
+        let expected: BaseGrid<u8> = vec![
             vec![1, 1, 6, 3, 7, 5, 1, 7, 4, 2],
             vec![1, 3, 8, 1, 3, 7, 3, 6, 7, 2],
             vec![2, 1, 3, 6, 5, 1, 1, 3, 2, 8],
