@@ -4,17 +4,17 @@ use std::ops::RangeInclusive;
 use aoc::grid::Point as BasePoint;
 use aoc::runner::*;
 
-type Point = BasePoint<i32>;
+type Point = BasePoint<i16>;
 type LineDef = (Point, Point);
 
 fn parse_point(input: &str) -> Point {
-    let parts: [i32; 2] = input
+    let parts: [i16; 2] = input
         .trim()
         .splitn(2, ",")
         .map(str::trim)
         .map(str::parse)
         .map(Result::unwrap)
-        .collect::<Vec<i32>>()
+        .collect::<Vec<i16>>()
         .try_into()
         .unwrap();
     return Point::new(parts[0], parts[1]);
@@ -36,7 +36,7 @@ fn parse_input(input: String) -> Vec<LineDef> {
         .collect();
 }
 
-fn range(a: i32, b: i32) -> RangeInclusive<i32> {
+fn range(a: i16, b: i16) -> RangeInclusive<i16> {
     if a < b {
         return a..=b;
     } else {
@@ -67,7 +67,7 @@ fn get_points(linedef: LineDef) -> Vec<Point> {
     }
 }
 
-fn count_overlapping_points(linedefs: Vec<LineDef>) -> i64 {
+fn count_overlapping_points(linedefs: Vec<LineDef>) -> i16 {
     let mut once: HashSet<Point> = HashSet::new();
     let mut more: HashSet<Point> = HashSet::new();
     let mut count = 0;
@@ -86,7 +86,7 @@ fn count_overlapping_points(linedefs: Vec<LineDef>) -> i64 {
     return count;
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> i16 {
     let linedefs = parse_input(input)
         .into_iter()
         .filter(|linedef| linedef.0.x == linedef.1.x || linedef.0.y == linedef.1.y)
@@ -94,7 +94,7 @@ pub fn part1(input: String) -> i64 {
     return count_overlapping_points(linedefs);
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> i16 {
     let linedefs = parse_input(input);
     return count_overlapping_points(linedefs);
 }

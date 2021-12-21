@@ -7,7 +7,7 @@ type Bits = VecDeque<u8>;
 
 trait BitHelper {
     fn take(&mut self, amount: usize) -> Bits;
-    fn to_decimal(&self) -> u128;
+    fn to_decimal(&self) -> u64;
 }
 impl BitHelper for Bits {
     fn take(&mut self, amount: usize) -> Bits {
@@ -18,11 +18,11 @@ impl BitHelper for Bits {
         return result;
     }
 
-    fn to_decimal(&self) -> u128 {
-        let mut result = 0u128;
+    fn to_decimal(&self) -> u64 {
+        let mut result = 0u64;
         for bit in self {
             result = result << 1;
-            result += *bit as u128;
+            result += *bit as u64;
         }
         return result;
     }
@@ -31,7 +31,7 @@ impl BitHelper for Bits {
 #[derive(Debug, PartialEq, new)]
 struct LiteralPacket {
     pub version: u8,
-    pub value: u128,
+    pub value: u64,
 }
 
 #[derive(Debug, PartialEq, new)]
@@ -98,7 +98,7 @@ fn parse_packet(bits: &mut Bits) -> Packet {
     }
 }
 
-fn resolve(packet: Packet) -> u128 {
+fn resolve(packet: Packet) -> u64 {
     match packet {
         Packet::Literal(p) => {
             return p.value;
@@ -108,9 +108,9 @@ fn resolve(packet: Packet) -> u128 {
                 .subpackets
                 .into_iter()
                 .map(|sp| resolve(sp))
-                .collect::<Vec<u128>>();
+                .collect::<Vec<u64>>();
             return match p.type_id {
-                0 => values.iter().sum::<u128>(),
+                0 => values.iter().sum::<u64>(),
                 1 => {
                     // product
                     let mut result = values.pop().unwrap();
@@ -121,27 +121,27 @@ fn resolve(packet: Packet) -> u128 {
                 }
                 2 => *values.iter().min().unwrap(),
                 3 => *values.iter().max().unwrap(),
-                5 => (values[0] > values[1]) as u128,
-                6 => (values[0] < values[1]) as u128,
-                7 => (values[0] == values[1]) as u128,
+                5 => (values[0] > values[1]) as u64,
+                6 => (values[0] < values[1]) as u64,
+                7 => (values[0] == values[1]) as u64,
                 _ => 0,
             };
         }
     }
 }
 
-pub fn part1(input: String) -> u128 {
+pub fn part1(input: String) -> u64 {
     let mut bits = parse_input(input);
     let mut remaining = vec![parse_packet(&mut bits)];
-    let mut result = 0u128;
+    let mut result = 0u64;
     while !remaining.is_empty() {
         let packet = remaining.pop().unwrap();
         match packet {
             Packet::Literal(p) => {
-                result += p.version as u128;
+                result += p.version as u64;
             }
             Packet::Operator(mut p) => {
-                result += p.version as u128;
+                result += p.version as u64;
                 remaining.append(&mut p.subpackets);
             }
         }
@@ -149,7 +149,7 @@ pub fn part1(input: String) -> u128 {
     return result;
 }
 
-pub fn part2(input: String) -> u128 {
+pub fn part2(input: String) -> u64 {
     let mut bits = parse_input(input);
     let packet = parse_packet(&mut bits);
     return resolve(packet);

@@ -6,7 +6,7 @@ use derive_new::new;
 
 type Pair = (char, char);
 type Rules = HashMap<Pair, char>;
-type PolymerPairCounts = HashMap<Pair, i64>;
+type PolymerPairCounts = HashMap<Pair, u64>;
 #[derive(Debug, PartialEq, new)]
 struct Polymer {
     pairs: PolymerPairCounts,
@@ -59,8 +59,8 @@ fn do_step(polymer: Polymer, rules: &Rules) -> Polymer {
     return Polymer::new(new_pairs, polymer.start, polymer.end);
 }
 
-fn get_polymer_char_counts(polymer: &Polymer) -> HashMap<char, i64> {
-    let mut char_counts: HashMap<char, i64> = HashMap::new();
+fn get_polymer_char_counts(polymer: &Polymer) -> HashMap<char, u64> {
+    let mut char_counts: HashMap<char, u64> = HashMap::new();
     for (pair, count) in &polymer.pairs {
         char_counts.count(pair.0, *count);
         char_counts.count(pair.1, *count);
@@ -73,7 +73,7 @@ fn get_polymer_char_counts(polymer: &Polymer) -> HashMap<char, i64> {
     return char_counts;
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> u64 {
     let (mut polymer, rules) = parse_input(input);
     for _ in 0..10 {
         polymer = do_step(polymer, &rules);
@@ -82,7 +82,7 @@ pub fn part1(input: String) -> i64 {
     return counts.values().max().unwrap() - counts.values().min().unwrap();
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> u64 {
     let (mut polymer, rules) = parse_input(input);
     for _ in 0..40 {
         polymer = do_step(polymer, &rules);

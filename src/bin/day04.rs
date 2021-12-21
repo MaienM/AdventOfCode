@@ -1,10 +1,10 @@
 use aoc::runner::*;
 
 type BaseBoard<T> = [[T; 5]; 5];
-type Board = BaseBoard<i32>;
+type Board = BaseBoard<u16>;
 
 struct BoardSpaceState {
-    num: i32,
+    num: u16,
     drawn: bool,
 }
 type BoardState = BaseBoard<BoardSpaceState>;
@@ -24,10 +24,10 @@ const WINNING_LINES: [[(usize, usize); 5]; 10] = [
     [(4, 0), (4, 1), (4, 2), (4, 3), (4, 4)],
 ];
 
-fn parse_input(input: String) -> (Vec<i32>, Vec<Board>) {
+fn parse_input(input: String) -> (Vec<u16>, Vec<Board>) {
     let mut lines = input.trim().split("\n");
 
-    let draws: Vec<i32> = lines
+    let draws: Vec<u16> = lines
         .next()
         .unwrap()
         .split(",")
@@ -35,7 +35,7 @@ fn parse_input(input: String) -> (Vec<i32>, Vec<Board>) {
         .collect();
 
     let mut boards: Vec<Board> = Vec::new();
-    let mut current_block: Vec<[i32; 5]> = Vec::new();
+    let mut current_block: Vec<[u16; 5]> = Vec::new();
     let mut expect_empty = true;
     for line in lines {
         if line.trim().is_empty() {
@@ -54,7 +54,7 @@ fn parse_input(input: String) -> (Vec<i32>, Vec<Board>) {
                 .filter(|p| !p.is_empty())
                 .map(str::parse)
                 .map(Result::unwrap)
-                .collect::<Vec<i32>>()
+                .collect::<Vec<u16>>()
                 .try_into()
                 .unwrap(),
         );
@@ -77,7 +77,7 @@ fn init_board_state(board: Board) -> BoardState {
     });
 }
 
-fn mark_number(state: &mut BoardState, draw: i32) {
+fn mark_number(state: &mut BoardState, draw: u16) {
     for space in state.iter_mut().flatten() {
         if space.num == draw {
             space.drawn = true;
@@ -94,7 +94,7 @@ fn is_winner(state: &BoardState) -> bool {
     return false;
 }
 
-fn get_unmarked_sum(state: &BoardState) -> i32 {
+fn get_unmarked_sum(state: &BoardState) -> u16 {
     return state
         .iter()
         .flatten()
@@ -103,7 +103,7 @@ fn get_unmarked_sum(state: &BoardState) -> i32 {
         .sum();
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> u16 {
     let (draws, boards) = parse_input(input);
     let mut states: Vec<BoardState> = boards.into_iter().map(init_board_state).collect();
     for draw in draws {
@@ -118,7 +118,7 @@ pub fn part1(input: String) -> i64 {
     panic!("Bingo night ended, no one won.");
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> u16 {
     let (draws, boards) = parse_input(input);
     let mut states: Vec<BoardState> = boards.into_iter().map(init_board_state).collect();
     for draw in draws {

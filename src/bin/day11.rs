@@ -20,7 +20,7 @@ fn parse_input(input: String) -> Grid {
         .into();
 }
 
-fn do_round(grid: &Grid) -> (Grid, i64) {
+fn do_round(grid: &Grid) -> (Grid, u16) {
     let mut new_grid: Grid = grid
         .by_cell()
         .map(|(point, level)| (point, level + 1))
@@ -52,12 +52,12 @@ fn do_round(grid: &Grid) -> (Grid, i64) {
     for point in &flashed {
         new_grid.setp(*point, 0);
     }
-    return (new_grid, flashed.len() as i64);
+    return (new_grid, flashed.len() as u16);
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> u16 {
     let mut grid = parse_input(input);
-    let mut flashes = 0_i64;
+    let mut flashes = 0u16;
     for _ in 0..100 {
         let (new_grid, new_flashes) = do_round(&grid);
         grid = new_grid;
@@ -66,7 +66,7 @@ pub fn part1(input: String) -> i64 {
     return flashes;
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> u16 {
     let mut grid = parse_input(input);
     for round in 1.. {
         let (new_grid, new_flashes) = do_round(&grid);

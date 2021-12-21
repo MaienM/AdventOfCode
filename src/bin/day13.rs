@@ -101,10 +101,10 @@ fn format_grid(grid: &Grid) -> String {
     return result;
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> u16 {
     let (mut grid, instructions) = parse_input(input);
     grid = do_fold(grid, instructions.into_iter().next().unwrap());
-    return grid.into_by_cell().filter(|(_, value)| *value).count() as i64;
+    return grid.into_by_cell().filter(|(_, value)| *value).count() as u16;
 }
 
 pub fn part2(input: String) -> String {

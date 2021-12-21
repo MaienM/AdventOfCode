@@ -19,9 +19,9 @@ fn get_matching_closing(chr: char) -> Option<char> {
     };
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: String) -> u64 {
     let lines = parse_input(input);
-    let mut score = 0_i64;
+    let mut score = 0u64;
     for line in lines {
         let mut stack: Vec<char> = Vec::new();
         for chr in line.chars() {
@@ -48,9 +48,9 @@ pub fn part1(input: String) -> i64 {
     return score;
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: String) -> u64 {
     let lines = parse_input(input);
-    let mut scores: Vec<i64> = Vec::new();
+    let mut scores: Vec<u64> = Vec::new();
     'lines: for line in lines {
         let mut stack: Vec<char> = Vec::new();
         for chr in line.chars() {
@@ -65,7 +65,7 @@ pub fn part2(input: String) -> i64 {
             }
         }
 
-        let mut score = 0_i64;
+        let mut score = 0u64;
         for chr in stack.into_iter().rev() {
             score *= 5;
             score += match chr {

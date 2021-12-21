@@ -15,7 +15,7 @@ impl<T: Debug> Debug for Point<T> {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Grid<T = i32> {
+pub struct Grid<T = u32> {
     items: Vec<Vec<T>>,
     pub width: usize,
     pub height: usize,
@@ -248,11 +248,11 @@ mod tests {
     #[test]
     fn new_invalid() {
         assert_eq!(
-            Grid::new(vec![] as Vec<Vec<i32>>),
+            Grid::new(vec![] as Vec<Vec<u32>>),
             Err("Grid cannot be empty.".to_string())
         );
         assert_eq!(
-            Grid::new(vec![vec![]] as Vec<Vec<i32>>),
+            Grid::new(vec![vec![]] as Vec<Vec<u32>>),
             Err("Grid rows cannot be empty.".to_string())
         );
         assert_eq!(
@@ -366,7 +366,7 @@ mod tests {
             ((Point::new(1, 3), 0)),
             ((Point::new(2, 3), 0)),
         ];
-        let actual: Grid<i32> = input.into_iter().collect();
+        let actual: Grid<u32> = input.into_iter().collect();
         let expected = basic_grid();
         assert_eq!(actual, expected);
     }
@@ -378,7 +378,7 @@ mod tests {
             ((Point::new(1, 0), 2)),
             ((Point::new(2, 0), 3)),
         ];
-        let actual: Grid<i32> = input.into_iter().collect();
+        let actual: Grid<u32> = input.into_iter().collect();
         let expected = Grid::new(vec![vec![1, 2, 3]]).unwrap();
         assert_eq!(actual, expected);
     }
@@ -392,7 +392,7 @@ mod tests {
                     ((Point::new(1, 0), 2)),
                     ((Point::new(2, 0), 3)),
                 ];
-                return input.into_iter().collect::<Grid<i32>>();
+                return input.into_iter().collect::<Grid<u32>>();
             },
             "Expected point (0, 0), got (1, 0).",
         );
@@ -403,7 +403,7 @@ mod tests {
                     ((Point::new(1, 0), 2)),
                     ((Point::new(1, 0), 3)),
                 ];
-                return input.into_iter().collect::<Grid<i32>>();
+                return input.into_iter().collect::<Grid<u32>>();
             },
             "Expected point (2, 0) or (0, 1), got (1, 0).",
         );
@@ -414,7 +414,7 @@ mod tests {
                     ((Point::new(1, 0), 2)),
                     ((Point::new(1, 1), 3)),
                 ];
-                return input.into_iter().collect::<Grid<i32>>();
+                return input.into_iter().collect::<Grid<u32>>();
             },
             "Expected point (2, 0) or (0, 1), got (1, 1).",
         );
@@ -427,7 +427,7 @@ mod tests {
                     ((Point::new(0, 1), 1)),
                     ((Point::new(2, 1), 3)),
                 ];
-                return input.into_iter().collect::<Grid<i32>>();
+                return input.into_iter().collect::<Grid<u32>>();
             },
             "Expected point (1, 1), got (2, 1).",
         );

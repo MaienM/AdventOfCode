@@ -3,15 +3,15 @@ use derive_new::new;
 
 #[derive(Debug, PartialEq, new)]
 struct TargetArea {
-    pub x: (i32, i32),
-    pub y: (i32, i32),
+    pub x: (i16, i16),
+    pub y: (i16, i16),
 }
 impl TargetArea {
-    fn contains_x(&self, x: i32) -> bool {
+    fn contains_x(&self, x: i16) -> bool {
         return self.x.0 <= x && x <= self.x.1;
     }
 
-    fn contains_y(&self, y: i32) -> bool {
+    fn contains_y(&self, y: i16) -> bool {
         return self.y.0 <= y && y <= self.y.1;
     }
 }
@@ -19,11 +19,11 @@ impl TargetArea {
 fn parse_input(input: String) -> TargetArea {
     assert!(input.trim().starts_with("target area: "));
     let mut ranges = input.trim()[13..].splitn(2, ",").map(|p| {
-        let bounds: [i32; 2] = p.trim()[2..]
+        let bounds: [i16; 2] = p.trim()[2..]
             .splitn(2, "..")
             .map(str::parse)
             .map(Result::unwrap)
-            .collect::<Vec<i32>>()
+            .collect::<Vec<i16>>()
             .try_into()
             .unwrap();
         return (bounds[0], bounds[1]);
@@ -31,7 +31,7 @@ fn parse_input(input: String) -> TargetArea {
     return TargetArea::new(ranges.next().unwrap(), ranges.next().unwrap());
 }
 
-fn ends_up_at_target(mut xvel: i32, mut yvel: i32, target: &TargetArea) -> bool {
+fn ends_up_at_target(mut xvel: i16, mut yvel: i16, target: &TargetArea) -> bool {
     let mut x = 0;
     let mut y = 0;
     while x <= target.x.1 && y >= target.y.0 {
@@ -47,7 +47,7 @@ fn ends_up_at_target(mut xvel: i32, mut yvel: i32, target: &TargetArea) -> bool 
     return false;
 }
 
-pub fn part1(input: String) -> i32 {
+pub fn part1(input: String) -> i16 {
     let target = parse_input(input);
     /*
      * X and Y are completely independent, so we can just ignore X for this part.
@@ -65,7 +65,7 @@ pub fn part1(input: String) -> i32 {
     return y;
 }
 
-pub fn part2(input: String) -> i32 {
+pub fn part2(input: String) -> i16 {
     let target = parse_input(input);
     /*
      * Despite having instructions on how to handle negative X velocities these will never get us to our goal, so we need not consider them. The highest x velocity that could be suitable is one that would get us to the right edge in one step, which is target.x.1.
