@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use aoc::counter::Counter;
 use aoc::runner::*;
 
 const NAME_START: &'static str = "start";
@@ -25,7 +26,7 @@ impl NodeType {
 
 #[derive(Debug, PartialEq)]
 struct Graph<'a> {
-    edges: HashMap<&'a str, Vec<&'a str>>,
+    edges: HashMap<&'a str, HashMap<&'a str, u32>>,
 }
 impl<'a> Graph<'a> {
     pub fn new() -> Self {
@@ -40,33 +41,50 @@ impl<'a> Graph<'a> {
         }
 
         if !self.edges.contains_key(left) {
-            self.edges.insert(left.clone(), Vec::new());
+            self.edges.insert(left.clone(), HashMap::new());
         }
-        self.edges.get_mut(left).unwrap().push(right.clone());
+        self.edges.get_mut(left).unwrap().count(right.clone(), 1);
 
         if !self.edges.contains_key(right) {
-            self.edges.insert(right.clone(), Vec::new());
+            self.edges.insert(right.clone(), HashMap::new());
         }
-        self.edges.get_mut(right).unwrap().push(left.clone());
+        self.edges.get_mut(right).unwrap().count(left.clone(), 1);
     }
 
-    pub fn get_connections(&self, name: &'a str) -> &Vec<&'a str> {
+    pub fn flatten_big_nodes(&mut self) {
+        let clone = self.edges.clone();
+        for node in clone.keys() {
+            if NodeType::get(node) != NodeType::Big {
+                continue;
+            }
+
+            let edges = self.edges.remove(node).unwrap();
+            for left in edges.keys() {
+                self.edges.get_mut(left).unwrap().remove(node);
+                for right in edges.keys() {
+                    self.edges.get_mut(left).unwrap().count(right, 1);
+                }
+            }
+        }
+    }
+
+    pub fn get_connections(&self, name: &'a str) -> &HashMap<&'a str, u32> {
         return &self.edges.get(name).unwrap();
     }
 }
 
 fn count_paths_to_end<'a>(
     graph: &'a Graph,
-    mut path: Vec<&'a str>,
+    path: &mut Vec<&'a str>,
     node: &'a str,
     did_small_double_visit: bool,
-) -> (Vec<&'a str>, u32) {
+) -> u32 {
     let mut results = 0u32;
-    for connected_node in graph.get_connections(node) {
+    for (connected_node, weight) in graph.get_connections(node) {
         if *connected_node == NAME_START {
             continue;
         } else if *connected_node == NAME_END {
-            results += 1;
+            results += weight;
             continue;
         }
 
@@ -80,13 +98,10 @@ fn count_paths_to_end<'a>(
         }
 
         path.push(connected_node.clone());
-        let (new_path, new_result) =
-            count_paths_to_end(graph, path, connected_node, did_small_double_visit);
-        results += new_result;
-        path = new_path;
+        results += weight * count_paths_to_end(graph, path, connected_node, did_small_double_visit);
         path.pop();
     }
-    return (path, results);
+    return results;
 }
 
 fn parse_input<'a>(input: &'a String) -> Graph<'a> {
@@ -99,15 +114,15 @@ fn parse_input<'a>(input: &'a String) -> Graph<'a> {
 }
 
 pub fn part1(input: String) -> u32 {
-    let graph = parse_input(&input);
-    let path: Vec<&str> = Vec::new();
-    return count_paths_to_end(&graph, path, NAME_START, true).1;
+    let mut graph = parse_input(&input);
+    graph.flatten_big_nodes();
+    return count_paths_to_end(&graph, &mut Vec::new(), NAME_START, true);
 }
 
 pub fn part2(input: String) -> u32 {
-    let graph = parse_input(&input);
-    let path: Vec<&str> = Vec::new();
-    return count_paths_to_end(&graph, path, NAME_START, false).1;
+    let mut graph = parse_input(&input);
+    graph.flatten_big_nodes();
+    return count_paths_to_end(&graph, &mut Vec::new(), NAME_START, false);
 }
 
 fn main() {
@@ -166,12 +181,56 @@ mod tests {
     fn example1_parse() {
         let input = EXAMPLE_INPUT_1.to_string();
         let graph = parse_input(&input);
-        assert_eq!(graph.get_connections("start"), &vec!["A", "b"]);
-        assert_eq!(graph.get_connections("end"), &vec!["A", "b"]);
-        assert_eq!(graph.get_connections("A"), &vec!["start", "c", "b", "end"]);
-        assert_eq!(graph.get_connections("b"), &vec!["start", "A", "d", "end"]);
-        assert_eq!(graph.get_connections("c"), &vec!["A"]);
-        assert_eq!(graph.get_connections("d"), &vec!["b"]);
+        assert_eq!(graph.get_connections("start").len(), 2);
+        assert_eq!(graph.get_connections("start").get("A"), Some(&1));
+        assert_eq!(graph.get_connections("start").get("b"), Some(&1));
+        assert_eq!(graph.get_connections("end").len(), 2);
+        assert_eq!(graph.get_connections("end").get("b"), Some(&1));
+        assert_eq!(graph.get_connections("end").get("A"), Some(&1));
+        assert_eq!(graph.get_connections("A").len(), 4);
+        assert_eq!(graph.get_connections("A").get("start"), Some(&1));
+        assert_eq!(graph.get_connections("A").get("c"), Some(&1));
+        assert_eq!(graph.get_connections("A").get("b"), Some(&1));
+        assert_eq!(graph.get_connections("A").get("end"), Some(&1));
+        assert_eq!(graph.get_connections("b").len(), 4);
+        assert_eq!(graph.get_connections("b").get("start"), Some(&1));
+        assert_eq!(graph.get_connections("b").get("A"), Some(&1));
+        assert_eq!(graph.get_connections("b").get("d"), Some(&1));
+        assert_eq!(graph.get_connections("b").get("end"), Some(&1));
+        assert_eq!(graph.get_connections("c").len(), 1);
+        assert_eq!(graph.get_connections("c").get("A"), Some(&1));
+        assert_eq!(graph.get_connections("d").len(), 1);
+        assert_eq!(graph.get_connections("d").get("b"), Some(&1));
+    }
+
+    #[test]
+    fn example1_flatten() {
+        let input = EXAMPLE_INPUT_1.to_string();
+        let mut graph = parse_input(&input);
+        graph.flatten_big_nodes();
+        assert_eq!(graph.get_connections("start").len(), 4);
+        assert_eq!(graph.get_connections("start").get("b"), Some(&2));
+        assert_eq!(graph.get_connections("start").get("c"), Some(&1));
+        assert_eq!(graph.get_connections("start").get("start"), Some(&1));
+        assert_eq!(graph.get_connections("start").get("end"), Some(&1));
+        assert_eq!(graph.get_connections("end").len(), 4);
+        assert_eq!(graph.get_connections("end").get("b"), Some(&2));
+        assert_eq!(graph.get_connections("end").get("c"), Some(&1));
+        assert_eq!(graph.get_connections("end").get("start"), Some(&1));
+        assert_eq!(graph.get_connections("end").get("end"), Some(&1));
+        assert_eq!(graph.get_connections("b").len(), 5);
+        assert_eq!(graph.get_connections("b").get("b"), Some(&1));
+        assert_eq!(graph.get_connections("b").get("c"), Some(&1));
+        assert_eq!(graph.get_connections("b").get("d"), Some(&1));
+        assert_eq!(graph.get_connections("b").get("start"), Some(&2));
+        assert_eq!(graph.get_connections("b").get("end"), Some(&2));
+        assert_eq!(graph.get_connections("c").len(), 4);
+        assert_eq!(graph.get_connections("c").get("b"), Some(&1));
+        assert_eq!(graph.get_connections("c").get("c"), Some(&1));
+        assert_eq!(graph.get_connections("c").get("start"), Some(&1));
+        assert_eq!(graph.get_connections("c").get("end"), Some(&1));
+        assert_eq!(graph.get_connections("d").len(), 1);
+        assert_eq!(graph.get_connections("d").get("b"), Some(&1));
     }
 
     #[test]
