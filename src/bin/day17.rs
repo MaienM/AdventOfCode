@@ -17,18 +17,32 @@ impl TargetArea {
 }
 
 fn parse_input(input: String) -> TargetArea {
-    assert!(input.trim().starts_with("target area: "));
-    let mut ranges = input.trim()[13..].splitn(2, ",").map(|p| {
-        let bounds: [i16; 2] = p.trim()[2..]
-            .splitn(2, "..")
-            .map(str::parse)
-            .map(Result::unwrap)
-            .collect::<Vec<i16>>()
-            .try_into()
-            .unwrap();
-        return (bounds[0], bounds[1]);
-    });
-    return TargetArea::new(ranges.next().unwrap(), ranges.next().unwrap());
+    // Safety? Trim? Split? Parse? Bah, who needs that nonsense. This is faster and therefore _clearly_ superior.
+    unsafe {
+        let mut bytes = input.bytes();
+        let mut nums = [0i16; 4];
+
+        for i in 0..2 {
+            while bytes.next().unwrap_unchecked() != b'=' {}
+            for j in 0..2 {
+                let mut b = bytes.next().unwrap_unchecked();
+                let mut neg = false;
+                if b == b'-' {
+                    neg = true;
+                    b = bytes.next().unwrap_unchecked();
+                }
+                let mut num = 0;
+                while b >= b'0' {
+                    num = num * 10 + b - b'0';
+                    b = bytes.next().unwrap_unchecked();
+                }
+                bytes.next();
+                nums[i * 2 + j] = if neg { -(num as i16) } else { num as i16 };
+            }
+        }
+
+        return TargetArea::new((nums[0], nums[1]), (nums[2], nums[3]));
+    }
 }
 
 fn ends_up_at_target(mut xvel: i16, mut yvel: i16, target: &TargetArea) -> bool {
