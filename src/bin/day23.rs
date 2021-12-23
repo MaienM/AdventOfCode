@@ -37,43 +37,40 @@ const VALID_STOP_POSITIONS: ValidStopPositions = [
 ];
 // The positions of the rooms.
 const ROOM_POSITIONS: [usize; 4] = [2, 4, 6, 8];
-// The solved state.
-const ROOMS_SOLVED: [[Option<usize>; 2]; 4] =
-    [[Some(0); 2], [Some(1); 2], [Some(2); 2], [Some(3); 2]];
 
 #[derive(Clone, Eq, PartialEq, Hash)]
-struct Board {
+struct Board<const SEATS: usize> {
     pub hallway: [Option<usize>; 11],
-    pub rooms: [[Option<usize>; 2]; 4],
+    pub rooms: [[Option<usize>; SEATS]; 4],
 }
-impl Board {
+impl<const SEATS: usize> Board<SEATS> {
     fn get_moves(&self) -> Vec<MoveWithCost> {
         let mut moves = Vec::new();
 
         // The rooms that can be moved into/out of + the seat that should be used.
         let mut rooms_move_into = [(false, 0); 4];
         let mut rooms_move_out = [(false, 0); 4];
-        for room in 0..=3 {
-            match self.rooms[room] {
-                [Some(typ1), Some(typ2)] => {
-                    if typ1 == room && typ2 == room {
-                        // Room only contains the correct type and is done.
-                    } else {
-                        rooms_move_out[room] = (true, 0);
+        'room: for room in 0..=3 {
+            for seat in 0..SEATS {
+                match self.rooms[room][seat] {
+                    Some(typ) => {
+                        if typ != room {
+                            // Room contains something of the wrong type, so move out whatever the first filled seat is.
+                            for seat in 0..SEATS {
+                                if self.rooms[room][seat].is_some() {
+                                    rooms_move_out[room] = (true, seat);
+                                    rooms_move_into[room] = (false, 0);
+                                    continue 'room;
+                                }
+                            }
+                        }
+                    }
+                    None => {
+                        // Empty spot, enable moving into. If there are futher empty seats or things that need to move out this will be overwritten again.
+                        rooms_move_into[room] = (true, seat);
                     }
                 }
-                [None, Some(typ)] => {
-                    if typ == room {
-                        // Nothing to move out of the room, but there is still room.
-                        rooms_move_into[room] = (true, 0);
-                    } else {
-                        rooms_move_out[room] = (true, 1);
-                    }
-                }
-                _ => {
-                    rooms_move_into[room] = (true, 1);
-                }
-            };
+            }
         }
 
         // Check if any of the amphipods can move directly from a room into their target room. If so this is the optimal move for this amphipod and we can ignore to/from hallway checks for both involved rooms.
@@ -180,7 +177,7 @@ impl Board {
         return moves;
     }
 
-    fn apply(&self, movkind: Move) -> Board {
+    fn apply(&self, movkind: Move) -> Board<SEATS> {
         let mut result = self.clone();
         match movkind {
             Move::HallwayRoom(spot, (room, roomseat)) => {
@@ -196,98 +193,72 @@ impl Board {
     }
 
     fn is_solved(&self) -> bool {
-        return self.rooms == ROOMS_SOLVED;
+        for room in 0..=3 {
+            for seat in 0..SEATS {
+                if self.rooms[room][seat] != Some(room) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
-impl Debug for Board {
+impl<const SEATS: usize> Debug for Board<SEATS> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        return writeln!(
+        let fc = |cell: Option<usize>| -> char {
+            return cell.map(|typ| (typ as u8 + b'A') as char).unwrap_or('.');
+        };
+
+        writeln!(f, "#############")?;
+        writeln!(
             f,
-            "#############\n#{}{}.{}.{}.{}.{}{}#\n###{}#{}#{}#{}###\n  #{}#{}#{}#{}#\n  #########",
-            self.hallway[0]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.hallway[1]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.hallway[3]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.hallway[5]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.hallway[7]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.hallway[9]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.hallway[10]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.rooms[0][0]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.rooms[1][0]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.rooms[2][0]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.rooms[3][0]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.rooms[0][1]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.rooms[1][1]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.rooms[2][1]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-            self.rooms[3][1]
-                .map(|typ| (typ as u8 + b'A') as char)
-                .unwrap_or('.'),
-        );
+            "#{}{}.{}.{}.{}.{}{}#",
+            fc(self.hallway[0]),
+            fc(self.hallway[1]),
+            fc(self.hallway[3]),
+            fc(self.hallway[5]),
+            fc(self.hallway[7]),
+            fc(self.hallway[9]),
+            fc(self.hallway[10]),
+        )?;
+        writeln!(
+            f,
+            "###{}#{}#{}#{}###",
+            fc(self.rooms[0][0]),
+            fc(self.rooms[1][0]),
+            fc(self.rooms[2][0]),
+            fc(self.rooms[3][0]),
+        )?;
+        for seat in 1..SEATS {
+            writeln!(
+                f,
+                "  #{}#{}#{}#{}#  ",
+                fc(self.rooms[0][seat]),
+                fc(self.rooms[1][seat]),
+                fc(self.rooms[2][seat]),
+                fc(self.rooms[3][seat]),
+            )?;
+        }
+        return Ok(());
     }
 }
 
 #[derive(Debug, Eq, PartialEq)]
-struct BoardWithCost(Board, u32);
-impl PartialOrd for BoardWithCost {
+struct BoardWithCost<const SEATS: usize>(Board<SEATS>, u32);
+impl<const SEATS: usize> PartialOrd for BoardWithCost<SEATS> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         return other.1.partial_cmp(&self.1);
     }
 }
-impl Ord for BoardWithCost {
+impl<const SEATS: usize> Ord for BoardWithCost<SEATS> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         return other.1.cmp(&self.1);
     }
 }
 
-fn parse_input(input: String) -> Board {
-    let mut rooms: [[Option<usize>; 2]; 4] = [[None; 2]; 4];
-    let lines = input.trim().split("\n").collect::<Vec<&str>>();
-    for roomseat in 0..=1 {
-        let bytes = lines[2 + roomseat].trim().as_bytes();
-        for room in 0..=3 {
-            let byte = bytes[3 - roomseat * 2 + room * 2];
-            rooms[room][roomseat] = Some((byte - b'A') as usize);
-        }
-    }
-
-    return Board {
-        hallway: [None; 11],
-        rooms,
-    };
-}
-
-pub fn part1(input: String) -> u32 {
-    let board = parse_input(input);
-
-    let mut heap: BinaryHeap<BoardWithCost> = BinaryHeap::new();
-    let mut seen: HashSet<Board> = HashSet::new();
+fn get_best_moveset_cost<const SEATS: usize>(board: Board<SEATS>) -> u32 {
+    let mut heap: BinaryHeap<BoardWithCost<SEATS>> = BinaryHeap::new();
+    let mut seen: HashSet<Board<SEATS>> = HashSet::new();
     heap.push(BoardWithCost(board, 0));
 
     while !heap.is_empty() {
@@ -312,8 +283,44 @@ pub fn part1(input: String) -> u32 {
     panic!("Should never happen.");
 }
 
+fn parse_input(input: String) -> Board<2> {
+    let mut rooms: [[Option<usize>; 2]; 4] = [[None; 2]; 4];
+    let lines = input.trim().split("\n").collect::<Vec<&str>>();
+    for roomseat in 0..=1 {
+        let bytes = lines[2 + roomseat].trim().as_bytes();
+        for room in 0..=3 {
+            let byte = bytes[3 - roomseat * 2 + room * 2];
+            rooms[room][roomseat] = Some((byte - b'A') as usize);
+        }
+    }
+
+    return Board {
+        hallway: [None; 11],
+        rooms,
+    };
+}
+
+pub fn part1(input: String) -> u32 {
+    let board = parse_input(input);
+    return get_best_moveset_cost(board);
+}
+
+pub fn part2(input: String) -> u32 {
+    let board = parse_input(input);
+    let board = Board::<4> {
+        hallway: board.hallway,
+        rooms: [
+            [board.rooms[0][0], Some(3), Some(3), board.rooms[0][1]],
+            [board.rooms[1][0], Some(2), Some(1), board.rooms[1][1]],
+            [board.rooms[2][0], Some(1), Some(0), board.rooms[2][1]],
+            [board.rooms[3][0], Some(0), Some(2), board.rooms[3][1]],
+        ],
+    };
+    return get_best_moveset_cost(board);
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -402,5 +409,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 12521);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 44169);
     }
 }
