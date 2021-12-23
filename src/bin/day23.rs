@@ -1,5 +1,5 @@
+use std::collections::BTreeSet;
 use std::collections::BinaryHeap;
-use std::collections::HashSet;
 use std::fmt::Debug;
 
 use aoc::runner::*;
@@ -31,14 +31,13 @@ enum Move {
 struct MoveWithCost(u32, Move);
 
 // The hallway spots that are valid to stop in.
-type ValidStopPositions = [bool; 11];
-const VALID_STOP_POSITIONS: ValidStopPositions = [
+const VALID_STOP_POSITIONS: [bool; 11] = [
     true, true, false, true, false, true, false, true, false, true, true,
 ];
 // The positions of the rooms.
 const ROOM_POSITIONS: [usize; 4] = [2, 4, 6, 8];
 
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 struct Board<const SEATS: usize> {
     pub hallway: [Option<usize>; 11],
     pub rooms: [[Option<usize>; SEATS]; 4],
@@ -244,25 +243,33 @@ impl<const SEATS: usize> Debug for Board<SEATS> {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-struct BoardWithCost<const SEATS: usize>(Board<SEATS>, u32);
-impl<const SEATS: usize> PartialOrd for BoardWithCost<SEATS> {
+struct PendingMove<const SEATS: usize>(u32, Box<Board<SEATS>>, Move);
+impl<const SEATS: usize> PartialOrd for PendingMove<SEATS> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        return other.1.partial_cmp(&self.1);
+        return other.0.partial_cmp(&self.0);
     }
 }
-impl<const SEATS: usize> Ord for BoardWithCost<SEATS> {
+impl<const SEATS: usize> Ord for PendingMove<SEATS> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        return other.1.cmp(&self.1);
+        return other.0.cmp(&self.0);
     }
 }
 
 fn get_best_moveset_cost<const SEATS: usize>(board: Board<SEATS>) -> u32 {
-    let mut heap: BinaryHeap<BoardWithCost<SEATS>> = BinaryHeap::new();
-    let mut seen: HashSet<Board<SEATS>> = HashSet::new();
-    heap.push(BoardWithCost(board, 0));
+    let mut heap: BinaryHeap<PendingMove<SEATS>> = BinaryHeap::new();
+    let mut seen: BTreeSet<Board<SEATS>> = BTreeSet::new();
+
+    let dummymove = Move::RoomRoom((0, 0), (1, 0));
+    heap.push(PendingMove(
+        0,
+        Box::new(board.apply(dummymove.clone())),
+        dummymove,
+    ));
 
     while !heap.is_empty() {
-        let BoardWithCost(board, cost) = heap.pop().unwrap();
+        let PendingMove(cost, board, mov) = heap.pop().unwrap();
+
+        let board = board.apply(mov);
         if seen.contains(&board) {
             continue;
         }
@@ -271,10 +278,8 @@ fn get_best_moveset_cost<const SEATS: usize>(board: Board<SEATS>) -> u32 {
             return cost;
         }
 
-        for mov in board.get_moves() {
-            let MoveWithCost(movcost, movkind) = mov.clone();
-            let newboard = board.apply(movkind);
-            heap.push(BoardWithCost(newboard, cost + movcost));
+        for MoveWithCost(movcost, mov) in board.get_moves() {
+            heap.push(PendingMove(cost + movcost, Box::new(board.clone()), mov));
         }
 
         seen.insert(board);
