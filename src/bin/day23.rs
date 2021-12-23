@@ -4,21 +4,48 @@ use std::fmt::Debug;
 
 use aoc::runner::*;
 
-// It's stupid that I cannot just return a goddamned iterator here.
-fn range(start: usize, end: usize) -> Vec<usize> {
-    if start < end {
-        return (start..=end).into_iter().collect();
-    } else {
-        return (end..=start).into_iter().rev().collect();
+struct ReversibleRange {
+    current: usize,
+    end: usize,
+    step: isize,
+}
+impl ReversibleRange {
+    fn contains(&self, value: usize) -> bool {
+        return if self.step > 0 {
+            self.current <= value && value <= self.end
+        } else {
+            self.end <= value && value <= self.current
+        };
+    }
+}
+impl Iterator for ReversibleRange {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current == self.end {
+            return None;
+        }
+
+        self.current = (self.current as isize + self.step) as usize;
+        return Some(self.current);
     }
 }
 
+fn range(start: usize, end: usize) -> ReversibleRange {
+    let step: isize = if start < end { 1 } else { -1 };
+    return ReversibleRange {
+        end,
+        current: (start as isize - step) as usize,
+        step,
+    };
+}
+
 fn diff(start: usize, end: usize) -> usize {
-    if start < end {
-        return end - start;
+    return if start < end {
+        end - start
     } else {
-        return start - end;
-    }
+        start - end
+    };
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -113,8 +140,8 @@ impl<const SEATS: usize> Board<SEATS> {
             let stepcost = 10u32.pow(typ as u32);
             let sourcepos = ROOM_POSITIONS[room];
             let roompos = ROOM_POSITIONS[typ];
-            for targetrange in [range(sourcepos - 1, 0), range(sourcepos + 1, 10)] {
-                'target: for targetpos in targetrange {
+            'target: for targetrange in [range(sourcepos - 1, 0), range(sourcepos + 1, 10)] {
+                for targetpos in targetrange {
                     match self.hallway[targetpos] {
                         Some(_) => break,
                         None => {
@@ -122,11 +149,11 @@ impl<const SEATS: usize> Board<SEATS> {
                                 continue;
                             }
 
-                            // We need to check to see what is currenlty between us and our target. If whatever is between us and our target needs to pass us to get to its room this leads to a deadlock, so we can write off that move as an option.
+                            // We need to check to see what is currently between us and our target. If whatever is between us and our target needs to pass us to get to its room this leads to a deadlock, so we can write off that move as an option.
                             for i in range(targetpos, roompos) {
                                 match self.hallway[i] {
                                     Some(otyp) => {
-                                        if range(i, ROOM_POSITIONS[otyp]).contains(&targetpos) {
+                                        if range(i, ROOM_POSITIONS[otyp]).contains(targetpos) {
                                             continue 'target;
                                         }
                                     }
