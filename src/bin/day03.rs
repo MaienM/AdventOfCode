@@ -4,6 +4,11 @@ use aoc::runner::*;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Rucksack(HashSet<char>, HashSet<char>);
+impl Rucksack {
+    fn contains(&self, chr: &char) -> bool {
+        return self.0.contains(chr) || self.1.contains(chr);
+    }
+}
 
 fn get_priority(chr: char) -> u16 {
     return (chr as u16 - 38) % 58;
@@ -33,8 +38,25 @@ pub fn part1(input: String) -> u16 {
     return commonalities.into_iter().copied().map(get_priority).sum();
 }
 
+pub fn part2(input: String) -> u16 {
+    let mut rucksacks = parse_input(input).into_iter();
+    let mut sum = 0u16;
+    loop {
+        match (rucksacks.next(), rucksacks.next(), rucksacks.next()) {
+            (Some(r1), Some(r2), Some(r3)) => {
+                let badge = (r1.0.union(&r1.1))
+                    .find(|item| r2.contains(item) && r3.contains(item))
+                    .unwrap();
+                sum += get_priority(*badge);
+            }
+            (None, None, None) => return sum,
+            _ => panic!("Got partial group"),
+        };
+    }
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -97,5 +119,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 157);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 70);
     }
 }
