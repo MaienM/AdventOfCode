@@ -12,6 +12,13 @@ fn range_is_subset_two_ways(left: &Range, right: &Range) -> bool {
     return range_is_subset(left, right) || range_is_subset(right, left);
 }
 
+fn ranges_overlap(left: &Range, right: &Range) -> bool {
+    return left.contains(right.start())
+        || left.contains(right.end())
+        || right.contains(left.start())
+        || right.contains(left.end());
+}
+
 fn parse_input(input: String) -> Vec<(Range, Range)> {
     return input
         .trim()
@@ -47,8 +54,16 @@ pub fn part1(input: String) -> usize {
         .count();
 }
 
+pub fn part2(input: String) -> usize {
+    let pairs = parse_input(input);
+    return pairs
+        .into_iter()
+        .filter(|(left, right)| ranges_overlap(left, right))
+        .count();
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -88,7 +103,19 @@ mod tests {
     }
 
     #[test]
+    fn test_ranges_overlap() {
+        assert_eq!(ranges_overlap(&(0..=5), &(2..=7)), true);
+        assert_eq!(ranges_overlap(&(5..=7), &(0..=5)), true);
+        assert_eq!(ranges_overlap(&(6..=7), &(0..=5)), false);
+    }
+
+    #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 2);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 4);
     }
 }
