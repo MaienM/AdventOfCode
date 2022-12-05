@@ -65,7 +65,7 @@ fn parse_input(input: String) -> (Stacks, Moves) {
     return (stacks, moves);
 }
 
-fn do_moves(mut stacks: Stacks, moves: Moves) -> Stacks {
+fn do_moves_9000(mut stacks: Stacks, moves: Moves) -> Stacks {
     for move_ in moves {
         for _ in 0..move_.count {
             let crate_ = stacks[move_.from].pop_front().unwrap();
@@ -75,9 +75,33 @@ fn do_moves(mut stacks: Stacks, moves: Moves) -> Stacks {
     return stacks;
 }
 
+fn do_moves_9001(mut stacks: Stacks, moves: Moves) -> Stacks {
+    for move_ in moves {
+        let mut stack = Stack::new();
+        for _ in 0..move_.count {
+            let crate_ = stacks[move_.from].pop_front().unwrap();
+            stack.push_front(crate_);
+        }
+        for crate_ in stack {
+            stacks[move_.to].push_front(crate_);
+        }
+    }
+    return stacks;
+}
+
 pub fn part1(input: String) -> String {
     let (mut stacks, moves) = parse_input(input);
-    stacks = do_moves(stacks, moves);
+    stacks = do_moves_9000(stacks, moves);
+    return stacks
+        .iter()
+        .map(Stack::front)
+        .map(Option::unwrap)
+        .collect();
+}
+
+pub fn part2(input: String) -> String {
+    let (mut stacks, moves) = parse_input(input);
+    stacks = do_moves_9001(stacks, moves);
     return stacks
         .iter()
         .map(Stack::front)
@@ -86,7 +110,7 @@ pub fn part1(input: String) -> String {
 }
 
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -131,6 +155,14 @@ mod tests {
         assert_eq!(
             part1(EXAMPLE_INPUT.to_string().replace("\n        ", "\n")),
             "CMZ"
+        );
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(
+            part2(EXAMPLE_INPUT.to_string().replace("\n        ", "\n")),
+            "MCD"
         );
     }
 }
