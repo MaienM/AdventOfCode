@@ -1,5 +1,3 @@
-#![feature(iter_array_chunks)]
-
 use std::collections::VecDeque;
 
 use aoc::runner::*;
@@ -28,20 +26,13 @@ fn parse_input(input: String) -> (Stacks, Moves) {
         if line.trim().chars().next().unwrap_or('1') == '1' {
             continue;
         }
-        for (i, part) in (line.to_owned() + " ")
-            .chars()
-            .array_chunks::<4>()
-            .enumerate()
-        {
-            if part[1] != ' ' {
-                assert!(part[0] == '[');
-                assert!(part[2] == ']');
-
+        for i in 0..=(line.len() / 4) {
+            let crate_ = line.chars().nth(i * 4 + 1).unwrap();
+            if crate_ != ' ' {
                 while i >= stacks.len() {
                     stacks.push(Stack::new());
                 }
-
-                stacks[i].push_back(part[1]);
+                stacks[i].push_back(crate_);
             }
         }
     }
