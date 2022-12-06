@@ -2,49 +2,26 @@ use std::collections::HashSet;
 
 use aoc::runner::*;
 
+fn find_marker(sequence: String, length: usize) -> usize {
+    for i in 0..(sequence.len() - length + 1) {
+        if sequence[i..(i + length)]
+            .chars()
+            .collect::<HashSet<char>>()
+            .len()
+            == length
+        {
+            return i + length;
+        }
+    }
+    panic!("Did not find marker.");
+}
+
 pub fn part1(input: String) -> usize {
-    let input = input.trim();
-    return input
-        .chars()
-        .zip(input.chars().skip(1))
-        .zip(input.chars().skip(2))
-        .zip(input.chars().skip(3))
-        .map(|(((c1, c2), c3), c4)| [c1, c2, c3, c4])
-        .enumerate()
-        .find(|(_idx, chars)| HashSet::<char>::from(*chars).len() == 4)
-        .unwrap()
-        .0
-        + 4;
+    return find_marker(input, 4);
 }
 
 pub fn part2(input: String) -> usize {
-    let input = input.trim();
-    return input
-        .chars()
-        .zip(input.chars().skip(1))
-        .zip(input.chars().skip(2))
-        .zip(input.chars().skip(3))
-        .zip(input.chars().skip(4))
-        .zip(input.chars().skip(5))
-        .zip(input.chars().skip(6))
-        .zip(input.chars().skip(7))
-        .zip(input.chars().skip(8))
-        .zip(input.chars().skip(9))
-        .zip(input.chars().skip(10))
-        .zip(input.chars().skip(11))
-        .zip(input.chars().skip(12))
-        .zip(input.chars().skip(13))
-        .map(
-            |(
-                ((((((((((((c1, c2), c3), c4), c5), c6), c7), c8), c9), c10), c11), c12), c13),
-                c14,
-            )| [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14],
-        )
-        .enumerate()
-        .find(|(_idx, chars)| HashSet::<char>::from(*chars).len() == 14)
-        .unwrap()
-        .0
-        + 14;
+    return find_marker(input, 14);
 }
 
 fn main() {
