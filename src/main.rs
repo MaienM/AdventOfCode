@@ -4,6 +4,11 @@ use ansi_term::Colour::*;
 use aoc::runner::*;
 use aoc_derive::RunnableListProvider;
 
+type RunnableList = Vec<(&'static str, Runnable<String>, Runnable<String>)>;
+pub trait RunnableListProvider {
+    fn get() -> RunnableList;
+}
+
 #[derive(RunnableListProvider)]
 pub struct ListProvider {}
 

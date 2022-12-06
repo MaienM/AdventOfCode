@@ -7,13 +7,7 @@ use ansi_term::unstyle;
 use ansi_term::ANSIStrings;
 use ansi_term::Colour::*;
 
-type Runnable<T> = fn(String) -> T;
-
-// Used with a proc-macro to provide a listing of all Runnables of all days.
-pub type RunnableList = Vec<(&'static str, Runnable<String>, Runnable<String>)>;
-pub trait RunnableListProvider {
-    fn get() -> RunnableList;
-}
+pub type Runnable<T> = fn(String) -> T;
 
 #[derive(Clone)]
 pub struct RunnableRunOk {

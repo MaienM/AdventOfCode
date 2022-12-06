@@ -63,7 +63,7 @@ pub fn part_finder_derive(input: TokenStream) -> TokenStream {
     }
 
     let output = quote! {
-        use aoc::runner::{missing, RunnableList};
+        use aoc::runner::missing;
         mod bin {
             #![allow(dead_code)]
             #(#uses)*
