@@ -85,32 +85,39 @@ fn parse_input<'a>(input: &'a String) -> Entry {
     return Entry::Dir(root);
 }
 
-fn sum_dir_sizes(entry: &Entry, predicate: fn(usize) -> bool) -> usize {
+fn get_dir_sizes(matches: &mut Vec<usize>, entry: &Entry) {
     match entry {
         Entry::Dir(dir) => {
-            let mut size = 0;
-            if predicate(entry.size()) {
-                size += entry.size();
+            matches.push(entry.size());
+            for e in dir.values() {
+                get_dir_sizes(matches, e);
             }
-            size += dir
-                .values()
-                .map(|e| sum_dir_sizes(e, predicate))
-                .sum::<usize>();
-            return size;
         }
-        _ => {
-            return 0;
-        }
+        _ => {}
     };
 }
 
 pub fn part1(input: String) -> usize {
     let root = parse_input(&input);
-    return sum_dir_sizes(&root, |s| s <= 100_000);
+    let mut sizes = vec![];
+    get_dir_sizes(&mut sizes, &root);
+    return sizes.into_iter().filter(|s| s <= &100_000).sum();
+}
+
+pub fn part2(input: String) -> usize {
+    let root = parse_input(&input);
+    let space_needed = 30_000_000 - (70_000_000 - root.size());
+    let mut sizes = vec![];
+    get_dir_sizes(&mut sizes, &root);
+    return sizes
+        .into_iter()
+        .filter(|s| s >= &space_needed)
+        .min()
+        .unwrap();
 }
 
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -173,5 +180,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 95_437);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 24_933_642);
     }
 }
