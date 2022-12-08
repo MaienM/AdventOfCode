@@ -21,25 +21,40 @@ fn parse_input(input: String) -> Grid {
         .into();
 }
 
-fn find_visible(grid: &Grid, points: &mut HashSet<Point>, start: Point, offset: (isize, isize)) {
-    let mut highest = grid.getp(start).unwrap();
+fn for_line_until(grid: &Grid, start: Point, offset: (isize, isize), predicate: &mut impl FnMut(Point, &u8) -> bool) {
     let mut current = start;
     loop {
         current = Point::new((current.x as isize + offset.0) as usize, (current.y as isize + offset.1) as usize);
         match grid.getp(current) {
             Some(height) => {
-                if height > highest {
-                    points.insert(current);
-                    highest = height;
-
-                    if height == &9 {
-                        return;
-                    }
+                if !predicate(current, height) {
+                    return;
                 }
             },
             None => return,
         }
     }
+}
+
+fn find_visible_from_edge(grid: &Grid, points: &mut HashSet<Point>, start: Point, offset: (isize, isize)) {
+    let mut highest = *grid.getp(start).unwrap();
+    for_line_until(grid, start, offset, &mut |point, height| {
+        if height > &highest {
+            points.insert(point);
+            highest = *height;
+        }
+        return height < &9;
+    });
+}
+
+fn count_visible_from_treehouse(grid: &Grid, start: Point, offset: (isize, isize)) -> usize {
+    let treehouse_height = grid.getp(start).unwrap();
+    let mut count = 0;
+    for_line_until(grid, start, offset, &mut |point, height| {
+        count += 1;
+        return height < treehouse_height;
+    });
+    return count;
 }
 
 pub fn part1(input: String) -> usize {
@@ -54,28 +69,45 @@ pub fn part1(input: String) -> usize {
     for x in 0..grid.width {
         let north = Point::new(x, 0);
         visible.insert(north);
-        find_visible(&grid, &mut visible, north, (0, 1));
+        find_visible_from_edge(&grid, &mut visible, north, (0, 1));
 
         let south = Point::new(x, grid.height - 1);
         visible.insert(south);
-        find_visible(&grid, &mut visible, south, (0, -1));
+        find_visible_from_edge(&grid, &mut visible, south, (0, -1));
     }
 
     for y in 0..grid.height {
         let west = Point::new(0, y);
         visible.insert(west);
-        find_visible(&grid, &mut visible, west, (1, 0));
+        find_visible_from_edge(&grid, &mut visible, west, (1, 0));
 
         let east = Point::new(grid.width - 1, y);
         visible.insert(east);
-        find_visible(&grid, &mut visible, east, (-1, 0));
+        find_visible_from_edge(&grid, &mut visible, east, (-1, 0));
     }
 
     return visible.len();
 }
 
+pub fn part2(input: String) -> usize {
+    let grid = parse_input(input);
+    return grid.by_cell().map(|(point, _)| {
+        let mut score = count_visible_from_treehouse(&grid, point, (0, 1));
+        if score > 0 {
+            score *= count_visible_from_treehouse(&grid, point, (0, -1));
+        }
+        if score > 0 {
+            score *= count_visible_from_treehouse(&grid, point, (1, 0));
+        }
+        if score > 0 {
+            score *= count_visible_from_treehouse(&grid, point, (-1, 0));
+        }
+        return score;
+    }).max().unwrap();
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -108,5 +140,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 21);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 8);
     }
 }
