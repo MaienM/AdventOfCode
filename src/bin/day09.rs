@@ -42,6 +42,15 @@ fn parse_input(input: String) -> Vec<Move> {
         .collect();
 }
 
+fn follow(follower: &Point, leader: &Point) -> Point {
+    let delta = *leader - *follower;
+    if delta.x.abs() > 1 || delta.y.abs() > 1 {
+        return *follower + Point::new(delta.x.clamp(-1, 1), delta.y.clamp(-1, 1));
+    } else {
+        return *follower;
+    }
+}
+
 pub fn part1(input: String) -> usize {
     let moves = parse_input(input);
     let mut head = Point::new(0, 0);
@@ -51,19 +60,32 @@ pub fn part1(input: String) -> usize {
     for mov in moves {
         for _ in 0..mov.distance {
             head += mov.direction;
-            let delta = head - tail;
-            if delta.x.abs() > 1 || delta.y.abs() > 1 {
-                tail += Point::new(delta.x.clamp(-1, 1), delta.y.clamp(-1, 1));
-                visited.insert(tail);
-            }
+            tail = follow(&tail, &head);
+            visited.insert(tail);
         }
     }
-    println!("{:#?}", visited);
+    return visited.len();
+}
+
+pub fn part2(input: String) -> usize {
+    let moves = parse_input(input);
+    let mut chain = [Point::new(0, 0); 10];
+    let mut visited = HashSet::<Point>::new();
+    visited.insert(chain[9]);
+    for mov in moves {
+        for _ in 0..mov.distance {
+            chain[0] += mov.direction;
+            for i in 1..=9 {
+                chain[i] = follow(&chain[i], &chain[i - 1]);
+            }
+            visited.insert(chain[9]);
+        }
+    }
     return visited.len();
 }
 
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -72,7 +94,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT_1: &'static str = "
         R 4
         U 4
         L 3
@@ -82,10 +104,20 @@ mod tests {
         L 5
         R 2
     ";
+    const EXAMPLE_INPUT_2: &'static str = "
+        R 5
+        U 8
+        L 8
+        D 3
+        R 17
+        D 10
+        L 25
+        U 20
+    ";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT_1.to_string());
         let expected = vec![
             Move::new(Direction::RIGHT, 4),
             Move::new(Direction::UP, 4),
@@ -101,6 +133,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 13);
+        assert_eq!(part1(EXAMPLE_INPUT_1.to_string()), 13);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT_2.to_string()), 36);
     }
 }
