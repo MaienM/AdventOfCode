@@ -1,3 +1,4 @@
+use std::ops::{Add, AddAssign, Sub, SubAssign};
 use std::slice::Iter;
 use std::{fmt::Debug, vec::IntoIter};
 
@@ -11,6 +12,40 @@ pub struct Point<T = usize> {
 impl<T: Debug> Debug for Point<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         return f.write_str(&format!("Point({:?}, {:?})", self.x, self.y));
+    }
+}
+impl<T: Add<T, Output = T>> Add for Point<T> {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self {
+        return Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        };
+    }
+}
+impl<T: Add<T, Output = T> + Copy> AddAssign for Point<T> {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        };
+    }
+}
+impl<T: Sub<T, Output = T>> Sub for Point<T> {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self {
+        return Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        };
+    }
+}
+impl<T: Sub<T, Output = T> + Copy> SubAssign for Point<T> {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        };
     }
 }
 
