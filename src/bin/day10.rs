@@ -55,8 +55,24 @@ pub fn part1(input: String) -> i16 {
     return signal;
 }
 
+pub fn part2(input: String) -> String {
+    let instructions = parse_input(input);
+    let mut output = "".to_string();
+    run_instructions(instructions, &mut |cycle, x| {
+        if ((cycle as i16 - 1) % 40 - x).abs() <= 1 {
+            output += "#";
+        } else {
+            output += ".";
+        }
+        if cycle % 40 == 0 {
+            output += "\n";
+        }
+    });
+    return output;
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -371,5 +387,21 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 13_140);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(
+            part2(EXAMPLE_INPUT.to_string()).trim(),
+            "
+##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....
+            "
+            .trim()
+        );
     }
 }
