@@ -1,14 +1,13 @@
 use aoc::runner::*;
-use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq)]
 enum Operation {
-    Add(u32),
-    Mul(u32),
+    Add(u64),
+    Mul(u64),
     Square,
 }
 impl Operation {
-    pub fn apply(&self, lhs: u32) -> u32 {
+    pub fn apply(&self, lhs: u64) -> u64 {
         return match self {
             Operation::Add(rhs) => lhs + rhs,
             Operation::Mul(rhs) => lhs * rhs,
@@ -19,9 +18,9 @@ impl Operation {
 
 #[derive(Debug, PartialEq, Eq)]
 struct Monkey {
-    items: Vec<u32>,
+    items: Vec<u64>,
     operation: Operation,
-    test: u32,
+    test: u64,
     targets: [usize; 2],
 }
 
@@ -85,14 +84,14 @@ fn parse_input(input: String) -> Vec<Monkey> {
         .collect();
 }
 
-fn do_round(monkeys: &mut Vec<Monkey>, counter: &mut Vec<u32>) {
-    let mut new_items: Vec<Vec<u32>> = (0..monkeys.len()).map(|_| Vec::new()).collect();
+fn do_round(monkeys: &mut Vec<Monkey>, counter: &mut Vec<u64>, therapy: &impl Fn(u64) -> u64) {
+    let mut new_items: Vec<Vec<u64>> = (0..monkeys.len()).map(|_| Vec::new()).collect();
     for (i, monkey) in monkeys.into_iter().enumerate() {
         new_items.push(Vec::new());
         let new = new_items.swap_remove(i);
 
         for item in monkey.items.iter().chain(new.iter()) {
-            let item = monkey.operation.apply(*item) / 3;
+            let item = therapy(monkey.operation.apply(*item));
             let test = item % monkey.test == 0;
             let target = monkey.targets[!test as usize];
             new_items[target].push(item);
@@ -104,18 +103,28 @@ fn do_round(monkeys: &mut Vec<Monkey>, counter: &mut Vec<u32>) {
     }
 }
 
-pub fn part1(input: String) -> u32 {
-    let mut monkeys = parse_input(input);
+fn monkey_business(monkeys: &mut Vec<Monkey>, rounds: usize, therapy: impl Fn(u64) -> u64) -> u64 {
     let mut counter = vec![0; monkeys.len()];
-    for _ in 0..20 {
-        do_round(&mut monkeys, &mut counter);
+    for _ in 0..rounds {
+        do_round(monkeys, &mut counter, &therapy);
     }
     counter.sort();
     return counter.pop().unwrap() * counter.pop().unwrap();
 }
 
+pub fn part1(input: String) -> u64 {
+    let mut monkeys = parse_input(input);
+    return monkey_business(&mut monkeys, 20, |worry| worry / 3);
+}
+
+pub fn part2(input: String) -> u64 {
+    let mut monkeys = parse_input(input);
+    let modulo = monkeys.iter().map(|m| m.test).reduce(|l, r| l * r).unwrap();
+    return monkey_business(&mut monkeys, 10_000, |worry| worry % modulo);
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -190,70 +199,71 @@ mod tests {
     fn example_do_round() {
         let mut monkeys = parse_input(EXAMPLE_INPUT.to_string());
         let mut counter = vec![0, 0, 0, 0];
+        let therapy = |worry| worry / 3;
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![20, 23, 27, 26]);
         assert_eq!(monkeys[1].items, vec![2080, 25, 167, 207, 401, 1046]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
         assert_eq!(counter, vec![2, 4, 3, 5]);
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![695, 10, 71, 135, 350]);
         assert_eq!(monkeys[1].items, vec![43, 49, 58, 55, 362]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![16, 18, 21, 20, 122]);
         assert_eq!(monkeys[1].items, vec![1468, 22, 150, 286, 739]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![491, 9, 52, 97, 248, 34]);
         assert_eq!(monkeys[1].items, vec![39, 45, 43, 258]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![15, 17, 16, 88, 1037]);
         assert_eq!(monkeys[1].items, vec![20, 110, 205, 524, 72]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![8, 70, 176, 26, 34]);
         assert_eq!(monkeys[1].items, vec![481, 32, 36, 186, 2190]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![162, 12, 14, 64, 732, 17]);
         assert_eq!(monkeys[1].items, vec![148, 372, 55, 72]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![51, 126, 20, 26, 136]);
         assert_eq!(monkeys[1].items, vec![343, 26, 30, 1546, 36]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![116, 10, 12, 517, 14]);
         assert_eq!(monkeys[1].items, vec![108, 267, 43, 55, 288]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
 
-        do_round(&mut monkeys, &mut counter);
+        do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![91, 16, 20, 98]);
         assert_eq!(monkeys[1].items, vec![481, 245, 22, 26, 1092, 30]);
         assert_eq!(monkeys[2].items, vec![]);
         assert_eq!(monkeys[3].items, vec![]);
 
         for _ in 0..5 {
-            do_round(&mut monkeys, &mut counter);
+            do_round(&mut monkeys, &mut counter, &therapy);
         }
         assert_eq!(monkeys[0].items, vec![83, 44, 8, 184, 9, 20, 26, 102]);
         assert_eq!(monkeys[1].items, vec![110, 36]);
@@ -261,7 +271,7 @@ mod tests {
         assert_eq!(monkeys[3].items, vec![]);
 
         for _ in 0..5 {
-            do_round(&mut monkeys, &mut counter);
+            do_round(&mut monkeys, &mut counter, &therapy);
         }
         assert_eq!(monkeys[0].items, vec![10, 12, 14, 26, 34]);
         assert_eq!(monkeys[1].items, vec![245, 93, 53, 199, 115]);
@@ -273,5 +283,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 10_605);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 2_713_310_158);
     }
 }
