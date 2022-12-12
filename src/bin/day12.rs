@@ -56,11 +56,15 @@ impl Ord for PartialPath {
     }
 }
 
-pub fn part1(input: String) -> u16 {
-    let (grid, start, end) = parse_input(input);
+fn pathfind(
+    grid: &Grid,
+    start: Point,
+    predicate_valid: fn(u8, u8) -> bool,
+    predicate_done: impl Fn(Point) -> bool,
+) -> u16 {
     let mut visited: HashSet<Point> = HashSet::new();
     let mut paths: BinaryHeap<PartialPath> = BinaryHeap::new();
-    paths.push(PartialPath::new(0, 0, start));
+    paths.push(PartialPath::new(0, *grid.getp(start).unwrap(), start));
     loop {
         let current = paths.pop().unwrap();
         for point in grid.neighbours(current.point, false) {
@@ -69,8 +73,8 @@ pub fn part1(input: String) -> u16 {
             }
 
             let height = *grid.getp(point).unwrap();
-            if height <= current.height + 1 {
-                if point == end {
+            if predicate_valid(height, current.height) {
+                if predicate_done(point) {
                     return current.steps + 1;
                 }
 
@@ -81,8 +85,28 @@ pub fn part1(input: String) -> u16 {
     }
 }
 
+pub fn part1(input: String) -> u16 {
+    let (grid, start, end) = parse_input(input);
+    return pathfind(
+        &grid,
+        start,
+        |height, current| height <= current + 1,
+        |point| point == end,
+    );
+}
+
+pub fn part2(input: String) -> u16 {
+    let (grid, _start, end) = parse_input(input);
+    return pathfind(
+        &grid,
+        end,
+        |height, current| current <= height + 1,
+        |point| grid.getp(point).unwrap() == &0,
+    );
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -119,5 +143,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 31);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 29);
     }
 }
