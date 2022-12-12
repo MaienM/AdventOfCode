@@ -1,0 +1,19 @@
+function! TestRun()
+	let l:fn = expand("%")
+	if l:fn =~ ".*/bin/.*\.rs"
+		let l:fn = expand("%:t:r")
+		call VimuxRunCommand("clear; cargo make --loglevel=error test-and-run-day " . l:fn)
+	else
+		call VimuxRunCommand("clear; cargo make --loglevel=error test-lib")
+	endif
+endfunction
+
+function! TestRunAll()
+	call VimuxRunCommand("clear; cargo make --loglevel=error run-all")
+endfunction
+
+augroup LVIMRC
+	au!
+	au BufEnter *.rs nnoremap <buffer> <leader>rt :call TestRun()<CR>
+	au BufEnter *.rs nnoremap <buffer> <leader>rT :call TestRunAll()<CR>
+augroup END
