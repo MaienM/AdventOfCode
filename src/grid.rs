@@ -192,6 +192,14 @@ impl<T> Grid<T> {
         });
     }
 
+    pub fn mut_by_cell<'a>(&'a mut self) -> impl Iterator<Item = GridCell<&'a mut T>> {
+        return self.items.iter_mut().enumerate().flat_map(|(y, row)| {
+            return row.iter_mut().enumerate().map(move |(x, value)| {
+                return (Point::new(x, y), value);
+            });
+        });
+    }
+
     pub fn by_cell<'a>(&'a self) -> impl Iterator<Item = GridCell<&'a T>> {
         return self.items.iter().enumerate().flat_map(|(y, row)| {
             return row.iter().enumerate().map(move |(x, value)| {
