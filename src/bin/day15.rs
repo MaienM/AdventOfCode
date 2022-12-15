@@ -1,7 +1,7 @@
 use aoc::grid::Point as BasePoint;
 use aoc::runner::*;
-use std::collections::HashSet;
-use std::ops::RangeInclusive;
+use std::iter;
+use std::ops::Range;
 
 type Point = BasePoint<isize>;
 
@@ -65,21 +65,45 @@ fn parse_input(input: String) -> Vec<Sensor> {
         .collect();
 }
 
+fn ranges_overlap(left: &Range<isize>, right: &Range<isize>) -> bool {
+    return left.contains(&right.start)
+        || left.contains(&right.end)
+        || right.contains(&left.start)
+        || right.contains(&left.end);
+}
+
 fn count_known_at_y(sensors: Vec<Sensor>, y: isize) -> usize {
-    // let relevant_sensors = sensors
-    //     .into_iter()
-    //     .filter(|sensor|  <= sensor.range);
-    let mut points: HashSet<isize> = HashSet::new();
+    let mut ranges: Vec<Range<isize>> = Vec::new();
     for sensor in sensors {
         let size = sensor.range - (sensor.point.y - y).abs();
         if size < 0 {
             continue;
         }
-        for x in (sensor.point.x - size)..(sensor.point.x + size) {
-            points.insert(x);
+
+        let mut range = (sensor.point.x - size)..(sensor.point.x + size);
+        let (overlapping, other): (Vec<Range<isize>>, Vec<Range<isize>>) =
+            ranges.into_iter().partition(|r| ranges_overlap(&range, r));
+        ranges = other;
+        if overlapping.len() > 0 {
+            // Range overlaps with one or more existing ranges, so merge them all into a single range.
+            let start = overlapping
+                .iter()
+                .chain(iter::once(&range))
+                .map(|r| r.start)
+                .min()
+                .unwrap();
+            let end = overlapping
+                .iter()
+                .chain(iter::once(&range))
+                .map(|r| r.end)
+                .max()
+                .unwrap();
+            range = start..end;
         }
+
+        ranges.push(range);
     }
-    return points.len();
+    return ranges.into_iter().map(|r| r.len()).sum();
 }
 
 pub fn part1(input: String) -> usize {
