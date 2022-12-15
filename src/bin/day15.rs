@@ -1,6 +1,7 @@
 use aoc::grid::Point as BasePoint;
 use aoc::runner::*;
 use std::collections::HashSet;
+use std::ops::RangeInclusive;
 
 type Point = BasePoint<isize>;
 
@@ -8,6 +9,10 @@ type Point = BasePoint<isize>;
 struct Sensor {
     point: Point,
     range: isize,
+}
+
+fn distance(left: &Point, right: &Point) -> isize {
+    return (left.x - right.x).abs() + (left.y - right.y).abs();
 }
 
 fn parse_input(input: String) -> Vec<Sensor> {
@@ -82,8 +87,41 @@ pub fn part1(input: String) -> usize {
     return count_known_at_y(sensors, 2_000_000);
 }
 
+fn get_beacon(sensors: &Vec<Sensor>, range: isize) -> Point {
+    for sensor in sensors {
+        // Consider all points that are _just_ outside the range of this sensor.
+        for x in (sensor.point.x - sensor.range - 1).max(0)
+            ..=(sensor.point.x + sensor.range + 1).min(range)
+        {
+            let yoffset = sensor.range - (sensor.point.x - x).abs() + 1;
+            let points = [
+                Point::new(x, sensor.point.y - yoffset),
+                Point::new(x, sensor.point.y + yoffset),
+            ];
+            'points: for point in points {
+                if point.y < 0 || point.y > range {
+                    continue;
+                }
+                for sensor in sensors {
+                    if distance(&sensor.point, &point) <= sensor.range {
+                        continue 'points;
+                    }
+                }
+                return point;
+            }
+        }
+    }
+    return Point::new(0, 0);
+}
+
+pub fn part2(input: String) -> usize {
+    let sensors = parse_input(input);
+    let point = get_beacon(&sensors, 4_000_000);
+    return (point.x * 4_000_000 + point.y) as usize;
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -177,5 +215,11 @@ mod tests {
     fn example_count_known_at_y() {
         let sensors = parse_input(EXAMPLE_INPUT.to_string());
         assert_eq!(count_known_at_y(sensors, 10), 26);
+    }
+
+    #[test]
+    fn example_get_beacon() {
+        let sensors = parse_input(EXAMPLE_INPUT.to_string());
+        assert_eq!(get_beacon(&sensors, 20), Point::new(14, 11));
     }
 }
