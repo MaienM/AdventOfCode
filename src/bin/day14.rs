@@ -1,7 +1,6 @@
 use aoc::grid::Point as BasePoint;
 use aoc::runner::*;
 use std::collections::HashSet;
-use std::ops::RangeInclusive;
 
 type Point = BasePoint<isize>;
 
@@ -46,39 +45,39 @@ fn parse_input(input: String) -> Points {
     return result;
 }
 
-fn sand_find_point(points: &Points, void_start: isize) -> Option<Point> {
-    let mut current = DROP_POINT;
-    'main: loop {
-        if &current.y >= &void_start {
-            return Option::None;
-        }
+#[derive(Debug, Eq, PartialEq)]
+enum Sand {
+    FellIntoVoid,
+    AtRest,
+}
 
-        for move_ in MOVES {
-            let new = current + move_;
-            if !points.contains(&new) {
-                current = new;
-                continue 'main;
+fn sand_fill(points: &mut Points, current: Point, void_start: isize) -> Sand {
+    if &current.y > &void_start {
+        return Sand::FellIntoVoid;
+    } else if points.contains(&current) {
+        return Sand::AtRest;
+    }
+    for move_ in MOVES {
+        let next = current + move_;
+        match sand_fill(points, next, void_start) {
+            Sand::FellIntoVoid => return Sand::FellIntoVoid,
+            Sand::AtRest => {
+                points.insert(next);
             }
         }
-
-        return Option::Some(current);
     }
+    return Sand::AtRest;
 }
 
 pub fn part1(input: String) -> usize {
     let mut points = parse_input(input);
     let void_start = points.iter().map(|p| p.y).max().unwrap();
     let size_start = points.len();
-    loop {
-        match sand_find_point(&points, void_start) {
-            Option::Some(point) => {
-                points.insert(point);
-            }
-            Option::None => {
-                return points.len() - size_start;
-            }
-        }
-    }
+    assert_eq!(
+        sand_fill(&mut points, DROP_POINT, void_start),
+        Sand::FellIntoVoid
+    );
+    return points.len() - size_start;
 }
 
 pub fn part2(input: String) -> usize {
@@ -88,17 +87,8 @@ pub fn part2(input: String) -> usize {
         points.insert(Point::new(x, floor));
     }
     let size_start = points.len();
-    loop {
-        match sand_find_point(&points, floor + 1) {
-            Option::Some(DROP_POINT) => {
-                return points.len() - size_start + 1;
-            }
-            Option::Some(point) => {
-                points.insert(point);
-            }
-            Option::None => panic!("Hit void, but no void should exist."),
-        }
-    }
+    assert_eq!(sand_fill(&mut points, DROP_POINT, floor + 1), Sand::AtRest);
+    return points.len() - size_start + 1;
 }
 
 fn main() {
