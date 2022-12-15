@@ -81,8 +81,28 @@ pub fn part1(input: String) -> usize {
     }
 }
 
+pub fn part2(input: String) -> usize {
+    let mut points = parse_input(input);
+    let floor = points.iter().map(|p| p.y).max().unwrap() + 2;
+    for x in -(floor + 1)..(floor + 1) {
+        points.insert(Point::new(x, floor));
+    }
+    let size_start = points.len();
+    loop {
+        match sand_find_point(&points, floor + 1) {
+            Option::Some(DROP_POINT) => {
+                return points.len() - size_start + 1;
+            }
+            Option::Some(point) => {
+                points.insert(point);
+            }
+            Option::None => panic!("Hit void, but no void should exist."),
+        }
+    }
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -127,5 +147,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 24);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 93);
     }
 }
