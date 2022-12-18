@@ -144,10 +144,10 @@ fn parse_input(input: String) -> Vec<Move> {
 }
 
 fn do_drop<'a>(
-    mut stone: Stone,
     top: usize,
     points: &mut HashSet<Point>,
     moveloop: &mut impl Iterator<Item = &'a Move>,
+    mut stone: Stone,
 ) -> usize {
     stone.offset(top + 1);
     stone = stone.apply(moveloop.next().unwrap());
@@ -184,7 +184,20 @@ fn do_drop<'a>(
     return top;
 }
 
-pub fn part1(input: String) -> usize {
+fn do_drops<'a>(
+    mut top: usize,
+    points: &mut HashSet<Point>,
+    moveloop: &mut impl Iterator<Item = &'a Move>,
+    stoneloop: &mut impl Iterator<Item = &'a Stone>,
+    drops: usize,
+) -> usize {
+    for _ in 0..drops {
+        top = do_drop(top, points, moveloop, stoneloop.next().unwrap().clone());
+    }
+    return top;
+}
+
+fn simulate(input: String, cycles: usize) -> (usize, HashSet<Point>) {
     let moves = parse_input(input);
     let stones = get_stones();
 
@@ -197,20 +210,64 @@ pub fn part1(input: String) -> usize {
         points.insert(Point::new(x, 0));
     }
 
-    for _ in 0..2022 {
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+    // Run a full cycles until we detect a stable loop.
+    let mut finished = 0;
+    let mut changes = Vec::new();
+    let mut loop_size = 0;
+    let mut change_per_loop = 0;
+    'findloop: while finished < cycles {
+        let drops = usize::min(cycles - finished, stones.len());
+        finished += drops;
+        let new_top = do_drops(top, &mut points, &mut moveloop, &mut stoneloop, drops);
+        changes.push(new_top - top);
+        top = new_top;
+
+        let cl = changes.len();
+        for len in 5..=(cl / 2) {
+            if changes[(cl - len)..cl] == changes[(cl - 2 * len)..(cl - len)] {
+                loop_size = stones.len() * len;
+                change_per_loop = changes[(cl - len)..cl].into_iter().sum();
+                println!(
+                    "Found loop with length {}, tower growing {} per iteration.",
+                    loop_size, change_per_loop
+                );
+                break 'findloop;
+            }
+        }
+    }
+    if cycles == finished {
+        return (top, points);
     }
 
-    return top;
+    // Figure out how many times the loop needs to be repeated.
+    let loops = (cycles - finished) / loop_size;
+    finished += loops * loop_size;
+
+    // Run the leftover cycles.
+    top = do_drops(
+        top,
+        &mut points,
+        &mut moveloop,
+        &mut stoneloop,
+        cycles - finished,
+    );
+
+    // Apply the loops to the height.
+    top += loops * change_per_loop;
+
+    return (top, points);
+}
+
+pub fn part1(input: String) -> usize {
+    return simulate(input, 2_022).0;
+}
+
+pub fn part2(input: String) -> usize {
+    return simulate(input, 1_000_000_000_000).0;
 }
 
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -275,26 +332,18 @@ mod tests {
     }
 
     #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 1_514_285_714_288);
+    }
+
+    #[test]
     fn example_do_drop() {
-        let moves = parse_input(EXAMPLE_INPUT.to_string());
-        let stones = get_stones();
-
-        let mut moveloop = moves.iter().cycle();
-        let mut stoneloop = stones.iter().cycle();
-
-        let mut points: HashSet<Point> = HashSet::new();
-        let mut top = 0;
+        let mut before = HashSet::new();
         for x in 0..7 {
-            points.insert(Point::new(x, 0));
+            before.insert(Point::new(x, 0));
         }
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 1);
         assert_eq!(top, 1);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -308,13 +357,8 @@ mod tests {
             .collect(),
         );
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let before = points;
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 2);
         assert_eq!(top, 4);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -329,13 +373,8 @@ mod tests {
             .collect(),
         );
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let before = points;
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 3);
         assert_eq!(top, 6);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -350,13 +389,8 @@ mod tests {
             .collect(),
         );
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let before = points;
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 4);
         assert_eq!(top, 7);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -370,13 +404,8 @@ mod tests {
             .collect(),
         );
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let before = points;
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 5);
         assert_eq!(top, 9);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -390,13 +419,8 @@ mod tests {
             .collect(),
         );
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let before = points;
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 6);
         assert_eq!(top, 10);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -410,13 +434,8 @@ mod tests {
             .collect(),
         );
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let before = points;
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 7);
         assert_eq!(top, 13);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -431,13 +450,8 @@ mod tests {
             .collect(),
         );
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let before = points;
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 8);
         assert_eq!(top, 15);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -452,13 +466,8 @@ mod tests {
             .collect(),
         );
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let before = points;
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 9);
         assert_eq!(top, 17);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -472,13 +481,8 @@ mod tests {
             .collect(),
         );
 
-        let before = points.clone();
-        top = do_drop(
-            stoneloop.next().unwrap().clone(),
-            top,
-            &mut points,
-            &mut moveloop,
-        );
+        let before = points;
+        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 10);
         assert_eq!(top, 17);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
