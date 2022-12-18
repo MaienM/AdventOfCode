@@ -1,8 +1,11 @@
 use aoc::counter::Counter;
 use aoc::runner::*;
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct Point(i8, i8, i8);
 impl Point {
     pub fn neighbours(&self) -> [Self; 6] {
@@ -14,6 +17,18 @@ impl Point {
             Point(self.0, self.1, self.2 + 1),
             Point(self.0, self.1, self.2 - 1),
         ];
+    }
+}
+impl Ord for Point {
+    fn cmp(&self, other: &Self) -> Ordering {
+        return (other.0.abs() + other.1.abs() + other.2.abs())
+            .cmp(&(self.0.abs() + self.1.abs() + self.2.abs()));
+    }
+}
+
+impl PartialOrd for Point {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -36,8 +51,32 @@ fn parse_input(input: String) -> Vec<Point> {
         .collect();
 }
 
-pub fn part1(input: String) -> usize {
-    let points = parse_input(input);
+enum Air {
+    Cooling(HashSet<Point>),
+    Bubble(HashSet<Point>),
+}
+
+fn check_air<'a>(point: &Point, points: &'a Vec<Point>) -> Air {
+    let mut paths = BinaryHeap::new();
+    let mut visited = HashSet::new();
+    paths.push(point.clone());
+    while !paths.is_empty() {
+        let point = paths.pop().unwrap();
+        if point == Point(0, 0, 0) {
+            return Air::Cooling(visited);
+        }
+        for neighbour in point.neighbours() {
+            if points.contains(&neighbour) || visited.contains(&neighbour) {
+                continue;
+            }
+            paths.push(neighbour.clone());
+            visited.insert(neighbour);
+        }
+    }
+    return Air::Bubble(visited);
+}
+
+fn get_counts(points: &Vec<Point>) -> HashMap<Point, u16> {
     let mut neighbour_counts = HashMap::new();
     for point in points.iter() {
         for neighbour in point.neighbours() {
@@ -47,11 +86,41 @@ pub fn part1(input: String) -> usize {
     for point in points.iter() {
         neighbour_counts.remove(point);
     }
+    return neighbour_counts;
+}
+
+pub fn part1(input: String) -> u16 {
+    let points = parse_input(input);
+    let neighbour_counts = get_counts(&points);
     return neighbour_counts.into_values().sum();
 }
 
+pub fn part2(input: String) -> u16 {
+    let points = parse_input(input);
+    let mut neighbour_counts = get_counts(&points);
+    let mut cooling = 0;
+    while !neighbour_counts.is_empty() {
+        let point = neighbour_counts.keys().next().unwrap().clone();
+        let count = neighbour_counts.remove(&point).unwrap();
+        match check_air(&point, &points) {
+            Air::Cooling(air_points) => {
+                cooling += count;
+                for air_point in air_points {
+                    cooling += neighbour_counts.remove(&air_point).unwrap_or(0);
+                }
+            }
+            Air::Bubble(bubble_points) => {
+                for bubble_point in bubble_points {
+                    neighbour_counts.remove(&bubble_point);
+                }
+            }
+        }
+    }
+    return cooling;
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -100,5 +169,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 64);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 58);
     }
 }
