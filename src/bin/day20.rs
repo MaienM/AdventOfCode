@@ -1,4 +1,5 @@
 use aoc::runner::*;
+use std::collections::VecDeque;
 
 fn parse_input(input: String) -> Vec<i64> {
     return input
@@ -11,7 +12,7 @@ fn parse_input(input: String) -> Vec<i64> {
 }
 
 fn mix(numbers: Vec<i64>, times: usize) -> Vec<i64> {
-    let mut mixing: Vec<(usize, i64)> = numbers.into_iter().enumerate().collect();
+    let mut mixing: VecDeque<(usize, i64)> = numbers.into_iter().enumerate().collect();
     let len = mixing.len();
     for _ in 0..times {
         for i in 0..len {
@@ -28,7 +29,7 @@ fn mix(numbers: Vec<i64>, times: usize) -> Vec<i64> {
             }
 
             if idx != new_idx {
-                let item = mixing.remove(idx as usize);
+                let item = mixing.remove(idx as usize).unwrap();
                 mixing.insert(new_idx as usize, item);
             }
         }
@@ -82,6 +83,18 @@ mod tests {
         4
     ";
 
+    fn zerofirst(mut numbers: Vec<i64>) -> Vec<i64> {
+        let idx = numbers
+            .iter()
+            .enumerate()
+            .find(|(_, n)| n == &&0)
+            .unwrap()
+            .0;
+        let mut zerofirst = numbers.split_off(idx);
+        zerofirst.append(&mut numbers);
+        return zerofirst;
+    }
+
     #[test]
     fn example_parse() {
         let actual = parse_input(EXAMPLE_INPUT.to_string());
@@ -90,9 +103,16 @@ mod tests {
     }
 
     #[test]
+    fn example_zerofirst() {
+        let actual = zerofirst(vec![1, 2, -3, 3, -2, 0, 4]);
+        let expected = vec![0, 4, 1, 2, -3, 3, -2];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn example_mix() {
-        let actual = mix(vec![1, 2, -3, 3, -2, 0, 4], 1);
-        let expected = vec![-2, 1, 2, -3, 4, 0, 3];
+        let actual = zerofirst(mix(vec![1, 2, -3, 3, -2, 0, 4], 1));
+        let expected = vec![0, 3, -2, 1, 2, -3, 4];
         assert_eq!(actual, expected);
     }
 
@@ -108,7 +128,7 @@ mod tests {
             3246356612,
         ];
         assert_eq!(
-            mix(start.clone(), 1),
+            zerofirst(mix(start.clone(), 1)),
             vec![
                 0,
                 -2434767459,
@@ -120,7 +140,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            mix(start.clone(), 2),
+            zerofirst(mix(start.clone(), 2)),
             vec![
                 0,
                 2434767459,
@@ -132,19 +152,19 @@ mod tests {
             ]
         );
         assert_eq!(
-            mix(start.clone(), 3),
+            zerofirst(mix(start.clone(), 3)),
             vec![
+                0,
+                811589153,
                 2434767459,
                 3246356612,
                 1623178306,
                 -1623178306,
                 -2434767459,
-                0,
-                811589153,
             ]
         );
         assert_eq!(
-            mix(start.clone(), 4),
+            zerofirst(mix(start.clone(), 4)),
             vec![
                 0,
                 1623178306,
@@ -156,7 +176,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            mix(start.clone(), 5),
+            zerofirst(mix(start.clone(), 5)),
             vec![
                 0,
                 811589153,
@@ -168,55 +188,55 @@ mod tests {
             ]
         );
         assert_eq!(
-            mix(start.clone(), 6),
+            zerofirst(mix(start.clone(), 6)),
             vec![
+                0,
                 811589153,
                 -1623178306,
                 3246356612,
                 -2434767459,
                 1623178306,
                 2434767459,
-                0,
             ]
         );
         assert_eq!(
-            mix(start.clone(), 7),
+            zerofirst(mix(start.clone(), 7)),
             vec![
-                3246356612,
                 0,
                 -2434767459,
                 2434767459,
                 1623178306,
                 -1623178306,
                 811589153,
+                3246356612,
             ]
         );
         assert_eq!(
-            mix(start.clone(), 8),
+            zerofirst(mix(start.clone(), 8)),
             vec![
-                -2434767459,
-                2434767459,
-                -1623178306,
                 0,
                 1623178306,
                 3246356612,
                 811589153,
+                -2434767459,
+                2434767459,
+                -1623178306,
             ]
         );
         assert_eq!(
-            mix(start.clone(), 9),
+            zerofirst(mix(start.clone(), 9)),
             vec![
+                0,
+                811589153,
                 1623178306,
                 -2434767459,
                 3246356612,
                 2434767459,
                 -1623178306,
-                0,
-                811589153,
             ]
         );
         assert_eq!(
-            mix(start.clone(), 10),
+            zerofirst(mix(start.clone(), 10)),
             vec![
                 0,
                 -2434767459,
