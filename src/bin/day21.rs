@@ -15,7 +15,7 @@ enum Job<'a> {
     Operation(&'a str, Operation, &'a str),
 }
 
-fn parse_input<'a>(input: &'a str) -> Vec<(&'a str, Job<'a>)> {
+fn parse_input<'a>(input: &'a str) -> HashMap<&'a str, Job<'a>> {
     return input
         .trim()
         .split("\n")
@@ -26,19 +26,17 @@ fn parse_input<'a>(input: &'a str) -> Vec<(&'a str, Job<'a>)> {
                 (Option::Some(num), Option::None, Option::None) => {
                     Job::Number(num.parse().unwrap())
                 }
-                (Option::Some(left), Option::Some(operation), Option::Some(right)) => {
-                    Job::Operation(
-                        left,
-                        match operation {
-                            "+" => Operation::Add,
-                            "-" => Operation::Rem,
-                            "*" => Operation::Mul,
-                            "/" => Operation::Div,
-                            _ => panic!(),
-                        },
-                        right,
-                    )
-                }
+                (Option::Some(lhs), Option::Some(operation), Option::Some(rhs)) => Job::Operation(
+                    lhs,
+                    match operation {
+                        "+" => Operation::Add,
+                        "-" => Operation::Rem,
+                        "*" => Operation::Mul,
+                        "/" => Operation::Div,
+                        _ => panic!(),
+                    },
+                    rhs,
+                ),
                 _ => panic!(),
             };
             return (name, job);
@@ -50,7 +48,8 @@ pub fn part1(input: String) -> u64 {
     let mut jobs = parse_input(input.as_str());
     let mut results: HashMap<&str, u64> = HashMap::new();
 
-    jobs.retain(|(name, job)| {
+    // Move all numbers to the results.
+    jobs.retain(|name, job| {
         match job {
             Job::Number(num) => {
                 results.insert(name, *num);
@@ -60,17 +59,18 @@ pub fn part1(input: String) -> u64 {
         };
     });
 
+    // Perform calcualtions until none are lhs.
     while !jobs.is_empty() {
-        jobs.retain(|(name, job)| match job {
-            Job::Operation(left, operation, right) => {
-                if results.contains_key(left) && results.contains_key(right) {
-                    let left = *results.get(left).unwrap();
-                    let right = *results.get(right).unwrap();
+        jobs.retain(|name, job| match job {
+            Job::Operation(lhs, operation, rhs) => {
+                if results.contains_key(lhs) && results.contains_key(rhs) {
+                    let lhs = *results.get(lhs).unwrap();
+                    let rhs = *results.get(rhs).unwrap();
                     let num = match operation {
-                        Operation::Add => left + right,
-                        Operation::Rem => left - right,
-                        Operation::Mul => left * right,
-                        Operation::Div => left / right,
+                        Operation::Add => lhs + rhs,
+                        Operation::Rem => lhs - rhs,
+                        Operation::Mul => lhs * rhs,
+                        Operation::Div => lhs / rhs,
                     };
                     results.insert(name, num);
                     return false;
@@ -84,8 +84,106 @@ pub fn part1(input: String) -> u64 {
     return *results.get("root").unwrap();
 }
 
+pub fn part2(input: String) -> u64 {
+    let mut jobs = parse_input(input.as_str());
+    let mut results: HashMap<&str, u64> = HashMap::new();
+
+    // Take out root and humn.
+    let root = jobs.remove(&"root").unwrap();
+    let humn = jobs.remove(&"humn").unwrap();
+
+    // Take out numbers.
+    jobs.retain(|name, job| {
+        match job {
+            Job::Number(num) => {
+                results.insert(name, *num);
+                return false;
+            }
+            _ => return true,
+        };
+    });
+
+    // Do all the calculations that can be done now.
+    loop {
+        let before = jobs.len();
+        jobs.retain(|name, job| match job {
+            Job::Operation(lhs, operation, rhs) => {
+                if results.contains_key(lhs) && results.contains_key(rhs) {
+                    let lhs = *results.get(lhs).unwrap();
+                    let rhs = *results.get(rhs).unwrap();
+                    let num = match operation {
+                        Operation::Add => lhs + rhs,
+                        Operation::Rem => lhs - rhs,
+                        Operation::Mul => lhs * rhs,
+                        Operation::Div => lhs / rhs,
+                    };
+                    results.insert(name, num);
+                    return false;
+                }
+                return true;
+            }
+            _ => panic!(),
+        });
+        if jobs.len() == before {
+            break;
+        }
+    }
+
+    // One of the inputs of root should be known. Set the other one to the same value and start
+    // working backwards.
+    jobs.insert("humn", humn);
+    let mut current = match root {
+        Job::Operation(lhs, _, rhs) => {
+            if results.contains_key(lhs) {
+                (*results.get(lhs).unwrap(), jobs.remove_entry(rhs).unwrap())
+            } else {
+                (*results.get(rhs).unwrap(), jobs.remove_entry(lhs).unwrap())
+            }
+        }
+        _ => panic!(),
+    };
+    println!("For root to be true {} == {}", current.1 .0, current.0);
+    loop {
+        current = match current {
+            (result, ("humn", _)) => {
+                return result;
+            }
+            (wanted_result, (name, Job::Operation(lhs, operation, rhs))) => {
+                match (results.get(lhs), operation, results.get(rhs)) {
+                    (Option::Some(lhs), Operation::Add, Option::None) => {
+                        (wanted_result - lhs, jobs.remove_entry(rhs).unwrap())
+                    }
+                    (Option::None, Operation::Add, Option::Some(rhs)) => {
+                        (wanted_result - rhs, jobs.remove_entry(lhs).unwrap())
+                    }
+                    (Option::Some(lhs), Operation::Rem, Option::None) => {
+                        (lhs - wanted_result, jobs.remove_entry(rhs).unwrap())
+                    }
+                    (Option::None, Operation::Rem, Option::Some(rhs)) => {
+                        (wanted_result + rhs, jobs.remove_entry(lhs).unwrap())
+                    }
+                    (Option::Some(lhs), Operation::Mul, Option::None) => {
+                        (wanted_result / lhs, jobs.remove_entry(rhs).unwrap())
+                    }
+                    (Option::None, Operation::Mul, Option::Some(rhs)) => {
+                        (wanted_result / rhs, jobs.remove_entry(lhs).unwrap())
+                    }
+                    (Option::Some(lhs), Operation::Div, Option::None) => {
+                        (lhs / wanted_result, jobs.remove_entry(rhs).unwrap())
+                    }
+                    (Option::None, Operation::Div, Option::Some(rhs)) => {
+                        (wanted_result * rhs, jobs.remove_entry(lhs).unwrap())
+                    }
+                    expr => panic!("{:?}", expr),
+                }
+            }
+            _ => panic!("{:?}", current),
+        };
+    }
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -115,7 +213,7 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(EXAMPLE_INPUT);
-        let mut expected = vec![
+        let expected = vec![
             ("root", Job::Operation("pppw", Operation::Add, "sjmn")),
             ("dbpl", Job::Number(5)),
             ("cczh", Job::Operation("sllz", Operation::Add, "lgvd")),
@@ -131,12 +229,19 @@ mod tests {
             ("lgvd", Job::Operation("ljgn", Operation::Mul, "ptdq")),
             ("drzm", Job::Operation("hmdt", Operation::Rem, "zczc")),
             ("hmdt", Job::Number(32)),
-        ];
+        ]
+        .into_iter()
+        .collect();
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 152);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 301);
     }
 }
