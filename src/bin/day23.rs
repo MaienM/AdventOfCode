@@ -152,8 +152,27 @@ pub fn part1(input: String) -> usize {
     return ((xmax - xmin + 1) * (ymax - ymin + 1)) as usize - state.elves.len();
 }
 
+pub fn part2(input: String) -> usize {
+    let elves = parse_input(input);
+    let mut prev = elves.clone();
+    let mut state = State {
+        elves,
+        directions: Vec::from(DIRECTIONS),
+    };
+    let mut round = 0;
+    loop {
+        round += 1;
+        cycle(&mut state);
+        if state.elves == prev {
+            return round;
+        }
+
+        prev = state.elves.clone();
+    }
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -582,5 +601,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 110);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 20);
     }
 }
