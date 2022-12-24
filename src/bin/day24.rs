@@ -32,6 +32,7 @@ impl Map {
     fn next_generation(&mut self) -> Generation {
         let mut generation = Generation::new();
         generation.insert(self.start);
+        generation.insert(self.end);
         for x in self.xrange.clone() {
             for y in self.yrange.clone() {
                 generation.insert(Point::new(x, y));
@@ -114,10 +115,9 @@ fn parse_input(input: String) -> Map {
     };
 }
 
-pub fn part1(input: String) -> usize {
-    let mut map = parse_input(input);
+fn navigate(map: &mut Map, start: &Point, end: &Point) -> usize {
     let mut points = HashSet::new();
-    points.insert(map.start);
+    points.insert(start.clone());
     let mut i = 0;
     loop {
         i += 1;
@@ -126,11 +126,11 @@ pub fn part1(input: String) -> usize {
         let mut oldpoints = HashSet::new();
         std::mem::swap(&mut points, &mut oldpoints);
         for point in oldpoints {
-            if point.x == map.end.x && point.y == map.end.y - 1 {
+            if point.x == end.x && (point.y as i8 - end.y as i8).abs() == 1 {
                 return i;
             }
 
-            if generation.contains(&point) || point.y == 0 {
+            if generation.contains(&point) {
                 points.insert(point);
             }
 
@@ -165,8 +165,24 @@ pub fn part1(input: String) -> usize {
     }
 }
 
+pub fn part1(input: String) -> usize {
+    let mut map = parse_input(input);
+    let start = map.start.clone();
+    let end = map.end.clone();
+    return navigate(&mut map, &start, &end);
+}
+
+pub fn part2(input: String) -> usize {
+    let mut map = parse_input(input);
+    let start = map.start.clone();
+    let end = map.end.clone();
+    return navigate(&mut map, &start, &end)
+        + navigate(&mut map, &end, &start)
+        + navigate(&mut map, &start, &end);
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -252,6 +268,7 @@ mod tests {
             map.next_generation(),
             hash_set![
                 map.start,
+                map.end,
                 Point::new(1, 1),
                 Point::new(4, 1),
                 Point::new(6, 1),
@@ -293,6 +310,7 @@ mod tests {
             map.next_generation(),
             hash_set![
                 map.start,
+                map.end,
                 Point::new(1, 1),
                 Point::new(5, 1),
                 Point::new(6, 1),
@@ -334,6 +352,7 @@ mod tests {
             map.next_generation(),
             hash_set![
                 map.start,
+                map.end,
                 Point::new(6, 1),
                 Point::new(1, 2),
                 Point::new(4, 2),
@@ -375,5 +394,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 18);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 54);
     }
 }
