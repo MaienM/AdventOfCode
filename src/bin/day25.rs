@@ -39,8 +39,12 @@ pub fn part1(input: String) -> String {
     return to_snafu(numbers.sum());
 }
 
+pub fn part2(_input: String) -> &'static str {
+    return "I did it!";
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -80,7 +84,7 @@ mod tests {
         (20, "1-0"),
         (2022, "1=11-2"),
         (12345, "1-0---0"),
-        (314159265, "1121-1110-1=0"), 
+        (314159265, "1121-1110-1=0"),
     ];
 
     #[test]
@@ -100,5 +104,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), "2=-1=0");
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), "I did it!");
     }
 }
