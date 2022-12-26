@@ -3,7 +3,6 @@ use std::iter::Peekable;
 use std::vec::IntoIter;
 
 use aoc::runner::*;
-use common_macros::hash_map;
 
 type Listing<'a> = HashMap<&'a str, Entry<'a>>;
 
@@ -122,6 +121,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use common_macros::hash_map;
     use pretty_assertions::assert_eq;
 
     use super::*;

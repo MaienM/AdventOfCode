@@ -1,7 +1,8 @@
-use aoc::grid::Point as BasePoint;
-use aoc::runner::*;
 use std::iter;
 use std::ops::Range;
+
+use aoc::grid::Point as BasePoint;
+use aoc::runner::*;
 
 type Point = BasePoint<isize>;
 

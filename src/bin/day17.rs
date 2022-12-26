@@ -1,6 +1,7 @@
+use std::collections::HashSet;
+
 use aoc::grid::Point;
 use aoc::runner::*;
-use std::collections::HashSet;
 
 #[derive(Clone, Debug)]
 struct Stone {
@@ -110,6 +111,7 @@ enum Move {
     Down,
 }
 
+#[allow(dead_code)]
 fn print_field(stone: &Stone, points: &HashSet<Point>, name: &str) {
     println!("== {} ==", name);
     for i in 0..stone.top {
@@ -227,10 +229,6 @@ fn simulate(input: String, cycles: usize) -> (usize, HashSet<Point>) {
             if changes[(cl - len)..cl] == changes[(cl - 2 * len)..(cl - len)] {
                 loop_size = stones.len() * len;
                 change_per_loop = changes[(cl - len)..cl].into_iter().sum();
-                println!(
-                    "Found loop with length {}, tower growing {} per iteration.",
-                    loop_size, change_per_loop
-                );
                 break 'findloop;
             }
         }

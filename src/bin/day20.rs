@@ -1,5 +1,6 @@
-use aoc::runner::*;
 use std::collections::VecDeque;
+
+use aoc::runner::*;
 
 fn parse_input(input: String) -> Vec<i64> {
     return input
