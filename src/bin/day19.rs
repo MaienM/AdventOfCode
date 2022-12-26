@@ -189,6 +189,7 @@ fn run_cycles(mut state: State, blueprint: &Blueprint) -> u16 {
 
     if !state.skipped.clay
         && state.robots.clay <= state.target.clay
+        && state.robots.ore + 2 >= state.target.ore
         && state.resources.can_make(&blueprint.clay)
     {
         state.skipped.clay = true;
@@ -200,6 +201,8 @@ fn run_cycles(mut state: State, blueprint: &Blueprint) -> u16 {
 
     if !state.skipped.obsidian
         && state.robots.obsidian <= state.target.obsidian
+        && state.robots.ore + 2 >= state.target.ore
+        && state.robots.clay + 2 >= state.target.clay
         && state.resources.can_make(&blueprint.obsidian)
     {
         state.skipped.obsidian = true;
@@ -216,9 +219,9 @@ fn run_cycles(mut state: State, blueprint: &Blueprint) -> u16 {
 
 fn calculate_geode_production(blueprint: &Blueprint, cycles: u16) -> u16 {
     let mut targets = Vec::new();
-    for ore in (1..8).rev() {
-        for clay in (1..8).rev() {
-            for obsidian in (1..8).rev() {
+    for ore in 1..7 {
+        for clay in 2..11 {
+            for obsidian in 2..11 {
                 targets.push(StateCounters {
                     ore,
                     clay,
@@ -257,8 +260,17 @@ pub fn part1(input: String) -> u16 {
     return result;
 }
 
+pub fn part2(input: String) -> u16 {
+    let blueprints = parse_input(input);
+    return blueprints
+        .iter()
+        .take(3)
+        .map(|blueprint| calculate_geode_production(blueprint, 32))
+        .product();
+}
+
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, part2);
 }
 
 #[cfg(test)]
@@ -325,7 +337,7 @@ mod tests {
     }
 
     #[test]
-    fn example_calculate_geode_production_1() {
+    fn example_calculate_geode_production_1_24() {
         let blueprint = Blueprint {
             ore: Cost {
                 ore: 4,
@@ -352,7 +364,7 @@ mod tests {
     }
 
     #[test]
-    fn example_calculate_geode_production_2() {
+    fn example_calculate_geode_production_2_24() {
         let blueprint = Blueprint {
             ore: Cost {
                 ore: 2,
@@ -378,8 +390,67 @@ mod tests {
         assert_eq!(calculate_geode_production(&blueprint, 24), 12);
     }
 
+    // #[test]
+    fn example_calculate_geode_production_1_32() {
+        let blueprint = Blueprint {
+            ore: Cost {
+                ore: 4,
+                clay: 0,
+                obsidian: 0,
+            },
+            clay: Cost {
+                ore: 2,
+                clay: 0,
+                obsidian: 0,
+            },
+            obsidian: Cost {
+                ore: 3,
+                clay: 14,
+                obsidian: 0,
+            },
+            geode: Cost {
+                ore: 2,
+                clay: 0,
+                obsidian: 7,
+            },
+        };
+        assert_eq!(calculate_geode_production(&blueprint, 32), 56);
+    }
+
+    // #[test]
+    fn example_calculate_geode_production_2_32() {
+        let blueprint = Blueprint {
+            ore: Cost {
+                ore: 2,
+                clay: 0,
+                obsidian: 0,
+            },
+            clay: Cost {
+                ore: 3,
+                clay: 0,
+                obsidian: 0,
+            },
+            obsidian: Cost {
+                ore: 3,
+                clay: 8,
+                obsidian: 0,
+            },
+            geode: Cost {
+                ore: 3,
+                clay: 0,
+                obsidian: 12,
+            },
+        };
+        assert_eq!(calculate_geode_production(&blueprint, 32), 62);
+    }
+
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT.to_string()), 33);
+    }
+
+    // #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 56 * 62);
     }
 }
