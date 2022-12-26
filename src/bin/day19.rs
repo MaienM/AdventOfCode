@@ -1,5 +1,6 @@
-use aoc::runner::*;
 use std::ops::{AddAssign, SubAssign};
+
+use aoc::runner::*;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Cost {

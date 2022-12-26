@@ -1,7 +1,8 @@
-use aoc::grid::Point;
-use aoc::runner::*;
 use std::collections::HashSet;
 use std::ops::{Add, Sub};
+
+use aoc::grid::Point;
+use aoc::runner::*;
 
 type BlockPoint = Point<isize>;
 

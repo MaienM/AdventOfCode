@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use aoc::runner::*;
 use aoc::grid::Grid as BaseGrid;
 use aoc::grid::Point;
+use aoc::runner::*;
 
-type Grid = BaseGrid<u8>; 
+type Grid = BaseGrid<u8>;
 
 fn parse_input(input: String) -> Grid {
     return input
@@ -21,22 +21,35 @@ fn parse_input(input: String) -> Grid {
         .into();
 }
 
-fn for_line_until(grid: &Grid, start: Point, offset: (isize, isize), predicate: &mut impl FnMut(Point, &u8) -> bool) {
+fn for_line_until(
+    grid: &Grid,
+    start: Point,
+    offset: (isize, isize),
+    predicate: &mut impl FnMut(Point, &u8) -> bool,
+) {
     let mut current = start;
     loop {
-        current = Point::new((current.x as isize + offset.0) as usize, (current.y as isize + offset.1) as usize);
+        current = Point::new(
+            (current.x as isize + offset.0) as usize,
+            (current.y as isize + offset.1) as usize,
+        );
         match grid.getp(current) {
             Some(height) => {
                 if !predicate(current, height) {
                     return;
                 }
-            },
+            }
             None => return,
         }
     }
 }
 
-fn find_visible_from_edge(grid: &Grid, points: &mut HashSet<Point>, start: Point, offset: (isize, isize)) {
+fn find_visible_from_edge(
+    grid: &Grid,
+    points: &mut HashSet<Point>,
+    start: Point,
+    offset: (isize, isize),
+) {
     let mut highest = *grid.getp(start).unwrap();
     for_line_until(grid, start, offset, &mut |point, height| {
         if height > &highest {
@@ -50,7 +63,7 @@ fn find_visible_from_edge(grid: &Grid, points: &mut HashSet<Point>, start: Point
 fn count_visible_from_treehouse(grid: &Grid, start: Point, offset: (isize, isize)) -> usize {
     let treehouse_height = grid.getp(start).unwrap();
     let mut count = 0;
-    for_line_until(grid, start, offset, &mut |point, height| {
+    for_line_until(grid, start, offset, &mut |_, height| {
         count += 1;
         return height < treehouse_height;
     });
@@ -91,19 +104,23 @@ pub fn part1(input: String) -> usize {
 
 pub fn part2(input: String) -> usize {
     let grid = parse_input(input);
-    return grid.by_cell().map(|(point, _)| {
-        let mut score = count_visible_from_treehouse(&grid, point, (0, 1));
-        if score > 0 {
-            score *= count_visible_from_treehouse(&grid, point, (0, -1));
-        }
-        if score > 0 {
-            score *= count_visible_from_treehouse(&grid, point, (1, 0));
-        }
-        if score > 0 {
-            score *= count_visible_from_treehouse(&grid, point, (-1, 0));
-        }
-        return score;
-    }).max().unwrap();
+    return grid
+        .by_cell()
+        .map(|(point, _)| {
+            let mut score = count_visible_from_treehouse(&grid, point, (0, 1));
+            if score > 0 {
+                score *= count_visible_from_treehouse(&grid, point, (0, -1));
+            }
+            if score > 0 {
+                score *= count_visible_from_treehouse(&grid, point, (1, 0));
+            }
+            if score > 0 {
+                score *= count_visible_from_treehouse(&grid, point, (-1, 0));
+            }
+            return score;
+        })
+        .max()
+        .unwrap();
 }
 
 fn main() {
@@ -133,7 +150,8 @@ mod tests {
             vec![6, 5, 3, 3, 2],
             vec![3, 3, 5, 4, 9],
             vec![3, 5, 3, 9, 0],
-        ].into();
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 

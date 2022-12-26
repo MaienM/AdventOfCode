@@ -1,6 +1,7 @@
+use std::collections::HashSet;
+
 use aoc::grid::Point as BasePoint;
 use aoc::runner::*;
-use std::collections::HashSet;
 
 type Point = BasePoint<isize>;
 

@@ -1,7 +1,8 @@
-use aoc::runner::*;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::collections::HashSet;
+
+use aoc::runner::*;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Valve<'a> {

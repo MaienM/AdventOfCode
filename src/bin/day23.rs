@@ -1,7 +1,7 @@
+use std::collections::HashSet;
+
 use aoc::grid::Point as BasePoint;
 use aoc::runner::*;
-use common_macros::hash_set;
-use std::collections::HashSet;
 
 type Point = BasePoint<isize>;
 
@@ -177,6 +177,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use common_macros::hash_set;
     use pretty_assertions::assert_eq;
 
     use super::*;

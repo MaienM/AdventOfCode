@@ -1,9 +1,8 @@
-use aoc::grid::Point as BasePoint;
-use aoc::runner::*;
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
 use std::collections::HashSet;
 use std::ops::Range;
+
+use aoc::grid::Point as BasePoint;
+use aoc::runner::*;
 
 type Point = BasePoint<u8>;
 

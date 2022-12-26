@@ -1,5 +1,6 @@
-use aoc::runner::*;
 use std::collections::HashMap;
+
+use aoc::runner::*;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Operation {
@@ -142,13 +143,12 @@ pub fn part2(input: String) -> u64 {
         }
         _ => panic!(),
     };
-    println!("For root to be true {} == {}", current.1 .0, current.0);
     loop {
         current = match current {
             (result, ("humn", _)) => {
                 return result;
             }
-            (wanted_result, (name, Job::Operation(lhs, operation, rhs))) => {
+            (wanted_result, (_, Job::Operation(lhs, operation, rhs))) => {
                 match (results.get(lhs), operation, results.get(rhs)) {
                     (Option::Some(lhs), Operation::Add, Option::None) => {
                         (wanted_result - lhs, jobs.remove_entry(rhs).unwrap())

@@ -1,10 +1,11 @@
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
+use std::collections::HashSet;
+
 use aoc::grid::Grid as BaseGrid;
 use aoc::grid::Point;
 use aoc::runner::*;
 use derive_new::new;
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
-use std::collections::HashSet;
 
 type Grid = BaseGrid<u8>;
 

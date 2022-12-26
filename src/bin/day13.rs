@@ -1,5 +1,6 @@
-use aoc::runner::*;
 use std::cmp::Ordering;
+
+use aoc::runner::*;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum Item {

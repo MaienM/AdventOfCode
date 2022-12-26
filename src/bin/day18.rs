@@ -1,9 +1,10 @@
-use aoc::counter::Counter;
-use aoc::runner::*;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::collections::HashSet;
+
+use aoc::counter::Counter;
+use aoc::runner::*;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct Point(i8, i8, i8);
