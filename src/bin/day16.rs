@@ -1,9 +1,6 @@
-use std::cmp::Reverse;
-use std::collections::BinaryHeap;
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
-use aoc::runner::*;
+use aoc::runner::run;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Valve<'a> {
@@ -13,12 +10,12 @@ struct Valve<'a> {
 
 type Valves<'a> = HashMap<&'a str, Valve<'a>>;
 
-fn parse_input<'a>(input: &'a str) -> Valves<'a> {
+fn parse_input(input: &str) -> Valves {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(|line| {
-            let mut parts = line.trim().splitn(10, " ");
+            let mut parts = line.trim().splitn(10, ' ');
             let name = parts.nth(1).unwrap();
             let flow = parts
                 .nth(2)
@@ -30,7 +27,7 @@ fn parse_input<'a>(input: &'a str) -> Valves<'a> {
                 .parse()
                 .unwrap();
             let tunnels = parts.nth(4).unwrap().split(", ").collect();
-            return (name, Valve { flow, tunnels });
+            (name, Valve { flow, tunnels })
         })
         .collect();
 }
@@ -50,7 +47,7 @@ fn find_path<'a>(valves: &Valves<'a>, start: &'a str, target: &'a str) -> u16 {
         let (cost, current) = paths.pop().unwrap();
         let valve = &valves[current];
         let cost = cost - 1;
-        for tunneltarget in valve.tunnels.iter() {
+        for tunneltarget in &valve.tunnels {
             if &target == tunneltarget {
                 return 100 - cost;
             }
@@ -81,7 +78,7 @@ fn calculate_paths<'a>(valves: &Valves<'a>) -> ValvesWithPaths<'a> {
     }
 
     return valves
-        .into_iter()
+        .iter()
         .map(|(k, v)| {
             (
                 *k,
@@ -110,25 +107,25 @@ struct State<'a, const C: usize> {
 }
 impl<'a, const C: usize> State<'a, C> {
     pub fn is_done(&self) -> bool {
-        return self.closed.is_empty();
+        self.closed.is_empty()
     }
 
     pub fn is_dead(&self, gstate: &GlobalState) -> bool {
         let cycles_before_next_valve = self.actors.iter().map(|(_, d)| d).max().unwrap();
         let approx_best =
             self.total + (self.cycles - cycles_before_next_valve) * (gstate.max_flow - self.flow);
-        return approx_best <= gstate.best_so_far;
+        approx_best <= gstate.best_so_far
     }
 }
 
 fn start_actor_move<'a, const C: usize>(
-    gstate: &mut GlobalState<'a>,
+    global_state: &mut GlobalState<'a>,
     state: &mut State<'a, C>,
     idx: usize,
     destination: &'a str,
     distance: u16,
 ) {
-    let destination_valve = &gstate.valves[destination];
+    let destination_valve = &global_state.valves[destination];
     state.actors[idx] = (destination, distance);
     state.closed.remove(destination);
     state.flow += destination_valve.flow;
@@ -136,73 +133,70 @@ fn start_actor_move<'a, const C: usize>(
 }
 
 fn run_cycle_single_actor<'a, const C: usize>(
-    gstate: &mut GlobalState<'a>,
+    global_state: &mut GlobalState<'a>,
     mut state: State<'a, C>,
     idx: usize,
 ) {
     if idx >= C {
         state.cycles -= 1;
-        run_cycle_single_actor(gstate, state, 0);
+        run_cycle_single_actor(global_state, state, 0);
         return;
     }
 
-    match state.actors[idx] {
-        (valven, 0) => {
-            let valve = &gstate.valves[valven];
-            let destinations = state
-                .closed
-                .iter()
-                .map(|n| (n, valve.paths[*n]))
-                .map(|(n, d)| {
-                    let v = &gstate.valves[*n];
-                    let score = if state.cycles > d {
-                        (state.cycles - d) * v.flow / d
-                    } else {
-                        0
-                    };
-                    return (score, d, n);
-                })
-                .collect::<Vec<_>>();
-            // destinations.sort();
-            // println!("At {} {:?} {:?}", valven, destinations, valve.paths);
-            let top = *destinations.iter().map(|(s, _, _)| s).max().unwrap();
-            for (score, distance, destination) in destinations.into_iter() {
-                if score * 2 < top {
-                    continue;
-                }
-
-                // let distance = valve.paths[destination];
-                if distance >= state.cycles {
-                    gstate.best_so_far = u16::max(gstate.best_so_far, state.total);
-                    continue;
-                }
-
-                let mut state = state.clone();
-                start_actor_move(gstate, &mut state, idx, destination, distance);
-
-                if state.is_done() {
-                    gstate.best_so_far = u16::max(gstate.best_so_far, state.total);
-                    continue;
-                }
-                if state.is_dead(&gstate) {
-                    continue;
-                }
-
-                run_cycle_single_actor(gstate, state, idx + 1);
+    if let (valven, 0) = state.actors[idx] {
+        let valve = &global_state.valves[valven];
+        let destinations = state
+            .closed
+            .iter()
+            .map(|n| (n, valve.paths[*n]))
+            .map(|(n, d)| {
+                let v = &global_state.valves[*n];
+                let score = if state.cycles > d {
+                    (state.cycles - d) * v.flow / d
+                } else {
+                    0
+                };
+                (score, d, n)
+            })
+            .collect::<Vec<_>>();
+        // destinations.sort();
+        // println!("At {} {:?} {:?}", valven, destinations, valve.paths);
+        let top = *destinations.iter().map(|(s, _, _)| s).max().unwrap();
+        for (score, distance, destination) in destinations {
+            if score * 2 < top {
+                continue;
             }
+
+            // let distance = valve.paths[destination];
+            if distance >= state.cycles {
+                global_state.best_so_far = u16::max(global_state.best_so_far, state.total);
+                continue;
+            }
+
+            let mut state = state.clone();
+            start_actor_move(global_state, &mut state, idx, destination, distance);
+
+            if state.is_done() {
+                global_state.best_so_far = u16::max(global_state.best_so_far, state.total);
+                continue;
+            }
+            if state.is_dead(global_state) {
+                continue;
+            }
+
+            run_cycle_single_actor(global_state, state, idx + 1);
         }
-        _ => {
-            state.actors[idx].1 -= 1;
-            run_cycle_single_actor(gstate, state, idx + 1);
-        }
+    } else {
+        state.actors[idx].1 -= 1;
+        run_cycle_single_actor(global_state, state, idx + 1);
     };
 }
 
-fn run_cycles<'a, const C: usize>(valves: &Valves<'a>, cycles: u16) -> u16 {
+fn run_cycles<const C: usize>(valves: &Valves, cycles: u16) -> u16 {
     let state = State {
         actors: [("AA", 0); C],
         closed: valves
-            .into_iter()
+            .iter()
             .filter(|(_k, v)| v.flow > 0)
             .map(|(k, _v)| *k)
             .collect(),
@@ -210,7 +204,7 @@ fn run_cycles<'a, const C: usize>(valves: &Valves<'a>, cycles: u16) -> u16 {
         flow: 0,
         total: 0,
     };
-    let valves = calculate_paths(&valves);
+    let valves = calculate_paths(valves);
     let mut global_state = GlobalState {
         valves: &valves,
         max_flow: valves.values().map(|v| v.flow).sum(),
@@ -222,26 +216,26 @@ fn run_cycles<'a, const C: usize>(valves: &Valves<'a>, cycles: u16) -> u16 {
     // TODO:
 
     run_cycle_single_actor(&mut global_state, state, 0);
-    return global_state.best_so_far;
+    global_state.best_so_far
 }
 
+#[allow(dead_code)]
 fn dump_as_dot(valves: &Valves) {
-    use std::fs::File;
-    use std::io::Write;
+    use std::{fs::File, io::Write};
 
     let mut file = File::create("day16.dot").unwrap();
-    let with_paths = calculate_paths(&valves);
+    let _with_paths = calculate_paths(valves);
 
     writeln!(&mut file, "graph {{").unwrap();
-    for (s, v) in valves.iter() {
+    for (s, v) in valves {
         if v.flow > 0 {
             writeln!(&mut file, "  {0} [label=\"{0} {1}\",shape=box];", s, v.flow).unwrap();
         } else {
-            writeln!(&mut file, "  {0} [color=gray,fontcolor=gray];", s).unwrap();
+            writeln!(&mut file, "  {s} [color=gray,fontcolor=gray];").unwrap();
         }
-        for e in v.tunnels.iter() {
+        for e in &v.tunnels {
             if s < e {
-                writeln!(&mut file, "  {} -- {};", s, e).unwrap();
+                writeln!(&mut file, "  {s} -- {e};").unwrap();
             }
         }
         // if v.flow > 0 || s == &"AA" {
@@ -261,15 +255,15 @@ fn dump_as_dot(valves: &Valves) {
     writeln!(&mut file, "}}").unwrap();
 }
 
-pub fn part1(input: String) -> u16 {
-    let valves = parse_input(input.as_str());
+pub fn part1(input: &str) -> u16 {
+    let valves = parse_input(input);
     // dump_as_dot(&valves);
-    return run_cycles::<1>(&valves, 30);
+    run_cycles::<1>(&valves, 30)
 }
 
-pub fn part2(input: String) -> u16 {
-    let valves = parse_input(input.as_str());
-    return run_cycles::<2>(&valves, 26);
+pub fn part2(input: &str) -> u16 {
+    let valves = parse_input(input);
+    run_cycles::<2>(&valves, 26)
 }
 
 fn main() {
@@ -282,7 +276,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
         Valve BB has flow rate=13; tunnels lead to valves CC, AA
         Valve CC has flow rate=2; tunnels lead to valves DD, BB
@@ -372,13 +366,13 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
-    // #[test]
+    #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 1_651);
+        assert_eq!(part1(EXAMPLE_INPUT), 1_651);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 1_707);
+        assert_eq!(part2(EXAMPLE_INPUT), 1_707);
     }
 }

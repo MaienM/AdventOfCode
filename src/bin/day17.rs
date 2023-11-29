@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
-use aoc::grid::Point;
-use aoc::runner::*;
+use aoc::{grid::Point, runner::run};
 
 #[derive(Clone, Debug)]
 struct Stone {
@@ -48,7 +47,7 @@ impl Stone {
 
 fn get_stones() -> Vec<Stone> {
     // Stones are all aligned so that they are in the proper X position for dropping, and so that their bottom edge has y=0.
-    return vec![
+    vec![
         Stone {
             width: 4,
             top: 0,
@@ -101,7 +100,7 @@ fn get_stones() -> Vec<Stone> {
                 Point::new(3, 1),
             ],
         },
-    ];
+    ]
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -113,7 +112,7 @@ enum Move {
 
 #[allow(dead_code)]
 fn print_field(stone: &Stone, points: &HashSet<Point>, name: &str) {
-    println!("== {} ==", name);
+    println!("== {name} ==");
     for i in 0..stone.top {
         let y = stone.top - i;
         print!("|");
@@ -127,13 +126,13 @@ fn print_field(stone: &Stone, points: &HashSet<Point>, name: &str) {
                 print!(".");
             }
         }
-        print!("| {}\n", y);
+        println!("| {y}");
     }
     println!("+-------+");
     println!(" 0123456");
 }
 
-fn parse_input(input: String) -> Vec<Move> {
+fn parse_input(input: &str) -> Vec<Move> {
     return input
         .trim()
         .chars()
@@ -160,7 +159,7 @@ fn do_drop<'a>(
     'move_: loop {
         // Move down. If this fails the stone is done moving and we move to the next one.
         let after_gravity = stone.apply(&Move::Down);
-        for point in after_gravity.points.iter() {
+        for point in &after_gravity.points {
             if points.contains(point) {
                 break 'move_;
             }
@@ -168,7 +167,7 @@ fn do_drop<'a>(
 
         // Apply wind movement. If this fails the stone doesn't move, but it does continue to fall.
         let after_wind = after_gravity.apply(moveloop.next().unwrap());
-        for point in after_wind.points.iter() {
+        for point in &after_wind.points {
             if points.contains(point) {
                 stone = after_gravity;
                 continue 'move_;
@@ -183,7 +182,7 @@ fn do_drop<'a>(
         points.insert(p);
     });
 
-    return top;
+    top
 }
 
 fn do_drops<'a>(
@@ -196,10 +195,10 @@ fn do_drops<'a>(
     for _ in 0..drops {
         top = do_drop(top, points, moveloop, stoneloop.next().unwrap().clone());
     }
-    return top;
+    top
 }
 
-fn simulate(input: String, cycles: usize) -> (usize, HashSet<Point>) {
+fn simulate(input: &str, cycles: usize) -> (usize, HashSet<Point>) {
     let moves = parse_input(input);
     let stones = get_stones();
 
@@ -228,7 +227,7 @@ fn simulate(input: String, cycles: usize) -> (usize, HashSet<Point>) {
         for len in 5..=(cl / 2) {
             if changes[(cl - len)..cl] == changes[(cl - 2 * len)..(cl - len)] {
                 loop_size = stones.len() * len;
-                change_per_loop = changes[(cl - len)..cl].into_iter().sum();
+                change_per_loop = changes[(cl - len)..cl].iter().sum();
                 break 'findloop;
             }
         }
@@ -253,15 +252,15 @@ fn simulate(input: String, cycles: usize) -> (usize, HashSet<Point>) {
     // Apply the loops to the height.
     top += loops * change_per_loop;
 
-    return (top, points);
+    (top, points)
 }
 
-pub fn part1(input: String) -> usize {
-    return simulate(input, 2_022).0;
+pub fn part1(input: &str) -> usize {
+    simulate(input, 2_022).0
 }
 
-pub fn part2(input: String) -> usize {
-    return simulate(input, 1_000_000_000_000).0;
+pub fn part2(input: &str) -> usize {
+    simulate(input, 1_000_000_000_000).0
 }
 
 fn main() {
@@ -274,11 +273,11 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
+    const EXAMPLE_INPUT: &str = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             Move::Right,
             Move::Right,
@@ -326,41 +325,42 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 3_068);
+        assert_eq!(part1(EXAMPLE_INPUT), 3_068);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 1_514_285_714_288);
+        assert_eq!(part2(EXAMPLE_INPUT), 1_514_285_714_288);
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_do_drop() {
         let mut before = HashSet::new();
         for x in 0..7 {
             before.insert(Point::new(x, 0));
         }
 
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 1);
+        let (top, points) = simulate(EXAMPLE_INPUT, 1);
         assert_eq!(top, 1);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(2, 1),
                 Point::new(3, 1),
                 Point::new(4, 1),
-                Point::new(5, 1),
+                Point::new(5, 1)
             ]
             .iter()
             .collect(),
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 2);
+        let (top, points) = simulate(EXAMPLE_INPUT, 2);
         assert_eq!(top, 4);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(3, 2),
                 Point::new(2, 3),
                 Point::new(3, 3),
@@ -372,11 +372,11 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 3);
+        let (top, points) = simulate(EXAMPLE_INPUT, 3);
         assert_eq!(top, 6);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(0, 4),
                 Point::new(1, 4),
                 Point::new(2, 4),
@@ -388,11 +388,11 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 4);
+        let (top, points) = simulate(EXAMPLE_INPUT, 4);
         assert_eq!(top, 7);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(4, 4),
                 Point::new(4, 5),
                 Point::new(4, 6),
@@ -403,11 +403,11 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 5);
+        let (top, points) = simulate(EXAMPLE_INPUT, 5);
         assert_eq!(top, 9);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(4, 8),
                 Point::new(5, 8),
                 Point::new(4, 9),
@@ -418,11 +418,11 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 6);
+        let (top, points) = simulate(EXAMPLE_INPUT, 6);
         assert_eq!(top, 10);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(1, 10),
                 Point::new(2, 10),
                 Point::new(3, 10),
@@ -433,11 +433,11 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 7);
+        let (top, points) = simulate(EXAMPLE_INPUT, 7);
         assert_eq!(top, 13);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(2, 11),
                 Point::new(1, 12),
                 Point::new(2, 12),
@@ -449,11 +449,11 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 8);
+        let (top, points) = simulate(EXAMPLE_INPUT, 8);
         assert_eq!(top, 15);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(3, 13),
                 Point::new(4, 13),
                 Point::new(5, 13),
@@ -465,11 +465,11 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 9);
+        let (top, points) = simulate(EXAMPLE_INPUT, 9);
         assert_eq!(top, 17);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(4, 14),
                 Point::new(4, 15),
                 Point::new(4, 16),
@@ -480,11 +480,11 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT.to_string(), 10);
+        let (top, points) = simulate(EXAMPLE_INPUT, 10);
         assert_eq!(top, 17);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
-            vec![
+            [
                 Point::new(0, 13),
                 Point::new(1, 13),
                 Point::new(0, 14),

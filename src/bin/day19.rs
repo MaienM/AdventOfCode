@@ -1,6 +1,6 @@
 use std::ops::{AddAssign, SubAssign};
 
-use aoc::runner::*;
+use aoc::runner::run;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Cost {
@@ -17,12 +17,12 @@ struct Blueprint {
     geode: Cost,
 }
 
-fn parse_input(input: String) -> Vec<Blueprint> {
+fn parse_input(input: &str) -> Vec<Blueprint> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(|line| {
-            let mut parts = line.trim().split(" ");
+            let mut parts = line.trim().split(' ');
             let ore = Cost {
                 ore: parts.nth(6).unwrap().parse().unwrap(),
                 clay: 0,
@@ -43,12 +43,12 @@ fn parse_input(input: String) -> Vec<Blueprint> {
                 clay: 0,
                 obsidian: parts.nth(2).unwrap().parse().unwrap(),
             };
-            return Blueprint {
+            Blueprint {
                 ore,
                 clay,
                 obsidian,
                 geode,
-            };
+            }
         })
         .collect();
 }
@@ -80,43 +80,43 @@ impl SubAssign<&Cost> for StateCounters {
 }
 impl StateCounters {
     fn can_make(&self, cost: &Cost) -> bool {
-        return self.ore >= cost.ore && self.clay >= cost.clay && self.obsidian >= cost.obsidian;
+        self.ore >= cost.ore && self.clay >= cost.clay && self.obsidian >= cost.obsidian
     }
 
     fn ore(ore: u16) -> Self {
-        return Self {
+        Self {
             ore,
             clay: 0,
             obsidian: 0,
             geode: 0,
-        };
+        }
     }
 
     fn clay(clay: u16) -> Self {
-        return Self {
+        Self {
             ore: 0,
             clay,
             obsidian: 0,
             geode: 0,
-        };
+        }
     }
 
     fn obsidian(obsidian: u16) -> Self {
-        return Self {
+        Self {
             ore: 0,
             clay: 0,
             obsidian,
             geode: 0,
-        };
+        }
     }
 
     fn geode(geode: u16) -> Self {
-        return Self {
+        Self {
             ore: 0,
             clay: 0,
             obsidian: 0,
             geode,
-        };
+        }
     }
 }
 
@@ -159,13 +159,10 @@ fn run_cycles(mut state: State, blueprint: &Blueprint) -> u16 {
         return state.resources.geode;
     }
 
-    match state.factory {
-        Option::Some(built) => {
-            state.robots += &built;
-            state.factory = Option::None;
-            state.skipped.clear();
-        }
-        _ => {}
+    if let Option::Some(built) = state.factory {
+        state.robots += &built;
+        state.factory = Option::None;
+        state.skipped.clear();
     }
 
     if state.resources.can_make(&blueprint.geode) {
@@ -185,7 +182,7 @@ fn run_cycles(mut state: State, blueprint: &Blueprint) -> u16 {
         let mut state = state.clone();
         state.build_robot(&blueprint.ore, StateCounters::ore(1));
         state.skipped.clear();
-        results.push(run_cycles(state, &blueprint));
+        results.push(run_cycles(state, blueprint));
     }
 
     if !state.skipped.clay
@@ -197,7 +194,7 @@ fn run_cycles(mut state: State, blueprint: &Blueprint) -> u16 {
 
         let mut state = state.clone();
         state.build_robot(&blueprint.clay, StateCounters::clay(1));
-        results.push(run_cycles(state, &blueprint));
+        results.push(run_cycles(state, blueprint));
     }
 
     if !state.skipped.obsidian
@@ -210,12 +207,12 @@ fn run_cycles(mut state: State, blueprint: &Blueprint) -> u16 {
 
         let mut state = state.clone();
         state.build_robot(&blueprint.obsidian, StateCounters::obsidian(1));
-        results.push(run_cycles(state, &blueprint));
+        results.push(run_cycles(state, blueprint));
     }
 
-    results.push(run_cycles(state, &blueprint));
+    results.push(run_cycles(state, blueprint));
 
-    return results.into_iter().max().unwrap();
+    results.into_iter().max().unwrap()
 }
 
 fn calculate_geode_production(blueprint: &Blueprint, cycles: u16) -> u16 {
@@ -233,7 +230,7 @@ fn calculate_geode_production(blueprint: &Blueprint, cycles: u16) -> u16 {
         }
     }
 
-    return targets
+    targets
         .into_iter()
         .map(|target| {
             run_cycles(
@@ -249,19 +246,19 @@ fn calculate_geode_production(blueprint: &Blueprint, cycles: u16) -> u16 {
             )
         })
         .max()
-        .unwrap();
+        .unwrap()
 }
 
-pub fn part1(input: String) -> u16 {
+pub fn part1(input: &str) -> u16 {
     let blueprints = parse_input(input);
     let mut result = 0;
     for (i, blueprint) in blueprints.iter().enumerate() {
         result += (i + 1) as u16 * calculate_geode_production(blueprint, 24);
     }
-    return result;
+    result
 }
 
-pub fn part2(input: String) -> u16 {
+pub fn part2(input: &str) -> u16 {
     let blueprints = parse_input(input);
     return blueprints
         .iter()
@@ -280,14 +277,14 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
         Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.
     ";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             Blueprint {
                 ore: Cost {
@@ -391,7 +388,7 @@ mod tests {
         assert_eq!(calculate_geode_production(&blueprint, 24), 12);
     }
 
-    // #[test]
+    #[test]
     fn example_calculate_geode_production_1_32() {
         let blueprint = Blueprint {
             ore: Cost {
@@ -418,7 +415,7 @@ mod tests {
         assert_eq!(calculate_geode_production(&blueprint, 32), 56);
     }
 
-    // #[test]
+    #[test]
     fn example_calculate_geode_production_2_32() {
         let blueprint = Blueprint {
             ore: Cost {
@@ -447,11 +444,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 33);
+        assert_eq!(part1(EXAMPLE_INPUT), 33);
     }
 
-    // #[test]
+    #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 56 * 62);
+        assert_eq!(part2(EXAMPLE_INPUT), 56 * 62);
     }
 }

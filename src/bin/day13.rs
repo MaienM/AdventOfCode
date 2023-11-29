@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use aoc::runner::*;
+use aoc::runner::run;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum Item {
@@ -36,23 +36,23 @@ fn parse_line(line: &str) -> Item {
             '0'..='9' => {
                 number = Option::Some(number.unwrap_or(0) * 10 + chr.to_digit(10).unwrap() as u8);
             }
-            _ => panic!("Unexpected character {}", chr),
+            _ => panic!("Unexpected character {chr}"),
         }
     }
-    return list.pop().unwrap();
+    list.pop().unwrap()
 }
 
-fn parse_input(input: String) -> Vec<(Item, Item)> {
+fn parse_input(input: &str) -> Vec<(Item, Item)> {
     return input
         .trim()
         .split("\n\n")
         .map(str::trim)
         .map(|block| {
-            let mut lines = block.split("\n");
+            let mut lines = block.split('\n');
             let left = parse_line(lines.next().unwrap().trim());
             let right = parse_line(lines.next().unwrap().trim());
             assert!(lines.next().is_none());
-            return (left, right);
+            (left, right)
         })
         .collect();
 }
@@ -60,35 +60,23 @@ fn parse_input(input: String) -> Vec<(Item, Item)> {
 fn compare(left: &Item, right: &Item) -> Ordering {
     match (left, right) {
         (Item::List(left), Item::List(right)) => {
-            let llen = left.len();
-            let rlen = right.len();
-            for (l, r) in left.into_iter().zip(right.into_iter()) {
+            let len_left = left.len();
+            let len_right = right.len();
+            for (l, r) in left.iter().zip(right.iter()) {
                 let result = compare(l, r);
                 if result.is_ne() {
                     return result;
                 }
             }
-            return compare(&Item::Number(llen as u8), &Item::Number(rlen as u8));
+            len_left.cmp(&len_right)
         }
-        (Item::Number(_), Item::List(_)) => {
-            return compare(&Item::List(vec![left.clone()]), right);
-        }
-        (Item::List(_), Item::Number(_)) => {
-            return compare(left, &Item::List(vec![right.clone()]));
-        }
-        (Item::Number(left), Item::Number(right)) => {
-            if left < right {
-                return Ordering::Less;
-            } else if left == right {
-                return Ordering::Equal;
-            } else {
-                return Ordering::Greater;
-            }
-        }
-    };
+        (Item::Number(_), Item::List(_)) => compare(&Item::List(vec![left.clone()]), right),
+        (Item::List(_), Item::Number(_)) => compare(left, &Item::List(vec![right.clone()])),
+        (Item::Number(left), Item::Number(right)) => left.cmp(right),
+    }
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let pairs = parse_input(input);
     let mut result = 0;
     for (i, (left, right)) in pairs.into_iter().enumerate() {
@@ -96,14 +84,13 @@ pub fn part1(input: String) -> usize {
             result += i + 1;
         }
     }
-    return result;
+    result
 }
 
-pub fn part2(input: String) -> usize {
+pub fn part2(input: &str) -> usize {
     let mut packets: Vec<Item> = parse_input(input)
         .into_iter()
-        .map(|p| [p.0, p.1])
-        .flatten()
+        .flat_map(|p| [p.0, p.1])
         .collect();
 
     let divider1 = parse_line("[[2]]");
@@ -111,7 +98,7 @@ pub fn part2(input: String) -> usize {
     packets.push(divider1.clone());
     packets.push(divider2.clone());
 
-    packets.sort_by(|l, r| compare(l, r));
+    packets.sort_by(compare);
 
     let mut idx1 = 0;
     for (i, packet) in packets.into_iter().enumerate() {
@@ -134,7 +121,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         [1,1,3,1,1]
         [1,1,5,1,1]
 
@@ -162,7 +149,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             (
                 Item::List(vec![
@@ -260,11 +247,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 13);
+        assert_eq!(part1(EXAMPLE_INPUT), 13);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 140);
+        assert_eq!(part2(EXAMPLE_INPUT), 140);
     }
 }

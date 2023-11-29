@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aoc::runner::*;
+use aoc::runner::run;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Operation {
@@ -16,12 +16,12 @@ enum Job<'a> {
     Operation(&'a str, Operation, &'a str),
 }
 
-fn parse_input<'a>(input: &'a str) -> HashMap<&'a str, Job<'a>> {
+fn parse_input(input: &str) -> HashMap<&str, Job> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(|line| {
-            let mut parts = line.trim().split(" ");
+            let mut parts = line.trim().split(' ');
             let name = parts.next().unwrap().strip_suffix(':').unwrap();
             let job = match (parts.next(), parts.next(), parts.next()) {
                 (Option::Some(num), Option::None, Option::None) => {
@@ -40,24 +40,22 @@ fn parse_input<'a>(input: &'a str) -> HashMap<&'a str, Job<'a>> {
                 ),
                 _ => panic!(),
             };
-            return (name, job);
+            (name, job)
         })
         .collect();
 }
 
-pub fn part1(input: String) -> u64 {
-    let mut jobs = parse_input(input.as_str());
+pub fn part1(input: &str) -> u64 {
+    let mut jobs = parse_input(input);
     let mut results: HashMap<&str, u64> = HashMap::new();
 
     // Move all numbers to the results.
-    jobs.retain(|name, job| {
-        match job {
-            Job::Number(num) => {
-                results.insert(name, *num);
-                return false;
-            }
-            _ => return true,
-        };
+    jobs.retain(|name, job| match job {
+        Job::Number(num) => {
+            results.insert(name, *num);
+            false
+        }
+        Job::Operation(..) => true,
     });
 
     // Perform calcualtions until none are lhs.
@@ -76,17 +74,17 @@ pub fn part1(input: String) -> u64 {
                     results.insert(name, num);
                     return false;
                 }
-                return true;
+                true
             }
-            _ => panic!(),
+            Job::Number(_) => panic!(),
         });
     }
 
     return *results.get("root").unwrap();
 }
 
-pub fn part2(input: String) -> u64 {
-    let mut jobs = parse_input(input.as_str());
+pub fn part2(input: &str) -> u64 {
+    let mut jobs = parse_input(input);
     let mut results: HashMap<&str, u64> = HashMap::new();
 
     // Take out root and humn.
@@ -94,14 +92,12 @@ pub fn part2(input: String) -> u64 {
     let humn = jobs.remove(&"humn").unwrap();
 
     // Take out numbers.
-    jobs.retain(|name, job| {
-        match job {
-            Job::Number(num) => {
-                results.insert(name, *num);
-                return false;
-            }
-            _ => return true,
-        };
+    jobs.retain(|name, job| match job {
+        Job::Number(num) => {
+            results.insert(name, *num);
+            false
+        }
+        Job::Operation(..) => true,
     });
 
     // Do all the calculations that can be done now.
@@ -121,9 +117,9 @@ pub fn part2(input: String) -> u64 {
                     results.insert(name, num);
                     return false;
                 }
-                return true;
+                true
             }
-            _ => panic!(),
+            Job::Number(_) => panic!(),
         });
         if jobs.len() == before {
             break;
@@ -141,7 +137,7 @@ pub fn part2(input: String) -> u64 {
                 (*results.get(rhs).unwrap(), jobs.remove_entry(lhs).unwrap())
             }
         }
-        _ => panic!(),
+        Job::Number(_) => panic!(),
     };
     loop {
         current = match current {
@@ -174,10 +170,10 @@ pub fn part2(input: String) -> u64 {
                     (Option::None, Operation::Div, Option::Some(rhs)) => {
                         (wanted_result * rhs, jobs.remove_entry(lhs).unwrap())
                     }
-                    expr => panic!("{:?}", expr),
+                    expr => panic!("{expr:?}"),
                 }
             }
-            _ => panic!("{:?}", current),
+            _ => panic!("{current:?}"),
         };
     }
 }
@@ -192,7 +188,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         root: pppw + sjmn
         dbpl: 5
         cczh: sllz + lgvd
@@ -237,11 +233,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 152);
+        assert_eq!(part1(EXAMPLE_INPUT), 152);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 301);
+        assert_eq!(part2(EXAMPLE_INPUT), 301);
     }
 }

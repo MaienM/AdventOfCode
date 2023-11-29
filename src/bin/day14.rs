@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
-use aoc::grid::Point as BasePoint;
-use aoc::runner::*;
+use aoc::{grid::Point as BasePoint, runner::run};
 
 type Point = BasePoint<isize>;
 
@@ -30,12 +29,12 @@ fn collect_points_on_line(points: &mut Points, start: Point, end: Point) {
     }
 }
 
-fn parse_input(input: String) -> Points {
+fn parse_input(input: &str) -> Points {
     let mut result = Points::new();
-    for line in input.trim().split("\n") {
+    for line in input.trim().split('\n') {
         let mut points = line.trim().split(" -> ").map(|part| {
-            let mut parts = part.splitn(2, ",").map(str::parse).map(Result::unwrap);
-            return Point::new(parts.next().unwrap(), parts.next().unwrap()) + OFFSET;
+            let mut parts = part.splitn(2, ',').map(str::parse).map(Result::unwrap);
+            Point::new(parts.next().unwrap(), parts.next().unwrap()) + OFFSET
         });
         let mut start = points.next().unwrap();
         for end in points {
@@ -43,7 +42,7 @@ fn parse_input(input: String) -> Points {
             start = end;
         }
     }
-    return result;
+    result
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -53,7 +52,7 @@ enum Sand {
 }
 
 fn sand_fill(points: &mut Points, current: Point, void_start: isize) -> Sand {
-    if &current.y > &void_start {
+    if current.y > void_start {
         return Sand::FellIntoVoid;
     } else if points.contains(&current) {
         return Sand::AtRest;
@@ -67,10 +66,10 @@ fn sand_fill(points: &mut Points, current: Point, void_start: isize) -> Sand {
             }
         }
     }
-    return Sand::AtRest;
+    Sand::AtRest
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let mut points = parse_input(input);
     let void_start = points.iter().map(|p| p.y).max().unwrap();
     let size_start = points.len();
@@ -78,18 +77,18 @@ pub fn part1(input: String) -> usize {
         sand_fill(&mut points, DROP_POINT, void_start),
         Sand::FellIntoVoid
     );
-    return points.len() - size_start;
+    points.len() - size_start
 }
 
-pub fn part2(input: String) -> usize {
+pub fn part2(input: &str) -> usize {
     let mut points = parse_input(input);
     let floor = points.iter().map(|p| p.y).max().unwrap() + 2;
-    for x in -(floor + 1)..(floor + 1) {
+    for x in -(floor + 1)..=floor {
         points.insert(Point::new(x, floor));
     }
     let size_start = points.len();
     assert_eq!(sand_fill(&mut points, DROP_POINT, floor + 1), Sand::AtRest);
-    return points.len() - size_start + 1;
+    points.len() - size_start + 1
 }
 
 fn main() {
@@ -102,14 +101,14 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         498,4 -> 498,6 -> 496,6
         503,4 -> 502,4 -> 502,9 -> 494,9
     ";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = Points::from([
             Point::new(-2, 4),
             Point::new(-2, 5),
@@ -137,11 +136,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 24);
+        assert_eq!(part1(EXAMPLE_INPUT), 24);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 93);
+        assert_eq!(part2(EXAMPLE_INPUT), 93);
     }
 }

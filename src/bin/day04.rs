@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use aoc::runner::*;
+use aoc::runner::run;
 
 type Range = RangeInclusive<i16>;
 
@@ -9,7 +9,7 @@ fn range_is_subset(left: &Range, right: &Range) -> bool {
 }
 
 fn range_is_subset_two_ways(left: &Range, right: &Range) -> bool {
-    return range_is_subset(left, right) || range_is_subset(right, left);
+    range_is_subset(left, right) || range_is_subset(right, left)
 }
 
 fn ranges_overlap(left: &Range, right: &Range) -> bool {
@@ -19,47 +19,46 @@ fn ranges_overlap(left: &Range, right: &Range) -> bool {
         || right.contains(left.end());
 }
 
-fn parse_input(input: String) -> Vec<(Range, Range)> {
+fn parse_input(input: &str) -> Vec<(Range, Range)> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(|line| {
             let [left, right]: [Range; 2] = line
                 .trim()
-                .splitn(2, ",")
-                .into_iter()
+                .splitn(2, ',')
                 .map(|part| {
                     let [lower, upper]: [i16; 2] = part
-                        .splitn(2, "-")
+                        .splitn(2, '-')
                         .map(str::parse)
                         .map(Result::unwrap)
                         .collect::<Vec<i16>>()
                         .try_into()
                         .unwrap();
-                    return lower..=upper;
+                    lower..=upper
                 })
                 .collect::<Vec<Range>>()
                 .try_into()
                 .unwrap();
-            return (left, right);
+            (left, right)
         })
         .collect();
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let pairs = parse_input(input);
-    return pairs
+    pairs
         .into_iter()
         .filter(|(left, right)| range_is_subset_two_ways(left, right))
-        .count();
+        .count()
 }
 
-pub fn part2(input: String) -> usize {
+pub fn part2(input: &str) -> usize {
     let pairs = parse_input(input);
-    return pairs
+    pairs
         .into_iter()
         .filter(|(left, right)| ranges_overlap(left, right))
-        .count();
+        .count()
 }
 
 fn main() {
@@ -72,7 +71,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         2-4,6-8
         2-3,4-5
         5-7,7-9
@@ -83,7 +82,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             (2..=4, 6..=8),
             (2..=3, 4..=5),
@@ -111,11 +110,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 2);
+        assert_eq!(part1(EXAMPLE_INPUT), 2);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 4);
+        assert_eq!(part2(EXAMPLE_INPUT), 4);
     }
 }

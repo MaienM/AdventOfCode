@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-use std::iter::Peekable;
-use std::vec::IntoIter;
+use std::{collections::HashMap, iter::Peekable, vec::IntoIter};
 
-use aoc::runner::*;
+use aoc::runner::run;
 
 type Listing<'a> = HashMap<&'a str, Entry<'a>>;
 
@@ -22,27 +20,23 @@ impl<'a> Entry<'a> {
 
 fn parse_input_lines<'a>(
     dir: &mut Listing<'a>,
-    mut lines: &mut Peekable<impl Iterator<Item = &'a str>>,
+    lines: &mut Peekable<impl Iterator<Item = &'a str>>,
 ) -> &'a str {
     loop {
         let line = lines.next();
         if line.is_none() {
             return "/";
         }
-        let mut parts = line.unwrap().split(" ");
+        let mut parts = line.unwrap().split(' ');
         match parts.nth(1).unwrap() {
             "cd" => match parts.next().unwrap() {
                 "/" => return "/",
                 ".." => return "..",
                 name => {
-                    // if !dir.contains_key(name) {
-                    //     dir.insert(name, Entry::Dir(HashMap::new()));
-                    // }
-                    let mut subdir = match dir.get_mut(name) {
-                        Some(Entry::Dir(listing)) => listing,
-                        _ => panic!(),
+                    let Some(Entry::Dir(subdir)) = dir.get_mut(name) else {
+                        panic!()
                     };
-                    match parse_input_lines(&mut subdir, &mut lines) {
+                    match parse_input_lines(subdir, lines) {
                         "/" => return "/",
                         ".." => continue,
                         _ => panic!(),
@@ -50,11 +44,11 @@ fn parse_input_lines<'a>(
                 }
             },
             "ls" => {
-                while lines.peek().filter(|l| !l.starts_with("$")).is_some() {
+                while lines.peek().filter(|l| !l.starts_with('$')).is_some() {
                     let [left, right]: [&'a str; 2] = lines
                         .next()
                         .unwrap()
-                        .splitn(2, " ")
+                        .splitn(2, ' ')
                         .collect::<Vec<&'a str>>()
                         .try_into()
                         .unwrap();
@@ -69,10 +63,10 @@ fn parse_input_lines<'a>(
     }
 }
 
-fn parse_input<'a>(input: &'a String) -> Entry {
+fn parse_input<'a>(input: &'a str) -> Entry {
     let mut lines: Peekable<IntoIter<&'a str>> = input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(str::trim)
         .collect::<Vec<&'a str>>()
         .into_iter()
@@ -85,34 +79,31 @@ fn parse_input<'a>(input: &'a String) -> Entry {
 }
 
 fn get_dir_sizes(matches: &mut Vec<usize>, entry: &Entry) {
-    match entry {
-        Entry::Dir(dir) => {
-            matches.push(entry.size());
-            for e in dir.values() {
-                get_dir_sizes(matches, e);
-            }
+    if let Entry::Dir(dir) = entry {
+        matches.push(entry.size());
+        for e in dir.values() {
+            get_dir_sizes(matches, e);
         }
-        _ => {}
     };
 }
 
-pub fn part1(input: String) -> usize {
-    let root = parse_input(&input);
+pub fn part1(input: &str) -> usize {
+    let root = parse_input(input);
     let mut sizes = vec![];
     get_dir_sizes(&mut sizes, &root);
-    return sizes.into_iter().filter(|s| s <= &100_000).sum();
+    sizes.into_iter().filter(|s| s <= &100_000).sum()
 }
 
-pub fn part2(input: String) -> usize {
-    let root = parse_input(&input);
+pub fn part2(input: &str) -> usize {
+    let root = parse_input(input);
     let space_needed = 30_000_000 - (70_000_000 - root.size());
     let mut sizes = vec![];
     get_dir_sizes(&mut sizes, &root);
-    return sizes
+    sizes
         .into_iter()
         .filter(|s| s >= &space_needed)
         .min()
-        .unwrap();
+        .unwrap()
 }
 
 fn main() {
@@ -126,7 +117,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         $ cd /
         $ ls
         dir a
@@ -154,24 +145,24 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let input = EXAMPLE_INPUT.to_string();
-        let actual = parse_input(&input);
+        let input = EXAMPLE_INPUT;
+        let actual = parse_input(input);
         let expected = Entry::Dir(hash_map! {
             "a" => Entry::Dir(hash_map!{
                 "e" => Entry::Dir(hash_map!{
                     "i" => Entry::File(584),
                 }),
-                "f" => Entry::File(29116),
-                "g" => Entry::File(2557),
-                "h.lst" => Entry::File(62596),
+                "f" => Entry::File(29_116),
+                "g" => Entry::File(2_557),
+                "h.lst" => Entry::File(62_596),
             }),
-            "b.txt" => Entry::File(14848514),
-            "c.dat" => Entry::File(8504156),
+            "b.txt" => Entry::File(14_848_514),
+            "c.dat" => Entry::File(8_504_156),
             "d" => Entry::Dir(hash_map!{
-                "j" => Entry::File(4060174),
-                "d.log" => Entry::File(8033020),
-                "d.ext" => Entry::File(5626152),
-                "k" => Entry::File(7214296),
+                "j" => Entry::File(4_060_174),
+                "d.log" => Entry::File(8_033_020),
+                "d.ext" => Entry::File(5_626_152),
+                "k" => Entry::File(7_214_296),
             }),
         });
         assert_eq!(actual, expected);
@@ -179,11 +170,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 95_437);
+        assert_eq!(part1(EXAMPLE_INPUT), 95_437);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 24_933_642);
+        assert_eq!(part2(EXAMPLE_INPUT), 24_933_642);
     }
 }

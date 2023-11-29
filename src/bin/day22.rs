@@ -1,16 +1,17 @@
-use std::collections::HashSet;
-use std::ops::{Add, Sub};
+use std::{
+    collections::HashSet,
+    ops::{Add, Sub},
+};
 
-use aoc::grid::Point;
-use aoc::runner::*;
+use aoc::{grid::Point, runner::run};
 
 type BlockPoint = Point<isize>;
 
 fn get_block(point: &Point, block_size: usize) -> BlockPoint {
-    return BlockPoint::new(
+    BlockPoint::new(
         (point.x / block_size) as isize,
         (point.y / block_size) as isize,
-    );
+    )
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -41,7 +42,7 @@ enum Action {
 }
 type Actions = Vec<Action>;
 
-fn parse_input(input: String) -> (Grid, Actions) {
+fn parse_input(input: &str) -> (Grid, Actions) {
     let [grid, path]: [&str; 2] = input
         .splitn(2, "\n\n")
         .collect::<Vec<&str>>()
@@ -49,10 +50,10 @@ fn parse_input(input: String) -> (Grid, Actions) {
         .unwrap();
 
     let mut walls = HashSet::new();
-    let lines = grid.split("\n");
+    let lines = grid.split('\n');
     let block_size = lines.map(str::trim).map(str::len).min().unwrap();
     let mut blocks = HashSet::new();
-    for (y, line) in grid.split("\n").enumerate() {
+    for (y, line) in grid.split('\n').enumerate() {
         for (x, c) in line.char_indices() {
             if c == '#' {
                 let point = Point::new(x, y);
@@ -89,11 +90,11 @@ fn parse_input(input: String) -> (Grid, Actions) {
                     }
                 }
             }
-            _ => panic!("Invalid path char {:?}", c),
+            _ => panic!("Invalid path char {c:?}"),
         }
     }
 
-    return (grid, actions);
+    (grid, actions)
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -105,25 +106,25 @@ enum Rotation {
 }
 impl From<i16> for Rotation {
     fn from(value: i16) -> Self {
-        return match (value + 3600) % 360 {
+        match (value + 3600) % 360 {
             n if n == Rotation::Zero as i16 => Rotation::Zero,
             n if n == Rotation::Quarter as i16 => Rotation::Quarter,
             n if n == Rotation::Half as i16 => Rotation::Half,
             n if n == Rotation::ThreeQuarters as i16 => Rotation::ThreeQuarters,
-            n => panic!("Invalid rotation {}.", n),
-        };
+            n => panic!("Invalid rotation {n}."),
+        }
     }
 }
 impl Add for Rotation {
     type Output = Self;
     fn add(self, other: Self) -> Self {
-        return (self as i16 + other as i16).into();
+        (self as i16 + other as i16).into()
     }
 }
 impl Sub for Rotation {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
-        return (self as i16 - other as i16).into();
+        (self as i16 - other as i16).into()
     }
 }
 
@@ -137,13 +138,13 @@ enum Direction {
 impl Add<Rotation> for Direction {
     type Output = Self;
     fn add(self, other: Rotation) -> Self {
-        return match (self as u8 + (other as u16 / 90) as u8) % 4 {
+        match (self as u8 + (other as u16 / 90) as u8) % 4 {
             n if n == Direction::Up as u8 => Direction::Up,
             n if n == Direction::Down as u8 => Direction::Down,
             n if n == Direction::Left as u8 => Direction::Left,
             n if n == Direction::Right as u8 => Direction::Right,
             _ => panic!(),
-        };
+        }
     }
 }
 
@@ -199,7 +200,7 @@ impl State {
             .find(|(_, point)| point == &&block)
             .unwrap()
             .0;
-        return &self.directions[idx];
+        &self.directions[idx]
     }
 
     fn wrap(&self, point: Point, edge: &Edge) -> (Point, Direction) {
@@ -219,7 +220,7 @@ impl State {
 
         let direction = self.direction + edge.rotation;
 
-        return (point, direction);
+        (point, direction)
     }
 
     fn move_(&mut self) -> bool {
@@ -283,7 +284,7 @@ impl State {
             self.direction = nextdirection;
             return true;
         }
-        return false;
+        false
     }
 }
 
@@ -297,7 +298,7 @@ fn process(grid: Grid, actions: Actions, directions: Directions) -> usize {
     for action in actions {
         state.apply(&action);
     }
-    return (state.position.y + 1) * 1000 + (state.position.x + 1) * 4 + (state.direction as usize);
+    (state.position.y + 1) * 1000 + (state.position.x + 1) * 4 + (state.direction as usize)
 }
 
 fn map_faces_grid(grid: &Grid) -> Directions {
@@ -308,44 +309,40 @@ fn map_faces_grid(grid: &Grid) -> Directions {
             let top = if block.y > 0 && blocks.contains(&Point::new(block.x, block.y - 1)) {
                 BlockPoint::new(block.x, block.y - 1)
             } else {
-                blocks
+                *blocks
                     .iter()
                     .filter(|b| b.x == block.x)
                     .max_by_key(|b| b.y)
                     .unwrap()
-                    .clone()
             };
             let bottom = if blocks.contains(&BlockPoint::new(block.x, block.y + 1)) {
                 BlockPoint::new(block.x, block.y + 1)
             } else {
-                blocks
+                *blocks
                     .iter()
                     .filter(|b| b.x == block.x)
                     .min_by_key(|b| b.y)
                     .unwrap()
-                    .clone()
             };
             let left = if block.x > 0 && blocks.contains(&BlockPoint::new(block.x - 1, block.y)) {
                 BlockPoint::new(block.x - 1, block.y)
             } else {
-                blocks
+                *blocks
                     .iter()
                     .filter(|b| b.y == block.y)
                     .max_by_key(|b| b.x)
                     .unwrap()
-                    .clone()
             };
             let right = if blocks.contains(&BlockPoint::new(block.x + 1, block.y)) {
                 BlockPoint::new(block.x + 1, block.y)
             } else {
-                blocks
+                *blocks
                     .iter()
                     .filter(|b| b.y == block.y)
                     .min_by_key(|b| b.x)
                     .unwrap()
-                    .clone()
             };
-            return Face {
+            Face {
                 top: Edge {
                     block: top,
                     rotation: Rotation::Zero,
@@ -362,7 +359,7 @@ fn map_faces_grid(grid: &Grid) -> Directions {
                     block: right,
                     rotation: Rotation::Zero,
                 },
-            };
+            }
         })
         .collect::<Vec<Face>>()
         .try_into()
@@ -410,7 +407,7 @@ fn find_cube_edge(grid: &Grid, start: &BlockPoint, direction: Direction) -> Edge
             return Edge { block, rotation };
         }
     }
-    panic!("No results found for {:?} from {:?}.", direction, start);
+    panic!("No results found for {direction:?} from {start:?}.");
 }
 
 fn map_faces_cube(grid: &Grid) -> Directions {
@@ -423,28 +420,28 @@ fn map_faces_cube(grid: &Grid) -> Directions {
             let bottom = find_cube_edge(grid, block, Direction::Down);
             let left = find_cube_edge(grid, block, Direction::Left);
             let right = find_cube_edge(grid, block, Direction::Right);
-            return Face {
+            Face {
                 top,
                 bottom,
                 left,
                 right,
-            };
+            }
         })
         .collect::<Vec<Face>>()
         .try_into()
         .unwrap();
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let (grid, actions) = parse_input(input);
     let directions = map_faces_grid(&grid);
-    return process(grid, actions, directions);
+    process(grid, actions, directions)
 }
 
-pub fn part2(input: String) -> usize {
+pub fn part2(input: &str) -> usize {
     let (grid, actions) = parse_input(input);
     let directions = map_faces_cube(&grid);
-    return process(grid, actions, directions);
+    process(grid, actions, directions)
 }
 
 fn main() {
@@ -457,11 +454,11 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "        ...#\n        .#..\n        #...\n        ....\n...#.......#\n........#...\n..#....#....\n..........#.\n        ...#....\n        .....#..\n        .#......\n        ......#.\n\n10R5L5R10L4R5L5";
+    const EXAMPLE_INPUT: &str = "        ...#\n        .#..\n        #...\n        ....\n...#.......#\n........#...\n..#....#....\n..........#.\n        ...#....\n        .....#..\n        .#......\n        ......#.\n\n10R5L5R10L4R5L5";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let grid = Grid {
             walls: vec![
                 Point::new(11, 0),
@@ -509,6 +506,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_map_faces_grid() {
         let grid = Grid {
             walls: HashSet::new(),
@@ -643,6 +641,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_map_faces_cube() {
         let grid = Grid {
             walls: HashSet::new(),
@@ -778,11 +777,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 6_032);
+        assert_eq!(part1(EXAMPLE_INPUT), 6_032);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 5_031);
+        assert_eq!(part2(EXAMPLE_INPUT), 5_031);
     }
 }

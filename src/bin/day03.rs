@@ -1,51 +1,50 @@
 use std::collections::HashSet;
 
-use aoc::runner::*;
+use aoc::runner::run;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Rucksack(HashSet<char>, HashSet<char>);
 impl Rucksack {
-    fn contains(&self, chr: &char) -> bool {
-        return self.0.contains(chr) || self.1.contains(chr);
+    fn contains(&self, chr: char) -> bool {
+        self.0.contains(&chr) || self.1.contains(&chr)
     }
 }
 
 fn get_priority(chr: char) -> u16 {
-    return (chr as u16 - 38) % 58;
+    (chr as u16 - 38) % 58
 }
 
-fn parse_input(input: String) -> Vec<Rucksack> {
+fn parse_input(input: &str) -> Vec<Rucksack> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(str::trim)
         .map(|line| {
             let size = line.len();
-            let mut chars = line.chars().into_iter();
-            let left = HashSet::from_iter(chars.by_ref().take(size / 2));
-            let right = HashSet::from_iter(chars.by_ref());
-            return Rucksack(left, right);
+            let mut chars = line.chars();
+            let left = chars.by_ref().take(size / 2).collect::<HashSet<_>>();
+            let right = chars.by_ref().collect::<HashSet<_>>();
+            Rucksack(left, right)
         })
         .collect();
 }
 
-pub fn part1(input: String) -> u16 {
+pub fn part1(input: &str) -> u16 {
     let rucksacks = parse_input(input);
-    let commonalities: Vec<&char> = rucksacks
+    let commonalities = rucksacks
         .iter()
-        .map(|sack| sack.0.intersection(&sack.1).next().unwrap())
-        .collect();
-    return commonalities.into_iter().copied().map(get_priority).sum();
+        .map(|sack| sack.0.intersection(&sack.1).next().unwrap());
+    commonalities.into_iter().copied().map(get_priority).sum()
 }
 
-pub fn part2(input: String) -> u16 {
+pub fn part2(input: &str) -> u16 {
     let mut rucksacks = parse_input(input).into_iter();
     let mut sum = 0u16;
     loop {
         match (rucksacks.next(), rucksacks.next(), rucksacks.next()) {
             (Some(r1), Some(r2), Some(r3)) => {
                 let badge = (r1.0.union(&r1.1))
-                    .find(|item| r2.contains(item) && r3.contains(item))
+                    .find(|item| r2.contains(**item) && r3.contains(**item))
                     .unwrap();
                 sum += get_priority(*badge);
             }
@@ -65,7 +64,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         vJrwpWtwJgWrhcsFMMfFFhFp
         jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
         PmmdzqPrVvPwwTWBwg
@@ -76,7 +75,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             Rucksack(
                 HashSet::from(['g', 'J', 'p', 'r', 't', 'v', 'w', 'W']),
@@ -118,11 +117,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 157);
+        assert_eq!(part1(EXAMPLE_INPUT), 157);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 70);
+        assert_eq!(part2(EXAMPLE_INPUT), 70);
     }
 }

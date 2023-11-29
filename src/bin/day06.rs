@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
-use aoc::runner::*;
+use aoc::runner::run;
 
-fn find_marker(sequence: String, length: usize) -> usize {
-    for i in 0..(sequence.len() - length + 1) {
+fn find_marker(sequence: &str, length: usize) -> usize {
+    for i in 0..=(sequence.len() - length) {
         if sequence[i..(i + length)]
             .chars()
             .collect::<HashSet<char>>()
@@ -16,12 +16,12 @@ fn find_marker(sequence: String, length: usize) -> usize {
     panic!("Did not find marker.");
 }
 
-pub fn part1(input: String) -> usize {
-    return find_marker(input, 4);
+pub fn part1(input: &str) -> usize {
+    find_marker(input, 4)
 }
 
-pub fn part2(input: String) -> usize {
-    return find_marker(input, 14);
+pub fn part2(input: &str) -> usize {
+    find_marker(input, 14)
 }
 
 fn main() {
@@ -36,19 +36,19 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1("mjqjpqmgbljsphdztnvjfqwrcgsmlb".to_string()), 7);
-        assert_eq!(part1("bvwbjplbgvbhsrlpgdmjqwftvncz".to_string()), 5);
-        assert_eq!(part1("nppdvjthqldpwncqszvftbrmjlhg".to_string()), 6);
-        assert_eq!(part1("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg".to_string()), 10);
-        assert_eq!(part1("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw".to_string()), 11);
+        assert_eq!(part1("mjqjpqmgbljsphdztnvjfqwrcgsmlb"), 7);
+        assert_eq!(part1("bvwbjplbgvbhsrlpgdmjqwftvncz"), 5);
+        assert_eq!(part1("nppdvjthqldpwncqszvftbrmjlhg"), 6);
+        assert_eq!(part1("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"), 10);
+        assert_eq!(part1("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"), 11);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2("mjqjpqmgbljsphdztnvjfqwrcgsmlb".to_string()), 19);
-        assert_eq!(part2("bvwbjplbgvbhsrlpgdmjqwftvncz".to_string()), 23);
-        assert_eq!(part2("nppdvjthqldpwncqszvftbrmjlhg".to_string()), 23);
-        assert_eq!(part2("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg".to_string()), 29);
-        assert_eq!(part2("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw".to_string()), 26);
+        assert_eq!(part2("mjqjpqmgbljsphdztnvjfqwrcgsmlb"), 19);
+        assert_eq!(part2("bvwbjplbgvbhsrlpgdmjqwftvncz"), 23);
+        assert_eq!(part2("nppdvjthqldpwncqszvftbrmjlhg"), 23);
+        assert_eq!(part2("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"), 29);
+        assert_eq!(part2("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"), 26);
     }
 }
