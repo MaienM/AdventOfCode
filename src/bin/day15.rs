@@ -1,8 +1,6 @@
-use std::iter;
-use std::ops::Range;
+use std::{iter, ops::Range};
 
-use aoc::grid::Point as BasePoint;
-use aoc::runner::*;
+use aoc::{grid::Point as BasePoint, runner::run};
 
 type Point = BasePoint<isize>;
 
@@ -13,15 +11,15 @@ struct Sensor {
 }
 
 fn distance(left: &Point, right: &Point) -> isize {
-    return (left.x - right.x).abs() + (left.y - right.y).abs();
+    (left.x - right.x).abs() + (left.y - right.y).abs()
 }
 
-fn parse_input(input: String) -> Vec<Sensor> {
+fn parse_input(input: &str) -> Vec<Sensor> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(|line| {
-            let mut words = line.trim().split(" ");
+            let mut words = line.trim().split(' ');
 
             let x = words
                 .nth(2)
@@ -61,16 +59,16 @@ fn parse_input(input: String) -> Vec<Sensor> {
                 .unwrap();
             let range = (point.x - x).abs() + (point.y - y).abs();
 
-            return Sensor { point, range };
+            Sensor { point, range }
         })
         .collect();
 }
 
 fn ranges_overlap(left: &Range<isize>, right: &Range<isize>) -> bool {
-    return left.contains(&right.start)
+    left.contains(&right.start)
         || left.contains(&right.end)
         || right.contains(&left.start)
-        || right.contains(&left.end);
+        || right.contains(&left.end)
 }
 
 fn count_known_at_y(sensors: Vec<Sensor>, y: isize) -> usize {
@@ -85,7 +83,7 @@ fn count_known_at_y(sensors: Vec<Sensor>, y: isize) -> usize {
         let (overlapping, other): (Vec<Range<isize>>, Vec<Range<isize>>) =
             ranges.into_iter().partition(|r| ranges_overlap(&range, r));
         ranges = other;
-        if overlapping.len() > 0 {
+        if !overlapping.is_empty() {
             // Range overlaps with one or more existing ranges, so merge them all into a single range.
             let start = overlapping
                 .iter()
@@ -104,12 +102,12 @@ fn count_known_at_y(sensors: Vec<Sensor>, y: isize) -> usize {
 
         ranges.push(range);
     }
-    return ranges.into_iter().map(|r| r.len()).sum();
+    ranges.into_iter().map(|r| r.len()).sum()
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let sensors = parse_input(input);
-    return count_known_at_y(sensors, 2_000_000);
+    count_known_at_y(sensors, 2_000_000)
 }
 
 fn get_beacon(sensors: &Vec<Sensor>, range: isize) -> Point {
@@ -136,13 +134,13 @@ fn get_beacon(sensors: &Vec<Sensor>, range: isize) -> Point {
             }
         }
     }
-    return Point::new(0, 0);
+    Point::new(0, 0)
 }
 
-pub fn part2(input: String) -> usize {
+pub fn part2(input: &str) -> isize {
     let sensors = parse_input(input);
     let point = get_beacon(&sensors, 4_000_000);
-    return (point.x * 4_000_000 + point.y) as usize;
+    point.x * 4_000_000 + point.y
 }
 
 fn main() {
@@ -155,7 +153,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         Sensor at x=2, y=18: closest beacon is at x=-2, y=15
         Sensor at x=9, y=16: closest beacon is at x=10, y=16
         Sensor at x=13, y=2: closest beacon is at x=15, y=3
@@ -174,7 +172,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             Sensor {
                 point: Point::new(2, 18),
@@ -238,13 +236,13 @@ mod tests {
 
     #[test]
     fn example_count_known_at_y() {
-        let sensors = parse_input(EXAMPLE_INPUT.to_string());
+        let sensors = parse_input(EXAMPLE_INPUT);
         assert_eq!(count_known_at_y(sensors, 10), 26);
     }
 
     #[test]
     fn example_get_beacon() {
-        let sensors = parse_input(EXAMPLE_INPUT.to_string());
+        let sensors = parse_input(EXAMPLE_INPUT);
         assert_eq!(get_beacon(&sensors, 20), Point::new(14, 11));
     }
 }

@@ -3,7 +3,7 @@ pub mod grid;
 pub mod range;
 pub mod runner;
 
-pub fn parse_number_list(input: String, sep: &str) -> Vec<i32> {
+pub fn parse_number_list(input: &str, sep: &str) -> Vec<i32> {
     return input
         .trim()
         .split(sep)

@@ -1,14 +1,13 @@
 use std::collections::HashSet;
 
-use aoc::grid::Point as BasePoint;
-use aoc::runner::*;
+use aoc::{grid::Point as BasePoint, runner::run};
 
 type Point = BasePoint<isize>;
 
-fn parse_input(input: String) -> HashSet<Point> {
+fn parse_input(input: &str) -> HashSet<Point> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .enumerate()
         .flat_map(|(y, line)| {
             line.trim()
@@ -21,7 +20,7 @@ fn parse_input(input: String) -> HashSet<Point> {
 }
 
 fn neighbours(point: &Point) -> [Point; 8] {
-    return [
+    [
         Point::new(point.x - 1, point.y - 1),
         Point::new(point.x, point.y - 1),
         Point::new(point.x + 1, point.y - 1),
@@ -30,7 +29,7 @@ fn neighbours(point: &Point) -> [Point; 8] {
         Point::new(point.x, point.y + 1),
         Point::new(point.x - 1, point.y + 1),
         Point::new(point.x - 1, point.y),
-    ];
+    ]
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -42,7 +41,7 @@ enum Direction {
 }
 impl Direction {
     fn get_points(&self, point: &Point) -> [Point; 3] {
-        return match self {
+        match self {
             Direction::North => [
                 Point::new(point.x - 1, point.y - 1),
                 Point::new(point.x, point.y - 1),
@@ -63,7 +62,7 @@ impl Direction {
                 Point::new(point.x - 1, point.y),
                 Point::new(point.x - 1, point.y + 1),
             ],
-        };
+        }
     }
 }
 
@@ -88,7 +87,7 @@ fn cycle(state: &mut State) {
         .iter()
         .map(|start| {
             let mut has_neighbours = false;
-            for point in neighbours(&start) {
+            for point in neighbours(start) {
                 if state.elves.contains(&point) {
                     has_neighbours = true;
                     break;
@@ -98,7 +97,7 @@ fn cycle(state: &mut State) {
                 return (start, Option::None);
             }
 
-            'direction: for direction in state.directions.iter() {
+            'direction: for direction in &state.directions {
                 let points = direction.get_points(start);
                 for point in points {
                     if state.elves.contains(&point) {
@@ -112,21 +111,19 @@ fn cycle(state: &mut State) {
                 return (start, Option::Some(target));
             }
 
-            return (start, Option::None);
+            (start, Option::None)
         })
         .collect::<Vec<(&Point, Option<Point>)>>()
         .into_iter()
-        .map(|(start, target)| {
-            match target {
-                Option::Some(target) => {
-                    if twice.contains(&target) {
-                        return *start;
-                    } else {
-                        return target;
-                    }
+        .map(|(start, target)| match target {
+            Option::Some(target) => {
+                if twice.contains(&target) {
+                    *start
+                } else {
+                    target
                 }
-                Option::None => return *start,
-            };
+            }
+            Option::None => *start,
         })
         .collect();
 
@@ -134,7 +131,7 @@ fn cycle(state: &mut State) {
     state.directions.push(direction);
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let elves = parse_input(input);
     let mut state = State {
         elves,
@@ -144,15 +141,15 @@ pub fn part1(input: String) -> usize {
         cycle(&mut state);
     }
 
-    let xmin = state.elves.iter().map(|point| point.x).min().unwrap();
-    let xmax = state.elves.iter().map(|point| point.x).max().unwrap();
-    let ymin = state.elves.iter().map(|point| point.y).min().unwrap();
-    let ymax = state.elves.iter().map(|point| point.y).max().unwrap();
+    let x_min = state.elves.iter().map(|point| point.x).min().unwrap();
+    let x_max = state.elves.iter().map(|point| point.x).max().unwrap();
+    let y_min = state.elves.iter().map(|point| point.y).min().unwrap();
+    let y_max = state.elves.iter().map(|point| point.y).max().unwrap();
 
-    return ((xmax - xmin + 1) * (ymax - ymin + 1)) as usize - state.elves.len();
+    ((x_max - x_min + 1) * (y_max - y_min + 1)) as usize - state.elves.len()
 }
 
-pub fn part2(input: String) -> usize {
+pub fn part2(input: &str) -> usize {
     let elves = parse_input(input);
     let mut prev = elves.clone();
     let mut state = State {
@@ -182,7 +179,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT_SMALL: &'static str = "
+    const EXAMPLE_INPUT_SMALL: &str = "
         .....
         ..##.
         ..#..
@@ -191,7 +188,7 @@ mod tests {
         .....
     ";
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         ....#..
         ..###.#
         #...#.#
@@ -203,7 +200,7 @@ mod tests {
 
     #[test]
     fn example_parse_small() {
-        let actual = parse_input(EXAMPLE_INPUT_SMALL.to_string());
+        let actual = parse_input(EXAMPLE_INPUT_SMALL);
         let expected = hash_set![
             Point::new(2, 1),
             Point::new(3, 1),
@@ -216,7 +213,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = hash_set![
             Point::new(4, 0),
             Point::new(2, 1),
@@ -339,6 +336,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_cycle() {
         let mut state = State {
             elves: hash_set![
@@ -601,11 +599,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 110);
+        assert_eq!(part1(EXAMPLE_INPUT), 110);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 20);
+        assert_eq!(part2(EXAMPLE_INPUT), 20);
     }
 }

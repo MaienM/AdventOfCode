@@ -6,11 +6,11 @@ pub struct ReversibleRange {
 #[allow(dead_code)]
 impl ReversibleRange {
     fn contains(&self, value: usize) -> bool {
-        return if self.step > 0 {
+        if self.step > 0 {
             self.current <= value && value <= self.end
         } else {
             self.end <= value && value <= self.current
-        };
+        }
     }
 }
 impl Iterator for ReversibleRange {
@@ -21,16 +21,17 @@ impl Iterator for ReversibleRange {
             return None;
         }
 
-        self.current = (self.current as isize + self.step) as usize;
-        return Some(self.current);
+        self.current = self.current.checked_add_signed(self.step).unwrap();
+        Some(self.current)
     }
 }
 
+#[must_use]
 pub fn range(start: usize, end: usize) -> ReversibleRange {
     let step: isize = if start < end { 1 } else { -1 };
-    return ReversibleRange {
+    ReversibleRange {
         end,
-        current: (start as isize - step) as usize,
+        current: start.checked_add_signed(-step).unwrap(),
         step,
-    };
+    }
 }

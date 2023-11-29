@@ -1,15 +1,18 @@
-use aoc::runner::*;
+#![allow(unused_variables)]
 
-fn parse_input(input: String) -> usize {
-    return 0;
+use aoc::runner::run;
+
+fn parse_input(input: &str) -> usize {
+    0
 }
 
-pub fn part1(input: String) -> usize {
-    return 0;
+pub fn part1(input: &str) -> usize {
+    let input = parse_input(input);
+    0
 }
 
 fn main() {
-    run(part1, missing::<i64>);
+    run(part1, ());
 }
 
 #[cfg(test)]
@@ -18,18 +21,18 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
     ";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = 0;
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 1);
+        assert_eq!(part1(EXAMPLE_INPUT), 1);
     }
 }

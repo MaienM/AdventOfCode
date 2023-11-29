@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
-use aoc::grid::Point as BasePoint;
-use aoc::runner::*;
+use aoc::{grid::Point as BasePoint, runner::run};
 use derive_new::new;
 
 type Point = BasePoint<isize>;
@@ -21,10 +20,10 @@ struct Move {
     distance: usize,
 }
 
-fn parse_input(input: String) -> Vec<Move> {
+fn parse_input(input: &str) -> Vec<Move> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(str::trim)
         .map(|line| {
             let direction = match &line[0..1] {
@@ -35,10 +34,10 @@ fn parse_input(input: String) -> Vec<Move> {
                 _ => panic!(),
             };
             let distance = line[2..].parse().unwrap();
-            return Move {
+            Move {
                 direction,
                 distance,
-            };
+            }
         })
         .collect();
 }
@@ -46,13 +45,13 @@ fn parse_input(input: String) -> Vec<Move> {
 fn follow(follower: &Point, leader: &Point) -> Point {
     let delta = *leader - *follower;
     if delta.x.abs() > 1 || delta.y.abs() > 1 {
-        return *follower + Point::new(delta.x.clamp(-1, 1), delta.y.clamp(-1, 1));
+        *follower + Point::new(delta.x.clamp(-1, 1), delta.y.clamp(-1, 1))
     } else {
-        return *follower;
+        *follower
     }
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let moves = parse_input(input);
     let mut head = Point::new(0, 0);
     let mut tail = Point::new(0, 0);
@@ -65,10 +64,10 @@ pub fn part1(input: String) -> usize {
             visited.insert(tail);
         }
     }
-    return visited.len();
+    visited.len()
 }
 
-pub fn part2(input: String) -> usize {
+pub fn part2(input: &str) -> usize {
     let moves = parse_input(input);
     let mut chain = [Point::new(0, 0); 10];
     let mut visited = HashSet::<Point>::new();
@@ -82,7 +81,7 @@ pub fn part2(input: String) -> usize {
             visited.insert(chain[9]);
         }
     }
-    return visited.len();
+    visited.len()
 }
 
 fn main() {
@@ -95,7 +94,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT_1: &'static str = "
+    const EXAMPLE_INPUT_1: &str = "
         R 4
         U 4
         L 3
@@ -105,7 +104,7 @@ mod tests {
         L 5
         R 2
     ";
-    const EXAMPLE_INPUT_2: &'static str = "
+    const EXAMPLE_INPUT_2: &str = "
         R 5
         U 8
         L 8
@@ -118,7 +117,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT_1.to_string());
+        let actual = parse_input(EXAMPLE_INPUT_1);
         let expected = vec![
             Move::new(Direction::RIGHT, 4),
             Move::new(Direction::UP, 4),
@@ -134,11 +133,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT_1.to_string()), 13);
+        assert_eq!(part1(EXAMPLE_INPUT_1), 13);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT_2.to_string()), 36);
+        assert_eq!(part2(EXAMPLE_INPUT_2), 36);
     }
 }

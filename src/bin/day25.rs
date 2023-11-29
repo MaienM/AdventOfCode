@@ -1,4 +1,4 @@
-use aoc::runner::*;
+use aoc::runner::run;
 
 fn to_snafu(mut num: u64) -> String {
     let mut chars = Vec::new();
@@ -14,7 +14,7 @@ fn to_snafu(mut num: u64) -> String {
         chars.push(chr);
         num = ((num as i64 - diff) / 5) as u64;
     }
-    return chars.into_iter().rev().collect();
+    chars.into_iter().rev().collect()
 }
 
 fn from_snafu(num: &str) -> u64 {
@@ -30,17 +30,17 @@ fn from_snafu(num: &str) -> u64 {
         };
         result = result * 5 + value;
     }
-    return result as u64;
+    result as u64
 }
 
-pub fn part1(input: String) -> String {
-    let lines = input.trim().split("\n").map(str::trim);
+pub fn part1(input: &str) -> String {
+    let lines = input.trim().split('\n').map(str::trim);
     let numbers = lines.map(from_snafu);
-    return to_snafu(numbers.sum());
+    to_snafu(numbers.sum())
 }
 
-pub fn part2(_input: String) -> &'static str {
-    return "I did it!";
+pub fn part2(_input: &str) -> &'static str {
+    "I did it!"
 }
 
 fn main() {
@@ -53,7 +53,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         1=-0-2
         12111
         2=0=
@@ -69,7 +69,7 @@ mod tests {
         122
     ";
 
-    const EXAMPLES: [(u64, &'static str); 15] = [
+    const EXAMPLES: [(u64, &str); 15] = [
         (1, "1"),
         (2, "2"),
         (3, "1="),
@@ -84,7 +84,7 @@ mod tests {
         (20, "1-0"),
         (2022, "1=11-2"),
         (12345, "1-0---0"),
-        (314159265, "1121-1110-1=0"),
+        (314_159_265, "1121-1110-1=0"),
     ];
 
     #[test]
@@ -103,11 +103,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), "2=-1=0");
+        assert_eq!(part1(EXAMPLE_INPUT), "2=-1=0");
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), "I did it!");
+        assert_eq!(part2(EXAMPLE_INPUT), "I did it!");
     }
 }

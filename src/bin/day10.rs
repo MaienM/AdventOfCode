@@ -1,4 +1,6 @@
-use aoc::runner::*;
+use std::convert::TryInto;
+
+use aoc::runner::run;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Instruction {
@@ -7,24 +9,22 @@ enum Instruction {
 }
 impl Instruction {
     fn len(&self) -> usize {
-        return match self {
+        match self {
             Instruction::AddX(_) => 2,
             Instruction::NoOp => 1,
-        };
+        }
     }
 }
 
-fn parse_input(input: String) -> Vec<Instruction> {
+fn parse_input(input: &str) -> Vec<Instruction> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(str::trim)
-        .map(|line| {
-            return match &line[0..4] {
-                "addx" => Instruction::AddX(line[5..].parse().unwrap()),
-                "noop" => Instruction::NoOp,
-                _ => panic!(),
-            };
+        .map(|line| match &line[0..4] {
+            "addx" => Instruction::AddX(line[5..].parse().unwrap()),
+            "noop" => Instruction::NoOp,
+            _ => panic!(),
         })
         .collect();
 }
@@ -44,22 +44,23 @@ fn run_instructions(instructions: Vec<Instruction>, callback: &mut impl FnMut(us
     }
 }
 
-pub fn part1(input: String) -> i16 {
+pub fn part1(input: &str) -> i16 {
     let instructions = parse_input(input);
     let mut signal: i16 = 0;
     run_instructions(instructions, &mut |cycle, x| {
         if cycle % 40 == 20 {
-            signal += cycle as i16 * x;
+            signal += TryInto::<i16>::try_into(cycle).unwrap() * x;
         }
     });
-    return signal;
+    signal
 }
 
-pub fn part2(input: String) -> String {
+pub fn part2(input: &str) -> String {
     let instructions = parse_input(input);
-    let mut output = "".to_string();
+    let mut output = String::new();
     run_instructions(instructions, &mut |cycle, x| {
-        if ((cycle as i16 - 1) % 40 - x).abs() <= 1 {
+        let pos = ((cycle - 1) % 40).try_into().unwrap();
+        if x.checked_sub_unsigned(pos).unwrap().abs() <= 1 {
             output += "█";
         } else {
             output += " ";
@@ -68,7 +69,7 @@ pub fn part2(input: String) -> String {
             output += "\n";
         }
     });
-    return output;
+    output
 }
 
 fn main() {
@@ -81,7 +82,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         addx 15
         addx -11
         addx 6
@@ -231,8 +232,9 @@ mod tests {
     ";
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             Instruction::AddX(15),
             Instruction::AddX(-11),
@@ -386,13 +388,13 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 13_140);
+        assert_eq!(part1(EXAMPLE_INPUT), 13_140);
     }
 
     #[test]
     fn example_part2() {
         assert_eq!(
-            part2(EXAMPLE_INPUT.to_string()).trim(),
+            part2(EXAMPLE_INPUT).trim(),
             "
 ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  
 ███   ███   ███   ███   ███   ███   ███ 

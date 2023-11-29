@@ -1,9 +1,13 @@
-use std::{collections::HashMap, hash::Hash, ops::Add};
+use std::{
+    collections::HashMap,
+    hash::{BuildHasher, Hash},
+    ops::Add,
+};
 
 pub trait Counter<K, V> {
     fn count(&mut self, key: K, value: V) -> V;
 }
-impl<K, V> Counter<K, V> for HashMap<K, V>
+impl<K, V, S: BuildHasher> Counter<K, V> for HashMap<K, V, S>
 where
     K: Hash + Eq,
     V: Add<V, Output = V> + Copy,
@@ -12,11 +16,10 @@ where
         if self.contains_key(&key) {
             let value = *self.get(&key).unwrap() + value;
             self.insert(key, value);
-            return value;
         } else {
             self.insert(key, value);
-            return value;
         }
+        value
     }
 }
 

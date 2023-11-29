@@ -1,6 +1,9 @@
-use std::ops::{Add, AddAssign, Sub, SubAssign};
-use std::slice::Iter;
-use std::{fmt::Debug, vec::IntoIter};
+use std::{
+    fmt::Debug,
+    ops::{Add, AddAssign, Sub, SubAssign},
+    slice::Iter,
+    vec::IntoIter,
+};
 
 use derive_new::new;
 
@@ -11,16 +14,16 @@ pub struct Point<T = usize> {
 }
 impl<T: Debug> Debug for Point<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        return f.write_str(&format!("Point({:?}, {:?})", self.x, self.y));
+        f.write_str(&format!("Point({:?}, {:?})", self.x, self.y))
     }
 }
 impl<T: Add<T, Output = T>> Add for Point<T> {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
-        return Self {
+        Self {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
-        };
+        }
     }
 }
 impl<T: Add<T, Output = T> + Copy> AddAssign for Point<T> {
@@ -34,10 +37,10 @@ impl<T: Add<T, Output = T> + Copy> AddAssign for Point<T> {
 impl<T: Sub<T, Output = T>> Sub for Point<T> {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self {
-        return Self {
+        Self {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
-        };
+        }
     }
 }
 impl<T: Sub<T, Output = T> + Copy> SubAssign for Point<T> {
@@ -70,25 +73,26 @@ impl<T: Debug> Grid<T> {
             let len = row.len();
             if len != width {
                 return Err(format!(
-                    "Grid rows must have consistent length, row 0 is {} and row {} is {}.",
-                    width, i, len
+                    "Grid rows must have consistent length, row 0 is {width} and row {i} is {len}."
                 ));
             }
         }
 
-        return Ok(Self {
+        Ok(Self {
             items,
             width,
             height,
-        });
+        })
     }
 
-    pub fn get<'a>(&'a self, x: usize, y: usize) -> Option<&'a T> {
-        return self.items.get(y).and_then(|row| row.get(x));
+    #[must_use]
+    pub fn get(&self, x: usize, y: usize) -> Option<&T> {
+        self.items.get(y).and_then(|row| row.get(x))
     }
 
-    pub fn getp<'a>(&'a self, point: Point) -> Option<&'a T> {
-        return self.get(point.x, point.y);
+    #[must_use]
+    pub fn getp(&self, point: Point) -> Option<&T> {
+        self.get(point.x, point.y)
     }
 
     pub fn set(&mut self, x: usize, y: usize, value: T) {
@@ -112,9 +116,10 @@ impl<T: Debug> Grid<T> {
     }
 
     pub fn iter(&self) -> Iter<Vec<T>> {
-        return self.items.iter();
+        self.items.iter()
     }
 
+    #[must_use]
     pub fn neighbours(&self, point: Point, include_diagonals: bool) -> Vec<Point> {
         let mut results: Vec<Point> = Vec::new();
 
@@ -146,31 +151,31 @@ impl<T: Debug> Grid<T> {
             }
         }
 
-        return results;
+        results
     }
 
     pub fn pprint(&self) {
         println!("Grid({}x{})", self.width, self.height);
         for row in &self.items {
-            println!("{:?}", row);
+            println!("{row:?}");
         }
     }
 }
 
 impl<T: Debug> From<Vec<Vec<T>>> for Grid<T> {
     fn from(items: Vec<Vec<T>>) -> Self {
-        return Self::new(items).unwrap();
+        Self::new(items).unwrap()
     }
 }
-impl<T: Debug> Into<Vec<Vec<T>>> for Grid<T> {
-    fn into(self) -> Vec<Vec<T>> {
-        return self.items;
+impl<T: Debug> From<Grid<T>> for Vec<Vec<T>> {
+    fn from(val: Grid<T>) -> Self {
+        val.items
     }
 }
 impl<T: Debug> FromIterator<Vec<T>> for Grid<T> {
     fn from_iter<I: IntoIterator<Item = Vec<T>>>(iter: I) -> Grid<T> {
         let items = iter.into_iter().collect::<Vec<Vec<T>>>();
-        return Self::new(items).unwrap();
+        Self::new(items).unwrap()
     }
 }
 impl<T: Debug> IntoIterator for Grid<T> {
@@ -178,34 +183,34 @@ impl<T: Debug> IntoIterator for Grid<T> {
     type IntoIter = IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        return self.items.into_iter();
+        self.items.into_iter()
     }
 }
 
 type GridCell<T> = (Point<usize>, T);
 impl<T> Grid<T> {
     pub fn into_by_cell(self) -> impl Iterator<Item = GridCell<T>> {
-        return self.items.into_iter().enumerate().flat_map(|(y, row)| {
-            return row.into_iter().enumerate().map(move |(x, value)| {
-                return (Point::new(x, y), value);
-            });
-        });
+        self.items.into_iter().enumerate().flat_map(|(y, row)| {
+            row.into_iter()
+                .enumerate()
+                .map(move |(x, value)| (Point::new(x, y), value))
+        })
     }
 
-    pub fn mut_by_cell<'a>(&'a mut self) -> impl Iterator<Item = GridCell<&'a mut T>> {
-        return self.items.iter_mut().enumerate().flat_map(|(y, row)| {
-            return row.iter_mut().enumerate().map(move |(x, value)| {
-                return (Point::new(x, y), value);
-            });
-        });
+    pub fn mut_by_cell(&mut self) -> impl Iterator<Item = GridCell<&mut T>> {
+        self.items.iter_mut().enumerate().flat_map(|(y, row)| {
+            row.iter_mut()
+                .enumerate()
+                .map(move |(x, value)| (Point::new(x, y), value))
+        })
     }
 
-    pub fn by_cell<'a>(&'a self) -> impl Iterator<Item = GridCell<&'a T>> {
-        return self.items.iter().enumerate().flat_map(|(y, row)| {
-            return row.iter().enumerate().map(move |(x, value)| {
-                return (Point::new(x, y), value);
-            });
-        });
+    pub fn by_cell(&self) -> impl Iterator<Item = GridCell<&T>> {
+        self.items.iter().enumerate().flat_map(|(y, row)| {
+            row.iter()
+                .enumerate()
+                .map(move |(x, value)| (Point::new(x, y), value))
+        })
     }
 }
 impl<T: Debug> FromIterator<GridCell<T>> for Grid<T> {
@@ -234,29 +239,26 @@ impl<T: Debug> FromIterator<GridCell<T>> for Grid<T> {
                 width = row.len();
 
                 items.push(row);
-                row = Vec::new();
-                row.push(value);
+                row = vec![value];
+            } else if next_x == 0 && next_y == 0 {
+                panic!("Expected point (0, 0), got ({}, {}).", point.x, point.y);
+            } else if next_y == 0 {
+                panic!(
+                    "Expected point ({}, 0) or (0, 1), got ({}, {}).",
+                    next_x, point.x, point.y
+                );
             } else {
-                if next_x == 0 && next_y == 0 {
-                    panic!("Expected point (0, 0), got ({}, {}).", point.x, point.y);
-                } else if next_y == 0 {
-                    panic!(
-                        "Expected point ({}, 0) or (0, 1), got ({}, {}).",
-                        next_x, point.x, point.y
-                    );
-                } else {
-                    panic!(
-                        "Expected point ({}, {}), got ({}, {}).",
-                        next_x, next_y, point.x, point.y
-                    );
-                }
+                panic!(
+                    "Expected point ({}, {}), got ({}, {}).",
+                    next_x, next_y, point.x, point.y
+                );
             }
         }
         if !row.is_empty() {
             items.push(row);
         }
 
-        return Self::new(items).unwrap();
+        Self::new(items).unwrap()
     }
 }
 
@@ -272,13 +274,13 @@ mod tests {
     use super::*;
 
     fn basic_grid() -> Grid {
-        return Grid::new(vec![
+        Grid::new(vec![
             vec![1, 2, 3],
             vec![4, 5, 6],
             vec![7, 8, 9],
             vec![0, 0, 0],
         ])
-        .unwrap();
+        .unwrap()
     }
 
     #[test]
@@ -396,18 +398,18 @@ mod tests {
     #[test]
     fn from_iter_by_cell() {
         let input = vec![
-            ((Point::new(0, 0), 1)),
-            ((Point::new(1, 0), 2)),
-            ((Point::new(2, 0), 3)),
-            ((Point::new(0, 1), 4)),
-            ((Point::new(1, 1), 5)),
-            ((Point::new(2, 1), 6)),
-            ((Point::new(0, 2), 7)),
-            ((Point::new(1, 2), 8)),
-            ((Point::new(2, 2), 9)),
-            ((Point::new(0, 3), 0)),
-            ((Point::new(1, 3), 0)),
-            ((Point::new(2, 3), 0)),
+            (Point::new(0, 0), 1),
+            (Point::new(1, 0), 2),
+            (Point::new(2, 0), 3),
+            (Point::new(0, 1), 4),
+            (Point::new(1, 1), 5),
+            (Point::new(2, 1), 6),
+            (Point::new(0, 2), 7),
+            (Point::new(1, 2), 8),
+            (Point::new(2, 2), 9),
+            (Point::new(0, 3), 0),
+            (Point::new(1, 3), 0),
+            (Point::new(2, 3), 0),
         ];
         let actual: Grid<u32> = input.into_iter().collect();
         let expected = basic_grid();
@@ -417,9 +419,9 @@ mod tests {
     #[test]
     fn from_iter_by_cell_single_row() {
         let input = vec![
-            ((Point::new(0, 0), 1)),
-            ((Point::new(1, 0), 2)),
-            ((Point::new(2, 0), 3)),
+            (Point::new(0, 0), 1),
+            (Point::new(1, 0), 2),
+            (Point::new(2, 0), 3),
         ];
         let actual: Grid<u32> = input.into_iter().collect();
         let expected = Grid::new(vec![vec![1, 2, 3]]).unwrap();
@@ -431,46 +433,46 @@ mod tests {
         assert_throws(
             || {
                 let input = vec![
-                    ((Point::new(1, 0), 1)),
-                    ((Point::new(1, 0), 2)),
-                    ((Point::new(2, 0), 3)),
+                    (Point::new(1, 0), 1),
+                    (Point::new(1, 0), 2),
+                    (Point::new(2, 0), 3),
                 ];
-                return input.into_iter().collect::<Grid<u32>>();
+                input.into_iter().collect::<Grid<u32>>()
             },
             "Expected point (0, 0), got (1, 0).",
         );
         assert_throws(
             || {
                 let input = vec![
-                    ((Point::new(0, 0), 1)),
-                    ((Point::new(1, 0), 2)),
-                    ((Point::new(1, 0), 3)),
+                    (Point::new(0, 0), 1),
+                    (Point::new(1, 0), 2),
+                    (Point::new(1, 0), 3),
                 ];
-                return input.into_iter().collect::<Grid<u32>>();
+                input.into_iter().collect::<Grid<u32>>()
             },
             "Expected point (2, 0) or (0, 1), got (1, 0).",
         );
         assert_throws(
             || {
                 let input = vec![
-                    ((Point::new(0, 0), 1)),
-                    ((Point::new(1, 0), 2)),
-                    ((Point::new(1, 1), 3)),
+                    (Point::new(0, 0), 1),
+                    (Point::new(1, 0), 2),
+                    (Point::new(1, 1), 3),
                 ];
-                return input.into_iter().collect::<Grid<u32>>();
+                input.into_iter().collect::<Grid<u32>>()
             },
             "Expected point (2, 0) or (0, 1), got (1, 1).",
         );
         assert_throws(
             || {
                 let input = vec![
-                    ((Point::new(0, 0), 1)),
-                    ((Point::new(1, 0), 2)),
-                    ((Point::new(2, 0), 3)),
-                    ((Point::new(0, 1), 1)),
-                    ((Point::new(2, 1), 3)),
+                    (Point::new(0, 0), 1),
+                    (Point::new(1, 0), 2),
+                    (Point::new(2, 0), 3),
+                    (Point::new(0, 1), 1),
+                    (Point::new(2, 1), 3),
                 ];
-                return input.into_iter().collect::<Grid<u32>>();
+                input.into_iter().collect::<Grid<u32>>()
             },
             "Expected point (1, 1), got (2, 1).",
         );

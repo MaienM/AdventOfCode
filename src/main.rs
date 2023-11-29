@@ -1,10 +1,17 @@
 use std::time::Duration;
 
-use ansi_term::Colour::*;
-use aoc::runner::*;
+use ansi_term::Colour::{Cyan, Purple, Red};
+use aoc::runner::{
+    get_input_path, print_runnable_run, run_day, DurationThresholds, Runnable, RunnableRun,
+    RunnableRunOk,
+};
 use aoc_derive::RunnableListProvider;
 
-type RunnableList = Vec<(&'static str, Runnable<String>, Runnable<String>)>;
+type RunnableList = Vec<(
+    &'static str,
+    Runnable<String, fn(&str) -> String>,
+    Runnable<String, fn(&str) -> String>,
+)>;
 pub trait RunnableListProvider {
     fn get() -> RunnableList;
 }
@@ -20,12 +27,12 @@ fn main() {
         Cyan.paint(runnables.len().to_string())
     );
     for (name, part1, part2) in ListProvider::get() {
-        let filename = get_input_path(name.to_string());
+        let filename = get_input_path(name);
         let name = name.replace("day", "Day ");
-        match run_day(&filename, part1, part2) {
-            Ok((run1, run2)) => {
-                for (i, run) in [(1, run1), (2, run2)] {
-                    runs.push((format!("{} part {}", name, i).to_string(), Ok(run)));
+        match run_day(&filename, &part1, &part2) {
+            Ok((run_1, run_2)) => {
+                for (i, run) in [(1, run_1), (2, run_2)] {
+                    runs.push((format!("{name} part {i}").to_string(), Ok(run)));
                 }
             }
             Err(err) => {
@@ -36,17 +43,14 @@ fn main() {
 
     let successes = runs
         .iter()
-        .map(|(_, r)| r.clone())
-        .filter(|r| r.is_ok())
-        .map(|r| r.unwrap())
-        .filter(|r| r.is_ok())
-        .map(|r| r.unwrap())
+        .filter_map(|(_, r)| r.clone().ok())
+        .filter_map(Result::ok)
         .collect::<Vec<RunnableRunOk>>();
     let duration_total = successes.iter().map(|r| r.duration).sum::<Duration>();
-    let duration_avg = if !successes.is_empty() {
-        duration_total / successes.len() as u32
-    } else {
+    let duration_avg = if successes.is_empty() {
         Duration::from_secs(0)
+    } else {
+        duration_total / successes.len() as u32
     };
 
     let thresholds = DurationThresholds {
@@ -67,8 +71,8 @@ fn main() {
         println!(
             "Ran {} parts in {}, averaging {} per part.",
             Cyan.paint(successes.len().to_string()),
-            Purple.paint(format!("{:?}", duration_total)),
-            Purple.paint(format!("{:?}", duration_avg,)),
+            Purple.paint(format!("{duration_total:?}")),
+            Purple.paint(format!("{duration_avg:?}",)),
         );
     }
 }

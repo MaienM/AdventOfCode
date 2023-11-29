@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use aoc::runner::*;
+use aoc::runner::run;
 use derive_new::new;
 
 #[derive(Debug, Eq, PartialEq, new)]
@@ -14,7 +14,7 @@ type Moves = Vec<Move>;
 type Stack = VecDeque<char>;
 type Stacks = Vec<Stack>;
 
-fn parse_input(input: String) -> (Stacks, Moves) {
+fn parse_input(input: &str) -> (Stacks, Moves) {
     let [input_state, input_moves]: [&str; 2] = input
         .splitn(2, "\n\n")
         .collect::<Vec<&str>>()
@@ -22,7 +22,7 @@ fn parse_input(input: String) -> (Stacks, Moves) {
         .unwrap();
 
     let mut stacks = Stacks::new();
-    for line in input_state.split("\n") {
+    for line in input_state.split('\n') {
         if line.trim().chars().next().unwrap_or('1') == '1' {
             continue;
         }
@@ -39,21 +39,21 @@ fn parse_input(input: String) -> (Stacks, Moves) {
 
     let moves: Moves = input_moves
         .trim()
-        .split("\n")
+        .split('\n')
         .map(str::trim)
         .map(|line| {
-            let mut parts = line.split(" ");
+            let mut parts = line.split(' ');
             parts.next(); // move
             let count = parts.next().unwrap().parse().unwrap();
             parts.next(); // from
             let from: usize = parts.next().unwrap().parse().unwrap();
             parts.next(); // to
             let to: usize = parts.next().unwrap().parse().unwrap();
-            return Move::new(count, from - 1, to - 1);
+            Move::new(count, from - 1, to - 1)
         })
         .collect();
 
-    return (stacks, moves);
+    (stacks, moves)
 }
 
 fn do_moves_9000(mut stacks: Stacks, moves: Moves) -> Stacks {
@@ -63,7 +63,7 @@ fn do_moves_9000(mut stacks: Stacks, moves: Moves) -> Stacks {
             stacks[move_.to].push_front(crate_);
         }
     }
-    return stacks;
+    stacks
 }
 
 fn do_moves_9001(mut stacks: Stacks, moves: Moves) -> Stacks {
@@ -77,10 +77,10 @@ fn do_moves_9001(mut stacks: Stacks, moves: Moves) -> Stacks {
             stacks[move_.to].push_front(crate_);
         }
     }
-    return stacks;
+    stacks
 }
 
-pub fn part1(input: String) -> String {
+pub fn part1(input: &str) -> String {
     let (mut stacks, moves) = parse_input(input);
     stacks = do_moves_9000(stacks, moves);
     return stacks
@@ -90,7 +90,7 @@ pub fn part1(input: String) -> String {
         .collect();
 }
 
-pub fn part2(input: String) -> String {
+pub fn part2(input: &str) -> String {
     let (mut stacks, moves) = parse_input(input);
     stacks = do_moves_9001(stacks, moves);
     return stacks
@@ -110,7 +110,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
             [D]    
         [N] [C]    
         [Z] [M] [P]
@@ -124,7 +124,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string().replace("\n        ", "\n"));
+        let actual = parse_input(&EXAMPLE_INPUT.replace("\n        ", "\n"));
         let expected = (
             vec![
                 vec!['N', 'Z'].into(),
@@ -143,17 +143,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(
-            part1(EXAMPLE_INPUT.to_string().replace("\n        ", "\n")),
-            "CMZ"
-        );
+        assert_eq!(part1(&EXAMPLE_INPUT.replace("\n        ", "\n")), "CMZ");
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(
-            part2(EXAMPLE_INPUT.to_string().replace("\n        ", "\n")),
-            "MCD"
-        );
+        assert_eq!(part2(&EXAMPLE_INPUT.replace("\n        ", "\n")), "MCD");
     }
 }

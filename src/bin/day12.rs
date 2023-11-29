@@ -1,27 +1,29 @@
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
-use std::collections::HashSet;
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashSet},
+};
 
-use aoc::grid::Grid as BaseGrid;
-use aoc::grid::Point;
-use aoc::runner::*;
+use aoc::{
+    grid::{Grid as BaseGrid, Point},
+    runner::run,
+};
 use derive_new::new;
 
 type Grid = BaseGrid<u8>;
 
-fn parse_input(input: String) -> (Grid, Point, Point) {
+fn parse_input(input: &str) -> (Grid, Point, Point) {
     let mut start = Option::None;
     let mut end = Option::None;
     let grid: Vec<Vec<u8>> = input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(str::trim)
         .map(|line| {
             line.chars()
                 .map(|c| match c {
                     'S' => 100,
                     'E' => 101,
-                    c => c as u8 - 'a' as u8,
+                    c => c as u8 - b'a',
                 })
                 .collect()
         })
@@ -36,7 +38,7 @@ fn parse_input(input: String) -> (Grid, Point, Point) {
             end = Option::Some(point);
         }
     }
-    return (grid, start.unwrap(), end.unwrap());
+    (grid, start.unwrap(), end.unwrap())
 }
 
 #[derive(Debug, Eq, PartialEq, new)]
@@ -86,24 +88,24 @@ fn pathfind(
     }
 }
 
-pub fn part1(input: String) -> u16 {
+pub fn part1(input: &str) -> u16 {
     let (grid, start, end) = parse_input(input);
-    return pathfind(
+    pathfind(
         &grid,
         start,
         |height, current| height <= current + 1,
         |point| point == end,
-    );
+    )
 }
 
-pub fn part2(input: String) -> u16 {
+pub fn part2(input: &str) -> u16 {
     let (grid, _start, end) = parse_input(input);
-    return pathfind(
+    pathfind(
         &grid,
         end,
         |height, current| current <= height + 1,
         |point| grid.getp(point).unwrap() == &0,
-    );
+    )
 }
 
 fn main() {
@@ -116,7 +118,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         Sabqponm
         abcryxxl
         accszExk
@@ -126,7 +128,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = (
             Grid::from(vec![
                 vec![0, 0, 1, 16, 15, 14, 13, 12],
@@ -143,11 +145,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 31);
+        assert_eq!(part1(EXAMPLE_INPUT), 31);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 29);
+        assert_eq!(part2(EXAMPLE_INPUT), 29);
     }
 }

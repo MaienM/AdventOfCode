@@ -1,11 +1,11 @@
 use std::collections::VecDeque;
 
-use aoc::runner::*;
+use aoc::runner::run;
 
-fn parse_input(input: String) -> Vec<i64> {
+fn parse_input(input: &str) -> Vec<i64> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(str::trim)
         .map(str::parse)
         .map(Result::unwrap)
@@ -35,10 +35,10 @@ fn mix(numbers: Vec<i64>, times: usize) -> Vec<i64> {
             }
         }
     }
-    return mixing.into_iter().map(|(_i, n)| n).collect();
+    mixing.into_iter().map(|(_i, n)| n).collect()
 }
 
-fn get_coordinates(numbers: Vec<i64>) -> i64 {
+fn get_coordinates(numbers: &[i64]) -> i64 {
     let offset = numbers
         .iter()
         .enumerate()
@@ -46,22 +46,20 @@ fn get_coordinates(numbers: Vec<i64>) -> i64 {
         .unwrap()
         .0;
     let len = numbers.len();
-    return numbers[(1000 + offset) % len]
-        + numbers[(2000 + offset) % len]
-        + numbers[(3000 + offset) % len];
+    numbers[(1000 + offset) % len] + numbers[(2000 + offset) % len] + numbers[(3000 + offset) % len]
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: &str) -> i64 {
     let numbers = parse_input(input);
     let numbers = mix(numbers, 1);
-    return get_coordinates(numbers);
+    get_coordinates(&numbers)
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: &str) -> i64 {
     let numbers = parse_input(input);
     let numbers = numbers.into_iter().map(|n| n * 811_589_153).collect();
     let numbers = mix(numbers, 10);
-    return get_coordinates(numbers);
+    get_coordinates(&numbers)
 }
 
 fn main() {
@@ -74,7 +72,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         1
         2
         -3
@@ -93,12 +91,12 @@ mod tests {
             .0;
         let mut zerofirst = numbers.split_off(idx);
         zerofirst.append(&mut numbers);
-        return zerofirst;
+        zerofirst
     }
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![1, 2, -3, 3, -2, 0, 4];
         assert_eq!(actual, expected);
     }
@@ -118,145 +116,146 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_mix_multi() {
         let start = vec![
-            811589153,
-            1623178306,
-            -2434767459,
-            2434767459,
-            -1623178306,
+            811_589_153,
+            1_623_178_306,
+            -2_434_767_459,
+            2_434_767_459,
+            -1_623_178_306,
             0,
-            3246356612,
+            3_246_356_612,
         ];
         assert_eq!(
             zerofirst(mix(start.clone(), 1)),
             vec![
                 0,
-                -2434767459,
-                3246356612,
-                -1623178306,
-                2434767459,
-                1623178306,
-                811589153,
+                -2_434_767_459,
+                3_246_356_612,
+                -1_623_178_306,
+                2_434_767_459,
+                1_623_178_306,
+                811_589_153,
             ]
         );
         assert_eq!(
             zerofirst(mix(start.clone(), 2)),
             vec![
                 0,
-                2434767459,
-                1623178306,
-                3246356612,
-                -2434767459,
-                -1623178306,
-                811589153,
+                2_434_767_459,
+                1_623_178_306,
+                3_246_356_612,
+                -2_434_767_459,
+                -1_623_178_306,
+                811_589_153,
             ]
         );
         assert_eq!(
             zerofirst(mix(start.clone(), 3)),
             vec![
                 0,
-                811589153,
-                2434767459,
-                3246356612,
-                1623178306,
-                -1623178306,
-                -2434767459,
+                811_589_153,
+                2_434_767_459,
+                3_246_356_612,
+                1_623_178_306,
+                -1_623_178_306,
+                -2_434_767_459,
             ]
         );
         assert_eq!(
             zerofirst(mix(start.clone(), 4)),
             vec![
                 0,
-                1623178306,
-                -2434767459,
-                811589153,
-                2434767459,
-                3246356612,
-                -1623178306,
+                1_623_178_306,
+                -2_434_767_459,
+                811_589_153,
+                2_434_767_459,
+                3_246_356_612,
+                -1_623_178_306,
             ]
         );
         assert_eq!(
             zerofirst(mix(start.clone(), 5)),
             vec![
                 0,
-                811589153,
-                -1623178306,
-                1623178306,
-                -2434767459,
-                3246356612,
-                2434767459,
+                811_589_153,
+                -1_623_178_306,
+                1_623_178_306,
+                -2_434_767_459,
+                3_246_356_612,
+                2_434_767_459,
             ]
         );
         assert_eq!(
             zerofirst(mix(start.clone(), 6)),
             vec![
                 0,
-                811589153,
-                -1623178306,
-                3246356612,
-                -2434767459,
-                1623178306,
-                2434767459,
+                811_589_153,
+                -1_623_178_306,
+                3_246_356_612,
+                -2_434_767_459,
+                1_623_178_306,
+                2_434_767_459,
             ]
         );
         assert_eq!(
             zerofirst(mix(start.clone(), 7)),
             vec![
                 0,
-                -2434767459,
-                2434767459,
-                1623178306,
-                -1623178306,
-                811589153,
-                3246356612,
+                -2_434_767_459,
+                2_434_767_459,
+                1_623_178_306,
+                -1_623_178_306,
+                811_589_153,
+                3_246_356_612,
             ]
         );
         assert_eq!(
             zerofirst(mix(start.clone(), 8)),
             vec![
                 0,
-                1623178306,
-                3246356612,
-                811589153,
-                -2434767459,
-                2434767459,
-                -1623178306,
+                1_623_178_306,
+                3_246_356_612,
+                811_589_153,
+                -2_434_767_459,
+                2_434_767_459,
+                -1_623_178_306,
             ]
         );
         assert_eq!(
             zerofirst(mix(start.clone(), 9)),
             vec![
                 0,
-                811589153,
-                1623178306,
-                -2434767459,
-                3246356612,
-                2434767459,
-                -1623178306,
+                811_589_153,
+                1_623_178_306,
+                -2_434_767_459,
+                3_246_356_612,
+                2_434_767_459,
+                -1_623_178_306,
             ]
         );
         assert_eq!(
-            zerofirst(mix(start.clone(), 10)),
+            zerofirst(mix(start, 10)),
             vec![
                 0,
-                -2434767459,
-                1623178306,
-                3246356612,
-                -1623178306,
-                2434767459,
-                811589153,
+                -2_434_767_459,
+                1_623_178_306,
+                3_246_356_612,
+                -1_623_178_306,
+                2_434_767_459,
+                811_589_153,
             ]
         );
     }
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 3);
+        assert_eq!(part1(EXAMPLE_INPUT), 3);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 1_623_178_306);
+        assert_eq!(part2(EXAMPLE_INPUT), 1_623_178_306);
     }
 }

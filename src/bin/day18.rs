@@ -1,29 +1,28 @@
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashMap, HashSet},
+};
 
-use aoc::counter::Counter;
-use aoc::runner::*;
+use aoc::{counter::Counter, runner::run};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct Point(i8, i8, i8);
 impl Point {
     pub fn neighbours(&self) -> [Self; 6] {
-        return [
+        [
             Point(self.0 + 1, self.1, self.2),
             Point(self.0 - 1, self.1, self.2),
             Point(self.0, self.1 + 1, self.2),
             Point(self.0, self.1 - 1, self.2),
             Point(self.0, self.1, self.2 + 1),
             Point(self.0, self.1, self.2 - 1),
-        ];
+        ]
     }
 }
 impl Ord for Point {
     fn cmp(&self, other: &Self) -> Ordering {
-        return (other.0.abs() + other.1.abs() + other.2.abs())
-            .cmp(&(self.0.abs() + self.1.abs() + self.2.abs()));
+        (other.0.abs() + other.1.abs() + other.2.abs())
+            .cmp(&(self.0.abs() + self.1.abs() + self.2.abs()))
     }
 }
 
@@ -33,21 +32,21 @@ impl PartialOrd for Point {
     }
 }
 
-fn parse_input(input: String) -> Vec<Point> {
+fn parse_input(input: &str) -> Vec<Point> {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(|line| {
             let mut parts = line
                 .trim()
                 .splitn(3, ',')
                 .map(str::parse)
                 .map(Result::unwrap);
-            return Point(
+            Point(
                 parts.next().unwrap(),
                 parts.next().unwrap(),
                 parts.next().unwrap(),
-            );
+            )
         })
         .collect();
 }
@@ -57,7 +56,7 @@ enum Air {
     Bubble(HashSet<Point>),
 }
 
-fn check_air<'a>(point: &Point, points: &'a Vec<Point>) -> Air {
+fn check_air(point: &Point, points: &[Point]) -> Air {
     let mut paths = BinaryHeap::new();
     let mut visited = HashSet::new();
     paths.push(point.clone());
@@ -74,29 +73,29 @@ fn check_air<'a>(point: &Point, points: &'a Vec<Point>) -> Air {
             visited.insert(neighbour);
         }
     }
-    return Air::Bubble(visited);
+    Air::Bubble(visited)
 }
 
-fn get_counts(points: &Vec<Point>) -> HashMap<Point, u16> {
+fn get_counts(points: &[Point]) -> HashMap<Point, u16> {
     let mut neighbour_counts = HashMap::new();
-    for point in points.iter() {
+    for point in points {
         for neighbour in point.neighbours() {
             neighbour_counts.count(neighbour, 1);
         }
     }
-    for point in points.iter() {
+    for point in points {
         neighbour_counts.remove(point);
     }
-    return neighbour_counts;
+    neighbour_counts
 }
 
-pub fn part1(input: String) -> u16 {
+pub fn part1(input: &str) -> u16 {
     let points = parse_input(input);
     let neighbour_counts = get_counts(&points);
-    return neighbour_counts.into_values().sum();
+    neighbour_counts.into_values().sum()
 }
 
-pub fn part2(input: String) -> u16 {
+pub fn part2(input: &str) -> u16 {
     let points = parse_input(input);
     let mut neighbour_counts = get_counts(&points);
     let mut cooling = 0;
@@ -117,7 +116,7 @@ pub fn part2(input: String) -> u16 {
             }
         }
     }
-    return cooling;
+    cooling
 }
 
 fn main() {
@@ -130,7 +129,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         2,2,2
         1,2,2
         3,2,2
@@ -148,7 +147,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             Point(2, 2, 2),
             Point(1, 2, 2),
@@ -169,11 +168,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 64);
+        assert_eq!(part1(EXAMPLE_INPUT), 64);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 58);
+        assert_eq!(part2(EXAMPLE_INPUT), 58);
     }
 }

@@ -1,20 +1,20 @@
 use std::collections::HashSet;
 
-use aoc::grid::Grid as BaseGrid;
-use aoc::grid::Point;
-use aoc::runner::*;
+use aoc::{
+    grid::{Grid as BaseGrid, Point},
+    runner::run,
+};
 
 type Grid = BaseGrid<u8>;
 
-fn parse_input(input: String) -> Grid {
+fn parse_input(input: &str) -> Grid {
     return input
         .trim()
-        .split("\n")
+        .split('\n')
         .map(|line| {
             line.trim()
                 .chars()
                 .map(|chr| chr.to_digit(10).unwrap() as u8)
-                .into_iter()
                 .collect::<Vec<u8>>()
         })
         .collect::<Vec<Vec<u8>>>()
@@ -56,7 +56,7 @@ fn find_visible_from_edge(
             points.insert(point);
             highest = *height;
         }
-        return height < &9;
+        height < &9
     });
 }
 
@@ -65,12 +65,12 @@ fn count_visible_from_treehouse(grid: &Grid, start: Point, offset: (isize, isize
     let mut count = 0;
     for_line_until(grid, start, offset, &mut |_, height| {
         count += 1;
-        return height < treehouse_height;
+        height < treehouse_height
     });
-    return count;
+    count
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let grid = parse_input(input);
 
     let mut visible = HashSet::new();
@@ -99,10 +99,10 @@ pub fn part1(input: String) -> usize {
         find_visible_from_edge(&grid, &mut visible, east, (-1, 0));
     }
 
-    return visible.len();
+    visible.len()
 }
 
-pub fn part2(input: String) -> usize {
+pub fn part2(input: &str) -> usize {
     let grid = parse_input(input);
     return grid
         .by_cell()
@@ -117,7 +117,7 @@ pub fn part2(input: String) -> usize {
             if score > 0 {
                 score *= count_visible_from_treehouse(&grid, point, (-1, 0));
             }
-            return score;
+            score
         })
         .max()
         .unwrap();
@@ -133,7 +133,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         30373
         25512
         65332
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             vec![3, 0, 3, 7, 3],
             vec![2, 5, 5, 1, 2],
@@ -157,11 +157,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 21);
+        assert_eq!(part1(EXAMPLE_INPUT), 21);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 8);
+        assert_eq!(part2(EXAMPLE_INPUT), 8);
     }
 }

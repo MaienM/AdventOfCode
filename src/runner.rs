@@ -1,13 +1,35 @@
-use std::env;
-use std::fs;
-use std::time::Duration;
-use std::time::Instant;
+use std::{
+    env, fs,
+    time::{Duration, Instant},
+};
 
-use ansi_term::unstyle;
-use ansi_term::ANSIStrings;
-use ansi_term::Colour::*;
+use ansi_term::{
+    unstyle, ANSIStrings,
+    Colour::{Blue, Cyan, Green, Purple, Red},
+};
 
-pub type Runnable<T> = fn(String) -> T;
+pub enum Runnable<T, F>
+where
+    T: ToString,
+    F: Fn(&str) -> T,
+{
+    Implemented(F),
+    Missing,
+}
+impl<F, T> From<F> for Runnable<T, F>
+where
+    T: ToString,
+    F: Fn(&str) -> T,
+{
+    fn from(value: F) -> Self {
+        Runnable::Implemented(value)
+    }
+}
+impl From<()> for Runnable<String, fn(&str) -> String> {
+    fn from(_value: ()) -> Self {
+        Runnable::Missing
+    }
+}
 
 #[derive(Clone)]
 pub struct RunnableRunOk {
@@ -36,7 +58,7 @@ pub fn print_runnable_run(
     let name = Purple.paint(name);
     match run {
         Err(err) => {
-            println!("> {}: {}", name, Red.paint(err));
+            println!("> {name}: {}", Red.paint(err));
         }
         Ok(run) => {
             let duration_colour = if run.duration < thresholds.good {
@@ -49,12 +71,12 @@ pub fn print_runnable_run(
             let duration_formatted = duration_colour.paint(format!("{:?}", run.duration));
 
             if !show_result {
-                let name = if run.solution.map(|s| s == run.result).unwrap_or(true) {
+                let name = if run.solution.map_or(true, |s| s == run.result) {
                     name
                 } else {
                     Red.paint(unstyle(&ANSIStrings(&[name])))
                 };
-                println!("> {} [{}]", name, duration_formatted);
+                println!("> {name} [{duration_formatted}]");
                 return;
             }
 
@@ -62,74 +84,82 @@ pub fn print_runnable_run(
                 Some(expected) => {
                     if run.result == expected {
                         Green.paint(&run.result).to_string()
+                    } else if run.result.contains('\n') || expected.contains('\n') {
+                        format!("{}\nShould be:\n{expected}", Red.paint(&run.result))
                     } else {
-                        if run.result.contains("\n") || expected.contains("\n") {
-                            format!("{}\nShould be:\n{}", Red.paint(&run.result), expected)
-                        } else {
-                            format!("{} (should be {})", Red.paint(&run.result), expected)
-                        }
+                        format!("{} (should be {expected})", Red.paint(&run.result))
                     }
                 }
                 None => run.result.clone(),
             };
 
-            if result_formatted.contains("\n") {
-                println!("> {}: [{}]", name, duration_formatted);
-                for line in result_formatted.split("\n") {
-                    println!("  {}", line);
+            if result_formatted.contains('\n') {
+                println!("> {name}: [{duration_formatted}]");
+                for line in result_formatted.split('\n') {
+                    println!("  {line}");
                 }
             } else {
-                println!("> {}: {} [{}]", name, result_formatted, duration_formatted);
+                println!("> {name}: {result_formatted} [{duration_formatted}]");
             }
         }
     }
 }
 
-fn run_runnable<T: ToString>(
-    runnable: Runnable<T>,
-    input: &String,
+fn run_runnable<T, F>(
+    runnable: &Runnable<T, F>,
+    input: &str,
     solution: Option<String>,
-) -> RunnableRun {
-    if runnable == missing {
+) -> RunnableRun
+where
+    T: ToString,
+    F: Fn(&str) -> T,
+{
+    let Runnable::Implemented(runnable) = runnable else {
         return Err("Not implemented.".to_string());
-    }
+    };
 
     let start = Instant::now();
-    let result = runnable(input.to_owned());
+    let result = ToString::to_string(&runnable(input));
     let duration = start.elapsed();
 
-    let result = result.to_string();
-
-    return Ok(RunnableRunOk {
+    Ok(RunnableRunOk {
         result,
-        duration,
         solution,
-    });
+        duration,
+    })
 }
 
-pub fn get_input_path(name: String) -> String {
-    return format!("inputs/{}.txt", name);
+#[allow(clippy::must_use_candidate)]
+pub fn get_input_path(name: &str) -> String {
+    format!("inputs/{name}.txt")
 }
 
-pub fn get_output_path(input_path: &String, part: i8) -> String {
-    if input_path.contains(".") {
+#[allow(clippy::must_use_candidate)]
+pub fn get_output_path(input_path: &str, part: i8) -> String {
+    if input_path.contains('.') {
         let [tail, head]: [&str; 2] = input_path
-            .rsplitn(2, ".")
+            .rsplitn(2, '.')
             .collect::<Vec<&str>>()
             .try_into()
             .unwrap();
-        return format!("{}.solution{}.{}", head, part, tail);
+        format!("{head}.solution{part}.{tail}")
     } else {
-        return format!("{}.solution{}", input_path, part);
+        format!("{input_path}.solution{part}")
     }
 }
 
-pub fn run_day<T1: ToString, T2: ToString>(
+pub fn run_day<T1, F1, T2, F2>(
     filename: &String,
-    part1: Runnable<T1>,
-    part2: Runnable<T2>,
-) -> Result<(RunnableRun, RunnableRun), String> {
-    return match fs::read_to_string(filename) {
+    part1: &Runnable<T1, F1>,
+    part2: &Runnable<T2, F2>,
+) -> Result<(RunnableRun, RunnableRun), String>
+where
+    T1: ToString,
+    F1: Fn(&str) -> T1,
+    T2: ToString,
+    F2: Fn(&str) -> T2,
+{
+    match fs::read_to_string(filename) {
         Ok(input) => Ok((
             run_runnable(
                 part1,
@@ -142,39 +172,40 @@ pub fn run_day<T1: ToString, T2: ToString>(
                 fs::read_to_string(get_output_path(filename, 2)).ok(),
             ),
         )),
-        Err(err) => Err(format!(
-            "Unable to read input file '{}': {}.",
-            filename, err
-        )),
-    };
+        Err(err) => Err(format!("Unable to read input file '{filename}': {err}.")),
+    }
 }
 
-pub fn run<T1: ToString, T2: ToString>(part1: Runnable<T1>, part2: Runnable<T2>) {
+pub fn run<T1, F1, T2, F2>(part1: impl Into<Runnable<T1, F1>>, part2: impl Into<Runnable<T2, F2>>)
+where
+    T1: ToString,
+    F1: Fn(&str) -> T1,
+    T2: ToString,
+    F2: Fn(&str) -> T2,
+{
     let args: Vec<String> = env::args().collect();
 
     let name = args[0]
-        .split("/")
+        .split('/')
         .last()
         .expect("Unable to determine binary name.");
 
     let filenames: Vec<String> = if args.len() > 1 {
         args.iter().skip(1).cloned().collect()
     } else {
-        vec![get_input_path(name.to_string())]
+        vec![get_input_path(name)]
     };
 
+    let part1 = part1.into();
+    let part2 = part2.into();
     for filename in &filenames {
         println!(
             "Running {} using input {}...",
             Cyan.paint(name),
             Cyan.paint(filename)
         );
-        let (run1, run2) = run_day(filename, part1, part2).unwrap();
+        let (run1, run2) = run_day(filename, &part1, &part2).unwrap();
         print_runnable_run("Part 1".to_string(), run1, &THRESHOLDS_DEFAULT, true);
         print_runnable_run("Part 2".to_string(), run2, &THRESHOLDS_DEFAULT, true);
     }
-}
-
-pub fn missing<T: ToString>(_data: String) -> T {
-    panic!("Should never actually be called.");
 }

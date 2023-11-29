@@ -1,4 +1,4 @@
-use aoc::runner::*;
+use aoc::runner::run;
 
 #[derive(Debug, PartialEq, Eq)]
 enum Operation {
@@ -8,11 +8,11 @@ enum Operation {
 }
 impl Operation {
     pub fn apply(&self, lhs: u64) -> u64 {
-        return match self {
+        match self {
             Operation::Add(rhs) => lhs + rhs,
             Operation::Mul(rhs) => lhs * rhs,
             Operation::Square => lhs * lhs,
-        };
+        }
     }
 }
 
@@ -24,32 +24,32 @@ struct Monkey {
     targets: [usize; 2],
 }
 
-fn parse_input(input: String) -> Vec<Monkey> {
+fn parse_input(input: &str) -> Vec<Monkey> {
     return input
         .trim()
         .split("\n\n")
         .map(|block| {
-            let mut lines = block.trim().split("\n").map(str::trim);
+            let mut lines = block.trim().split('\n').map(str::trim);
             assert!(lines.next().unwrap().starts_with("Monkey"));
 
-            let mut parts = lines.next().unwrap().splitn(2, ":");
+            let mut parts = lines.next().unwrap().splitn(2, ':');
             assert_eq!(parts.next().unwrap(), "Starting items");
             let items = parts
                 .next()
                 .unwrap()
-                .split(",")
+                .split(',')
                 .map(str::trim)
                 .map(str::parse)
                 .map(Result::unwrap)
                 .collect();
 
-            let mut parts = lines.next().unwrap().splitn(2, "=");
+            let mut parts = lines.next().unwrap().splitn(2, '=');
             assert_eq!(parts.next().unwrap(), "Operation: new ");
             let parts: [&str; 3] = parts
                 .next()
                 .unwrap()
                 .trim()
-                .splitn(3, " ")
+                .splitn(3, ' ')
                 .collect::<Vec<&str>>()
                 .try_into()
                 .unwrap();
@@ -57,7 +57,7 @@ fn parse_input(input: String) -> Vec<Monkey> {
                 ["old", "+", rhs] => Operation::Add(rhs.parse().unwrap()),
                 ["old", "*", "old"] => Operation::Square,
                 ["old", "*", rhs] => Operation::Mul(rhs.parse().unwrap()),
-                _ => panic!("Invalid operation {:?}", parts),
+                _ => panic!("Invalid operation {parts:?}"),
             };
 
             let line = lines.next().unwrap().trim();
@@ -74,26 +74,26 @@ fn parse_input(input: String) -> Vec<Monkey> {
 
             assert!(lines.next().is_none());
 
-            return Monkey {
+            Monkey {
                 items,
                 operation,
                 test,
                 targets: [target_true, target_false],
-            };
+            }
         })
         .collect();
 }
 
-fn do_round(monkeys: &mut Vec<Monkey>, counter: &mut Vec<u64>, therapy: &impl Fn(u64) -> u64) {
+fn do_round(monkeys: &mut Vec<Monkey>, counter: &mut [u64], therapy: &impl Fn(u64) -> u64) {
     let mut new_items: Vec<Vec<u64>> = (0..monkeys.len()).map(|_| Vec::new()).collect();
-    for (i, monkey) in monkeys.into_iter().enumerate() {
+    for (i, monkey) in monkeys.iter_mut().enumerate() {
         new_items.push(Vec::new());
         let new = new_items.swap_remove(i);
 
         for item in monkey.items.iter().chain(new.iter()) {
             let item = therapy(monkey.operation.apply(*item));
             let test = item % monkey.test == 0;
-            let target = monkey.targets[!test as usize];
+            let target = monkey.targets[usize::from(!test)];
             new_items[target].push(item);
             counter[i] += 1;
         }
@@ -108,19 +108,19 @@ fn monkey_business(monkeys: &mut Vec<Monkey>, rounds: usize, therapy: impl Fn(u6
     for _ in 0..rounds {
         do_round(monkeys, &mut counter, &therapy);
     }
-    counter.sort();
-    return counter.pop().unwrap() * counter.pop().unwrap();
+    counter.sort_unstable();
+    counter.pop().unwrap() * counter.pop().unwrap()
 }
 
-pub fn part1(input: String) -> u64 {
+pub fn part1(input: &str) -> u64 {
     let mut monkeys = parse_input(input);
-    return monkey_business(&mut monkeys, 20, |worry| worry / 3);
+    monkey_business(&mut monkeys, 20, |worry| worry / 3)
 }
 
-pub fn part2(input: String) -> u64 {
+pub fn part2(input: &str) -> u64 {
     let mut monkeys = parse_input(input);
     let modulo = monkeys.iter().map(|m| m.test).reduce(|l, r| l * r).unwrap();
-    return monkey_business(&mut monkeys, 10_000, |worry| worry % modulo);
+    monkey_business(&mut monkeys, 10_000, |worry| worry % modulo)
 }
 
 fn main() {
@@ -133,7 +133,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    const EXAMPLE_INPUT: &str = "
         Monkey 0:
           Starting items: 79, 98
           Operation: new = old * 19
@@ -165,7 +165,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             Monkey {
                 items: vec![79, 98],
@@ -197,7 +197,7 @@ mod tests {
 
     #[test]
     fn example_do_round() {
-        let mut monkeys = parse_input(EXAMPLE_INPUT.to_string());
+        let mut monkeys = parse_input(EXAMPLE_INPUT);
         let mut counter = vec![0, 0, 0, 0];
         let therapy = |worry| worry / 3;
 
@@ -282,11 +282,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 10_605);
+        assert_eq!(part1(EXAMPLE_INPUT), 10_605);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 2_713_310_158);
+        assert_eq!(part2(EXAMPLE_INPUT), 2_713_310_158);
     }
 }

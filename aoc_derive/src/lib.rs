@@ -53,17 +53,17 @@ pub fn part_finder_derive(input: TokenStream) -> TokenStream {
             pub mod #modident;
         });
 
-        let part1ident = quote! { |i| crate::bin::#modident::part1(i).to_string() };
+        let part1ident =
+            quote! { Runnable::Implemented(|i| crate::bin::#modident::part1(&i).to_string()) };
         let part2ident = if has_part_2 {
-            quote! { |i| crate::bin::#modident::part2(i).to_string() }
+            quote! { Runnable::Implemented(|i| crate::bin::#modident::part2(&i).to_string()) }
         } else {
-            quote! { missing::<String>  }
+            quote! { Runnable::Missing  }
         };
         runnables.push(quote! { (#modname, #part1ident, #part2ident) });
     }
 
     let output = quote! {
-        use aoc::runner::missing;
         mod bin {
             #![allow(dead_code)]
             #(#uses)*
