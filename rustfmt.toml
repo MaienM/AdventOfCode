@@ -1,0 +1,6 @@
+# More consistency.
+group_imports = "StdExternalCrate"
+imports_granularity = "Crate"
+
+# This is often annoying during development.
+empty_item_single_line = false
