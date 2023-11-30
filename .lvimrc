@@ -1,15 +1,15 @@
 function! TestRun()
 	let l:fn = expand("%")
 	if l:fn =~ ".*/bin/.*\.rs"
-		let l:fn = expand("%:t:r")
-		call VimuxRunCommand("clear; cargo make --loglevel=error test-and-run-day " . l:fn)
+		let l:day = expand("%:t:r")
+		call VimuxRunCommand("clear; make test-and-run-" . l:day)
 	else
-		call VimuxRunCommand("clear; cargo make --loglevel=error test-lib")
+		call VimuxRunCommand("clear; make test-libs")
 	endif
 endfunction
 
 function! TestRunAll()
-	call VimuxRunCommand("clear; cargo make --loglevel=error run-all")
+	call VimuxRunCommand("clear; make run-all")
 endfunction
 
 augroup LVIMRC
