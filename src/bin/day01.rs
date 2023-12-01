@@ -1,6 +1,6 @@
 use aoc::generate_day_main;
 
-fn parse_input(input: &str) -> Vec<(u32, u32)> {
+fn parse_input(input: &str) -> Vec<u32> {
     input
         .trim()
         .split('\n')
@@ -8,21 +8,37 @@ fn parse_input(input: &str) -> Vec<(u32, u32)> {
             let mut iter = line.chars().filter_map(|c| c.to_digit(10));
             let first = iter.next().unwrap();
             let last = iter.last().unwrap_or(first);
-            (first, last)
+            first * 10 + last
         })
         .collect()
 }
 
-pub fn part1(input: &str) -> u32 {
-    let input = parse_input(input);
-    let mut sum = 0;
-    for (first, last) in input {
-        sum += (first * 10) + last;
-    }
-    sum
+fn parse_input_with_words(input: &str) -> Vec<u32> {
+    parse_input(
+        &input
+            .replace("one", "o1e")
+            .replace("two", "t2o")
+            .replace("three", "t3e")
+            .replace("four", "4")
+            .replace("five", "5e")
+            .replace("six", "6")
+            .replace("seven", "7")
+            .replace("eight", "e8t")
+            .replace("nine", "n9e"),
+    )
 }
 
-generate_day_main!(part1);
+pub fn part1(input: &str) -> u32 {
+    let input = parse_input(input);
+    input.iter().sum()
+}
+
+pub fn part2(input: &str) -> u32 {
+    let input = parse_input_with_words(input);
+    input.iter().sum()
+}
+
+generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
@@ -30,22 +46,44 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    const EXAMPLE_INPUT_1: &str = "
         1abc2
         pqr3stu8vwx
         a1b2c3d4e5f
         treb7uchet
     ";
 
+    const EXAMPLE_INPUT_2: &str = "
+        two1nine
+        eightwothree
+        abcone2threexyz
+        xtwone3four
+        4nineeightseven2
+        zoneight234
+        7pqrstsixteen
+    ";
+
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
-        let expected = vec![(1, 2), (3, 8), (1, 5), (7, 7)];
+        let actual = parse_input(EXAMPLE_INPUT_1);
+        let expected = vec![12, 38, 15, 77];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn example_parse_with_words() {
+        let actual = parse_input_with_words(EXAMPLE_INPUT_2);
+        let expected = vec![29, 83, 13, 24, 42, 14, 76];
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 142);
+        assert_eq!(part1(EXAMPLE_INPUT_1), 142);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT_2), 281);
     }
 }
