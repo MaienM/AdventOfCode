@@ -127,18 +127,21 @@ pub fn run_day<T1: ToString, T2: ToString>(
     part2: Runnable<T2>,
 ) -> Result<(RunnableRun, RunnableRun), String> {
     match fs::read_to_string(filename) {
-        Ok(input) => Ok((
-            run_runnable(
-                part1,
-                &input,
-                fs::read_to_string(get_output_path(filename, 1)).ok(),
-            ),
-            run_runnable(
-                part2,
-                &input,
-                fs::read_to_string(get_output_path(filename, 2)).ok(),
-            ),
-        )),
+        Ok(input) => {
+            let input = input.strip_suffix('\n').unwrap_or(&input);
+            Ok((
+                run_runnable(
+                    part1,
+                    input,
+                    fs::read_to_string(get_output_path(filename, 1)).ok(),
+                ),
+                run_runnable(
+                    part2,
+                    input,
+                    fs::read_to_string(get_output_path(filename, 2)).ok(),
+                ),
+            ))
+        }
         Err(err) => Err(format!("Unable to read input file '{filename}': {err}.")),
     }
 }

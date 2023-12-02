@@ -14,10 +14,9 @@ struct Round {
 
 fn parse_input(input: &str) -> Vec<Game> {
     input
-        .trim()
         .split('\n')
         .map(|line| {
-            let (name, rounds) = splitn!(line.trim(), ": ", str, str);
+            let (name, rounds) = splitn!(line, ": ", str, str);
             let id = name[5..].parse().unwrap();
             let rounds = rounds
                 .split("; ")
@@ -70,21 +69,24 @@ generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
+    use aoc::examples;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
-        Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
-        Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
-        Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
-        Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
-        Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
-    ";
+    examples! {
+        EXAMPLE_INPUT = "
+            Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+            Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+            Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+            Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+            Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+        ";
+    }
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = [
             Game {
                 id: 1,
@@ -187,11 +189,11 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 8);
+        assert_eq!(part1(&EXAMPLE_INPUT), 8);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 2286);
+        assert_eq!(part2(&EXAMPLE_INPUT), 2286);
     }
 }

@@ -15,22 +15,27 @@ generate_day_main!(part1);
 
 #[cfg(test)]
 mod tests {
+    use aoc::examples;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
-    ";
+    examples! {
+        EXAMPLE_INPUT = "
+            FOO
+            BAR
+        ";
+    }
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
-        let expected = 0;
+        let actual = parse_input(&EXAMPLE_INPUT);
+        let expected = 1;
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 1);
+        assert_eq!(part1(&EXAMPLE_INPUT), 1);
     }
 }

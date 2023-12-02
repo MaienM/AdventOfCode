@@ -2,7 +2,6 @@ use aoc::generate_day_main;
 
 fn parse_input(input: &str) -> Vec<u32> {
     input
-        .trim()
         .split('\n')
         .map(|line| {
             let mut iter = line.chars().filter_map(|c| c.to_digit(10));
@@ -42,48 +41,50 @@ generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
+    use aoc::examples;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT_1: &str = "
-        1abc2
-        pqr3stu8vwx
-        a1b2c3d4e5f
-        treb7uchet
-    ";
-
-    const EXAMPLE_INPUT_2: &str = "
-        two1nine
-        eightwothree
-        abcone2threexyz
-        xtwone3four
-        4nineeightseven2
-        zoneight234
-        7pqrstsixteen
-    ";
+    examples! {
+        EXAMPLE_INPUT_1 = "
+            1abc2
+            pqr3stu8vwx
+            a1b2c3d4e5f
+            treb7uchet
+        ";
+        EXAMPLE_INPUT_2 = "
+            two1nine
+            eightwothree
+            abcone2threexyz
+            xtwone3four
+            4nineeightseven2
+            zoneight234
+            7pqrstsixteen
+        ";
+    }
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT_1);
+        let actual = parse_input(&EXAMPLE_INPUT_1);
         let expected = vec![12, 38, 15, 77];
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn example_parse_with_words() {
-        let actual = parse_input_with_words(EXAMPLE_INPUT_2);
+        let actual = parse_input_with_words(&EXAMPLE_INPUT_2);
         let expected = vec![29, 83, 13, 24, 42, 14, 76];
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT_1), 142);
+        assert_eq!(part1(&EXAMPLE_INPUT_1), 142);
     }
 
     #[test]
     fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT_2), 281);
+        assert_eq!(part2(&EXAMPLE_INPUT_2), 281);
     }
 }
