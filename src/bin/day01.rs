@@ -41,28 +41,30 @@ generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
-    use aoc::examples;
+    use aoc::example;
+    use macro_rules_attribute::apply;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    examples! {
-        EXAMPLE_INPUT_1 = "
-            1abc2
-            pqr3stu8vwx
-            a1b2c3d4e5f
-            treb7uchet
-        ";
-        EXAMPLE_INPUT_2 = "
-            two1nine
-            eightwothree
-            abcone2threexyz
-            xtwone3four
-            4nineeightseven2
-            zoneight234
-            7pqrstsixteen
-        ";
-    }
+    #[apply(example)]
+    static EXAMPLE_INPUT_1: String = "
+        1abc2
+        pqr3stu8vwx
+        a1b2c3d4e5f
+        treb7uchet
+    ";
+
+    #[apply(example)]
+    static EXAMPLE_INPUT_2: String = "
+        two1nine
+        eightwothree
+        abcone2threexyz
+        xtwone3four
+        4nineeightseven2
+        zoneight234
+        7pqrstsixteen
+    ";
 
     #[test]
     fn example_parse() {

@@ -15,17 +15,17 @@ generate_day_main!(part1);
 
 #[cfg(test)]
 mod tests {
-    use aoc::examples;
+    use aoc::example;
+    use macro_rules_attribute::apply;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    examples! {
-        EXAMPLE_INPUT = "
-            FOO
-            BAR
-        ";
-    }
+    #[apply(example)]
+    static EXAMPLE_INPUT: String = "
+        FOO
+        BAR
+    ";
 
     #[test]
     fn example_parse() {
