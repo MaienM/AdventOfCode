@@ -58,7 +58,20 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-generate_day_main!(part1);
+pub fn part2(input: &str) -> usize {
+    let games = parse_input(input);
+    games
+        .into_iter()
+        .map(|g| {
+            let red = g.rounds.iter().map(|r| r.red).max().unwrap() as usize;
+            let green = g.rounds.iter().map(|r| r.green).max().unwrap() as usize;
+            let blue = g.rounds.iter().map(|r| r.blue).max().unwrap() as usize;
+            red * green * blue
+        })
+        .sum()
+}
+
+generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
@@ -180,5 +193,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(EXAMPLE_INPUT), 8);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(EXAMPLE_INPUT), 2286);
     }
 }
