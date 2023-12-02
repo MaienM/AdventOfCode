@@ -1,11 +1,11 @@
-use aoc::generate_day_main;
+use aoc::{generate_day_main, splitn};
 
 #[derive(Debug, PartialEq)]
 struct Game {
     id: u8,
     rounds: Vec<Round>,
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 struct Round {
     red: u8,
     green: u8,
@@ -17,23 +17,18 @@ fn parse_input(input: &str) -> Vec<Game> {
         .trim()
         .split('\n')
         .map(|line| {
-            let mut parts = line.trim().splitn(2, ": ");
-            let id = parts.next().unwrap()[5..].parse().unwrap();
-            let parts = parts.next().unwrap().split("; ");
-            let rounds = parts
+            let (name, rounds) = splitn!(line.trim(), ": ", str, str);
+            let id = name[5..].parse().unwrap();
+            let rounds = rounds
+                .split("; ")
                 .map(|part| {
-                    let mut round = Round {
-                        red: 0,
-                        green: 0,
-                        blue: 0,
-                    };
+                    let mut round = Round::default();
                     for part in part.split(", ") {
-                        let [count, color]: [&str; 2] =
-                            part.splitn(2, ' ').collect::<Vec<_>>().try_into().unwrap();
+                        let (count, color) = splitn!(part, ' ', u8, str);
                         match color {
-                            "red" => round.red = count.parse().unwrap(),
-                            "green" => round.green = count.parse().unwrap(),
-                            "blue" => round.blue = count.parse().unwrap(),
+                            "red" => round.red = count,
+                            "green" => round.green = count,
+                            "blue" => round.blue = count,
                             _ => panic!("Invalid color {color}"),
                         };
                     }
