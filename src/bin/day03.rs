@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use aoc::{generate_day_main, point::Point2};
 
@@ -8,8 +8,14 @@ struct Number {
     points: Vec<Point2>,
 }
 
-fn parse_input(input: &str) -> (HashSet<Point2>, Vec<Number>) {
-    let mut symbols = HashSet::new();
+#[derive(Debug, PartialEq)]
+struct Symbol {
+    symbol: char,
+    point: Point2,
+}
+
+fn parse_input(input: &str) -> (Vec<Symbol>, Vec<Number>) {
+    let mut symbols = Vec::new();
     let mut numbers = Vec::new();
 
     let mut number = 0;
@@ -41,7 +47,10 @@ fn parse_input(input: &str) -> (HashSet<Point2>, Vec<Number>) {
                     finalize_number!();
                 }
                 _ => {
-                    symbols.insert(Point2::new(x, y));
+                    symbols.push(Symbol {
+                        symbol: char,
+                        point: Point2::new(x, y),
+                    });
                     finalize_number!();
                 }
             }
@@ -65,8 +74,9 @@ pub fn part1(input: &str) -> u32 {
         .into_iter()
         .filter(|n| {
             for npoint in &n.points {
-                for spoint in &symbols {
-                    if udiff(npoint.x, spoint.x) <= 1 && udiff(npoint.y, spoint.y) <= 1 {
+                for symbol in &symbols {
+                    if udiff(npoint.x, symbol.point.x) <= 1 && udiff(npoint.y, symbol.point.y) <= 1
+                    {
                         return true;
                     }
                 }
@@ -77,7 +87,31 @@ pub fn part1(input: &str) -> u32 {
         .sum()
 }
 
-generate_day_main!(part1);
+pub fn part2(input: &str) -> u32 {
+    let (symbols, numbers) = parse_input(input);
+    let mut gears: HashMap<Point2, Vec<u32>> =
+        symbols.iter().map(|s| (s.point, Vec::new())).collect();
+    'number: for number in numbers {
+        for npoint in &number.points {
+            for symbol in &symbols {
+                if udiff(npoint.x, symbol.point.x) <= 1 && udiff(npoint.y, symbol.point.y) <= 1 {
+                    gears.get_mut(&symbol.point).unwrap().push(number.number);
+                    continue 'number;
+                }
+            }
+        }
+    }
+    gears
+        .into_iter()
+        .filter_map(|(point, gear)| match gear.len() {
+            2 => Some(gear[0] * gear[1]),
+            0 | 1 => None,
+            _ => panic!("Excessive gear at {point:?}: {gear:?}."),
+        })
+        .sum()
+}
+
+generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
@@ -105,14 +139,32 @@ mod tests {
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
         let expected = (
-            HashSet::from([
-                Point2::new(3, 1),
-                Point2::new(6, 3),
-                Point2::new(3, 4),
-                Point2::new(5, 5),
-                Point2::new(3, 8),
-                Point2::new(5, 8),
-            ]),
+            vec![
+                Symbol {
+                    symbol: '*',
+                    point: Point2::new(3, 1),
+                },
+                Symbol {
+                    symbol: '#',
+                    point: Point2::new(6, 3),
+                },
+                Symbol {
+                    symbol: '*',
+                    point: Point2::new(3, 4),
+                },
+                Symbol {
+                    symbol: '+',
+                    point: Point2::new(5, 5),
+                },
+                Symbol {
+                    symbol: '$',
+                    point: Point2::new(3, 8),
+                },
+                Symbol {
+                    symbol: '*',
+                    point: Point2::new(5, 8),
+                },
+            ],
             vec![
                 Number {
                     number: 467,
@@ -162,5 +214,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(&EXAMPLE_INPUT), 4361);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(&EXAMPLE_INPUT), 467_835);
     }
 }
