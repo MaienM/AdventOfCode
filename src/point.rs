@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     fmt::Debug,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
@@ -39,6 +40,38 @@ macro_rules! impl_operator {
     };
 }
 
+// Helper macro for neighbours() method.
+macro_rules! impl_neighbor_diag_inner {
+    (toplevel; $neighbours:ident, $base:expr, $var:ident) => {
+        if let Some($var) = $base.$var.checked_sub(1) {
+            $neighbours.insert(Self { $var, ..$base });
+        }
+        if let Some($var) = $base.$var.checked_add(1) {
+            $neighbours.insert(Self { $var, ..$base });
+        }
+    };
+    (nested; $neighbours:ident, $base:expr, $var:ident) => {
+        impl_neighbor_diag_inner!(toplevel; $neighbours, $base, $var);
+        $neighbours.insert($base);
+    };
+
+    ($type:ident; $neighbours:ident, $base:expr, $var:ident, $($vars:ident),*) => {
+        if let Some($var) = $base.$var.checked_sub(1) {
+            let base = Self { $var, ..$base };
+            impl_neighbor_diag_inner!(nested; $neighbours, base, $($vars),*);
+        }
+        if let Some($var) = $base.$var.checked_add(1) {
+            let base = Self { $var, ..$base };
+            impl_neighbor_diag_inner!(nested; $neighbours, base, $($vars),*);
+        }
+        impl_neighbor_diag_inner!($type; $neighbours, $base, $($vars),*);
+    };
+
+    ($neighbours:ident, $base:expr, $($vars:ident),*) => {
+        impl_neighbor_diag_inner!(toplevel; $neighbours, $base, $($vars),*);
+    }
+}
+
 // Implements methods that rely on the type contained in the point being an integer of some kind.
 macro_rules! impl_integer_methods {
     ($name:ident, $type:ty, $($var:ident),+) => {
@@ -51,6 +84,27 @@ macro_rules! impl_integer_methods {
             /// Check whether the given point is orthogontally or diagonally adjacent to this one.
             pub fn adjacent_to_diag(&self, other: &Self) -> bool {
                 self != other && self.distance(other) == 1
+            }
+
+            /// Get the orthogontal neighbours of this point.
+            pub fn neighbours_ortho(&self) -> HashSet<Self> {
+                let mut neighbours = HashSet::new();
+                $(
+                    if let Some($var) = self.$var.checked_sub(1) {
+                        neighbours.insert(Self { $var, ..*self });
+                    }
+                    if let Some($var) = self.$var.checked_add(1) {
+                        neighbours.insert(Self { $var, ..*self });
+                    }
+                )+
+                neighbours
+            }
+
+            /// Get the orthogontal & diagonal neighbours of this point.
+            pub fn neighbours_diag(&self) -> HashSet<Self> {
+                let mut neighbours = HashSet::new();
+                impl_neighbor_diag_inner!(neighbours, *self, $($var),+);
+                neighbours
             }
         }
     };
@@ -66,7 +120,7 @@ macro_rules! call_chain {
 // Generate a point class with the given name and variables.
 macro_rules! create_point {
     ($name:ident, $($var:ident),+) => {
-        #[derive(Clone, Copy, Eq, Hash, PartialEq, new)]
+        #[derive(Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd, new)]
         pub struct $name<T = usize> {
             $(pub $var: T),+
         }
@@ -134,6 +188,7 @@ impl<T: Debug> Debug for Point3<T> {
 
 #[cfg(test)]
 mod tests {
+    use common_macros::hash_set;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -288,5 +343,132 @@ mod tests {
 
         assert_eq!(point.adjacent_to_diag(&point), false);
         assert_eq!(point.adjacent_to_diag(&Point3::new(12, 5, 8)), false);
+    }
+
+    macro_rules! assert_eq_points {
+        (sort; $set:expr) => {
+            {
+                let mut list: Vec<_> = $set.into_iter().collect();
+                list.sort_unstable();
+                list
+            }
+        };
+        ($actual:expr, $expected:expr $(,)?) => {
+            assert_eq!(
+                assert_eq_points!(sort; $actual),
+                assert_eq_points!(sort; $expected),
+            );
+        };
+    }
+
+    #[test]
+    fn neighbours_ortho() {
+        assert_eq_points!(
+            Point2::<u8>::new(10, 5).neighbours_ortho(),
+            hash_set![
+                Point2::new(9, 5),
+                Point2::new(10, 4),
+                Point2::new(10, 6),
+                Point2::new(11, 5),
+            ]
+        );
+        assert_eq_points!(
+            Point2::<u8>::new(0, 255).neighbours_ortho(),
+            hash_set![Point2::new(1, 255), Point2::new(0, 254)]
+        );
+
+        assert_eq_points!(
+            Point3::<u8>::new(10, 5, 8).neighbours_ortho(),
+            hash_set![
+                Point3::new(9, 5, 8),
+                Point3::new(10, 4, 8),
+                Point3::new(10, 5, 7),
+                Point3::new(10, 5, 9),
+                Point3::new(10, 6, 8),
+                Point3::new(11, 5, 8),
+            ]
+        );
+        assert_eq_points!(
+            Point3::<u8>::new(0, 5, 255).neighbours_ortho(),
+            hash_set![
+                Point3::new(0, 4, 255),
+                Point3::new(0, 5, 254),
+                Point3::new(0, 6, 255),
+                Point3::new(1, 5, 255),
+            ]
+        );
+    }
+
+    #[test]
+    fn neighbours_diag() {
+        assert_eq_points!(
+            Point2::<u8>::new(10, 5).neighbours_diag(),
+            hash_set![
+                Point2::new(9, 4),
+                Point2::new(9, 5),
+                Point2::new(9, 6),
+                Point2::new(10, 4),
+                Point2::new(10, 6),
+                Point2::new(11, 4),
+                Point2::new(11, 5),
+                Point2::new(11, 6),
+            ]
+        );
+        assert_eq_points!(
+            Point2::<u8>::new(0, 255).neighbours_diag(),
+            hash_set![
+                Point2::new(0, 254),
+                Point2::new(1, 254),
+                Point2::new(1, 255),
+            ]
+        );
+
+        assert_eq_points!(
+            Point3::<u8>::new(10, 5, 8).neighbours_diag(),
+            hash_set![
+                Point3::new(9, 4, 7),
+                Point3::new(9, 4, 8),
+                Point3::new(9, 4, 9),
+                Point3::new(9, 5, 7),
+                Point3::new(9, 5, 8),
+                Point3::new(9, 5, 9),
+                Point3::new(9, 6, 7),
+                Point3::new(9, 6, 8),
+                Point3::new(9, 6, 9),
+                Point3::new(10, 4, 7),
+                Point3::new(10, 4, 8),
+                Point3::new(10, 4, 9),
+                Point3::new(10, 5, 7),
+                Point3::new(10, 5, 9),
+                Point3::new(10, 6, 7),
+                Point3::new(10, 6, 8),
+                Point3::new(10, 6, 9),
+                Point3::new(11, 4, 7),
+                Point3::new(11, 4, 8),
+                Point3::new(11, 4, 9),
+                Point3::new(11, 5, 7),
+                Point3::new(11, 5, 8),
+                Point3::new(11, 5, 9),
+                Point3::new(11, 6, 7),
+                Point3::new(11, 6, 8),
+                Point3::new(11, 6, 9),
+            ]
+        );
+        assert_eq_points!(
+            Point3::<u8>::new(0, 5, 255).neighbours_diag(),
+            hash_set![
+                Point3::new(0, 4, 254),
+                Point3::new(0, 4, 255),
+                Point3::new(0, 5, 254),
+                Point3::new(0, 6, 254),
+                Point3::new(0, 6, 255),
+                Point3::new(1, 4, 254),
+                Point3::new(1, 4, 255),
+                Point3::new(1, 5, 254),
+                Point3::new(1, 5, 255),
+                Point3::new(1, 6, 254),
+                Point3::new(1, 6, 255),
+            ]
+        );
     }
 }
