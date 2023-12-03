@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aoc::{generate_day_main, point::Point2};
+use aoc::{abs_diff, generate_day_main, point::Point2};
 
 #[derive(Debug, PartialEq)]
 struct Number {
@@ -60,14 +60,6 @@ fn parse_input(input: &str) -> (Vec<Symbol>, Vec<Number>) {
     (symbols, numbers)
 }
 
-fn udiff(a: usize, b: usize) -> usize {
-    if a > b {
-        a - b
-    } else {
-        b - a
-    }
-}
-
 pub fn part1(input: &str) -> u32 {
     let (symbols, numbers) = parse_input(input);
     numbers
@@ -75,7 +67,8 @@ pub fn part1(input: &str) -> u32 {
         .filter(|n| {
             for npoint in &n.points {
                 for symbol in &symbols {
-                    if udiff(npoint.x, symbol.point.x) <= 1 && udiff(npoint.y, symbol.point.y) <= 1
+                    if abs_diff(npoint.x, symbol.point.x) <= 1
+                        && abs_diff(npoint.y, symbol.point.y) <= 1
                     {
                         return true;
                     }
@@ -94,7 +87,9 @@ pub fn part2(input: &str) -> u32 {
     'number: for number in numbers {
         for npoint in &number.points {
             for symbol in &symbols {
-                if udiff(npoint.x, symbol.point.x) <= 1 && udiff(npoint.y, symbol.point.y) <= 1 {
+                if abs_diff(npoint.x, symbol.point.x) <= 1
+                    && abs_diff(npoint.y, symbol.point.y) <= 1
+                {
                     gears.get_mut(&symbol.point).unwrap().push(number.number);
                     continue 'number;
                 }

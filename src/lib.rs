@@ -1,6 +1,20 @@
+use std::ops::Sub;
+
 pub mod parse;
 pub mod point;
 pub mod runner;
+
+/// Calculate the absolute difference between two (possibly unsigned) integers.
+pub fn abs_diff<T>(a: T, b: T) -> T
+where
+    T: PartialOrd + Sub<Output = T>,
+{
+    if a > b {
+        a - b
+    } else {
+        b - a
+    }
+}
 
 /// Define an example for the tests which will be stripped of leading/trailing newline and a static amount of indentation.
 #[macro_export]
