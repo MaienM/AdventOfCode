@@ -5,6 +5,8 @@ use std::{
 
 use derive_new::new;
 
+use crate::abs_diff;
+
 // Implements an operator (add/sub/mul/div) for a point type, including the assign variant of the operator.
 macro_rules! impl_operator {
     ($name:ident, $op:ident, $($var:ident),+) => {
@@ -37,6 +39,13 @@ macro_rules! impl_operator {
     };
 }
 
+macro_rules! call_chain {
+    ($fn:ident, $expr:expr $(,)?) => ($expr);
+    ($fn:ident, $first:expr, $second:expr $(, $($exprs:expr),*)?) => {
+        call_chain!($fn, $first.$fn($second) $(, $($exprs),*)?)
+    };
+}
+
 // Generate a point class with the given name and variables.
 macro_rules! create_point {
     ($name:ident, $($var:ident),+) => {
@@ -49,6 +58,33 @@ macro_rules! create_point {
         impl_operator!($name, sub, $($var),+);
         impl_operator!($name, mul, $($var),+);
         impl_operator!($name, div, $($var),+);
+
+        impl<T> $name<T>
+            where T: Copy + Add<T, Output = T> + Sub<T, Output = T> + PartialOrd<T> + Ord
+        {
+            /// Calculate the sum of all coordinates of the point.
+            #[must_use]
+            pub fn sum(&self) -> T {
+                call_chain!(add, $(self.$var),+)
+            }
+
+            /// Calculate the distance between this point and another point.
+            ///
+            /// Diagonals are counted as a distance of one.
+            #[must_use]
+            pub fn distance(&self, other: &Self) -> T {
+                let diff = self.abs_diff(other);
+                call_chain!(max, $(diff.$var),+)
+            }
+
+            /// Get a point that represents the absolute differences of all coordinates of the two points.
+            #[must_use]
+            pub fn abs_diff(&self, other: &Self) -> Self {
+                Self {
+                    $($var: abs_diff(self.$var, other.$var)),+
+                }
+            }
+        }
     };
 }
 
@@ -150,5 +186,31 @@ mod tests {
         let mut point = Point3::new(20, 15, 28);
         point /= Point3::new(2, 3, 4);
         assert_eq!(point, Point3::new(10, 5, 7));
+    }
+
+    #[test]
+    fn sum() {
+        assert_eq!(Point2::new(10, 5).sum(), 15);
+        assert_eq!(Point2::new(10, -5).sum(), 5);
+        assert_eq!(Point3::new(10, 5, 8).sum(), 23);
+        assert_eq!(Point3::new(10, -5, 3).sum(), 8);
+    }
+
+    #[test]
+    fn abs_diff() {
+        assert_eq!(
+            Point2::new(10, 5).abs_diff(&Point2::new(2, 20)),
+            Point2::new(8, 15)
+        );
+        assert_eq!(
+            Point3::new(10, 5, 3).abs_diff(&Point3::new(2, 20, -3)),
+            Point3::new(8, 15, 6)
+        );
+    }
+
+    #[test]
+    fn distance() {
+        assert_eq!(Point2::new(10, 5).distance(&Point2::new(2, 20)), 15);
+        assert_eq!(Point3::new(10, 5, 3).distance(&Point3::new(2, 20, -3)), 15);
     }
 }
