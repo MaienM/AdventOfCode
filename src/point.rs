@@ -39,6 +39,23 @@ macro_rules! impl_operator {
     };
 }
 
+// Implements methods that rely on the type contained in the point being an integer of some kind.
+macro_rules! impl_integer_methods {
+    ($name:ident, $type:ty, $($var:ident),+) => {
+        impl $name<$type> {
+            /// Check whether the given point is orthogontally adjacent to this one.
+            pub fn adjacent_to_ortho(&self, other: &Self) -> bool {
+                self.abs_diff(other).sum() == 1
+            }
+
+            /// Check whether the given point is orthogontally or diagonally adjacent to this one.
+            pub fn adjacent_to_diag(&self, other: &Self) -> bool {
+                self != other && self.distance(other) == 1
+            }
+        }
+    };
+}
+
 macro_rules! call_chain {
     ($fn:ident, $expr:expr $(,)?) => ($expr);
     ($fn:ident, $first:expr, $second:expr $(, $($exprs:expr),*)?) => {
@@ -58,6 +75,19 @@ macro_rules! create_point {
         impl_operator!($name, sub, $($var),+);
         impl_operator!($name, mul, $($var),+);
         impl_operator!($name, div, $($var),+);
+
+        impl_integer_methods!($name, u8, $($var),+);
+        impl_integer_methods!($name, u16, $($var),+);
+        impl_integer_methods!($name, u32, $($var),+);
+        impl_integer_methods!($name, u64, $($var),+);
+        impl_integer_methods!($name, u128, $($var),+);
+        impl_integer_methods!($name, usize, $($var),+);
+        impl_integer_methods!($name, i8, $($var),+);
+        impl_integer_methods!($name, i16, $($var),+);
+        impl_integer_methods!($name, i32, $($var),+);
+        impl_integer_methods!($name, i64, $($var),+);
+        impl_integer_methods!($name, i128, $($var),+);
+        impl_integer_methods!($name, isize, $($var),+);
 
         impl<T> $name<T>
             where T: Copy + Add<T, Output = T> + Sub<T, Output = T> + PartialOrd<T> + Ord
@@ -212,5 +242,51 @@ mod tests {
     fn distance() {
         assert_eq!(Point2::new(10, 5).distance(&Point2::new(2, 20)), 15);
         assert_eq!(Point3::new(10, 5, 3).distance(&Point3::new(2, 20, -3)), 15);
+    }
+
+    #[test]
+    fn adjacent_to_ortho() {
+        let point: Point2<u8> = Point2::new(10, 5);
+
+        assert_eq!(point.adjacent_to_ortho(&Point2::new(10, 4)), true);
+        assert_eq!(point.adjacent_to_ortho(&Point2::new(10, 6)), true);
+        assert_eq!(point.adjacent_to_ortho(&Point2::new(9, 5)), true);
+
+        assert_eq!(point.adjacent_to_ortho(&point), false);
+        assert_eq!(point.adjacent_to_ortho(&Point2::new(9, 4)), false);
+        assert_eq!(point.adjacent_to_ortho(&Point2::new(10, 3)), false);
+
+        let point: Point3<u8> = Point3::new(10, 5, 8);
+
+        assert_eq!(point.adjacent_to_ortho(&Point3::new(10, 5, 7)), true);
+        assert_eq!(point.adjacent_to_ortho(&Point3::new(10, 6, 8)), true);
+        assert_eq!(point.adjacent_to_ortho(&Point3::new(9, 5, 8)), true);
+
+        assert_eq!(point.adjacent_to_ortho(&point), false);
+        assert_eq!(point.adjacent_to_ortho(&Point3::new(11, 6, 8)), false);
+        assert_eq!(point.adjacent_to_ortho(&Point3::new(12, 5, 8)), false);
+    }
+
+    #[test]
+    fn adjacent_to_diag() {
+        let point: Point2<u8> = Point2::new(10, 5);
+
+        assert_eq!(point.adjacent_to_diag(&Point2::new(10, 4)), true);
+        assert_eq!(point.adjacent_to_diag(&Point2::new(10, 6)), true);
+        assert_eq!(point.adjacent_to_diag(&Point2::new(9, 5)), true);
+        assert_eq!(point.adjacent_to_diag(&Point2::new(9, 4)), true);
+
+        assert_eq!(point.adjacent_to_diag(&point), false);
+        assert_eq!(point.adjacent_to_diag(&Point2::new(10, 3)), false);
+
+        let point: Point3<u8> = Point3::new(10, 5, 8);
+
+        assert_eq!(point.adjacent_to_diag(&Point3::new(10, 5, 7)), true);
+        assert_eq!(point.adjacent_to_diag(&Point3::new(10, 6, 8)), true);
+        assert_eq!(point.adjacent_to_diag(&Point3::new(9, 5, 8)), true);
+        assert_eq!(point.adjacent_to_diag(&Point3::new(11, 6, 8)), true);
+
+        assert_eq!(point.adjacent_to_diag(&point), false);
+        assert_eq!(point.adjacent_to_diag(&Point3::new(12, 5, 8)), false);
     }
 }
