@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use aoc::{generate_day_main, splitn};
 
@@ -36,7 +36,23 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-generate_day_main!(part1);
+pub fn part2(input: &str) -> u64 {
+    let cards = parse_input(input);
+    let mut sum = 0u64;
+    let mut copies: HashMap<usize, u32> = HashMap::new();
+    for (idx, card) in cards.into_iter().enumerate() {
+        let amount = copies.remove(&idx).unwrap_or(1);
+        let winning = card.numbers.intersection(&card.winners).count();
+        for i in 0..winning {
+            let idx = idx + i + 1;
+            copies.insert(idx, copies.get(&idx).unwrap_or(&1) + amount);
+        }
+        sum += u64::from(amount);
+    }
+    sum
+}
+
+generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
@@ -92,5 +108,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(&EXAMPLE_INPUT), 13);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(&EXAMPLE_INPUT), 30);
     }
 }
