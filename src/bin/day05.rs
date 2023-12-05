@@ -49,9 +49,7 @@ fn parse_input(input: &str) -> Input {
     Input { seeds, maps }
 }
 
-pub fn part1(input: &str) -> usize {
-    let input = parse_input(input);
-
+fn find_lowest_location(input: Input) -> usize {
     let mut current = "seed".to_owned();
     let mut items = input.seeds;
 
@@ -74,7 +72,28 @@ pub fn part1(input: &str) -> usize {
     items.into_iter().min().unwrap()
 }
 
-generate_day_main!(part1);
+pub fn part1(input: &str) -> usize {
+    let input = parse_input(input);
+    find_lowest_location(input)
+}
+
+pub fn part2(input: &str) -> usize {
+    let mut input = parse_input(input);
+
+    let mut seeds = Vec::new();
+    while !input.seeds.is_empty() {
+        let len = input.seeds.pop().unwrap();
+        let start = input.seeds.pop().unwrap();
+        for i in 0..len {
+            seeds.push(start + i);
+        }
+    }
+    input.seeds = seeds;
+
+    find_lowest_location(input)
+}
+
+generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
@@ -209,5 +228,10 @@ mod tests {
     #[test]
     fn example_part1() {
         assert_eq!(part1(&EXAMPLE_INPUT), 35);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(&EXAMPLE_INPUT), 46);
     }
 }
