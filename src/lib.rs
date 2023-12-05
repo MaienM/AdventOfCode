@@ -34,7 +34,7 @@ macro_rules! example {
                 .strip_suffix('\n')
                 .unwrap()
                 .split('\n')
-                .map(|line| line.strip_prefix("        ").unwrap())
+                .map(|line| line.strip_prefix("        ").unwrap_or(line))
                 .collect::<Vec<_>>()
                 .join("\n")
         });
