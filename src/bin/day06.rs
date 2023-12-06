@@ -16,20 +16,28 @@ fn parse_input(input: &str) -> Vec<Race> {
         .collect()
 }
 
+fn find_win_options(race: &Race) -> usize {
+    let first = (1..race.duration)
+        .find(|charge| charge * (race.duration - charge) > race.record)
+        .unwrap();
+    race.duration + 1 - 2 * first
+}
+
 pub fn part1(input: &str) -> usize {
     let races = parse_input(input);
     let mut result = 1;
     for race in races {
-        let wins = (1..race.duration)
-            .map(|charge| charge * (race.duration - charge))
-            .filter(|s| s > &race.record)
-            .count();
-        result *= wins;
+        result *= find_win_options(&race);
     }
     result
 }
 
-generate_day_main!(part1);
+pub fn part2(input: &str) -> usize {
+    let races = parse_input(&input.replace(' ', "").replace(':', ": "));
+    find_win_options(races.first().unwrap())
+}
+
+generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
@@ -66,7 +74,37 @@ mod tests {
     }
 
     #[test]
+    fn test_find_win_options() {
+        assert_eq!(
+            find_win_options(&Race {
+                duration: 7,
+                record: 9,
+            }),
+            4
+        );
+        assert_eq!(
+            find_win_options(&Race {
+                duration: 15,
+                record: 40,
+            }),
+            8
+        );
+        assert_eq!(
+            find_win_options(&Race {
+                duration: 30,
+                record: 200,
+            }),
+            9
+        );
+    }
+
+    #[test]
     fn example_part1() {
         assert_eq!(part1(&EXAMPLE_INPUT), 288);
+    }
+
+    #[test]
+    fn example_part2() {
+        assert_eq!(part2(&EXAMPLE_INPUT), 71_503);
     }
 }
