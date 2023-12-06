@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aoc::{abs_diff, generate_day_main, point::Point2};
+use aoc::{generate_day_main, point::Point2, utils::abs_diff};
 
 #[derive(Debug, PartialEq)]
 struct Number {

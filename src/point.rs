@@ -6,7 +6,7 @@ use std::{
 
 use derive_new::new;
 
-use crate::abs_diff;
+use crate::utils::abs_diff;
 
 // Implements an operator (add/sub/mul/div) for a point type, including the assign variant of the operator.
 macro_rules! impl_operator {
