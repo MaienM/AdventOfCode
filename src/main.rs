@@ -2,30 +2,22 @@ use std::time::Duration;
 
 use ansi_term::Colour::{Cyan, Purple, Red};
 use aoc::runner::{
-    get_input_path, print_runnable_run, run_day, DurationThresholds, Runnable, RunnableRun,
-    RunnableRunOk,
+    get_input_path, print_runnable_run, run_day, DurationThresholds, RunnableRun, RunnableRunOk,
 };
-use aoc_derive::RunnableListProvider;
+use aoc_derive::get_runnables;
 
-type RunnableList = Vec<(&'static str, Runnable<String>, Runnable<String>)>;
-pub trait RunnableListProvider {
-    fn get() -> RunnableList;
-}
-
-#[derive(RunnableListProvider)]
-pub struct ListProvider {}
+get_runnables!(RUNNABLES);
 
 fn main() {
-    let runnables = ListProvider::get();
     let mut runs: Vec<(String, Result<RunnableRun, String>)> = Vec::new();
     println!(
         "Running {} days using default inputs...",
-        Cyan.paint(runnables.len().to_string())
+        Cyan.paint(RUNNABLES.len().to_string())
     );
-    for (name, part1, part2) in ListProvider::get() {
+    for (name, part1, part2) in &*RUNNABLES {
         let filename = get_input_path(name);
         let name = name.replace("day", "Day ");
-        match run_day(&filename, part1, part2) {
+        match run_day(&filename, *part1, *part2) {
             Ok((run_1, run_2)) => {
                 for (i, run) in [(1, run_1), (2, run_2)] {
                     runs.push((format!("{name} part {i}").to_string(), Ok(run)));
