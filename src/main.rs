@@ -1,20 +1,26 @@
 use std::time::Duration;
 
 use ansi_term::Colour::{Cyan, Purple, Red};
-use aoc::runner::{
-    get_input_path, print_runnable_run, run_day, DurationThresholds, RunnableRun, RunnableRunOk,
+use aoc::{
+    derived::Day,
+    runner::{
+        get_input_path, print_runnable_run, run_day, DurationThresholds, RunnableRun, RunnableRunOk,
+    },
 };
-use aoc_derive::get_runnables;
+use aoc_derive::scan_days;
 
-get_runnables!(RUNNABLES);
+scan_days!(DAYS);
 
 fn main() {
     let mut runs: Vec<(String, Result<RunnableRun, String>)> = Vec::new();
     println!(
         "Running {} days using default inputs...",
-        Cyan.paint(RUNNABLES.len().to_string())
+        Cyan.paint(DAYS.len().to_string())
     );
-    for (name, part1, part2) in &*RUNNABLES {
+    for day in &*DAYS {
+        let Day {
+            name, part1, part2, ..
+        } = day;
         let filename = get_input_path(name);
         let name = name.replace("day", "Day ");
         match run_day(&filename, *part1, *part2) {

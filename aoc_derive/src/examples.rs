@@ -48,10 +48,10 @@ impl<'a> Parser for ExampleStringParser<'a> {
         for line in text.split('\n') {
             lines.push(match line {
                 "" => "",
-                line => line.strip_prefix(&indent).ok_or_else(|| {
+                line => line.strip_prefix(indent).ok_or_else(|| {
                     Error::new(
                         span,
-                        &format!("non-empty line doesn't start with indent ({indent:?}): {line:?}"),
+                        format!("non-empty line doesn't start with indent ({indent:?}): {line:?}"),
                     )
                 })?,
             });
@@ -110,13 +110,13 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
         let part1 = get_part_args(&args.part1);
         let part2 = get_part_args(&args.part2);
         *example.expr = parse_quote! {
-            aoc::examples::Example {
+            aoc::derived::Example {
                 input: #text,
                 part1: #part1,
                 part2: #part2,
             }
         };
-        *example.ty = parse_quote!(aoc::examples::Example);
+        *example.ty = parse_quote!(aoc::derived::Example);
     };
 
     let mut result = quote!(#example);
