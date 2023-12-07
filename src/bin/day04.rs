@@ -56,15 +56,14 @@ generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
-    use aoc::example;
+    use aoc_derive::example_input;
     use common_macros::hash_set;
-    use macro_rules_attribute::apply;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    #[apply(example)]
-    static EXAMPLE_INPUT: String = "
+    #[example_input(part1 = 13, part2 = 30, test)]
+    static EXAMPLE_INPUT: &str = "
         Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
         Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
         Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
@@ -103,15 +102,5 @@ mod tests {
             },
         ];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(&EXAMPLE_INPUT), 13);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(&EXAMPLE_INPUT), 30);
     }
 }

@@ -15,14 +15,13 @@ generate_day_main!(part1);
 
 #[cfg(test)]
 mod tests {
-    use aoc::example;
-    use macro_rules_attribute::apply;
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    #[apply(example)]
-    static EXAMPLE_INPUT: String = "
+    #[example_input(part1 = 1, test)]
+    static EXAMPLE_INPUT: &str = "
         FOO
         BAR
     ";
@@ -32,10 +31,5 @@ mod tests {
         let actual = parse_input(&EXAMPLE_INPUT);
         let expected = 1;
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(&EXAMPLE_INPUT), 1);
     }
 }

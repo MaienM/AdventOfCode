@@ -41,22 +41,21 @@ generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
-    use aoc::example;
-    use macro_rules_attribute::apply;
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    #[apply(example)]
-    static EXAMPLE_INPUT_1: String = "
+    #[example_input(part1 = 142, test)]
+    static EXAMPLE_INPUT_1: &str = "
         1abc2
         pqr3stu8vwx
         a1b2c3d4e5f
         treb7uchet
     ";
 
-    #[apply(example)]
-    static EXAMPLE_INPUT_2: String = "
+    #[example_input(part2 = 281, test)]
+    static EXAMPLE_INPUT_2: &str = "
         two1nine
         eightwothree
         abcone2threexyz
@@ -78,15 +77,5 @@ mod tests {
         let actual = parse_input_with_words(&EXAMPLE_INPUT_2);
         let expected = vec![29, 83, 13, 24, 42, 14, 76];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(&EXAMPLE_INPUT_1), 142);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(&EXAMPLE_INPUT_2), 281);
     }
 }

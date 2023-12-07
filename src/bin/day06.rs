@@ -41,14 +41,13 @@ generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
-    use aoc::example;
-    use macro_rules_attribute::apply;
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    #[apply(example)]
-    static EXAMPLE_INPUT: String = "
+    #[example_input(part1 = 288, part2 = 71_503, test)]
+    static EXAMPLE_INPUT: &str = "
         Time:      7  15   30
         Distance:  9  40  200
     ";
@@ -96,15 +95,5 @@ mod tests {
             }),
             9
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(&EXAMPLE_INPUT), 288);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(&EXAMPLE_INPUT), 71_503);
     }
 }

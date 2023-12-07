@@ -147,14 +147,13 @@ generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
-    use aoc::example;
-    use macro_rules_attribute::apply;
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    #[apply(example)]
-    static EXAMPLE_INPUT: String = "
+    #[example_input(part1 = 6440, part2 = 5905, test)]
+    static EXAMPLE_INPUT: &str = "
         32T3K 765
         T55J5 684
         KK677 28
@@ -188,15 +187,5 @@ mod tests {
             },
         ];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(&EXAMPLE_INPUT), 6440);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(&EXAMPLE_INPUT), 5905);
     }
 }

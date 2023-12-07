@@ -97,14 +97,13 @@ generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
-    use aoc::example;
-    use macro_rules_attribute::apply;
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    #[apply(example)]
-    static EXAMPLE_INPUT: String = "
+    #[example_input(part1 = 35, part2 = 46, test)]
+    static EXAMPLE_INPUT: &str = "
         seeds: 79 14 55 13
 
         seed-to-soil map:
@@ -223,15 +222,5 @@ mod tests {
             ]),
         };
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(&EXAMPLE_INPUT), 35);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(&EXAMPLE_INPUT), 46);
     }
 }
