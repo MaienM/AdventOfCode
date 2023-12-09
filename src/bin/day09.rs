@@ -34,7 +34,32 @@ pub fn part1(input: &str) -> isize {
     lists.into_iter().map(|list| predict(&list)).sum()
 }
 
-generate_day_main!(part1);
+pub fn interpolate_history(sequence: &[isize]) -> isize {
+    let mut steps = Vec::new();
+    let mut iter = sequence.iter();
+    let mut cur = iter.next().unwrap();
+    for next in iter {
+        steps.push(next - cur);
+        cur = next;
+    }
+
+    let step = &steps[0];
+    if steps.iter().all(|v| v == step) {
+        sequence[0] - step
+    } else {
+        sequence[0] - interpolate_history(&steps)
+    }
+}
+
+pub fn part2(input: &str) -> isize {
+    let lists = parse_input(input);
+    lists
+        .into_iter()
+        .map(|list| interpolate_history(&list))
+        .sum()
+}
+
+generate_day_main!(part1, part2);
 
 #[cfg(test)]
 mod tests {
@@ -43,7 +68,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 114, test)]
+    #[example_input(part1 = 114, part2 = 2, test)]
     static EXAMPLE_INPUT: &str = "
         0 3 6 9 12 15
         1 3 6 10 15 21
