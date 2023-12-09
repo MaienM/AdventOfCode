@@ -8,7 +8,8 @@ use syn::{
     punctuated::Punctuated,
     spanned::Spanned,
     visit::{self, Visit},
-    Error, Expr, ExprPath, ForeignItemStatic, ItemFn, ItemStatic, Meta, PathSegment, Token, Type,
+    Error, Expr, ExprPath, ForeignItemStatic, ItemFn, ItemStatic, LitStr, Meta, PathSegment, Token,
+    Type,
 };
 use tap::prelude::*;
 
@@ -135,7 +136,18 @@ fn fill_static(def: ForeignItemStatic, ty: Type, expr: Expr) -> ItemStatic {
     }
 }
 
-pub fn inject_days(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+pub fn inject_days(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    let mut path = ".".to_owned();
+    let args_parser = syn::meta::parser(|meta| {
+        if meta.path.is_ident("path") {
+            path = meta.value()?.parse::<LitStr>()?.value();
+        } else {
+            return Err(meta.error("unsupported property"));
+        }
+        Ok(())
+    });
+    parse_macro_input!(input with args_parser);
+
     let itemdef = parse_macro_input!(annotated_item as ForeignItemStatic);
     if itemdef.ty != parse_quote!(Vec<Day>) {
         return Error::new(itemdef.ty.span(), "must be of type Vec<Day>".to_owned())
@@ -183,7 +195,10 @@ pub fn inject_days(_input: TokenStream, annotated_item: TokenStream) -> TokenStr
     quote! {
         #itemdef
 
-        #[path = "."]
+        #[path = #path]
+        #[allow(dead_code)]
+        #[allow(unused_imports)]
+        #[allow(unused_variables)]
         mod bin {
             #(#binmods)*
         }

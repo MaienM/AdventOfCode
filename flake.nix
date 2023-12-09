@@ -26,6 +26,8 @@
             ])
             fenix.packages.${system}.rust-analyzer
             pkgs.cargo-nextest
+            pkgs.critcmp
+            pkgs.gnuplot
           ];
         };
       });

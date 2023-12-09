@@ -107,10 +107,12 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
         let expr = example.expr.to_token_stream().into();
         let text = parse_macro_input!(expr with parser);
 
+        let name = example.ident.to_string();
         let part1 = get_part_args(&args.part1);
         let part2 = get_part_args(&args.part2);
         *example.expr = parse_quote! {
             ::aoc::derived::Example {
+                name: #name,
                 input: #text,
                 part1: #part1,
                 part2: #part2,

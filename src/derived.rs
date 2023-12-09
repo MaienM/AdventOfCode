@@ -5,6 +5,9 @@ use crate::runner::Solver;
 /// An example input.
 #[derive(Clone)]
 pub struct Example {
+    /// The name of the example.
+    pub name: &'static str,
+
     /// The example input.
     pub input: &'static str,
 

@@ -129,9 +129,10 @@ pub mod multi {
 
     use ansi_term::Colour::{Cyan, Purple};
     use clap::{
-        builder::{PossibleValue, PossibleValuesParser, TypedValueParser},
+        builder::{ArgPredicate, PossibleValue, PossibleValuesParser, TypedValueParser},
         CommandFactory, FromArgMatches, Parser,
     };
+    use criterion::Criterion;
 
     use super::{FilePath, FilePathParser};
     use crate::{
@@ -174,10 +175,8 @@ pub mod multi {
         })
     }
 
-    /// Entrypoint for the main/combined binary.
     #[derive(Parser, Debug)]
-    #[command(author, version, about, long_about = None)]
-    struct MultiArgs {
+    struct CommonArgs {
         /// Only run the listed days.
         ///
         /// The syntax {day}-{part} can be used to target only a single part for a day.
@@ -201,6 +200,54 @@ pub mod multi {
             group = "targets",
         )]
         skip: Option<Vec<Vec<(u8, u8)>>>,
+    }
+    impl CommonArgs {
+        fn get_targets(&self, days: &[Day]) -> Vec<Day> {
+            let mut days = days.to_owned();
+            if let Some(only) = &self.only {
+                let only: HashSet<_> = only.iter().flatten().collect();
+                for day in &mut days {
+                    if !only.contains(&(day.num, 1)) {
+                        day.part1 = Solver::NotImplemented;
+                    }
+                    if !only.contains(&(day.num, 2)) {
+                        day.part2 = Solver::NotImplemented;
+                    }
+                }
+            } else if let Some(skip) = &self.skip {
+                let skip: HashSet<_> = skip.iter().flatten().collect();
+                for day in &mut days {
+                    if skip.contains(&(day.num, 1)) {
+                        day.part1 = Solver::NotImplemented;
+                    }
+                    if skip.contains(&(day.num, 2)) {
+                        day.part2 = Solver::NotImplemented;
+                    }
+                }
+            }
+            days.into_iter()
+                .filter(|day| day.part1.is_implemented() || day.part2.is_implemented())
+                .collect()
+        }
+    }
+
+    fn parse_args<T>(days: &[Day]) -> T
+    where
+        T: CommandFactory + FromArgMatches,
+    {
+        let mut command = <T as CommandFactory>::command()
+            .mut_arg("only", |a| a.value_parser(create_target_value_parser(days)))
+            .mut_arg("skip", |a| a.value_parser(create_target_value_parser(days)));
+        <T as FromArgMatches>::from_arg_matches_mut(&mut command.clone().get_matches())
+            .map_err(|err| err.format(&mut command))
+            .unwrap()
+    }
+
+    #[derive(Parser, Debug)]
+    #[command(author, version, about, long_about = None)]
+    struct MainArgs {
+        #[command(flatten)]
+        common: CommonArgs,
 
         /// Pattern for paths to files containing the inputs.
         ///
@@ -234,46 +281,10 @@ pub mod multi {
         show_results: bool,
     }
 
-    impl MultiArgs {
-        fn get_targets(&self, days: &[Day]) -> Vec<Day> {
-            let mut days = days.to_owned();
-            if let Some(only) = &self.only {
-                let only: HashSet<_> = only.iter().flatten().collect();
-                for day in &mut days {
-                    if !only.contains(&(day.num, 1)) {
-                        day.part1 = Solver::NotImplemented;
-                    }
-                    if !only.contains(&(day.num, 2)) {
-                        day.part2 = Solver::NotImplemented;
-                    }
-                }
-            } else if let Some(skip) = &self.skip {
-                let skip: HashSet<_> = skip.iter().flatten().collect();
-                for day in &mut days {
-                    if skip.contains(&(day.num, 1)) {
-                        day.part1 = Solver::NotImplemented;
-                    }
-                    if skip.contains(&(day.num, 2)) {
-                        day.part2 = Solver::NotImplemented;
-                    }
-                }
-            }
-            days.into_iter()
-                .filter(|day| day.part1.is_implemented() || day.part2.is_implemented())
-                .collect()
-        }
-    }
-
     pub fn main(days: &[Day]) {
-        let mut command = <MultiArgs as CommandFactory>::command()
-            .mut_arg("only", |a| a.value_parser(create_target_value_parser(days)))
-            .mut_arg("skip", |a| a.value_parser(create_target_value_parser(days)));
-        let args =
-            <MultiArgs as FromArgMatches>::from_arg_matches_mut(&mut command.clone().get_matches())
-                .map_err(|err| err.format(&mut command))
-                .unwrap();
+        let args: MainArgs = parse_args(days);
 
-        let targets = args.get_targets(days);
+        let targets = args.common.get_targets(days);
         println!(
             "Running {} parts over {} days...",
             Cyan.paint(
@@ -343,6 +354,68 @@ pub mod multi {
             );
         }
     }
+
+    #[derive(Parser, Debug)]
+    #[command(author, version, about, long_about = None)]
+    struct BenchArgs {
+        #[command(flatten)]
+        common: CommonArgs,
+
+        /// Noop for compatibility.
+        #[arg(long, num_args = 0)]
+        bench: (),
+
+        /// Save results under a named baseline.
+        #[arg(
+            short = 's',
+            long,
+            default_value_if("baseline", ArgPredicate::IsPresent, None),
+            default_value = "base",
+            conflicts_with = "baseline"
+        )]
+        save_baseline: Option<String>,
+
+        /// Compare to a named baseline.
+        ///
+        /// If any benchmarks do not have the specified baseline this command fails.
+        #[arg(short = 'b', long)]
+        baseline: Option<String>,
+    }
+
+    pub fn bench(days: &[Day]) {
+        let args: BenchArgs = parse_args(days);
+
+        let mut criterion = Criterion::default();
+        if let Some(name) = args.save_baseline {
+            criterion = criterion.save_baseline(name);
+        } else if let Some(name) = args.baseline {
+            criterion = criterion.retain_baseline(name, true);
+        }
+
+        for day in args.common.get_targets(days) {
+            for example in day.examples {
+                for (i, part, solution) in [
+                    (1, &day.part1, example.part1),
+                    (2, &day.part2, example.part2),
+                ] {
+                    if solution.is_none() {
+                        continue;
+                    }
+                    let Solver::Implemented(runnable) = part else {
+                        continue;
+                    };
+                    criterion.bench_function(
+                        &format!("{}/part{}/{}", day.name, i, example.name),
+                        |b| {
+                            b.iter(|| runnable(example.input));
+                        },
+                    );
+                }
+            }
+        }
+
+        criterion.final_summary();
+    }
 }
 
 pub mod single {
@@ -357,7 +430,6 @@ pub mod single {
         runner::{DurationThresholds, SolverRunResult},
     };
 
-    /// Entrypoint for the binary of a single day.
     #[derive(Parser, Debug)]
     #[command(author, version, about, long_about = None)]
     struct SingleArgs {

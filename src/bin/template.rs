@@ -9,7 +9,9 @@ pub fn part1(input: &str) -> usize {
     0
 }
 
-aoc::cli::single::generate_main!();
+// aoc::cli::single::generate_main!();
+fn main() {
+}
 
 #[cfg(test)]
 mod tests {
