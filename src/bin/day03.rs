@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aoc::{generate_day_main, point::Point2, utils::abs_diff};
+use aoc::{point::Point2, utils::abs_diff};
 
 #[derive(Debug, PartialEq)]
 struct Number {
@@ -106,7 +106,7 @@ pub fn part2(input: &str) -> u32 {
         .sum()
 }
 
-generate_day_main!(part1, part2);
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

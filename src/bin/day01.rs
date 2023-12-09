@@ -1,5 +1,3 @@
-use aoc::generate_day_main;
-
 fn parse_input(input: &str) -> Vec<u32> {
     input
         .split('\n')
@@ -37,7 +35,7 @@ pub fn part2(input: &str) -> u32 {
     input.iter().sum()
 }
 
-generate_day_main!(part1, part2);
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

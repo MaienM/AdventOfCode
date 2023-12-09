@@ -11,20 +11,17 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        devToolchain = fenix.packages.${system}.stable;
         devToolchainUnstable = fenix.packages."${system}".latest;
       in
       {
         defaultPackage = fenix.packages.x86_64-linux.minimal.toolchain;
         devShell = pkgs.mkShell {
           buildInputs = [
-            (devToolchain.withComponents [
+            (devToolchainUnstable.withComponents [
               "cargo"
               "clippy"
               "rust-src"
               "rustc"
-            ])
-            (devToolchainUnstable.withComponents [
               "rustfmt"
             ])
             fenix.packages.${system}.rust-analyzer

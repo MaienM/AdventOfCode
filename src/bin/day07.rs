@@ -1,4 +1,4 @@
-use aoc::{generate_day_main, parse::splitn};
+use aoc::parse::splitn;
 
 type Card = char;
 
@@ -143,7 +143,7 @@ pub fn part2(input: &str) -> usize {
     })
 }
 
-generate_day_main!(part1, part2);
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

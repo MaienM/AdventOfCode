@@ -1,7 +1,5 @@
 #![allow(unused_variables)]
 
-use aoc::generate_day_main;
-
 fn parse_input(input: &str) -> usize {
     0
 }
@@ -11,7 +9,7 @@ pub fn part1(input: &str) -> usize {
     0
 }
 
-generate_day_main!(part1);
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

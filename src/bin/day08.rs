@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use aoc::{generate_day_main, parse::splitn};
+use aoc::parse::splitn;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Direction {
@@ -112,7 +112,7 @@ pub fn part2(input: &str) -> usize {
     least_common_multiple(cycles)
 }
 
-generate_day_main!(part1, part2);
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

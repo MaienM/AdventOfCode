@@ -110,13 +110,13 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
         let part1 = get_part_args(&args.part1);
         let part2 = get_part_args(&args.part2);
         *example.expr = parse_quote! {
-            aoc::derived::Example {
+            ::aoc::derived::Example {
                 input: #text,
                 part1: #part1,
                 part2: #part2,
             }
         };
-        *example.ty = parse_quote!(aoc::derived::Example);
+        *example.ty = parse_quote!(::aoc::derived::Example);
     };
 
     let mut result = quote!(#example);

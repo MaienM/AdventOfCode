@@ -1,12 +1,22 @@
+#![feature(proc_macro_span)]
+
 mod examples;
 mod scanner;
 
 use proc_macro::TokenStream;
 
 /// Define a static that will hold a list of all [`aoc::derived::Day`]s for all days.
-#[proc_macro]
-pub fn scan_days(input: TokenStream) -> TokenStream {
-    scanner::scan_days(input)
+///
+/// This will also include all days as modules.
+#[proc_macro_attribute]
+pub fn inject_days(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    scanner::inject_days(input, annotated_item)
+}
+
+/// Define a static that will hold the [`aoc::derived::Day`] for the current file.
+#[proc_macro_attribute]
+pub fn inject_day(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    scanner::inject_day(input, annotated_item)
 }
 
 /// Mark an attribute as an example input.

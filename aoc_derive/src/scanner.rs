@@ -1,36 +1,70 @@
-use std::fs::{self, read_to_string, DirEntry};
+use std::fs::{self, read_to_string};
 
-use proc_macro::TokenStream;
+use proc_macro::{Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
     parse_file, parse_macro_input, parse_quote,
     punctuated::Punctuated,
+    spanned::Spanned,
     visit::{self, Visit},
-    Expr, ExprPath, Ident, ItemFn, ItemStatic, Meta, PathSegment, Token,
+    Error, Expr, ExprPath, ForeignItemStatic, ItemFn, ItemStatic, Meta, PathSegment, Token, Type,
 };
+use tap::prelude::*;
 
 use crate::examples;
 
-struct ExampleScraper {
+struct BinScanner {
     mod_root_path: Punctuated<PathSegment, Token![::]>,
     current_path: Punctuated<PathSegment, Token![::]>,
-    pub part1: Expr,
-    pub part2: Expr,
-    pub examples: Vec<Expr>,
+    pub(crate) name: String,
+    pub(crate) part1: Option<Expr>,
+    pub(crate) part2: Option<Expr>,
+    pub(crate) examples: Vec<Expr>,
 }
-impl ExampleScraper {
-    pub fn new(path: ExprPath) -> Self {
-        Self {
-            mod_root_path: path.path.segments.clone(),
-            current_path: path.path.segments,
-            part1: parse_quote!(None),
-            part2: parse_quote!(None),
+impl BinScanner {
+    pub(crate) fn scan_file(path: &str, modpath: ExprPath) -> Self {
+        let mut scanner = Self {
+            name: path.split('/').last().unwrap().replace(".rs", ""),
+            mod_root_path: modpath.path.segments.clone(),
+            current_path: modpath.path.segments,
+            part1: None,
+            part2: None,
             examples: Vec::new(),
+        };
+
+        let contents = read_to_string(path).unwrap();
+        let file = parse_file(&contents).unwrap();
+        scanner.visit_file(&file);
+
+        scanner
+    }
+
+    pub(crate) fn to_expr(&self) -> Expr {
+        let BinScanner { name, examples, .. } = self;
+
+        let num: u8 = name[3..].parse().unwrap();
+        let part1: Expr = self.part1.as_ref().map_or(
+            parse_quote!(::aoc::runner::Solver::NotImplemented),
+            |f| parse_quote!(::aoc::runner::Solver::Implemented(#f)),
+        );
+        let part2: Expr = self.part2.as_ref().map_or(
+            parse_quote!(::aoc::runner::Solver::NotImplemented),
+            |f| parse_quote!(::aoc::runner::Solver::Implemented(#f)),
+        );
+
+        parse_quote! {
+            ::aoc::derived::Day {
+                name: #name,
+                num: #num,
+                part1: #part1,
+                part2: #part2,
+                examples: vec![ #(#examples),* ],
+            }
         }
     }
 }
-impl<'ast> Visit<'ast> for ExampleScraper {
+impl<'ast> Visit<'ast> for BinScanner {
     fn visit_item_mod(&mut self, node: &'ast syn::ItemMod) {
         self.current_path.push(node.ident.clone().into());
         visit::visit_item_mod(self, node);
@@ -41,8 +75,8 @@ impl<'ast> Visit<'ast> for ExampleScraper {
         let cp = &self.current_path;
         if cp == &self.mod_root_path {
             match node.sig.ident.to_string().as_str() {
-                "part1" => self.part1 = parse_quote!(Some(|i| #cp::part1(i).to_string())),
-                "part2" => self.part2 = parse_quote!(Some(|i| #cp::part2(i).to_string())),
+                "part1" => self.part1 = Some(parse_quote!(|i| #cp::part1(i).to_string())),
+                "part2" => self.part2 = Some(parse_quote!(|i| #cp::part2(i).to_string())),
                 _ => {}
             }
         }
@@ -77,8 +111,8 @@ impl<'ast> Visit<'ast> for ExampleScraper {
             return;
         }
 
-        // Check if this item in an expanded example.
-        if node.ty == parse_quote!(aoc::derived::Example) {
+        // Check if this item is an expanded example.
+        if node.ty == parse_quote!(::aoc::derived::Example) {
             self.examples.push(*node.expr.clone());
         }
 
@@ -86,65 +120,109 @@ impl<'ast> Visit<'ast> for ExampleScraper {
     }
 }
 
-fn scan_day(path: &str, name: &str, modpath: ExprPath) -> TokenStream2 {
-    let mut scraper = ExampleScraper::new(modpath);
-    let contents = read_to_string(path).unwrap();
-    let file = parse_file(&contents).unwrap();
-    scraper.visit_file(&file);
-
-    let ExampleScraper {
-        part1,
-        part2,
-        examples,
-        ..
-    } = scraper;
-
-    quote! {
-        aoc::derived::Day {
-            name: #name,
-            part1: #part1,
-            part2: #part2,
-            examples: vec![ #(#examples),* ],
-        }
+fn fill_static(def: ForeignItemStatic, ty: Type, expr: Expr) -> ItemStatic {
+    ItemStatic {
+        attrs: def.attrs,
+        vis: def.vis,
+        static_token: def.static_token,
+        mutability: def.mutability,
+        ident: def.ident,
+        colon_token: def.colon_token,
+        semi_token: def.semi_token,
+        eq_token: parse_quote!(=),
+        ty: Box::new(ty),
+        expr: Box::new(expr),
     }
 }
 
-pub fn scan_days(input: TokenStream) -> TokenStream {
-    let ident: Ident = parse_macro_input!(input);
+pub fn inject_days(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    let itemdef = parse_macro_input!(annotated_item as ForeignItemStatic);
+    if itemdef.ty != parse_quote!(Vec<Day>) {
+        return Error::new(itemdef.ty.span(), "must be of type Vec<Day>".to_owned())
+            .to_compile_error()
+            .into();
+    }
 
     let mut binmods: Vec<TokenStream2> = Vec::new();
-    let mut days: Vec<TokenStream2> = Vec::new();
+    let mut dayexprs: Vec<TokenStream2> = Vec::new();
 
-    let mut entries: Vec<DirEntry> = fs::read_dir("./src/bin")
+    let scanners: Vec<BinScanner> = fs::read_dir("./src/bin")
         .unwrap()
         .map(Result::unwrap)
+        .collect::<Vec<_>>()
+        .tap_mut(|list| list.sort_by_key(|e| e.file_name()))
+        .into_iter()
+        .filter_map(|entry| {
+            let fname = entry.file_name().into_string().unwrap();
+            if !fname.starts_with("day") || !fname.ends_with(".rs") {
+                return None;
+            }
+
+            let modident = format_ident!("{}", fname.replace(".rs", ""));
+            Some(BinScanner::scan_file(
+                entry.path().to_str().unwrap(),
+                parse_quote!(bin::#modident),
+            ))
+        })
         .collect();
-    entries.sort_by_key(|e| e.file_name());
 
-    for entry in entries {
-        let fname = entry.file_name().into_string().unwrap();
-        if !fname.starts_with("day") || !fname.ends_with(".rs") {
-            continue;
-        }
-
-        let modname = fname.replace(".rs", "");
-        let modident = format_ident!("{}", modname);
+    for scanner in scanners {
+        let modident = format_ident!("{}", scanner.name);
         binmods.push(quote! {
             pub mod #modident;
         });
-
-        days.push(scan_day(
-            entry.path().to_str().unwrap(),
-            &modname,
-            parse_quote!(crate::bin::#modident),
-        ))
+        dayexprs.push(scanner.to_expr().into_token_stream());
     }
 
+    let itemdef = fill_static(
+        itemdef,
+        parse_quote!(once_cell::sync::Lazy<Vec<::aoc::derived::Day>>),
+        parse_quote!(once_cell::sync::Lazy::new(|| vec![ #(#dayexprs),* ])),
+    );
+
     quote! {
+        #itemdef
+
+        #[path = "."]
         mod bin {
             #(#binmods)*
         }
-        static #ident: once_cell::sync::Lazy<Vec<aoc::derived::Day>> = once_cell::sync::Lazy::new(|| vec![ #(#days),* ]);
     }
+    .into()
+}
+
+pub fn inject_day(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    let itemdef = parse_macro_input!(annotated_item as ForeignItemStatic);
+    if itemdef.ty != parse_quote!(Day) {
+        return Error::new(itemdef.ty.span(), "must be of type Day".to_owned())
+            .to_compile_error()
+            .into();
+    }
+
+    let file = {
+        let mut span = Span::call_site();
+        while let Some(parent) = span.parent() {
+            span = parent;
+        }
+        span.source_file()
+    };
+    if !file.is_real() {
+        return Error::new(
+            itemdef.ty.span(),
+            "unable to determine path of source file".to_owned(),
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    let scanner = BinScanner::scan_file(file.path().to_str().unwrap(), parse_quote!(self));
+    let expr = scanner.to_expr();
+
+    fill_static(
+        itemdef,
+        parse_quote!(once_cell::sync::Lazy<::aoc::derived::Day>),
+        parse_quote!(once_cell::sync::Lazy::new(|| #expr )),
+    )
+    .into_token_stream()
     .into()
 }
