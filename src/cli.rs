@@ -5,60 +5,70 @@ use clap::{
     parser::ValueSource,
 };
 
-/// A path to a file containing a solution input or expected output.
+/// The source of a solution input or expected output.
 #[derive(Clone, Debug)]
-pub enum FilePath {
+pub enum Source {
     /// A path that was explicitly passed in by the user.
     ///
     /// Any error while reading this will be reported back.
-    Explicit(String),
+    ExplicitPath(String),
 
     /// A path that was automatically chosen by the program.
     ///
     /// A "file does not exist" error will be treated as if there was no path, but any other IO error will be reported back to the user.
-    Automatic(String),
+    AutomaticPath(String),
 
-    /// No path available.
+    /// An inline value.
+    Inline { source: String, contents: String },
+
+    /// No value available.
     None(
         /// A description of the purpose of this path.
         String,
     ),
 }
-impl FilePath {
+impl Source {
     fn read_path(path: &str) -> Result<String, (ErrorKind, String)> {
         read_to_string(path)
             .map(|contents| contents.strip_suffix('\n').unwrap_or(&contents).to_owned())
             .map_err(|err| (err.kind(), format!("Failed to read {path}: {err}")))
     }
 
-    /// Get the path, if any.
-    pub fn path(&self) -> Result<String, String> {
+    /// Get the source of the value, if any.
+    pub fn source(&self) -> Result<String, String> {
         match self {
-            FilePath::Explicit(path) | FilePath::Automatic(path) => Ok(path.clone()),
-            FilePath::None(description) => Err(format!("No path for {description}.")),
+            Source::ExplicitPath(path) | Source::AutomaticPath(path) => Ok(path.clone()),
+            Source::Inline { source, .. } => Ok(source.clone()),
+            Source::None(description) => Err(format!("No value for {description}.")),
         }
     }
 
     /// Attempt to read the file at the provided path, returning [`None`] when a non-fatal error occurs.
     pub fn read_maybe(&self) -> Result<Option<String>, String> {
         match self {
-            FilePath::Explicit(path) => Ok(Some(Self::read_path(path).map_err(|(_, e)| e)?)),
-            FilePath::Automatic(path) => match Self::read_path(path) {
+            Source::ExplicitPath(path) => Ok(Some(Self::read_path(path).map_err(|(_, e)| e)?)),
+            Source::AutomaticPath(path) => match Self::read_path(path) {
                 Ok(contents) => Ok(Some(contents)),
                 Err((ErrorKind::NotFound, _)) => Ok(None),
                 Err((_, err)) => Err(err),
             },
-            FilePath::None(_) => Ok(None),
+            Source::Inline { contents, .. } => Ok(Some(contents.clone())),
+            Source::None(_) => Ok(None),
         }
     }
 
     /// Attempt to read the file at the provided path, returning an error if this fails for any reason.
     pub fn read(&self) -> Result<String, String> {
-        self.path()
-            .and_then(|path| Self::read_path(&path).map_err(|(_, e)| e))
+        match self {
+            Source::ExplicitPath(path) | Source::AutomaticPath(path) => {
+                Self::read_path(path).map_err(|(_, e)| e)
+            }
+            Source::Inline { contents, .. } => Ok(contents.clone()),
+            Source::None(description) => Err(format!("No value for {description}.")),
+        }
     }
 
-    /// Mutate the contained path (if any). Does nothing for [`FilePath::None`].
+    /// Mutate the contained path (if any). Does nothing for [`Source::None`].
     #[must_use]
     pub fn mutate_path<F>(&self, f: F) -> Self
     where
@@ -66,20 +76,20 @@ impl FilePath {
     {
         let mut result = self.clone();
         match result {
-            FilePath::Explicit(ref mut path) | FilePath::Automatic(ref mut path) => {
+            Source::ExplicitPath(ref mut path) | Source::AutomaticPath(ref mut path) => {
                 *path = f(std::mem::take(path));
             }
-            FilePath::None(_) => {}
+            _ => {}
         };
         result
     }
 }
 
-/// Parse arguments to [`FilePath`]s.
+/// Parse arguments to [`Source`]s.
 #[derive(Clone)]
-pub struct FilePathParser;
-impl TypedValueParser for FilePathParser {
-    type Value = FilePath;
+pub struct SourceValueParser;
+impl TypedValueParser for SourceValueParser {
+    type Value = Source;
 
     fn parse_ref(
         &self,
@@ -100,13 +110,13 @@ impl TypedValueParser for FilePathParser {
         let value = StringValueParser::new().parse_ref_(cmd, arg, value, source)?;
 
         if source == ValueSource::DefaultValue {
-            Ok(FilePath::Automatic(value))
+            Ok(Source::AutomaticPath(value))
         } else if value.is_empty() {
-            Ok(FilePath::None(
+            Ok(Source::None(
                 arg.map_or("unknown".to_owned(), |a| a.get_id().to_string()),
             ))
         } else {
-            Ok(FilePath::Explicit(value))
+            Ok(Source::ExplicitPath(value))
         }
     }
 }
@@ -134,7 +144,7 @@ pub mod multi {
     };
     use criterion::Criterion;
 
-    use super::{FilePath, FilePathParser};
+    use super::{Source, SourceValueParser};
     use crate::{
         derived::Day,
         parse::splitn,
@@ -200,9 +210,42 @@ pub mod multi {
             group = "targets",
         )]
         skip: Option<Vec<Vec<(u8, u8)>>>,
+
+        /// Pattern for paths to files containing the inputs.
+        ///
+        /// The following tokens will be replaced:
+        /// - `{day}`: the number of the day (`1`, `13`, etc).
+        /// - `{day0}`: the number of the day as two digits (`01`, `13`, etc).
+        #[arg(
+            long,
+            default_value = "inputs/day{day0}.txt",
+            value_parser = SourceValueParser,
+            verbatim_doc_comment,
+            conflicts_with = "use_examples",
+        )]
+        input_pattern: Source,
+
+        /// Pattern for paths to files containing the expected results.
+        ///
+        /// The following tokens will be replaced:
+        /// - `{day}`: the number of the day (`1`, `13`, etc).
+        /// - `{day0}`: the number of the day as two digits (`01`, `13`, etc).
+        /// - `{part}`: the number of the part (`1` or `2`).
+        #[arg(
+            long,
+            default_value = "inputs/day{day0}.solution{part}.txt",
+            value_parser = SourceValueParser,
+            verbatim_doc_comment,
+            conflicts_with = "use_examples",
+        )]
+        result_pattern: Source,
+
+        /// Run using examples instead of real inputs/results.
+        #[arg(long)]
+        use_examples: bool,
     }
     impl CommonArgs {
-        fn get_targets(&self, days: &[Day]) -> Vec<Day> {
+        fn filter_days(&self, days: &[Day]) -> Vec<Day> {
             let mut days = days.to_owned();
             if let Some(only) = &self.only {
                 let only: HashSet<_> = only.iter().flatten().collect();
@@ -229,6 +272,69 @@ pub mod multi {
                 .filter(|day| day.part1.is_implemented() || day.part2.is_implemented())
                 .collect()
         }
+
+        fn get_targets(&self, days: &[Day]) -> Vec<Target> {
+            let mut targets = Vec::new();
+            if self.use_examples {
+                for day in days {
+                    for example in &day.examples {
+                        for (i, solver, solution) in [
+                            (1, &day.part1, example.part1),
+                            (2, &day.part2, example.part2),
+                        ] {
+                            if !solver.is_implemented() {
+                                continue;
+                            }
+                            let Some(solution) = solution else {
+                                continue;
+                            };
+                            targets.push(Target {
+                                day: day.name.to_owned(),
+                                part: i,
+                                source_name: Some(example.name.to_owned()),
+                                solver: solver.clone(),
+                                input: Source::Inline {
+                                    source: example.name.to_owned(),
+                                    contents: example.input.to_owned(),
+                                },
+                                solution: Source::Inline {
+                                    source: example.name.to_owned(),
+                                    contents: solution.to_owned(),
+                                },
+                            });
+                        }
+                    }
+                }
+            } else {
+                for day in days {
+                    let input = file_path_fill_tokens!(self.input_pattern, day = day);
+                    for (i, solver) in [(1, &day.part1), (2, &day.part2)] {
+                        if solver.is_implemented() {
+                            let solution =
+                                file_path_fill_tokens!(self.result_pattern, day = day, part = i);
+                            targets.push(Target {
+                                day: day.name.to_owned(),
+                                part: i,
+                                source_name: None,
+                                solver: solver.clone(),
+                                input: input.clone(),
+                                solution,
+                            });
+                        }
+                    }
+                }
+            }
+            targets
+        }
+    }
+
+    struct Target {
+        day: String,
+        part: u8,
+        source_name: Option<String>,
+        solver: Solver<String>,
+        input: Source,
+        solution: Source,
     }
 
     fn parse_args<T>(days: &[Day]) -> T
@@ -249,33 +355,6 @@ pub mod multi {
         #[command(flatten)]
         common: CommonArgs,
 
-        /// Pattern for paths to files containing the inputs.
-        ///
-        /// The following tokens will be replaced:
-        /// - `{day}`: the number of the day (`1`, `13`, etc).
-        /// - `{day0}`: the number of the day as two digits (`01`, `13`, etc).
-        #[arg(
-            long,
-            default_value = "inputs/day{day0}.txt",
-            value_parser = FilePathParser,
-            verbatim_doc_comment,
-        )]
-        input_pattern: FilePath,
-
-        /// Pattern for paths to files containing the expected results.
-        ///
-        /// The following tokens will be replaced:
-        /// - `{day}`: the number of the day (`1`, `13`, etc).
-        /// - `{day0}`: the number of the day as two digits (`01`, `13`, etc).
-        /// - `{part}`: the number of the part (`1` or `2`).
-        #[arg(
-            long,
-            default_value = "inputs/day{day0}.solution{part}.txt",
-            value_parser = FilePathParser,
-            verbatim_doc_comment
-        )]
-        result_pattern: FilePath,
-
         /// Show the results in addition to the pass/fail (which is always shown).
         #[arg(short = 'r', long)]
         show_results: bool,
@@ -284,11 +363,13 @@ pub mod multi {
     pub fn main(days: &[Day]) {
         let args: MainArgs = parse_args(days);
 
-        let targets = args.common.get_targets(days);
+        let days = args.common.filter_days(days);
+        let targets = args.common.get_targets(&days);
         println!(
-            "Running {} parts over {} days...",
+            "Running {} runs, across {} parts, across {} days...",
+            Cyan.paint(targets.len().to_string()),
             Cyan.paint(
-                targets
+                days
                     .iter()
                     .map(|d| u8::from(d.part1.is_implemented()) + u8::from(d.part2.is_implemented()))
                     .sum::<u8>()
@@ -297,33 +378,31 @@ pub mod multi {
             Cyan.paint(targets.len().to_string()),
         );
 
-        let mut runs: Vec<(String, SolverRunResult)> = Vec::new();
-        for day in targets {
-            let name = day.name.replace("day", "Day ");
-
-            let input_path = file_path_fill_tokens!(args.input_pattern, day = day);
-            let input = match input_path.read() {
-                Ok(input) => input,
-                Err(err) => {
-                    runs.push((name, SolverRunResult::Error(err)));
-                    continue;
+        let runs: Vec<(String, SolverRunResult)> = targets
+            .into_iter()
+            .map(|target| {
+                let mut name =
+                    format!("{} part {}", target.day.replace("day", "Day "), target.part);
+                if let Some(source) = target.source_name {
+                    name = format!("{name} {source}");
                 }
-            };
 
-            for (i, part) in [(1, day.part1), (2, day.part2)] {
-                if part.is_implemented() {
-                    let solution = file_path_fill_tokens!(args.result_pattern, day = day, part = i)
-                        .read_maybe();
-                    runs.push((
-                        format!("{name} part {i}"),
-                        match solution {
-                            Ok(solution) => part.run(&input, solution),
-                            Err(err) => SolverRunResult::Error(err),
-                        },
-                    ));
-                }
-            }
-        }
+                let input = match target.input.read() {
+                    Ok(input) => input,
+                    Err(err) => {
+                        return (name, SolverRunResult::Error(err));
+                    }
+                };
+
+                (
+                    name,
+                    match target.solution.read_maybe() {
+                        Ok(solution) => target.solver.run(&input, solution),
+                        Err(err) => SolverRunResult::Error(err),
+                    },
+                )
+            })
+            .collect();
 
         let durations = runs
             .iter()
@@ -347,7 +426,7 @@ pub mod multi {
         }
         if !durations.is_empty() {
             println!(
-                "Finished {} parts in {}, averaging {} per part.",
+                "Finished {} runs in {}, averaging {} per run.",
                 Cyan.paint(durations.len().to_string()),
                 Purple.paint(format!("{duration_total:?}")),
                 Purple.paint(format!("{duration_avg:?}",)),
@@ -392,26 +471,22 @@ pub mod multi {
             criterion = criterion.retain_baseline(name, true);
         }
 
-        for day in args.common.get_targets(days) {
-            for example in day.examples {
-                for (i, part, solution) in [
-                    (1, &day.part1, example.part1),
-                    (2, &day.part2, example.part2),
-                ] {
-                    if solution.is_none() {
-                        continue;
-                    }
-                    let Solver::Implemented(runnable) = part else {
-                        continue;
-                    };
-                    criterion.bench_function(
-                        &format!("{}/part{}/{}", day.name, i, example.name),
-                        |b| {
-                            b.iter(|| runnable(example.input));
-                        },
-                    );
-                }
+        let days = args.common.filter_days(days);
+        for target in args.common.get_targets(&days) {
+            let Solver::Implemented(runnable) = target.solver else {
+                continue;
+            };
+
+            let mut name = format!("{}/part{}", target.day, target.part);
+            if let Some(source) = target.source_name {
+                name = format!("{name}/{source}");
             }
+
+            let input = target.input.read().unwrap();
+
+            criterion.bench_function(&name, |b| {
+                b.iter(|| runnable(&input));
+            });
         }
 
         criterion.final_summary();
@@ -424,7 +499,7 @@ pub mod single {
     use ansi_term::Colour::{Cyan, Red};
     use clap::{Parser, ValueHint};
 
-    use super::{FilePath, FilePathParser};
+    use super::{Source, SourceValueParser};
     use crate::{
         derived::Day,
         runner::{DurationThresholds, SolverRunResult},
@@ -437,25 +512,25 @@ pub mod single {
         #[arg(
             value_hint = ValueHint::FilePath,
             default_value = "inputs/day{day0}.txt",
-            value_parser = FilePathParser,
+            value_parser = SourceValueParser,
         )]
-        input: FilePath,
+        input: Source,
 
         /// Path to a file containing the expected result of part 1.
         #[arg(
             value_hint = ValueHint::FilePath,
             default_value = "inputs/day{day0}.solution{part}.txt",
-            value_parser = FilePathParser,
+            value_parser = SourceValueParser,
         )]
-        part1: FilePath,
+        part1: Source,
 
         /// Path to a file containing the expected result of part 2.
         #[arg(
             value_hint = ValueHint::FilePath,
             default_value = "inputs/day{day0}.solution{part}.txt",
-            value_parser = FilePathParser,
+            value_parser = SourceValueParser,
         )]
-        part2: FilePath,
+        part2: Source,
     }
 
     const THRESHOLDS: DurationThresholds = DurationThresholds {
@@ -473,7 +548,7 @@ pub mod single {
         println!(
             "Running {} using input {}...",
             Cyan.paint(format!("day {}", day.num)),
-            Cyan.paint(input_path.path().unwrap()),
+            Cyan.paint(input_path.source().unwrap()),
         );
 
         let input = match input_path.read() {
