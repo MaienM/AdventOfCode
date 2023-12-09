@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Range};
 
-use aoc::{generate_day_main, splitn};
+use aoc::{generate_day_main, parse::splitn};
 
 #[derive(Debug, PartialEq)]
 struct Input {

@@ -1,11 +1,12 @@
 #[macro_export]
 macro_rules! __count {
     () => (0);
-    ($item:tt $($items:tt)*) => (1 + aoc::__count!($($items)*));
+    ($item:tt $($items:tt)*) => (1 + $crate::parse::__count__!($($items)*));
 }
+pub use __count as __count__;
 
-#[rustfmt::skip]
 #[macro_export]
+#[rustfmt::skip]
 macro_rules! __splitn_parse {
     ($var:expr => str) => ($var);
     ($var:expr => char) => ($var[0]);
@@ -24,18 +25,20 @@ macro_rules! __splitn_parse {
     ($var:expr => f64) => ($var.parse::<f64>().unwrap());
     ($var:expr => f32) => ($var.parse::<f32>().unwrap());
 }
+pub use __splitn_parse as __splitn_parse__;
 
 /// Split a string on a separator and parse the parts into a tuple with the given types.
 #[macro_export]
-macro_rules! splitn {
+macro_rules! __splitn {
     ($input:expr, $sep:literal, $($type:tt),+ $(,)?) => {
         {
-            let mut parts = $input.splitn(aoc::__count!($($type)+), $sep);
+            let mut parts = $input.splitn($crate::parse::__count__!($($type)+), $sep);
             (
                 $(
-                    aoc::__splitn_parse!(parts.next().unwrap() => $type)
+                    $crate::parse::__splitn_parse__!(parts.next().unwrap() => $type)
                 ),+
             )
         }
     };
 }
+pub use __splitn as splitn;

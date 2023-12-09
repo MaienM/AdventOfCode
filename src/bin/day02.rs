@@ -1,4 +1,4 @@
-use aoc::{generate_day_main, splitn};
+use aoc::{generate_day_main, parse::splitn};
 
 #[derive(Debug, PartialEq)]
 struct Game {
