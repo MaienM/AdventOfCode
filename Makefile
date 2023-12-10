@@ -32,3 +32,7 @@ test-and-run-day%: inputs/day%.txt
 
 	@echo "$(setaf6)>>>>> Running ${day} <<<<<$(sgr0)"
 	@cargo run --bin ${day} --release --quiet
+
+	@echo "$(setaf6)>>>>> Benchmarking ${day} <<<<<$(sgr0)"
+	@cargo bench --bench main --quiet -- --only $(subst day,,${day}) --save-baseline current
+	@critcmp baseline current --filter ${day}
