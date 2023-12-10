@@ -36,3 +36,12 @@ test-and-run-day%: inputs/day%.txt
 	@echo "$(setaf6)>>>>> Benchmarking ${day} <<<<<$(sgr0)"
 	@cargo bench --bench main --quiet -- --only $(subst day,,${day}) --save-baseline current
 	@critcmp baseline current --filter ${day}
+
+benchmark-set-baseline-all:
+	@echo "$(setaf6)>>>>> Updating benchmark baselines <<<<<$(sgr0)"
+	@cargo bench --bench main --quiet -- --save-baseline baseline
+
+benchmark-set-baseline-day%: day = $(subst benchmark-set-baseline-,,$@)
+benchmark-set-baseline-day%: inputs/day%.txt
+	@echo "$(setaf6)>>>>> Updating benchmark baseline for ${day} <<<<<$(sgr0)"
+	@cargo bench --bench main --quiet -- --only $(subst day,,${day}) --save-baseline baseline
