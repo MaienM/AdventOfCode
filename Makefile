@@ -10,7 +10,7 @@ run-all:
 	@cargo run --release --bin aoc --quiet
 
 test-libs:
-	@cargo nextest run --lib --cargo-quiet
+	@cargo nextest run --lib --no-fail-fast --cargo-quiet
 
 .session:
 	@echo "Please create a file named .session containing your session cookie." >&2
@@ -28,7 +28,7 @@ inputs/day%.txt: .session
 test-and-run-day%: day = $(subst test-and-run-,,$@)
 test-and-run-day%: inputs/day%.txt
 	@echo "$(setaf6)>>>>> Testing ${day} <<<<<$(sgr0)"
-	@cargo nextest run --lib --bin ${day} --no-fail-fast --cargo-quiet
+	@cargo nextest run --lib --bin ${day} --no-fail-fast --cargo-quiet --status-level fail
 
 	@echo "$(setaf6)>>>>> Running ${day} <<<<<$(sgr0)"
 	@cargo run --bin ${day} --release --quiet
