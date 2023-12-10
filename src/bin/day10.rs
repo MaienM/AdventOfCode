@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Add,
-};
+use std::{collections::HashSet, ops::Add};
 
 use aoc::point::Point2;
 
@@ -50,16 +47,6 @@ impl Add<Point> for Direction {
             Direction::East => Point::new(rhs.x + 1, rhs.y),
             Direction::South => Point::new(rhs.x, rhs.y + 1),
             Direction::West => Point::new(rhs.x.wrapping_sub(1), rhs.y),
-        }
-    }
-}
-impl Direction {
-    fn reverse(self) -> Self {
-        match self {
-            Direction::North => Direction::South,
-            Direction::East => Direction::West,
-            Direction::South => Direction::North,
-            Direction::West => Direction::East,
         }
     }
 }
@@ -186,327 +173,6 @@ fn find_loop(map: &[Vec<Tile>], start: Point) -> Vec<Point> {
     mainloop
 }
 
-#[allow(clippy::too_many_lines)]
-fn collect_reachable(
-    map: &HashMap<Point, &Tile>,
-    bounds: &(usize, usize),
-    visited: &mut Vec<Point>,
-    reachable: &mut HashSet<Point>,
-    point: Point,
-    direction: Direction,
-    squeeze: Option<Direction>,
-) {
-    reachable.insert(point);
-
-    let tile = map.get(&point);
-    #[rustfmt::skip]
-    #[allow(clippy::match_same_arms)]
-    let options = match (tile, direction, squeeze) {
-        //
-        // Horizontal.
-        //
-
-        // Moving alongside pipe.
-        (
-            Some(Tile::Horizontal),
-            Direction::East | Direction::West,
-            Some(Direction::North | Direction::South),
-        ) => vec![
-            (direction, squeeze),
-            (squeeze.unwrap(), None),
-        ],
-        // Approaching from the side.
-        (
-            Some(Tile::Horizontal),
-            Direction::North | Direction::South,
-            _,
-        ) => vec![
-            (Direction::East, Some(direction.reverse())),
-            (Direction::West, Some(direction.reverse())),
-        ],
-
-        //
-        // Vertical.
-        //
-
-        // Moving alongside pipe.
-        (
-            Some(Tile::Vertical),
-            Direction::North | Direction::South,
-            Some(Direction::East | Direction::West),
-        ) => vec![
-            (direction, squeeze),
-            (squeeze.unwrap(), None),
-        ],
-        // Approaching from the side.
-        (
-            Some(Tile::Vertical),
-            Direction::East | Direction::West,
-            _,
-        ) => vec![
-            (Direction::North, Some(direction.reverse())),
-            (Direction::South, Some(direction.reverse())),
-        ],
-
-        //
-        // NorthEast.
-        //
-
-        // Inside bend of corner.
-        (
-            Some(Tile::NorthEast),
-            Direction::South,
-            Some(Direction::East),
-        ) => vec![
-            (Direction::East, Some(Direction::North)),
-        ],
-        (
-            Some(Tile::NorthEast),
-            Direction::West,
-            Some(Direction::North),
-        ) => vec![
-            (Direction::North, Some(Direction::East)),
-        ],
-        // Outside bend of corner.
-        (
-            Some(Tile::NorthEast),
-            Direction::South,
-            _,
-        ) => vec![
-            (Direction::East, Some(Direction::South)),
-            (Direction::South, None),
-            (Direction::West, None),
-        ],
-        (
-            Some(Tile::NorthEast),
-            Direction::West,
-            _,
-        ) => vec![
-            (Direction::North, Some(Direction::West)),
-            (Direction::West, None),
-            (Direction::South, None),
-        ],
-        // Approaching from the side.
-        (
-            Some(Tile::NorthEast),
-            Direction::North,
-            _,
-        ) => vec![
-            (Direction::East, Some(Direction::South)),
-            (Direction::West, None),
-            (Direction::North, Some(Direction::West)),
-        ],
-        (
-            Some(Tile::NorthEast),
-            Direction::East,
-            _,
-        ) => vec![
-            (Direction::North, Some(Direction::West)),
-            (Direction::South, None),
-            (Direction::East, Some(Direction::South)),
-        ],
-
-        //
-        // SouthEast.
-        //
-
-        // Inside bend of corner.
-        (
-            Some(Tile::SouthEast),
-            Direction::North,
-            Some(Direction::East),
-        ) => vec![
-            (Direction::East, Some(Direction::South)),
-        ],
-        (
-            Some(Tile::SouthEast),
-            Direction::West,
-            Some(Direction::South),
-        ) => vec![
-            (Direction::South, Some(Direction::East)),
-        ],
-        // Outside bend of corner.
-        (
-            Some(Tile::SouthEast),
-            Direction::North,
-            _,
-        ) => vec![
-            (Direction::East, Some(Direction::North)),
-            (Direction::North, None),
-            (Direction::West, None),
-        ],
-        (
-            Some(Tile::SouthEast),
-            Direction::West,
-            _,
-        ) => vec![
-            (Direction::South, Some(Direction::West)),
-            (Direction::West, None),
-            (Direction::North, None),
-        ],
-        // Approaching from the side.
-        (
-            Some(Tile::SouthEast),
-            Direction::South,
-            _,
-        ) => vec![
-            (Direction::East, Some(Direction::North)),
-            (Direction::West, None),
-            (Direction::South, Some(Direction::West)),
-        ],
-        (
-            Some(Tile::SouthEast),
-            Direction::East,
-            _,
-        ) => vec![
-            (Direction::South, Some(Direction::West)),
-            (Direction::North, None),
-            (Direction::East, Some(Direction::North)),
-        ],
-
-        //
-        // SouthWest.
-        //
-
-        // Inside bend of corner.
-        (
-            Some(Tile::SouthWest),
-            Direction::North,
-            Some(Direction::West),
-        ) => vec![
-            (Direction::West, Some(Direction::South)),
-        ],
-        (
-            Some(Tile::SouthWest),
-            Direction::East,
-            Some(Direction::South),
-        ) => vec![
-            (Direction::South, Some(Direction::West)),
-        ],
-        // Outside bend of corner.
-        (
-            Some(Tile::SouthWest),
-            Direction::North,
-            _,
-        ) => vec![
-            (Direction::West, Some(Direction::North)),
-            (Direction::North, None),
-            (Direction::East, None),
-        ],
-        (
-            Some(Tile::SouthWest),
-            Direction::East,
-            _,
-        ) => vec![
-            (Direction::South, Some(Direction::East)),
-            (Direction::East, None),
-            (Direction::North, None),
-        ],
-        // Approaching from the side.
-        (
-            Some(Tile::SouthWest),
-            Direction::South,
-            _,
-        ) => vec![
-            (Direction::West, Some(Direction::North)),
-            (Direction::East, None),
-            (Direction::South, Some(Direction::East)),
-        ],
-        (
-            Some(Tile::SouthWest),
-            Direction::West,
-            _,
-        ) => vec![
-            (Direction::South, Some(Direction::East)),
-            (Direction::North, None),
-            (Direction::West, Some(Direction::North)),
-        ],
-
-        //
-        // NorthWest.
-        //
-
-        // Inside bend of corner.
-        (
-            Some(Tile::NorthWest),
-            Direction::South,
-            Some(Direction::West),
-        ) => vec![
-            (Direction::West, Some(Direction::North)),
-        ],
-        (
-            Some(Tile::NorthWest),
-            Direction::East,
-            Some(Direction::North),
-        ) => vec![
-            (Direction::North, Some(Direction::West)),
-        ],
-        // Outside bend of corner.
-        (
-            Some(Tile::NorthWest),
-            Direction::South,
-            _,
-        ) => vec![
-            (Direction::West, Some(Direction::South)),
-            (Direction::South, None),
-            (Direction::East, None),
-        ],
-        (
-            Some(Tile::NorthWest),
-            Direction::East,
-            _,
-        ) => vec![
-            (Direction::North, Some(Direction::East)),
-            (Direction::East, None),
-            (Direction::South, None),
-        ],
-        // Approaching from the side.
-        (
-            Some(Tile::NorthWest),
-            Direction::North,
-            _,
-        ) => vec![
-            (Direction::West, Some(Direction::South)),
-            (Direction::East, None),
-            (Direction::North, Some(Direction::East)),
-        ],
-        (
-            Some(Tile::NorthWest),
-            Direction::West,
-            _,
-        ) => vec![
-            (Direction::North, Some(Direction::East)),
-            (Direction::South, None),
-            (Direction::West, Some(Direction::South)),
-        ],
-
-        //
-        // Non-loop tiles.
-        //
-
-        _ => vec![
-            (Direction::North, None),
-            (Direction::East, None),
-            (Direction::South, None),
-            (Direction::West, None),
-        ],
-    };
-
-    visited.push(point);
-    for (direction, squeeze) in options {
-        let next = direction + point;
-        if next.x >= bounds.0
-            || next.y >= bounds.1
-            || reachable.contains(&next)
-            || visited.contains(&next)
-        {
-            continue;
-        }
-        collect_reachable(map, bounds, visited, reachable, next, direction, squeeze);
-    }
-    visited.pop();
-}
-
 pub fn part1(input: &str) -> usize {
     let mut map = parse_input(input);
     let start = extract_start(&mut map);
@@ -517,65 +183,29 @@ pub fn part1(input: &str) -> usize {
 pub fn part2(input: &str) -> usize {
     let mut map = parse_input(input);
     let start = extract_start(&mut map);
-    let mainloop: HashMap<_, _> = find_loop(&map, start)
-        .into_iter()
-        .map(|point| (point, &map[point.y][point.x]))
-        .collect();
+    let mainloop: HashSet<_> = find_loop(&map, start).into_iter().collect();
 
-    let mut reachable: HashSet<Point> = HashSet::new();
-    let mut visited = Vec::new();
-    let bounds = (map[0].len(), map.len());
-    for x in 0..bounds.0 {
-        collect_reachable(
-            &mainloop,
-            &bounds,
-            &mut visited,
-            &mut reachable,
-            Point::new(x, 0),
-            Direction::East,
-            None,
-        );
-        collect_reachable(
-            &mainloop,
-            &bounds,
-            &mut visited,
-            &mut reachable,
-            Point::new(x, bounds.1),
-            Direction::West,
-            None,
-        );
-    }
-    for y in 0..bounds.1 {
-        collect_reachable(
-            &mainloop,
-            &bounds,
-            &mut visited,
-            &mut reachable,
-            Point::new(0, y),
-            Direction::South,
-            None,
-        );
-        collect_reachable(
-            &mainloop,
-            &bounds,
-            &mut visited,
-            &mut reachable,
-            Point::new(bounds.0, y),
-            Direction::North,
-            None,
-        );
-    }
-
-    let mut count = 0;
-    for x in 0..bounds.0 {
-        for y in 0..bounds.1 {
-            let point = Point::new(x, y);
-            if !mainloop.contains_key(&point) && !reachable.contains(&point) {
-                count += 1;
+    map.into_iter()
+        .enumerate()
+        .map(|(y, row)| {
+            let mut count = 0;
+            let mut inside = false;
+            for (x, tile) in row.into_iter().enumerate() {
+                match tile {
+                    _ if !mainloop.contains(&Point::new(x, y)) => {
+                        if inside {
+                            count += 1;
+                        }
+                    }
+                    Tile::Vertical | Tile::NorthEast | Tile::NorthWest => {
+                        inside = !inside;
+                    }
+                    _ => {}
+                }
             }
-        }
-    }
-    count
+            count
+        })
+        .sum()
 }
 
 aoc::cli::single::generate_main!();
