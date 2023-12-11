@@ -48,7 +48,7 @@ fn sum_of_distances(map: &[Point]) -> usize {
         .map(|(idx, first)| {
             map.iter()
                 .skip(idx + 1)
-                .map(|second| first.abs_diff(second).sum())
+                .map(|second| first.distance_ortho(second))
                 .sum::<usize>()
         })
         .sum()

@@ -83,7 +83,7 @@ macro_rules! impl_integer_methods {
 
             /// Check whether the given point is orthogontally or diagonally adjacent to this one.
             pub fn adjacent_to_diag(&self, other: &Self) -> bool {
-                self != other && self.distance(other) == 1
+                self != other && self.distance_diag(other) == 1
             }
 
             /// Get the orthogontal neighbours of this point.
@@ -154,9 +154,17 @@ macro_rules! create_point {
 
             /// Calculate the distance between this point and another point.
             ///
+            /// Diagonals are counted as a distance of two.
+            #[must_use]
+            pub fn distance_ortho(&self, other: &Self) -> T {
+                self.abs_diff(other).sum()
+            }
+
+            /// Calculate the distance between this point and another point.
+            ///
             /// Diagonals are counted as a distance of one.
             #[must_use]
-            pub fn distance(&self, other: &Self) -> T {
+            pub fn distance_diag(&self, other: &Self) -> T {
                 let diff = self.abs_diff(other);
                 call_chain!(max, $(diff.$var),+)
             }
@@ -294,9 +302,21 @@ mod tests {
     }
 
     #[test]
-    fn distance() {
-        assert_eq!(Point2::new(10, 5).distance(&Point2::new(2, 20)), 15);
-        assert_eq!(Point3::new(10, 5, 3).distance(&Point3::new(2, 20, -3)), 15);
+    fn distance_ortho() {
+        assert_eq!(Point2::new(10, 5).distance_ortho(&Point2::new(2, 20)), 23);
+        assert_eq!(
+            Point3::new(10, 5, 3).distance_ortho(&Point3::new(2, 20, -3)),
+            29
+        );
+    }
+
+    #[test]
+    fn distance_diag() {
+        assert_eq!(Point2::new(10, 5).distance_diag(&Point2::new(2, 20)), 15);
+        assert_eq!(
+            Point3::new(10, 5, 3).distance_diag(&Point3::new(2, 20, -3)),
+            15
+        );
     }
 
     #[test]
