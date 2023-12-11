@@ -33,18 +33,16 @@ macro_rules! get_space {
     }};
 }
 
-fn expand_space(map: &mut [Point]) {
+fn expand_space(map: &mut [Point], by: usize) {
     let x_space = get_space!(map, x);
     let y_space = get_space!(map, y);
     for point in map {
-        point.x += (0..point.x).filter(|x| x_space.contains(x)).count();
-        point.y += (0..point.y).filter(|y| y_space.contains(y)).count();
+        point.x += (0..point.x).filter(|x| x_space.contains(x)).count() * by;
+        point.y += (0..point.y).filter(|y| y_space.contains(y)).count() * by;
     }
 }
 
-pub fn part1(input: &str) -> usize {
-    let mut map = parse_input(input);
-    expand_space(&mut map);
+fn sum_of_distances(map: &[Point]) -> usize {
     map.iter()
         .enumerate()
         .map(|(idx, first)| {
@@ -54,6 +52,20 @@ pub fn part1(input: &str) -> usize {
                 .sum::<usize>()
         })
         .sum()
+}
+
+fn solve(input: &str, expansion: usize) -> usize {
+    let mut map = parse_input(input);
+    expand_space(&mut map, expansion);
+    sum_of_distances(&map)
+}
+
+pub fn part1(input: &str) -> usize {
+    solve(input, 1)
+}
+
+pub fn part2(input: &str) -> usize {
+    solve(input, 999_999)
 }
 
 aoc::cli::single::generate_main!();
@@ -109,7 +121,7 @@ mod tests {
             Point::new(0, 9),
             Point::new(4, 9),
         ];
-        super::expand_space(&mut map);
+        super::expand_space(&mut map, 1);
         let expected = vec![
             Point::new(4, 0),
             Point::new(9, 1),
@@ -122,5 +134,15 @@ mod tests {
             Point::new(5, 11),
         ];
         assert_eq!(map, expected);
+    }
+
+    #[test]
+    fn example_solve_10() {
+        assert_eq!(solve(&EXAMPLE_INPUT, 9), 1030);
+    }
+
+    #[test]
+    fn example_solve_100() {
+        assert_eq!(solve(&EXAMPLE_INPUT, 99), 8410);
     }
 }
