@@ -5,13 +5,19 @@ use aoc::utils::parse::splitn;
 #[derive(Debug, PartialEq)]
 struct Input {
     seeds: Vec<usize>,
-    maps: HashMap<String, Mapping>,
+    maps: HashMap<String, Map>,
 }
 
 #[derive(Debug, PartialEq)]
-struct Mapping {
+struct Translation {
+    source: Range<usize>,
+    offset: isize,
+}
+
+#[derive(Debug, PartialEq)]
+struct Map {
     target: String,
-    ranges: Vec<(Range<usize>, isize)>,
+    translations: Vec<Translation>,
 }
 
 fn parse_input(input: &str) -> Input {
@@ -30,17 +36,17 @@ fn parse_input(input: &str) -> Input {
                 .split('\n')
                 .map(|line| {
                     let (dest_start, source_start, len) = splitn!(line, ' ', usize, usize, usize);
-                    (
-                        source_start..(source_start + len),
-                        (dest_start as isize - source_start as isize),
-                    )
+                    Translation {
+                        source: source_start..(source_start + len),
+                        offset: (dest_start as isize - source_start as isize),
+                    }
                 })
                 .collect();
             (
                 from.to_owned(),
-                Mapping {
+                Map {
                     target: to.to_owned(),
-                    ranges,
+                    translations: ranges,
                 },
             )
         })
@@ -60,10 +66,10 @@ fn find_lowest_location(input: Input) -> usize {
             .into_iter()
             .map(|n| {
                 let offset = map
-                    .ranges
+                    .translations
                     .iter()
-                    .find(|r| r.0.contains(&n))
-                    .map_or(0, |r| r.1);
+                    .find(|r| r.source.contains(&n))
+                    .map_or(0, |r| r.offset);
                 (n as isize + offset) as usize
             })
             .collect();
@@ -81,10 +87,9 @@ pub fn part2(input: &str) -> usize {
     let mut input = parse_input(input);
 
     let mut seeds = Vec::new();
-    while !input.seeds.is_empty() {
-        let len = input.seeds.pop().unwrap();
-        let start = input.seeds.pop().unwrap();
-        for i in 0..len {
+    let mut iter = input.seeds.chunks_exact(2);
+    while let Some([start, len]) = iter.next() {
+        for i in 0..*len {
             seeds.push(start + i);
         }
     }
@@ -140,82 +145,138 @@ mod tests {
     ";
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
+        let range = |start, length| start..(start + length);
         let expected = Input {
             seeds: vec![79, 14, 55, 13],
             maps: HashMap::from([
                 (
                     "seed".to_owned(),
-                    Mapping {
+                    Map {
                         target: "soil".to_owned(),
-                        ranges: vec![
-                            (98..(98 + 2), (50isize - 98isize)),
-                            (50..(50 + 48), (52isize - 50isize)),
+                        translations: vec![
+                            Translation {
+                                source: range(98, 2),
+                                offset: 50 - 98,
+                            },
+                            Translation {
+                                source: range(50, 48),
+                                offset: 52 - 50,
+                            },
                         ],
                     },
                 ),
                 (
                     "soil".to_owned(),
-                    Mapping {
+                    Map {
                         target: "fertilizer".to_owned(),
-                        ranges: vec![
-                            (15..(15 + 37), (0isize - 15isize)),
-                            (52..(52 + 2), (37isize - 52isize)),
-                            (0..(0 + 15), (39isize - 0isize)),
+                        translations: vec![
+                            Translation {
+                                source: range(15, 37),
+                                offset: 0 - 15,
+                            },
+                            Translation {
+                                source: range(52, 2),
+                                offset: 37 - 52,
+                            },
+                            Translation {
+                                source: range(0, 15),
+                                offset: 39,
+                            },
                         ],
                     },
                 ),
                 (
                     "fertilizer".to_owned(),
-                    Mapping {
+                    Map {
                         target: "water".to_owned(),
-                        ranges: vec![
-                            (53..(53 + 8), (49isize - 53isize)),
-                            (11..(11 + 42), (0isize - 11isize)),
-                            (0..(0 + 7), (42isize - 0isize)),
-                            (7..(7 + 4), (57isize - 7isize)),
+                        translations: vec![
+                            Translation {
+                                source: range(53, 8),
+                                offset: 49 - 53,
+                            },
+                            Translation {
+                                source: range(11, 42),
+                                offset: 0 - 11,
+                            },
+                            Translation {
+                                source: range(0, 7),
+                                offset: 42,
+                            },
+                            Translation {
+                                source: range(7, 4),
+                                offset: 57 - 7,
+                            },
                         ],
                     },
                 ),
                 (
                     "water".to_owned(),
-                    Mapping {
+                    Map {
                         target: "light".to_owned(),
-                        ranges: vec![
-                            (18..(18 + 7), (88isize - 18isize)),
-                            (25..(25 + 70), (18isize - 25isize)),
+                        translations: vec![
+                            Translation {
+                                source: range(18, 7),
+                                offset: 88 - 18,
+                            },
+                            Translation {
+                                source: range(25, 70),
+                                offset: 18 - 25,
+                            },
                         ],
                     },
                 ),
                 (
                     "light".to_owned(),
-                    Mapping {
+                    Map {
                         target: "temperature".to_owned(),
-                        ranges: vec![
-                            (77..(77 + 23), (45isize - 77isize)),
-                            (45..(45 + 19), (81isize - 45isize)),
-                            (64..(64 + 13), (68isize - 64isize)),
+                        translations: vec![
+                            Translation {
+                                source: range(77, 23),
+                                offset: 45 - 77,
+                            },
+                            Translation {
+                                source: range(45, 19),
+                                offset: 81 - 45,
+                            },
+                            Translation {
+                                source: range(64, 13),
+                                offset: 68 - 64,
+                            },
                         ],
                     },
                 ),
                 (
                     "temperature".to_owned(),
-                    Mapping {
+                    Map {
                         target: "humidity".to_owned(),
-                        ranges: vec![
-                            (69..(69 + 1), (0isize - 69isize)),
-                            (0..(0 + 69), (1isize - 0isize)),
+                        translations: vec![
+                            Translation {
+                                source: range(69, 1),
+                                offset: 0 - 69,
+                            },
+                            Translation {
+                                source: range(0, 69),
+                                offset: 1,
+                            },
                         ],
                     },
                 ),
                 (
                     "humidity".to_owned(),
-                    Mapping {
+                    Map {
                         target: "location".to_owned(),
-                        ranges: vec![
-                            (56..(56 + 37), (60isize - 56isize)),
-                            (93..(93 + 4), (56isize - 93isize)),
+                        translations: vec![
+                            Translation {
+                                source: range(56, 37),
+                                offset: 60 - 56,
+                            },
+                            Translation {
+                                source: range(93, 4),
+                                offset: 56 - 93,
+                            },
                         ],
                     },
                 ),
