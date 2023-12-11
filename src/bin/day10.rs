@@ -1,6 +1,6 @@
 use std::{collections::HashSet, ops::Add};
 
-use aoc::point::Point2;
+use aoc::utils::point::Point2;
 
 type Point = Point2<usize>;
 

@@ -1,4 +1,4 @@
-use aoc::{parse::splitn, utils::range_binary_search};
+use aoc::utils::{parse::splitn, range_binary_search};
 
 #[derive(Debug, PartialEq)]
 struct Race {

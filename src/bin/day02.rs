@@ -1,4 +1,4 @@
-use aoc::parse::splitn;
+use aoc::utils::parse::splitn;
 
 #[derive(Debug, PartialEq)]
 struct Game {

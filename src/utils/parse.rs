@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! __count {
     () => (0);
-    ($item:tt $($items:tt)*) => (1 + $crate::parse::__count__!($($items)*));
+    ($item:tt $($items:tt)*) => (1 + $crate::utils::parse::__count__!($($items)*));
 }
 pub use __count as __count__;
 
@@ -32,10 +32,10 @@ pub use __splitn_parse as __splitn_parse__;
 macro_rules! __splitn {
     ($input:expr, $sep:literal, $($type:tt),+ $(,)?) => {
         {
-            let mut parts = $input.splitn($crate::parse::__count__!($($type)+), $sep);
+            let mut parts = $input.splitn($crate::utils::parse::__count__!($($type)+), $sep);
             (
                 $(
-                    $crate::parse::__splitn_parse__!(parts.next().unwrap() => $type)
+                    $crate::utils::parse::__splitn_parse__!(parts.next().unwrap() => $type)
                 ),+
             )
         }

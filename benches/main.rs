@@ -4,5 +4,5 @@ use aoc_derive::inject_days;
 static DAYS: Vec<Day>;
 
 fn main() {
-    aoc::cli::multi::bench(&DAYS);
+    aoc::cli::bench::main(&DAYS);
 }

@@ -45,14 +45,14 @@ impl BinScanner {
         let BinScanner { name, examples, .. } = self;
 
         let num: u8 = name[3..].parse().unwrap();
-        let part1: Expr = self.part1.as_ref().map_or(
-            parse_quote!(::aoc::runner::Solver::NotImplemented),
-            |f| parse_quote!(::aoc::runner::Solver::Implemented(#f)),
-        );
-        let part2: Expr = self.part2.as_ref().map_or(
-            parse_quote!(::aoc::runner::Solver::NotImplemented),
-            |f| parse_quote!(::aoc::runner::Solver::Implemented(#f)),
-        );
+        let part1: Expr = self
+            .part1
+            .as_ref()
+            .map_or(parse_quote!(None), |f| parse_quote!(Some(#f)));
+        let part2: Expr = self
+            .part2
+            .as_ref()
+            .map_or(parse_quote!(None), |f| parse_quote!(Some(#f)));
 
         parse_quote! {
             ::aoc::derived::Day {

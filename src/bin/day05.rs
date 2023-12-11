@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Range};
 
-use aoc::parse::splitn;
+use aoc::utils::parse::splitn;
 
 #[derive(Debug, PartialEq)]
 struct Input {

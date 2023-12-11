@@ -12,6 +12,14 @@ pub enum Solver<T> {
     Implemented(fn(&str) -> T),
     NotImplemented,
 }
+impl<T> From<Option<fn(&str) -> T>> for Solver<T> {
+    fn from(value: Option<fn(&str) -> T>) -> Self {
+        match value {
+            Some(f) => Solver::Implemented(f),
+            None => Solver::NotImplemented,
+        }
+    }
+}
 impl<T> Solver<T>
 where
     T: ToString,
@@ -29,13 +37,6 @@ where
             result: result.to_string(),
             solution,
             duration,
-        }
-    }
-
-    pub fn is_implemented(&self) -> bool {
-        match self {
-            Solver::Implemented(_) => true,
-            Solver::NotImplemented => false,
         }
     }
 }

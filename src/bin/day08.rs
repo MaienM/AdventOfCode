@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use aoc::parse::splitn;
+use aoc::utils::parse::splitn;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Direction {

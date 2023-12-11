@@ -1,17 +1,19 @@
 use std::collections::HashMap;
 
-use aoc::{point::Point2, utils::abs_diff};
+use aoc::utils::{abs_diff, point::Point2};
+
+type Point = Point2<usize>;
 
 #[derive(Debug, PartialEq)]
 struct Number {
     number: u32,
-    points: Vec<Point2>,
+    points: Vec<Point>,
 }
 
 #[derive(Debug, PartialEq)]
 struct Symbol {
     symbol: char,
-    point: Point2,
+    point: Point,
 }
 
 fn parse_input(input: &str) -> (Vec<Symbol>, Vec<Number>) {
@@ -41,7 +43,7 @@ fn parse_input(input: &str) -> (Vec<Symbol>, Vec<Number>) {
             match char {
                 '0'..='9' => {
                     number = number * 10 + char.to_digit(10).unwrap();
-                    points.push(Point2::new(x, y));
+                    points.push(Point::new(x, y));
                 }
                 '.' => {
                     finalize_number!();
@@ -49,7 +51,7 @@ fn parse_input(input: &str) -> (Vec<Symbol>, Vec<Number>) {
                 _ => {
                     symbols.push(Symbol {
                         symbol: char,
-                        point: Point2::new(x, y),
+                        point: Point::new(x, y),
                     });
                     finalize_number!();
                 }
@@ -82,7 +84,7 @@ pub fn part1(input: &str) -> u32 {
 
 pub fn part2(input: &str) -> u32 {
     let (symbols, numbers) = parse_input(input);
-    let mut gears: HashMap<Point2, Vec<u32>> =
+    let mut gears: HashMap<Point, Vec<u32>> =
         symbols.iter().map(|s| (s.point, Vec::new())).collect();
     'number: for number in numbers {
         for npoint in &number.points {
@@ -136,69 +138,69 @@ mod tests {
             vec![
                 Symbol {
                     symbol: '*',
-                    point: Point2::new(3, 1),
+                    point: Point::new(3, 1),
                 },
                 Symbol {
                     symbol: '#',
-                    point: Point2::new(6, 3),
+                    point: Point::new(6, 3),
                 },
                 Symbol {
                     symbol: '*',
-                    point: Point2::new(3, 4),
+                    point: Point::new(3, 4),
                 },
                 Symbol {
                     symbol: '+',
-                    point: Point2::new(5, 5),
+                    point: Point::new(5, 5),
                 },
                 Symbol {
                     symbol: '$',
-                    point: Point2::new(3, 8),
+                    point: Point::new(3, 8),
                 },
                 Symbol {
                     symbol: '*',
-                    point: Point2::new(5, 8),
+                    point: Point::new(5, 8),
                 },
             ],
             vec![
                 Number {
                     number: 467,
-                    points: vec![Point2::new(0, 0), Point2::new(1, 0), Point2::new(2, 0)],
+                    points: vec![Point::new(0, 0), Point::new(1, 0), Point::new(2, 0)],
                 },
                 Number {
                     number: 114,
-                    points: vec![Point2::new(5, 0), Point2::new(6, 0), Point2::new(7, 0)],
+                    points: vec![Point::new(5, 0), Point::new(6, 0), Point::new(7, 0)],
                 },
                 Number {
                     number: 35,
-                    points: vec![Point2::new(2, 2), Point2::new(3, 2)],
+                    points: vec![Point::new(2, 2), Point::new(3, 2)],
                 },
                 Number {
                     number: 633,
-                    points: vec![Point2::new(6, 2), Point2::new(7, 2), Point2::new(8, 2)],
+                    points: vec![Point::new(6, 2), Point::new(7, 2), Point::new(8, 2)],
                 },
                 Number {
                     number: 617,
-                    points: vec![Point2::new(0, 4), Point2::new(1, 4), Point2::new(2, 4)],
+                    points: vec![Point::new(0, 4), Point::new(1, 4), Point::new(2, 4)],
                 },
                 Number {
                     number: 58,
-                    points: vec![Point2::new(7, 5), Point2::new(8, 5)],
+                    points: vec![Point::new(7, 5), Point::new(8, 5)],
                 },
                 Number {
                     number: 592,
-                    points: vec![Point2::new(2, 6), Point2::new(3, 6), Point2::new(4, 6)],
+                    points: vec![Point::new(2, 6), Point::new(3, 6), Point::new(4, 6)],
                 },
                 Number {
                     number: 755,
-                    points: vec![Point2::new(6, 7), Point2::new(7, 7), Point2::new(8, 7)],
+                    points: vec![Point::new(6, 7), Point::new(7, 7), Point::new(8, 7)],
                 },
                 Number {
                     number: 664,
-                    points: vec![Point2::new(1, 9), Point2::new(2, 9), Point2::new(3, 9)],
+                    points: vec![Point::new(1, 9), Point::new(2, 9), Point::new(3, 9)],
                 },
                 Number {
                     number: 598,
-                    points: vec![Point2::new(5, 9), Point2::new(6, 9), Point2::new(7, 9)],
+                    points: vec![Point::new(5, 9), Point::new(6, 9), Point::new(7, 9)],
                 },
             ],
         );
