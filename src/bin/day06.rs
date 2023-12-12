@@ -1,4 +1,4 @@
-use aoc::utils::{parse::splitn, range_binary_search};
+use aoc::utils::{ext::range::RangeExt as _, parse::splitn};
 
 #[derive(Debug, PartialEq)]
 struct Race {
@@ -17,10 +17,9 @@ fn parse_input(input: &str) -> Vec<Race> {
 }
 
 fn find_win_options(race: &Race) -> usize {
-    let first = range_binary_search(1..race.duration, |charge| {
-        charge * (race.duration - charge) > race.record
-    })
-    .unwrap();
+    let first = (1..race.duration)
+        .binary_search(|charge| charge * (race.duration - charge) > race.record)
+        .unwrap();
     race.duration + 1 - 2 * first
 }
 
