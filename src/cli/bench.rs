@@ -1,4 +1,4 @@
-use clap::{builder::ArgPredicate, Parser};
+use clap::{builder::ArgPredicate, value_parser, Parser};
 use criterion::Criterion;
 
 use super::{
@@ -32,6 +32,10 @@ struct BenchArgs {
     /// If any benchmarks do not have the specified baseline this command fails.
     #[arg(short = 'b', long)]
     baseline: Option<String>,
+
+    /// Set the number of samples to collect.
+    #[arg(long, default_value = "100", value_parser = value_parser![u64].range(10..))]
+    samples: u64,
 }
 
 pub fn main(days: &[Day]) {
@@ -43,6 +47,7 @@ pub fn main(days: &[Day]) {
     } else if let Some(name) = args.baseline {
         criterion = criterion.retain_baseline(name, true);
     }
+    criterion = criterion.sample_size(args.samples as usize);
 
     let days = args.targets.filter_days(days);
     for target in args.targets.get_targets(&days) {
