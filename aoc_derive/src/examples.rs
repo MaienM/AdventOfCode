@@ -63,10 +63,22 @@ impl<'a> Parser for ExampleStringParser<'a> {
 }
 
 fn get_part_args(part: &Option<Expr>) -> Expr {
-    if let Some(expr) = part {
-        parse_quote!(Some(stringify!(#expr)))
-    } else {
-        parse_quote!(None)
+    match part {
+        Some(Expr::Lit(lit)) => match &lit.lit {
+            Lit::Int(lit) => {
+                let num = lit.base10_digits();
+                parse_quote!(Some(#num))
+            }
+            Lit::Float(lit) => {
+                let num = lit.base10_digits();
+                parse_quote!(Some(#num))
+            }
+            lit => {
+                parse_quote!(Some(stringify!(#lit)))
+            }
+        },
+        Some(_) => panic!("Part solution {part:?} cannot be converted to a static string."),
+        None => parse_quote!(None),
     }
 }
 
