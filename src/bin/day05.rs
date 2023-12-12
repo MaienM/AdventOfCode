@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Range};
+use std::{collections::HashMap, mem, ops::Range};
 
 use aoc::utils::parse::splitn;
 
@@ -78,24 +78,81 @@ fn find_lowest_location(input: Input) -> usize {
     items.into_iter().min().unwrap()
 }
 
+fn offset_range(range: Range<usize>, offset: isize) -> Range<usize> {
+    let start = (range.start as isize + offset) as usize;
+    let end = (range.end as isize + offset) as usize;
+    start..end
+}
+
+fn find_lowest_location_ranges(seeds: Vec<Range<usize>>, maps: &HashMap<String, Map>) -> usize {
+    let mut current = "seed".to_owned();
+    let mut items = seeds;
+
+    while current != "location" {
+        let map = maps.get(&current).unwrap();
+        current = map.target.clone();
+        items = items
+            .into_iter()
+            .flat_map(|range| {
+                let mut unmapped = vec![range];
+                let mut mapped = Vec::new();
+                for translation in &map.translations {
+                    for range in mem::take(&mut unmapped) {
+                        if translation.source.contains(&range.start)
+                            && translation.source.contains(&(range.end - 1))
+                        {
+                            mapped.push(offset_range(range.clone(), translation.offset));
+                        } else if translation.source.contains(&range.start) {
+                            mapped.push(offset_range(
+                                range.start..translation.source.end,
+                                translation.offset,
+                            ));
+                            unmapped.push(translation.source.end..range.end);
+                        } else if translation.source.contains(&(range.end - 1)) {
+                            mapped.push(offset_range(
+                                translation.source.start..range.end,
+                                translation.offset,
+                            ));
+                            unmapped.push(range.start..translation.source.start);
+                        } else if range.contains(&translation.source.start) {
+                            mapped
+                                .push(offset_range(translation.source.clone(), translation.offset));
+                            unmapped.push(range.start..translation.source.start);
+                            unmapped.push(translation.source.end..range.end);
+                        } else {
+                            unmapped.push(range);
+                        }
+                    }
+                }
+                mapped.append(&mut unmapped);
+                mapped
+            })
+            .collect();
+    }
+
+    items.into_iter().map(|r| r.start).min().unwrap()
+}
+
 pub fn part1(input: &str) -> usize {
     let input = parse_input(input);
+    #[allow(clippy::range_plus_one)]
     find_lowest_location(input)
 }
 
 pub fn part2(input: &str) -> usize {
-    let mut input = parse_input(input);
-
-    let mut seeds = Vec::new();
-    let mut iter = input.seeds.chunks_exact(2);
-    while let Some([start, len]) = iter.next() {
-        for i in 0..*len {
-            seeds.push(start + i);
-        }
-    }
-    input.seeds = seeds;
-
-    find_lowest_location(input)
+    let input = parse_input(input);
+    find_lowest_location_ranges(
+        input
+            .seeds
+            .chunks_exact(2)
+            .map(|pair| {
+                let start = pair[0];
+                let len = pair[1];
+                start..(start + len)
+            })
+            .collect(),
+        &input.maps,
+    )
 }
 
 aoc::cli::single::generate_main!();
