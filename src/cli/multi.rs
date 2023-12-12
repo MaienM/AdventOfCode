@@ -240,7 +240,7 @@ pub fn main(days: &[Day]) {
                 .sum::<u8>()
                 .to_string()
         ),
-        Cyan.paint(targets.len().to_string()),
+        Cyan.paint(days.len().to_string()),
     );
 
     let runs: Vec<(String, SolverRunResult)> = targets
