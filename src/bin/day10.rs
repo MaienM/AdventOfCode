@@ -1,6 +1,6 @@
 use std::{collections::HashSet, ops::Add};
 
-use aoc::utils::point::Point2;
+use aoc::utils::{parse, point::Point2};
 
 type Point = Point2<usize>;
 
@@ -52,10 +52,9 @@ impl Add<Point> for Direction {
 }
 
 fn parse_input(input: &str) -> Vec<Vec<Tile>> {
-    input
-        .split('\n')
-        .map(|line| line.chars().map(Tile::from).collect())
-        .collect()
+    parse!(input => {
+        [lines split on '\n' with [chars as Tile]]
+    } => lines)
 }
 
 fn extract_start(map: &mut [Vec<Tile>]) -> Point {

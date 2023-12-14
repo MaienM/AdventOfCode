@@ -1,13 +1,9 @@
+use aoc::utils::parse;
+
 fn parse_input(input: &str) -> Vec<Vec<isize>> {
-    input
-        .split('\n')
-        .map(|line| {
-            line.split(' ')
-                .map(str::parse)
-                .map(Result::unwrap)
-                .collect()
-        })
-        .collect()
+    parse!(input => {
+        [lists split on '\n' with [split as isize]] 
+    } => lists)
 }
 
 fn predict(sequence: &[isize]) -> (isize, isize) {

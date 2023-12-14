@@ -1,4 +1,4 @@
-use aoc::utils::parse::splitn;
+use aoc::utils::parse;
 
 #[derive(Debug, PartialEq)]
 struct Game {
@@ -12,31 +12,33 @@ struct Round {
     blue: u8,
 }
 
+#[inline]
+fn parse_round(input: &str) -> Round {
+    parse!(input =>
+        [parts split on ", " into iterator with
+            { [count as u8] " " color }
+            => (count, color)
+        ]
+    );
+    let mut round = Round::default();
+    for (count, color) in parts {
+        match color {
+            "red" => round.red = count,
+            "green" => round.green = count,
+            "blue" => round.blue = count,
+            _ => panic!("Invalid color {color}."),
+        };
+    }
+    round
+}
+
 fn parse_input(input: &str) -> Vec<Game> {
-    input
-        .split('\n')
-        .map(|line| {
-            let (name, rounds) = splitn!(line, ": ", str, str);
-            let id = name[5..].parse().unwrap();
-            let rounds = rounds
-                .split("; ")
-                .map(|part| {
-                    let mut round = Round::default();
-                    for part in part.split(", ") {
-                        let (count, color) = splitn!(part, ' ', u8, str);
-                        match color {
-                            "red" => round.red = count,
-                            "green" => round.green = count,
-                            "blue" => round.blue = count,
-                            _ => panic!("Invalid color {color}"),
-                        };
-                    }
-                    round
-                })
-                .collect();
-            Game { id, rounds }
-        })
-        .collect()
+    parse!(input => {
+        [games split on '\n' with
+            { "Game " [id as u8] ": " [rounds split on "; " with (parse_round)] }
+            => Game { id, rounds }
+        ]
+    } => games)
 }
 
 pub fn part1(input: &str) -> usize {

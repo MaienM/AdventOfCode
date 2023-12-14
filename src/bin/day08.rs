@@ -1,11 +1,20 @@
 use std::collections::{HashMap, HashSet};
 
-use aoc::utils::parse::splitn;
+use aoc::utils::parse;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Direction {
     Left = 0,
     Right = 1,
+}
+impl From<char> for Direction {
+    fn from(value: char) -> Self {
+        match value {
+            'L' => Direction::Left,
+            'R' => Direction::Right,
+            _ => panic!("Invalid direction {value:?}."),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -14,26 +23,17 @@ struct Instructions<'a> {
     maps: HashMap<&'a str, [&'a str; 2]>,
 }
 
+fn parse_map(line: &str) -> (&str, [&str; 2]) {
+    parse!(line => source " = (" left ", " right ")");
+    (source, [left, right])
+}
+
 fn parse_input(input: &str) -> Instructions {
-    let (directions, maps) = splitn!(input, "\n\n", str, str);
-    Instructions {
-        directions: directions
-            .chars()
-            .map(|c| match c {
-                'L' => Direction::Left,
-                'R' => Direction::Right,
-                _ => panic!("Invalid direction {c:?}."),
-            })
-            .collect(),
-        maps: maps
-            .split('\n')
-            .map(|line| {
-                let (source, targets) = splitn!(line, " = ", str, str);
-                let (left, right) = splitn!(targets[1..(targets.len() - 1)], ", ", str, str);
-                (source, [left, right])
-            })
-            .collect(),
-    }
+    parse!(input => {
+        [directions chars as Direction]
+        "\n\n"
+        [maps split on '\n' into (HashMap<_, _>) with parse_map]
+    } => Instructions { directions, maps })
 }
 
 fn run_until<'a>(

@@ -1,15 +1,11 @@
+use aoc::utils::parse;
+
 type Map = Vec<Vec<bool>>;
 
 fn parse_input(input: &str) -> Vec<Map> {
-    input
-        .split("\n\n")
-        .map(|block| {
-            block
-                .split('\n')
-                .map(|line| line.chars().map(|c| c == '#').collect())
-                .collect()
-        })
-        .collect()
+    parse!(input => {
+        [maps split on "\n\n" with [split on '\n' with [chars with |c| c == '#']]]
+    } => maps)
 }
 
 fn rotate(map: &Map) -> Map {

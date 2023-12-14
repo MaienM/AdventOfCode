@@ -1,8 +1,10 @@
 pub mod ext;
-pub mod parse;
+pub mod parser;
 pub mod point;
 
 use std::ops::Sub;
+
+pub use parser::parse;
 
 /// Calculate the absolute difference between two (possibly unsigned) integers.
 pub fn abs_diff<T>(a: T, b: T) -> T

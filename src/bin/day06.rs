@@ -1,4 +1,4 @@
-use aoc::utils::{ext::range::RangeExt as _, parse::splitn};
+use aoc::utils::{ext::range::RangeExt as _, parse};
 
 #[derive(Debug, PartialEq)]
 struct Race {
@@ -7,10 +7,9 @@ struct Race {
 }
 
 fn parse_input(input: &str) -> Vec<Race> {
-    let (line_time, line_distance) = splitn!(input, '\n', str, str);
-    let times = line_time.split(' ').filter_map(|p| p.parse().ok());
-    let distances = line_distance.split(' ').filter_map(|p| p.parse().ok());
+    parse!(input => "Time:" [times split try as usize] "\nDistance:" [distances split try as usize]);
     times
+        .into_iter()
         .zip(distances)
         .map(|(duration, record)| Race { duration, record })
         .collect()

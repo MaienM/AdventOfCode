@@ -1,7 +1,11 @@
 #![allow(unused_variables)]
 
+use aoc::utils::parse;
+
 fn parse_input(input: &str) -> usize {
-    0
+    parse!(input => {
+        [num as usize]
+    } => num)
 }
 
 pub fn part1(input: &str) -> usize {

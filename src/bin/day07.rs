@@ -1,4 +1,4 @@
-use aoc::utils::parse::splitn;
+use aoc::utils::parse;
 
 type Card = char;
 
@@ -9,14 +9,15 @@ struct Hand {
 }
 
 fn parse_input(input: &str) -> Vec<Hand> {
-    input
-        .split('\n')
-        .map(|line| {
-            let (cards, bid) = splitn!(line, ' ', str, usize);
-            let cards = cards.chars().collect::<Vec<_>>().try_into().unwrap();
-            Hand { cards, bid }
-        })
-        .collect()
+    parse!(input => {
+        [hands split on '\n' with
+            { [cards chars] ' ' [bid as usize] }
+            => Hand {
+                cards: cards.try_into().unwrap(),
+                bid,
+            }
+        ] 
+    } => hands)
 }
 
 fn card_to_numbers(card: Card, value_for_j: u8) -> u8 {

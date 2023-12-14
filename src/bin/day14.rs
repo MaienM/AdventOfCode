@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use aoc::utils::parse;
+
 type Map = Vec<Vec<Cell>>;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -20,10 +22,9 @@ impl From<char> for Cell {
 }
 
 fn parse_input(input: &str) -> Map {
-    input
-        .split('\n')
-        .map(|line| line.chars().map(Cell::from).collect())
-        .collect()
+    parse!(input => {
+        [map split on '\n' with [chars as Cell]]
+    } => map)
 }
 
 fn slide_north(map: &mut Map) {

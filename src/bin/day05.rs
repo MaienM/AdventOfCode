@@ -1,11 +1,11 @@
 use std::{collections::HashMap, mem, ops::Range};
 
-use aoc::utils::parse::splitn;
+use aoc::utils::parse;
 
 #[derive(Debug, PartialEq)]
-struct Input {
+struct Input<'a> {
     seeds: Vec<usize>,
-    maps: HashMap<String, Map>,
+    maps: HashMap<&'a str, Map<'a>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -15,53 +15,40 @@ struct Translation {
 }
 
 #[derive(Debug, PartialEq)]
-struct Map {
-    target: String,
+struct Map<'a> {
+    target: &'a str,
     translations: Vec<Translation>,
 }
 
 fn parse_input(input: &str) -> Input {
-    let (seeds, maps) = splitn!(input, "\n\n", str, str);
-
-    let (_, seeds) = splitn!(seeds, ": ", str, str);
-    let seeds = seeds.split(' ').map(|s| s.parse().unwrap()).collect();
-
-    let maps = maps
-        .split("\n\n")
-        .map(|lines| {
-            let (header, ranges) = splitn!(lines, '\n', str, str);
-            let (header, _) = splitn!(header, ' ', str, str);
-            let (from, _, to) = splitn!(header, '-', str, str, str);
-            let ranges = ranges
-                .split('\n')
-                .map(|line| {
-                    let (dest_start, source_start, len) = splitn!(line, ' ', usize, usize, usize);
-                    Translation {
+    parse!(input => {
+        "seeds: " [seeds split as usize]
+        "\n\n"
+        [maps split on "\n\n" into (HashMap<_, _>) with
+            {
+                source "-to-" target " map:\n" 
+                [translations split on '\n' with
+                    { [dest_start as usize] " " [source_start as usize] " " [len as usize] }
+                    => Translation {
                         source: source_start..(source_start + len),
                         offset: (dest_start as isize - source_start as isize),
                     }
-                })
-                .collect();
-            (
-                from.to_owned(),
-                Map {
-                    target: to.to_owned(),
-                    translations: ranges,
-                },
+                ]
+            } => (
+                source,
+                Map { target, translations },
             )
-        })
-        .collect();
-
-    Input { seeds, maps }
+        ]
+    } => Input { seeds, maps })
 }
 
 fn find_lowest_location(input: Input) -> usize {
-    let mut current = "seed".to_owned();
+    let mut current = "seed";
     let mut items = input.seeds;
 
     while current != "location" {
         let map = input.maps.get(&current).unwrap();
-        current = map.target.clone();
+        current = map.target;
         items = items
             .into_iter()
             .map(|n| {
@@ -84,13 +71,13 @@ fn offset_range(range: Range<usize>, offset: isize) -> Range<usize> {
     start..end
 }
 
-fn find_lowest_location_ranges(seeds: Vec<Range<usize>>, maps: &HashMap<String, Map>) -> usize {
-    let mut current = "seed".to_owned();
+fn find_lowest_location_ranges(seeds: Vec<Range<usize>>, maps: &HashMap<&str, Map>) -> usize {
+    let mut current = "seed";
     let mut items = seeds;
 
     while current != "location" {
-        let map = maps.get(&current).unwrap();
-        current = map.target.clone();
+        let map = maps.get(current).unwrap();
+        current = map.target;
         items = items
             .into_iter()
             .flat_map(|range| {
@@ -210,9 +197,9 @@ mod tests {
             seeds: vec![79, 14, 55, 13],
             maps: HashMap::from([
                 (
-                    "seed".to_owned(),
+                    "seed",
                     Map {
-                        target: "soil".to_owned(),
+                        target: "soil",
                         translations: vec![
                             Translation {
                                 source: range(98, 2),
@@ -226,9 +213,9 @@ mod tests {
                     },
                 ),
                 (
-                    "soil".to_owned(),
+                    "soil",
                     Map {
-                        target: "fertilizer".to_owned(),
+                        target: "fertilizer",
                         translations: vec![
                             Translation {
                                 source: range(15, 37),
@@ -246,9 +233,9 @@ mod tests {
                     },
                 ),
                 (
-                    "fertilizer".to_owned(),
+                    "fertilizer",
                     Map {
-                        target: "water".to_owned(),
+                        target: "water",
                         translations: vec![
                             Translation {
                                 source: range(53, 8),
@@ -270,9 +257,9 @@ mod tests {
                     },
                 ),
                 (
-                    "water".to_owned(),
+                    "water",
                     Map {
-                        target: "light".to_owned(),
+                        target: "light",
                         translations: vec![
                             Translation {
                                 source: range(18, 7),
@@ -286,9 +273,9 @@ mod tests {
                     },
                 ),
                 (
-                    "light".to_owned(),
+                    "light",
                     Map {
-                        target: "temperature".to_owned(),
+                        target: "temperature",
                         translations: vec![
                             Translation {
                                 source: range(77, 23),
@@ -306,9 +293,9 @@ mod tests {
                     },
                 ),
                 (
-                    "temperature".to_owned(),
+                    "temperature",
                     Map {
-                        target: "humidity".to_owned(),
+                        target: "humidity",
                         translations: vec![
                             Translation {
                                 source: range(69, 1),
@@ -322,9 +309,9 @@ mod tests {
                     },
                 ),
                 (
-                    "humidity".to_owned(),
+                    "humidity",
                     Map {
-                        target: "location".to_owned(),
+                        target: "location",
                         translations: vec![
                             Translation {
                                 source: range(56, 37),

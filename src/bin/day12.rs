@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aoc::utils::parse::splitn;
+use aoc::utils::parse;
 
 #[derive(Clone, Debug, PartialEq)]
 enum Condition {
@@ -25,17 +25,15 @@ struct Record {
     damaged_groups: Vec<usize>,
 }
 
+fn parse_record(line: &str) -> Record {
+    parse!(line => {
+        [conditions chars as Condition] " " [damaged_groups split on ',' as usize]
+    } => Record { conditions, damaged_groups })
+}
+
 fn parse_input(input: &str) -> Vec<Record> {
-    input
-        .split('\n')
-        .map(|line| {
-            let (conditions, groups) = splitn!(line, ' ', str, str);
-            Record {
-                conditions: conditions.chars().map(Condition::from).collect(),
-                damaged_groups: groups.split(',').map(|s| s.parse().unwrap()).collect(),
-            }
-        })
-        .collect()
+    parse!(input => [records split on '\n' with (parse_record)]);
+    records
 }
 
 fn find_valid_options(

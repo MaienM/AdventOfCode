@@ -79,7 +79,7 @@ pub fn main(day: &Day) {
 }
 
 #[macro_export]
-macro_rules! __generate_day_main__ {
+macro_rules! __generate_day_main {
     () => {
         #[::aoc_derive::inject_day]
         static DAY: Day;
@@ -89,4 +89,4 @@ macro_rules! __generate_day_main__ {
         }
     };
 }
-pub use __generate_day_main__ as generate_main;
+pub use __generate_day_main as generate_main;

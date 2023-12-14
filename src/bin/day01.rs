@@ -1,13 +1,15 @@
+use aoc::utils::parse;
+
 fn parse_input(input: &str) -> Vec<u32> {
-    input
-        .split('\n')
-        .map(|line| {
-            let mut iter = line.chars().filter_map(|c| c.to_digit(10));
-            let first = iter.next().unwrap();
-            let last = iter.last().unwrap_or(first);
-            first * 10 + last
-        })
-        .collect()
+    parse!(input => {
+        [lines split on '\n' with
+            { [nums chars into iterator try as u32] }
+            => {
+                let first = nums.next().unwrap();
+                first * 10 + nums.last().unwrap_or(first)
+            }
+        ]
+    } => lines)
 }
 
 fn parse_input_with_words(input: &str) -> Vec<u32> {

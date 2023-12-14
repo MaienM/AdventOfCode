@@ -13,7 +13,7 @@ use crate::{
         source::{Source, SourceValueParser},
     },
     derived::Day,
-    utils::parse::splitn,
+    utils::parse,
 };
 
 /// Create parser for --only/--skip.
@@ -41,7 +41,7 @@ fn create_target_value_parser(days: &[Day]) -> impl TypedValueParser {
     parser.map(|s| {
         let s = s.trim_start_matches('0');
         if s.contains('-') {
-            let (day, part) = splitn!(s, '-', u8, u8);
+            parse!(s => [day as u8] "-" [part as u8]);
             vec![(day, part)]
         } else {
             let day = s.parse().unwrap();

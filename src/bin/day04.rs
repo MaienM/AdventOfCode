@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use aoc::utils::parse::splitn;
+use aoc::utils::parse;
 
 #[derive(Debug, PartialEq)]
 struct Card {
@@ -9,17 +9,12 @@ struct Card {
 }
 
 fn parse_input(input: &str) -> Vec<Card> {
-    input
-        .split('\n')
-        .map(|line| {
-            let (_, line) = splitn!(line, ": ", str, str);
-            let (numbers, winners) = splitn!(line, " | ", str, str);
-            Card {
-                numbers: numbers.split(' ').filter_map(|n| n.parse().ok()).collect(),
-                winners: winners.split(' ').filter_map(|n| n.parse().ok()).collect(),
-            }
-        })
-        .collect()
+    parse!(input => {
+        [cards split on '\n' with
+            { "Card " _ ": " [numbers split into (HashSet<_>) try as u8] " | " [winners split into (HashSet<_>) try as u8] }
+            => Card { numbers, winners }
+        ]
+    } => cards)
 }
 
 pub fn part1(input: &str) -> usize {
