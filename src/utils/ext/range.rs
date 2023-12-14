@@ -54,7 +54,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_range_binary_search() {
+    fn binary_search() {
         assert_eq!((1..10).binary_search(|v| v > 6), Some(7));
         assert_eq!(
             (1..1_000_000_000).binary_search(|v| v > 628_162_832),
