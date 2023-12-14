@@ -103,10 +103,14 @@ pub fn part2(input: &str) -> usize {
         .keys()
         .filter(|k| k.ends_with('A'))
         .map(|k| (instructions.clone(), k.to_owned()))
-        .threaded_map(5, |(instructions, k)| {
+        .threaded_map(4, |(instructions, k)| {
+            #[allow(unused_variables)]
             let (first, k) = run_until(&instructions, 0, &k, |c| c.ends_with('Z'));
-            let (cycle, _) = run_until(&instructions, first, &k, |c| c.ends_with('Z'));
-            assert_eq!(first, cycle, "This logic only works if start -> finish and finish -> finish take the same amount of steps.");
+            #[cfg(debug_assertions)]
+            {
+                let (cycle, _) = run_until(&instructions, first, &k, |c| c.ends_with('Z'));
+                assert_eq!(first, cycle, "This logic only works if start -> finish and finish -> finish take the same amount of steps.");
+            }
             first
         })
         .collect();
