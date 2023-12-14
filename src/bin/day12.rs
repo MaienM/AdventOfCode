@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aoc::utils::parse;
+use aoc::utils::{ext::iter::IterExt, parse};
 
 #[derive(Clone, Debug, PartialEq)]
 enum Condition {
@@ -104,15 +104,18 @@ pub fn part1(input: &str) -> usize {
     let records = parse_input(input);
     records
         .into_iter()
-        .map(|mut record| find_valid_options(&mut HashMap::new(), &mut record, 0, 0, 0))
+        .threaded_map(7, |mut record| {
+            find_valid_options(&mut HashMap::new(), &mut record, 0, 0, 0)
+        })
         .sum()
 }
 
 pub fn part2(input: &str) -> usize {
     let records = parse_input(input);
+
     records
         .into_iter()
-        .map(|record| {
+        .threaded_map(15, |record| {
             let mut conditions = Vec::new();
             conditions.append(&mut record.conditions.clone());
             conditions.push(Condition::Unknown);

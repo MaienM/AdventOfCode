@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use aoc::utils::parse;
+use aoc::utils::{ext::iter::IterExt, parse};
 
 #[derive(Debug, PartialEq, Clone)]
 enum Direction {
@@ -17,14 +17,14 @@ impl From<char> for Direction {
     }
 }
 
-#[derive(Debug, PartialEq)]
-struct Instructions<'a> {
+#[derive(Debug, PartialEq, Clone)]
+struct Instructions {
     directions: Vec<Direction>,
-    maps: HashMap<&'a str, [&'a str; 2]>,
+    maps: HashMap<String, [String; 2]>,
 }
 
-fn parse_map(line: &str) -> (&str, [&str; 2]) {
-    parse!(line => source " = (" left ", " right ")");
+fn parse_map(line: &str) -> (String, [String; 2]) {
+    parse!(line => [source as String] " = (" [left as String]", " [right as String] ")");
     (source, [left, right])
 }
 
@@ -36,13 +36,13 @@ fn parse_input(input: &str) -> Instructions {
     } => Instructions { directions, maps })
 }
 
-fn run_until<'a>(
-    instructions: &Instructions<'a>,
+fn run_until(
+    instructions: &Instructions,
     offset: usize,
-    start: &'a str,
+    start: &str,
     is_end: fn(&str) -> bool,
-) -> (usize, &'a str) {
-    let mut current = start;
+) -> (usize, String) {
+    let mut current = &start.to_owned();
     let mut steps = 0;
     for direction in instructions
         .directions
@@ -53,10 +53,10 @@ fn run_until<'a>(
     {
         let idx = direction as usize;
         steps += 1;
-        current = instructions.maps.get(current).unwrap()[idx];
+        current = &instructions.maps.get(current).unwrap()[idx];
 
         if is_end(current) {
-            return (steps, current);
+            return (steps, current.clone());
         }
     }
     panic!("Should never happen");
@@ -102,9 +102,10 @@ pub fn part2(input: &str) -> usize {
         .maps
         .keys()
         .filter(|k| k.ends_with('A'))
-        .map(|k| {
-            let (first, k) = run_until(&instructions, 0, k, |c| c.ends_with('Z'));
-            let (cycle, _) = run_until(&instructions, first, k, |c| c.ends_with('Z'));
+        .map(|k| (instructions.clone(), k.to_owned()))
+        .threaded_map(5, |(instructions, k)| {
+            let (first, k) = run_until(&instructions, 0, &k, |c| c.ends_with('Z'));
+            let (cycle, _) = run_until(&instructions, first, &k, |c| c.ends_with('Z'));
             assert_eq!(first, cycle, "This logic only works if start -> finish and finish -> finish take the same amount of steps.");
             first
         })
@@ -164,13 +165,13 @@ mod tests {
         let expected = Instructions {
             directions: vec![Direction::Right, Direction::Left],
             maps: hash_map!(
-                "AAA" => ["BBB", "CCC"],
-                "BBB" => ["DDD", "EEE"],
-                "CCC" => ["ZZZ", "GGG"],
-                "DDD" => ["DDD", "DDD"],
-                "EEE" => ["EEE", "EEE"],
-                "GGG" => ["GGG", "GGG"],
-                "ZZZ" => ["ZZZ", "ZZZ"],
+                "AAA".to_owned() => ["BBB".to_owned(), "CCC".to_owned()],
+                "BBB".to_owned() => ["DDD".to_owned(), "EEE".to_owned()],
+                "CCC".to_owned() => ["ZZZ".to_owned(), "GGG".to_owned()],
+                "DDD".to_owned() => ["DDD".to_owned(), "DDD".to_owned()],
+                "EEE".to_owned() => ["EEE".to_owned(), "EEE".to_owned()],
+                "GGG".to_owned() => ["GGG".to_owned(), "GGG".to_owned()],
+                "ZZZ".to_owned() => ["ZZZ".to_owned(), "ZZZ".to_owned()],
             ),
         };
         assert_eq!(actual, expected);
@@ -182,9 +183,9 @@ mod tests {
         let expected = Instructions {
             directions: vec![Direction::Left, Direction::Left, Direction::Right],
             maps: hash_map!(
-                "AAA" => ["BBB", "BBB"],
-                "BBB" => ["AAA", "ZZZ"],
-                "ZZZ" => ["ZZZ", "ZZZ"],
+                "AAA".to_owned() => ["BBB".to_owned(), "BBB".to_owned()],
+                "BBB".to_owned() => ["AAA".to_owned(), "ZZZ".to_owned()],
+                "ZZZ".to_owned() => ["ZZZ".to_owned(), "ZZZ".to_owned()],
             ),
         };
         assert_eq!(actual, expected);
@@ -196,14 +197,14 @@ mod tests {
         let expected = Instructions {
             directions: vec![Direction::Left, Direction::Right],
             maps: hash_map!(
-                "11A" => ["11B", "XXX"],
-                "11B" => ["XXX", "11Z"],
-                "11Z" => ["11B", "XXX"],
-                "22A" => ["22B", "XXX"],
-                "22B" => ["22C", "22C"],
-                "22C" => ["22Z", "22Z"],
-                "22Z" => ["22B", "22B"],
-                "XXX" => ["XXX", "XXX"],
+                "11A".to_owned() => ["11B".to_owned(), "XXX".to_owned()],
+                "11B".to_owned() => ["XXX".to_owned(), "11Z".to_owned()],
+                "11Z".to_owned() => ["11B".to_owned(), "XXX".to_owned()],
+                "22A".to_owned() => ["22B".to_owned(), "XXX".to_owned()],
+                "22B".to_owned() => ["22C".to_owned(), "22C".to_owned()],
+                "22C".to_owned() => ["22Z".to_owned(), "22Z".to_owned()],
+                "22Z".to_owned() => ["22B".to_owned(), "22B".to_owned()],
+                "XXX".to_owned() => ["XXX".to_owned(), "XXX".to_owned()],
             ),
         };
         assert_eq!(actual, expected);
