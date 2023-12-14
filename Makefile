@@ -3,7 +3,7 @@ RUST_BACKTRACE ?= 0
 setaf6 = $(shell tput setaf 6)
 sgr0 = $(shell tput sgr0)
 
-.PHONY: run-all test-libs test-and-run-day%
+.PHONY: run-all test-libs benchmark-all test-and-run-day% benchmark-day%
 .SECONDARY:
 
 run-all:
@@ -33,6 +33,12 @@ test-and-run-day%: inputs/day%.txt
 	@echo "$(setaf6)>>>>> Running ${day} <<<<<$(sgr0)"
 	@cargo run --bin ${day} --release --quiet
 
+benchmark-all:
+	@cargo bench --bench main --quiet -- --save-baseline current
+	@critcmp baseline current
+
+benchmark-day%: day = $(subst benchmark-,,$@)
+benchmark-day%: test-and-run-day% inputs/day%.txt
 	@echo "$(setaf6)>>>>> Benchmarking ${day} <<<<<$(sgr0)"
 	@cargo bench --bench main --quiet -- --only $(subst day,,${day}) --save-baseline current
 	@critcmp baseline current --filter ${day}
