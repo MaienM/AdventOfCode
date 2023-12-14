@@ -31,6 +31,7 @@ fn slide_north(map: &mut Map) {
     for x in 0..width {
         let mut rolling = 0;
         for y in (0..map.len()).rev() {
+            #[allow(clippy::match_on_vec_items)]
             match map[y][x] {
                 Cell::RoundRock => {
                     rolling += 1;
@@ -45,8 +46,8 @@ fn slide_north(map: &mut Map) {
                 Cell::Empty => {}
             }
         }
-        for i in 0..rolling {
-            map[i][x] = Cell::RoundRock;
+        for row in map.iter_mut().take(rolling) {
+            row[x] = Cell::RoundRock;
         }
     }
 }
@@ -56,6 +57,7 @@ fn slide_south(map: &mut Map) {
     for x in 0..width {
         let mut rolling = 0;
         for y in 0..map.len() {
+            #[allow(clippy::match_on_vec_items)]
             match map[y][x] {
                 Cell::RoundRock => {
                     rolling += 1;
@@ -70,59 +72,60 @@ fn slide_south(map: &mut Map) {
                 Cell::Empty => {}
             }
         }
-        let len = map.len();
-        for i in 0..rolling {
-            map[len - i - 1][x] = Cell::RoundRock;
+        for row in map.iter_mut().rev().take(rolling) {
+            row[x] = Cell::RoundRock;
         }
     }
 }
 
 fn slide_east(map: &mut Map) {
     let width = map[0].len();
-    for y in 0..map.len() {
+    for row in map {
         let mut rolling = 0;
         for x in 0..width {
-            match map[y][x] {
+            #[allow(clippy::match_on_vec_items)]
+            match row[x] {
                 Cell::RoundRock => {
                     rolling += 1;
-                    map[y][x] = Cell::Empty;
+                    row[x] = Cell::Empty;
                 }
                 Cell::CubeRock => {
                     for i in 0..rolling {
-                        map[y][x - i - 1] = Cell::RoundRock;
+                        row[x - i - 1] = Cell::RoundRock;
                     }
                     rolling = 0;
                 }
                 Cell::Empty => {}
             }
         }
-        for i in 0..rolling {
-            map[y][width - i - 1] = Cell::RoundRock;
+        for cell in row.iter_mut().rev().take(rolling) {
+            *cell = Cell::RoundRock;
         }
     }
 }
 
 fn slide_west(map: &mut Map) {
     let width = map[0].len();
-    for y in 0..map.len() {
+    for row in map {
         let mut rolling = 0;
         for x in (0..width).rev() {
-            match map[y][x] {
+            #[allow(clippy::match_on_vec_items)]
+            match row[x] {
                 Cell::RoundRock => {
                     rolling += 1;
-                    map[y][x] = Cell::Empty;
+                    row[x] = Cell::Empty;
                 }
                 Cell::CubeRock => {
                     for i in 0..rolling {
-                        map[y][x + i + 1] = Cell::RoundRock;
+                        row[x + i + 1] = Cell::RoundRock;
                     }
                     rolling = 0;
                 }
                 Cell::Empty => {}
             }
         }
-        for i in 0..rolling {
-            map[y][i] = Cell::RoundRock;
+        for cell in row.iter_mut().take(rolling) {
+            *cell = Cell::RoundRock;
         }
     }
 }
@@ -180,9 +183,9 @@ pub fn part2(input: &str) -> usize {
             cache.insert(map.clone(), i);
             continue;
         };
-        let first = first.clone();
+        let first = *first;
 
-        // We're in a loop, so figure out where in this loop we will end.
+        // We're in a loop, so figure out which loop member we will end on and use that.
         let remaining = cycles - i - 1;
         let loop_size = i - first;
         let steps = remaining % loop_size;
