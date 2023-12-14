@@ -66,19 +66,18 @@ pub fn part1(input: &str) -> u32 {
     let (symbols, numbers) = parse_input(input);
     numbers
         .into_iter()
-        .filter(|n| {
+        .filter_map(|n| {
             for npoint in &n.points {
                 for symbol in &symbols {
                     if abs_diff(npoint.x, symbol.point.x) <= 1
                         && abs_diff(npoint.y, symbol.point.y) <= 1
                     {
-                        return true;
+                        return Some(n.number);
                     }
                 }
             }
-            false
+            None
         })
-        .map(|n| n.number)
         .sum()
 }
 
