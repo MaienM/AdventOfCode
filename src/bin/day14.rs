@@ -1,10 +1,13 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    hash::{BuildHasher, RandomState},
+};
 
 use aoc::utils::parse;
 
 type Map = Vec<Vec<Cell>>;
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Debug, Hash, PartialEq)]
 enum Cell {
     RoundRock,
     CubeRock,
@@ -153,35 +156,31 @@ fn cycle(map: &mut Map) {
     slide_east(map);
 }
 
-fn calculate_load(map: Map) -> usize {
-    map.into_iter()
+fn calculate_load(map: &Map) -> usize {
+    map.iter()
         .rev()
         .enumerate()
-        .map(|(y, row)| {
-            (y + 1)
-                * row
-                    .into_iter()
-                    .filter(|cell| cell == &Cell::RoundRock)
-                    .count()
-        })
+        .map(|(y, row)| (y + 1) * row.iter().filter(|cell| cell == &&Cell::RoundRock).count())
         .sum()
 }
 
 pub fn part1(input: &str) -> usize {
     let mut map = parse_input(input);
     slide_north(&mut map);
-    calculate_load(map)
+    calculate_load(&map)
 }
 
 pub fn part2(input: &str) -> usize {
     let mut map = parse_input(input);
-    let mut cache: HashMap<Map, usize> = HashMap::new();
-    cache.insert(map.clone(), 0);
+    let hasher = RandomState::new();
+    let mut cache = HashMap::new();
+    cache.insert(hasher.hash_one(&map), (0, 0));
     let cycles = 1_000_000_000;
     for i in 0..cycles {
         cycle(&mut map);
-        let Some(first) = cache.get(&map) else {
-            cache.insert(map.clone(), i);
+        let hash = hasher.hash_one(&map);
+        let Some((first, _)) = cache.get(&hash) else {
+            cache.insert(hash, (i, calculate_load(&map)));
             continue;
         };
         let first = *first;
@@ -190,14 +189,18 @@ pub fn part2(input: &str) -> usize {
         let remaining = cycles - i - 1;
         let loop_size = i - first;
         let steps = remaining % loop_size;
-        map = cache
+        return cache
             .into_iter()
-            .find(|(_, iteration)| *iteration == first + steps)
-            .unwrap()
-            .0;
-        break;
+            .find_map(|(_, (iteration, load))| {
+                if iteration == first + steps {
+                    Some(load)
+                } else {
+                    None
+                }
+            })
+            .unwrap();
     }
-    calculate_load(map)
+    panic!("Should never happen.");
 }
 
 aoc::cli::single::generate_main!();
