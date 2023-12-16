@@ -1,4 +1,4 @@
-use std::sync::mpsc;
+use std::{collections::HashMap, hash::Hash, sync::mpsc};
 
 use threadpool::ThreadPool;
 
@@ -22,6 +22,11 @@ pub trait IterExt<T> {
         F: Fn(T) -> R + Send + Copy + 'static,
         T: Send + 'static,
         R: Send + 'static;
+
+    /// Count how often each item occurs.
+    fn count_occurences(self) -> HashMap<T, usize>
+    where
+        T: Eq + PartialEq + Hash;
 }
 impl<I, T> IterExt<T> for I
 where
@@ -97,6 +102,17 @@ where
         results.sort_unstable_by_key(|(idx, _)| *idx);
         results.into_iter().map(|(_, v)| v)
     }
+
+    fn count_occurences(self) -> HashMap<T, usize>
+    where
+        T: Eq + PartialEq + Hash,
+    {
+        let mut map = HashMap::new();
+        for item in self {
+            map.entry(item).and_modify(|c| *c += 1).or_insert(1);
+        }
+        map
+    }
 }
 
 #[cfg(test)]
@@ -131,5 +147,16 @@ mod tests {
             (0..200).threaded_map(5, |v| v * 2).collect::<Vec<_>>(),
             (0..400).step_by(2).collect::<Vec<_>>(),
         );
+    }
+
+    #[test]
+    fn count_occurences() {
+        let counts = ["foo", "foo", "bar", "foo", "baz", "bar"]
+            .into_iter()
+            .count_occurences();
+        assert_eq!(counts.len(), 3);
+        assert_eq!(counts["foo"], 3);
+        assert_eq!(counts["bar"], 2);
+        assert_eq!(counts["baz"], 1);
     }
 }
