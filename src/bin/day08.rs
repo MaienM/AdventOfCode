@@ -4,6 +4,7 @@ use std::{
 };
 
 use aoc::utils::{ext::iter::IterExt, parse};
+use threadpool::ThreadPool;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Direction {
@@ -106,7 +107,7 @@ pub fn part2(input: &str) -> usize {
         .keys()
         .filter(|k| k.ends_with('A'))
         .map(|k| (instructions.clone(), k.to_owned()))
-        .threaded_map(4, |(instructions, k)| {
+        .threaded_map(&ThreadPool::new(4), |(instructions, k)| {
             #[allow(unused_variables)]
             let (first, k) = run_until(&instructions, 0, &k, |c| c.ends_with('Z'));
             #[cfg(debug_assertions)]

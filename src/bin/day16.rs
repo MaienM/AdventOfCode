@@ -1,6 +1,7 @@
 use std::{collections::HashSet, ops::Add, sync::Arc};
 
 use aoc::utils::{ext::iter::IterExt as _, parse, point::Point2};
+use threadpool::ThreadPool;
 
 type Point = Point2;
 
@@ -166,7 +167,7 @@ pub fn part2(input: &str) -> usize {
     options
         .into_iter()
         .map(|(p, d)| (map.clone(), bounds.clone(), p, d))
-        .threaded_map(10, |(map, bounds, point, direction)| {
+        .threaded_map(&ThreadPool::new(10), |(map, bounds, point, direction)| {
             solve_from_position(&map, &bounds, point, direction)
         })
         .max()

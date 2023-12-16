@@ -4,20 +4,20 @@ use threadpool::ThreadPool;
 
 pub trait IterExt<T> {
     /// Like [`Iterator::filter_map`], but with the calls being executed inside threads from a threadpool.
-    fn threaded_filter_map<F, R>(self, pool_size: usize, f: F) -> impl Iterator<Item = R>
+    fn threaded_filter_map<F, R>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = R>
     where
         F: Fn(T) -> Option<R> + Send + Copy + 'static,
         T: Send + 'static,
         R: Send + 'static;
 
     /// Like [`Iterator::filter`], but with the calls being executed inside threads from a threadpool.
-    fn threaded_filter<F>(self, pool_size: usize, f: F) -> impl Iterator<Item = T>
+    fn threaded_filter<F>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = T>
     where
         F: Fn(&T) -> bool + Send + Copy + 'static,
         T: Send + 'static;
 
     /// Like [`Iterator::map`], but with the calls being executed inside threads from a threadpool.
-    fn threaded_map<F, R>(self, pool_size: usize, f: F) -> impl Iterator<Item = R>
+    fn threaded_map<F, R>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = R>
     where
         F: Fn(T) -> R + Send + Copy + 'static,
         T: Send + 'static,
@@ -32,13 +32,12 @@ impl<I, T> IterExt<T> for I
 where
     I: Iterator<Item = T>,
 {
-    fn threaded_filter_map<F, R>(self, pool_size: usize, f: F) -> impl Iterator<Item = R>
+    fn threaded_filter_map<F, R>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = R>
     where
         F: Fn(T) -> Option<R> + Send + Copy + 'static,
         T: Send + 'static,
         R: Send + 'static,
     {
-        let pool = ThreadPool::new(pool_size);
         let (tx, rx) = mpsc::channel();
         let mut len = 0;
         for (idx, item) in self.enumerate() {
@@ -55,12 +54,11 @@ where
         results.into_iter().filter_map(|(_, v)| v)
     }
 
-    fn threaded_filter<F>(self, pool_size: usize, f: F) -> impl Iterator<Item = T>
+    fn threaded_filter<F>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = T>
     where
         F: Fn(&T) -> bool + Send + Copy + 'static,
         T: Send + 'static,
     {
-        let pool = ThreadPool::new(pool_size);
         let (tx, rx) = mpsc::channel();
         let mut len = 0;
         for (idx, item) in self.enumerate() {
@@ -80,13 +78,12 @@ where
             .map(|(_, _, v)| v)
     }
 
-    fn threaded_map<F, R>(self, pool_size: usize, f: F) -> impl Iterator<Item = R>
+    fn threaded_map<F, R>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = R>
     where
         F: Fn(T) -> R + Send + Copy + 'static,
         T: Send + 'static,
         R: Send + 'static,
     {
-        let pool = ThreadPool::new(pool_size);
         let (tx, rx) = mpsc::channel();
         let mut len = 0;
         for (idx, item) in self.enumerate() {
@@ -125,7 +122,11 @@ mod tests {
     fn threaded_filter_map() {
         assert_eq!(
             (0..200)
-                .threaded_filter_map(5, |v| if v % 2 == 0 { Some(v * 2) } else { None })
+                .threaded_filter_map(&ThreadPool::new(5), |v| if v % 2 == 0 {
+                    Some(v * 2)
+                } else {
+                    None
+                })
                 .collect::<Vec<_>>(),
             (0..400).step_by(4).collect::<Vec<_>>(),
         );
@@ -135,7 +136,7 @@ mod tests {
     fn threaded_filter() {
         assert_eq!(
             (0..200)
-                .threaded_filter(5, |v| v % 2 == 0)
+                .threaded_filter(&ThreadPool::new(5), |v| v % 2 == 0)
                 .collect::<Vec<_>>(),
             (0..200).step_by(2).collect::<Vec<_>>(),
         );
@@ -144,7 +145,9 @@ mod tests {
     #[test]
     fn threaded_map() {
         assert_eq!(
-            (0..200).threaded_map(5, |v| v * 2).collect::<Vec<_>>(),
+            (0..200)
+                .threaded_map(&ThreadPool::new(5), |v| v * 2)
+                .collect::<Vec<_>>(),
             (0..400).step_by(2).collect::<Vec<_>>(),
         );
     }
