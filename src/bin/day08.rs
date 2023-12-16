@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use aoc::utils::{ext::iter::IterExt, parse};
 
@@ -97,7 +100,7 @@ pub fn part1(input: &str) -> usize {
 }
 
 pub fn part2(input: &str) -> usize {
-    let instructions = parse_input(input);
+    let instructions = Arc::new(parse_input(input));
     let cycles: Vec<_> = instructions
         .maps
         .keys()
