@@ -56,24 +56,24 @@ pub(super) struct TargetArgs {
     ///
     /// The syntax {day}-{part} can be used to target only a single part for a day.
     #[arg(
-            long,
-            value_delimiter = ',',
-            value_name = "1,3,8-1",
-            value_parser = create_target_value_parser(&[]),
-            group = "targets",
-        )]
+        long,
+        value_delimiter = ',',
+        value_name = "1,3,8-1",
+        value_parser = create_target_value_parser(&[]),
+        group = "targets",
+    )]
     only: Option<Vec<Vec<(u8, u8)>>>,
 
     /// Skip the listed days.
     ///
     /// The syntax {day}-{part} can be used to target only a single part for a day.
     #[arg(
-            long,
-            value_delimiter = ',',
-            value_name = "1,3,8-1",
-            value_parser = create_target_value_parser(&[]),
-            group = "targets",
-        )]
+        long,
+        value_delimiter = ',',
+        value_name = "1,3,8-1",
+        value_parser = create_target_value_parser(&[]),
+        group = "targets",
+    )]
     skip: Option<Vec<Vec<(u8, u8)>>>,
 
     /// Pattern for paths to files containing the inputs.
@@ -82,12 +82,12 @@ pub(super) struct TargetArgs {
     /// - `{day}`: the number of the day (`1`, `13`, etc).
     /// - `{day0}`: the number of the day as two digits (`01`, `13`, etc).
     #[arg(
-            long,
-            default_value = "inputs/day{day0}.txt",
-            value_parser = SourceValueParser,
-            verbatim_doc_comment,
-            conflicts_with = "use_examples",
-        )]
+        long,
+        default_value = "inputs/day{day0}.txt",
+        value_parser = SourceValueParser,
+        verbatim_doc_comment,
+        conflicts_with = "use_examples",
+    )]
     input_pattern: Source,
 
     /// Pattern for paths to files containing the expected results.
@@ -97,12 +97,12 @@ pub(super) struct TargetArgs {
     /// - `{day0}`: the number of the day as two digits (`01`, `13`, etc).
     /// - `{part}`: the number of the part (`1` or `2`).
     #[arg(
-            long,
-            default_value = "inputs/day{day0}.solution{part}.txt",
-            value_parser = SourceValueParser,
-            verbatim_doc_comment,
-            conflicts_with = "use_examples",
-        )]
+        long,
+        default_value = "inputs/day{day0}.solution{part}.txt",
+        value_parser = SourceValueParser,
+        verbatim_doc_comment,
+        conflicts_with = "use_examples",
+    )]
     result_pattern: Source,
 
     /// Run using examples instead of real inputs/results.

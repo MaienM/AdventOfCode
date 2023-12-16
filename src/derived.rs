@@ -2,6 +2,25 @@
 
 use std::ops::Deref;
 
+/// The main components of the implementation of a single day.
+#[derive(Clone)]
+pub struct Day {
+    /// The name of the day.
+    pub name: &'static str,
+
+    /// The numer of the day.
+    pub num: u8,
+
+    /// The runnable for part 1, with the result cast to a string.
+    pub part1: Option<fn(&str) -> String>,
+
+    /// The runnable for part 2, with the result cast to a string.
+    pub part2: Option<fn(&str) -> String>,
+
+    /// The examples.
+    pub examples: Vec<Example>,
+}
+
 /// An example input.
 #[derive(Clone)]
 pub struct Example {
@@ -23,23 +42,4 @@ impl Deref for Example {
     fn deref(&self) -> &Self::Target {
         &self.input
     }
-}
-
-/// The main components of the implementation of a single day.
-#[derive(Clone)]
-pub struct Day {
-    /// The name of the day.
-    pub name: &'static str,
-
-    /// The numer of the day.
-    pub num: u8,
-
-    /// The runnable for part 1, with the result cast to a string.
-    pub part1: Option<fn(&str) -> String>,
-
-    /// The runnable for part 2, with the result cast to a string.
-    pub part2: Option<fn(&str) -> String>,
-
-    /// The examples.
-    pub examples: Vec<Example>,
 }

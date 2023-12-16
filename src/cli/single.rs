@@ -16,26 +16,26 @@ use crate::{
 struct SingleArgs {
     /// Path to a file containing the input.
     #[arg(
-            value_hint = ValueHint::FilePath,
-            default_value = "inputs/day{day0}.txt",
-            value_parser = SourceValueParser,
-        )]
+        value_hint = ValueHint::FilePath,
+        default_value = "inputs/day{day0}.txt",
+        value_parser = SourceValueParser,
+    )]
     input: Source,
 
     /// Path to a file containing the expected result of part 1.
     #[arg(
-            value_hint = ValueHint::FilePath,
-            default_value = "inputs/day{day0}.solution{part}.txt",
-            value_parser = SourceValueParser,
-        )]
+        value_hint = ValueHint::FilePath,
+        default_value = "inputs/day{day0}.solution{part}.txt",
+        value_parser = SourceValueParser,
+    )]
     part1: Source,
 
     /// Path to a file containing the expected result of part 2.
     #[arg(
-            value_hint = ValueHint::FilePath,
-            default_value = "inputs/day{day0}.solution{part}.txt",
-            value_parser = SourceValueParser,
-        )]
+        value_hint = ValueHint::FilePath,
+        default_value = "inputs/day{day0}.solution{part}.txt",
+        value_parser = SourceValueParser,
+    )]
     part2: Source,
 }
 
