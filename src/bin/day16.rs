@@ -125,24 +125,68 @@ fn track_beams(
     }
 }
 
-pub fn part1(input: &str) -> usize {
-    let map = parse_input(input);
-    let bounds = Point::new(map[0].len(), map.len());
+fn solve_from_position(
+    map: &Map<Tile>,
+    bounds: &Point,
+    start: Point,
+    direction: Direction,
+) -> usize {
     let mut results: Map<bool> = (0..bounds.y)
         .map(|_| (0..bounds.x).map(|_| false).collect())
         .collect();
     track_beams(
-        &map,
-        &bounds,
+        map,
+        bounds,
         &mut results,
         &mut HashSet::new(),
-        Point::new(0, 0),
-        Direction::East,
+        start,
+        direction,
     );
     results
         .into_iter()
         .map(|row| row.into_iter().filter(|v| *v).count())
         .sum()
+}
+
+pub fn part1(input: &str) -> usize {
+    let map = parse_input(input);
+    let bounds = Point::new(map[0].len(), map.len());
+    solve_from_position(&map, &bounds, Point::new(0, 0), Direction::East)
+}
+
+pub fn part2(input: &str) -> usize {
+    let map = parse_input(input);
+    let bounds = Point::new(map[0].len(), map.len());
+    let mut best = 0;
+    for x in 0..bounds.x {
+        best = best.max(solve_from_position(
+            &map,
+            &bounds,
+            Point::new(x, 0),
+            Direction::South,
+        ));
+        best = best.max(solve_from_position(
+            &map,
+            &bounds,
+            Point::new(x, bounds.y),
+            Direction::North,
+        ));
+    }
+    for y in 0..bounds.y {
+        best = best.max(solve_from_position(
+            &map,
+            &bounds,
+            Point::new(0, y),
+            Direction::East,
+        ));
+        best = best.max(solve_from_position(
+            &map,
+            &bounds,
+            Point::new(bounds.x, y),
+            Direction::West,
+        ));
+    }
+    best
 }
 
 aoc::cli::single::generate_main!();
@@ -154,7 +198,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 46, test)]
+    #[example_input(part1 = 46, part2 = 51, test)]
     static EXAMPLE_INPUT: &str = r#"
         .|...\....
         |.-.\.....
