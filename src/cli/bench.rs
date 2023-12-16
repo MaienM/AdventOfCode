@@ -1,3 +1,5 @@
+#![cfg(feature = "bench")]
+
 use clap::{builder::ArgPredicate, value_parser, Parser};
 use criterion::Criterion;
 

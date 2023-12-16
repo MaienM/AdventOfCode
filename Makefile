@@ -34,23 +34,23 @@ test-and-run-day%: inputs/day%.txt
 	@cargo run --bin ${day} --release --quiet
 
 benchmark-all:
-	@cargo bench --bench main --quiet -- --save-baseline current
+	@cargo bench --bench main --features bench --quiet -- --save-baseline current
 	@critcmp baseline current
 
 benchmark-day%: day = $(subst benchmark-,,$@)
 benchmark-day%: test-and-run-day% inputs/day%.txt
 	@echo "$(setaf6)>>>>> Benchmarking ${day} <<<<<$(sgr0)"
-	@cargo bench --bench main --quiet -- --only $(subst day,,${day}) --save-baseline current
+	@cargo bench --bench main --features bench --quiet -- --only $(subst day,,${day}) --save-baseline current
 	@critcmp baseline current --filter ${day}
 
 benchmark-set-baseline-all:
 	@echo "$(setaf6)>>>>> Updating benchmark baselines <<<<<$(sgr0)"
-	@cargo bench --bench main --quiet -- --save-baseline baseline
+	@cargo bench --bench main --features bench --quiet -- --save-baseline baseline
 
 benchmark-set-baseline-day%: day = $(subst benchmark-set-baseline-,,$@)
 benchmark-set-baseline-day%: inputs/day%.txt
 	@echo "$(setaf6)>>>>> Updating benchmark baseline for ${day} <<<<<$(sgr0)"
-	@cargo bench --bench main --quiet -- --only $(subst day,,${day}) --save-baseline baseline
+	@cargo bench --bench main --features bench --quiet -- --only $(subst day,,${day}) --save-baseline baseline
 
 # Whenever this target is run this shell command will first be executed, altering the timestamp of the tracker file. If this causes the tracker file to be newer than the json file itself this will cause the it to be considered out-of-date and to be re-downloaded; otherwise it will be considered up-to-date and skipped. In effect this means the json file will be updated if it's been longer than the time passed to touch since it was last updated.
 .leaderboard.json: $(shell touch -d '-1 hour' .leaderboard.json.timestamp-tracker)
@@ -69,4 +69,4 @@ benchmark-set-baseline-day%: inputs/day%.txt
 
 leaderboard: .leaderboard.json
 	@echo "$(setaf6)>>>>> Processing leaderboard json <<<<<$(sgr0)"
-	@cargo run --quiet --bin leaderboard .leaderboard.json
+	@cargo run --quiet --bin leaderboard --features leaderboard -- .leaderboard.json
