@@ -1,6 +1,6 @@
-use std::{collections::HashSet, ops::Add};
+use std::{collections::HashSet, ops::Add, sync::Arc};
 
-use aoc::utils::{parse, point::Point2};
+use aoc::utils::{ext::iter::IterExt as _, parse, point::Point2};
 
 type Point = Point2;
 
@@ -155,38 +155,22 @@ pub fn part1(input: &str) -> usize {
 }
 
 pub fn part2(input: &str) -> usize {
-    let map = parse_input(input);
-    let bounds = Point::new(map[0].len(), map.len());
-    let mut best = 0;
-    for x in 0..bounds.x {
-        best = best.max(solve_from_position(
-            &map,
-            &bounds,
-            Point::new(x, 0),
-            Direction::South,
-        ));
-        best = best.max(solve_from_position(
-            &map,
-            &bounds,
-            Point::new(x, bounds.y),
-            Direction::North,
-        ));
-    }
-    for y in 0..bounds.y {
-        best = best.max(solve_from_position(
-            &map,
-            &bounds,
-            Point::new(0, y),
-            Direction::East,
-        ));
-        best = best.max(solve_from_position(
-            &map,
-            &bounds,
-            Point::new(bounds.x, y),
-            Direction::West,
-        ));
-    }
-    best
+    let map = Arc::new(parse_input(input));
+    let bounds = Arc::new(Point::new(map[0].len(), map.len()));
+
+    let mut options = Vec::new();
+    options.extend((0..bounds.x).map(|x| (Point::new(x, 0), Direction::South)));
+    options.extend((0..bounds.x).map(|x| (Point::new(x, bounds.y), Direction::North)));
+    options.extend((0..bounds.y).map(|y| (Point::new(0, y), Direction::East)));
+    options.extend((0..bounds.y).map(|y| (Point::new(bounds.x, y), Direction::West)));
+    options
+        .into_iter()
+        .map(|(p, d)| (map.clone(), bounds.clone(), p, d))
+        .threaded_map(10, |(map, bounds, point, direction)| {
+            solve_from_position(&map, &bounds, point, direction)
+        })
+        .max()
+        .unwrap()
 }
 
 aoc::cli::single::generate_main!();
