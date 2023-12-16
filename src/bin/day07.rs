@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+use aoc::utils::{ext::iter::IterExt as _, parse};
 
 type Card = char;
 
@@ -42,7 +42,7 @@ fn cards_to_numbers(cards: [Card; 5], value_for_j: u8) -> [u8; 5] {
 }
 
 fn calculate_total_winnings(hands: Vec<Hand>, calculate_score: fn(Hand) -> (u8, [u8; 5])) -> usize {
-    let mut scores: Vec<_> = hands
+    hands
         .into_iter()
         .map(|hand| {
             let bid = hand.bid;
@@ -55,14 +55,10 @@ fn calculate_total_winnings(hands: Vec<Hand>, calculate_score: fn(Hand) -> (u8, 
                 + cards[4] as usize;
             (score, bid)
         })
-        .collect();
-    scores.sort_unstable_by_key(|(score, _)| *score);
-    let scores: Vec<_> = scores
-        .into_iter()
+        .sort_unstable_by_key(|(score, _)| *score)
         .enumerate()
         .map(|(rank, (_, bid))| (rank + 1) * bid)
-        .collect();
-    scores.iter().sum()
+        .sum()
 }
 
 pub fn part1(input: &str) -> usize {

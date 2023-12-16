@@ -7,7 +7,6 @@ use ansi_term::{Colour, Style};
 use aoc::utils::ext::iter::IterExt;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
-use tap::prelude::*;
 
 static USER_ID: Lazy<usize> = Lazy::new(|| {
     env::var("USER_ID")
@@ -81,11 +80,7 @@ where
         let order = mapping
             .iter()
             .map(|(id, value)| (value, id))
-            .collect::<Vec<_>>()
-            .tap_mut(|l| {
-                l.sort_unstable();
-            })
-            .into_iter()
+            .sort_unstable()
             .map(|(_, id)| *id)
             .collect();
         Self { mapping, order }
