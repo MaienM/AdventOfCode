@@ -88,6 +88,9 @@ dependencies = [
  "once_cell",
  "paste",
  "pretty_assertions",
+ "serde",
+ "serde_json",
+ "tap",
  "threadpool",
 ]
 
