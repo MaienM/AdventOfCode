@@ -41,7 +41,7 @@ struct BenchArgs {
 }
 
 pub fn main(days: &[Day]) {
-    let args: BenchArgs = parse_args_with_targets(days);
+    let args = BenchArgs::parse();
 
     let mut criterion = Criterion::default();
     if let Some(name) = args.save_baseline {
@@ -51,7 +51,7 @@ pub fn main(days: &[Day]) {
     }
     criterion = criterion.sample_size(args.samples as usize);
 
-    let days = args.targets.filter_days(days);
+    let days = args.targets.filtered_days();
     for target in args.targets.get_targets(&days) {
         let Solver::Implemented(runnable) = target.solver else {
             continue;

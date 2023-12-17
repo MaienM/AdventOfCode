@@ -3,7 +3,7 @@ use std::{collections::HashSet, time::Duration};
 use ansi_term::Colour::{Cyan, Purple};
 use clap::{
     builder::{PossibleValue, PossibleValuesParser, TypedValueParser},
-    CommandFactory, FromArgMatches, Parser,
+    Parser,
 };
 
 use super::source::source_path_fill_tokens;
@@ -14,6 +14,7 @@ use crate::{
     },
     derived::Day,
     utils::parse,
+    DAYS,
 };
 
 /// Create parser for --only/--skip.
@@ -59,7 +60,7 @@ pub(super) struct TargetArgs {
         long,
         value_delimiter = ',',
         value_name = "1,3,8-1",
-        value_parser = create_target_value_parser(&[]),
+        value_parser = create_target_value_parser(&DAYS),
         group = "targets",
     )]
     only: Option<Vec<Vec<(u8, u8)>>>,
@@ -71,7 +72,7 @@ pub(super) struct TargetArgs {
         long,
         value_delimiter = ',',
         value_name = "1,3,8-1",
-        value_parser = create_target_value_parser(&[]),
+        value_parser = create_target_value_parser(&DAYS),
         group = "targets",
     )]
     skip: Option<Vec<Vec<(u8, u8)>>>,
@@ -110,8 +111,8 @@ pub(super) struct TargetArgs {
     use_examples: bool,
 }
 impl TargetArgs {
-    pub(super) fn filter_days(&self, days: &[Day]) -> Vec<Day> {
-        let mut days = days.to_owned();
+    pub(super) fn filtered_days(&self) -> Vec<Day> {
+        let mut days = DAYS.to_owned();
         if let Some(only) = &self.only {
             let only: HashSet<_> = only.iter().flatten().collect();
             for day in &mut days {
@@ -203,18 +204,6 @@ pub(super) struct Target {
     pub(super) solution: Source,
 }
 
-pub(super) fn parse_args_with_targets<T>(days: &[Day]) -> T
-where
-    T: CommandFactory + FromArgMatches,
-{
-    let mut command = <T as CommandFactory>::command()
-        .mut_arg("only", |a| a.value_parser(create_target_value_parser(days)))
-        .mut_arg("skip", |a| a.value_parser(create_target_value_parser(days)));
-    <T as FromArgMatches>::from_arg_matches_mut(&mut command.clone().get_matches())
-        .map_err(|err| err.format(&mut command))
-        .unwrap()
-}
-
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct MainArgs {
@@ -226,10 +215,10 @@ struct MainArgs {
     show_results: bool,
 }
 
-pub fn main(days: &[Day]) {
-    let args: MainArgs = parse_args_with_targets(days);
+pub fn main() {
+    let args = MainArgs::parse();
 
-    let days = args.targets.filter_days(days);
+    let days = args.targets.filtered_days();
     let targets = args.targets.get_targets(&days);
     println!(
         "Running {} runs, across {} parts, across {} days...",
