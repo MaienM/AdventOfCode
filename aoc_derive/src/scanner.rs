@@ -1,4 +1,4 @@
-use std::fs::{self, read_to_string};
+use std::{env, fs::read_to_string, path::PathBuf};
 
 use proc_macro::{Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
@@ -11,9 +11,19 @@ use syn::{
     Error, Expr, ExprPath, ForeignItemStatic, ItemFn, ItemStatic, LitStr, Meta, PathSegment, Token,
     Type,
 };
-use tap::prelude::*;
 
 use crate::examples;
+
+macro_rules! return_err {
+    ($value:expr, $span:expr) => {
+        match $value {
+            Ok(value) => value,
+            Err(err) => {
+                return Error::new($span, err).to_compile_error().into();
+            }
+        }
+    };
+}
 
 struct BinScanner {
     mod_root_path: Punctuated<PathSegment, Token![::]>,
@@ -136,6 +146,62 @@ fn fill_static(def: ForeignItemStatic, ty: Type, expr: Expr) -> ItemStatic {
     }
 }
 
+fn get_source_path() -> Result<PathBuf, String> {
+    let file = {
+        let mut span = Span::call_site();
+        while let Some(parent) = span.parent() {
+            span = parent;
+        }
+        span.source_file()
+    };
+    if file.is_real() {
+        Ok(file.path())
+    } else {
+        Err("unable to determine path of source file".to_owned())
+    }
+}
+
+fn scan_days(path: String) -> Result<Vec<BinScanner>, String> {
+    let source_path = get_source_path()?;
+    let abs_path = env::current_dir()
+        .map_err(|err| format!("error determining working directory: {err}"))?
+        .join(source_path.clone())
+        .parent()
+        .ok_or(format!(
+            "failed to determine parent of source file {source_path:?}"
+        ))?
+        .join(path.clone())
+        .canonicalize()
+        .map_err(|err| format!("error resolving {path:?}: {err}"))?;
+    let mut scanners = Vec::new();
+    let dir = abs_path.read_dir().map_err(|err| {
+        format!("error listing files in {path:?} (resolved to {abs_path:?}): {err}")
+    })?;
+    for entry in dir {
+        let entry = entry.map_err(|err| {
+            format!("error listing files in {path:?} (resolved to {abs_path:?}): {err}")
+        })?;
+        let fname = entry.file_name().into_string().map_err(|err| {
+            let err = err.into_string().unwrap();
+            format!("error getting filename for {entry:?}: {err}")
+        })?;
+        if !fname.starts_with("day") || !fname.ends_with(".rs") {
+            continue;
+        }
+
+        let modident = format_ident!("{}", fname.replace(".rs", ""));
+        scanners.push(BinScanner::scan_file(
+            entry
+                .path()
+                .to_str()
+                .ok_or(format!("error getting path for {entry:?}"))?,
+            parse_quote!(bin::#modident),
+        ));
+    }
+    scanners.sort_by_key(|s| s.name.clone());
+    Ok(scanners)
+}
+
 pub fn inject_days(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let mut path = ".".to_owned();
     let args_parser = syn::meta::parser(|meta| {
@@ -158,26 +224,7 @@ pub fn inject_days(input: TokenStream, annotated_item: TokenStream) -> TokenStre
     let mut binmods: Vec<TokenStream2> = Vec::new();
     let mut dayexprs: Vec<TokenStream2> = Vec::new();
 
-    let scanners: Vec<BinScanner> = fs::read_dir("./src/bin")
-        .unwrap()
-        .map(Result::unwrap)
-        .collect::<Vec<_>>()
-        .tap_mut(|list| list.sort_by_key(|e| e.file_name()))
-        .into_iter()
-        .filter_map(|entry| {
-            let fname = entry.file_name().into_string().unwrap();
-            if !fname.starts_with("day") || !fname.ends_with(".rs") {
-                return None;
-            }
-
-            let modident = format_ident!("{}", fname.replace(".rs", ""));
-            Some(BinScanner::scan_file(
-                entry.path().to_str().unwrap(),
-                parse_quote!(bin::#modident),
-            ))
-        })
-        .collect();
-
+    let scanners = return_err!(scan_days(path.clone()), itemdef.ty.span());
     for scanner in scanners {
         let modident = format_ident!("{}", scanner.name);
         binmods.push(quote! {
@@ -214,23 +261,8 @@ pub fn inject_day(_input: TokenStream, annotated_item: TokenStream) -> TokenStre
             .into();
     }
 
-    let file = {
-        let mut span = Span::call_site();
-        while let Some(parent) = span.parent() {
-            span = parent;
-        }
-        span.source_file()
-    };
-    if !file.is_real() {
-        return Error::new(
-            itemdef.ty.span(),
-            "unable to determine path of source file".to_owned(),
-        )
-        .to_compile_error()
-        .into();
-    }
-
-    let scanner = BinScanner::scan_file(file.path().to_str().unwrap(), parse_quote!(self));
+    let path = return_err!(get_source_path(), itemdef.ty.span());
+    let scanner = BinScanner::scan_file(path.to_str().unwrap(), parse_quote!(self));
     let expr = scanner.to_expr();
 
     fill_static(
