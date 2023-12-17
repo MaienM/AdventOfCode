@@ -5,6 +5,7 @@ use std::{
 
 use ansi_term::{Colour, Style};
 use aoc::utils::ext::iter::IterExt;
+use chrono::{DateTime, NaiveDate};
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 
@@ -15,7 +16,7 @@ static USER_ID: Lazy<usize> = Lazy::new(|| {
         .unwrap_or(0)
 });
 
-const NAME_MAX_LENGTH: usize = 11;
+const NAME_MAX_LENGTH: usize = 9;
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Deserialize)]
@@ -34,7 +35,7 @@ struct Member<'a> {
     local_score: u16,
     global_score: u16,
     last_star_ts: usize,
-    completion_day_level: HashMap<usize, HashMap<usize, Part>>,
+    completion_day_level: HashMap<u8, HashMap<u8, Part>>,
 }
 
 #[allow(dead_code)]
@@ -136,10 +137,10 @@ fn create_name_map<T>(data: &Data, ranking: &Ranking<T>) -> HashMap<usize, (Styl
         .collect()
 }
 
-fn rank_speed_per_solution(data: &Data) -> Vec<(String, Ranking<usize>)> {
-    (1..=25)
+fn rank_speed_per_solution(data: &Data) -> Vec<((u8, u8), Ranking<usize>)> {
+    (1..=25u8)
         .flat_map(|day| {
-            (1..=2)
+            (1..=2u8)
                 .map(|part| {
                     let ranking = data
                         .members
@@ -151,7 +152,7 @@ fn rank_speed_per_solution(data: &Data) -> Vec<(String, Ranking<usize>)> {
                                 .map(|p| (m.id, p.get_star_ts))
                         })
                         .collect::<Ranking<_>>();
-                    (format!("{day:0>2}-{part}"), ranking)
+                    ((day, part), ranking)
                 })
                 .collect::<Vec<_>>()
         })
@@ -167,7 +168,7 @@ fn rank_local_score(data: &Data) -> Ranking<u16> {
         .reversed()
 }
 
-fn rank_most_wins(speed_per_solution: &[(String, Ranking<usize>)]) -> Ranking<usize> {
+fn rank_most_wins(speed_per_solution: &[((u8, u8), Ranking<usize>)]) -> Ranking<usize> {
     speed_per_solution
         .iter()
         .filter_map(|(_, ranked)| ranked.id_by_rank(0))
@@ -176,6 +177,27 @@ fn rank_most_wins(speed_per_solution: &[(String, Ranking<usize>)]) -> Ranking<us
         .into_iter()
         .collect::<Ranking<_>>()
         .reversed()
+}
+
+fn format_solve_time(data: &Data, day: u8, time: usize) -> String {
+    let start = NaiveDate::from_ymd_opt(data.event.parse().unwrap(), 12, u32::from(day))
+        .unwrap()
+        .and_hms_opt(5, 0, 0)
+        .unwrap()
+        .and_utc();
+    let solve = DateTime::from_timestamp(time as i64, 0).unwrap();
+
+    let duration = solve - start;
+    if duration.num_days() >= 1 {
+        ">1 day".to_owned()
+    } else {
+        format!(
+            "{:0>2}:{:0>2}:{:0>2}",
+            duration.num_hours(),
+            duration.num_minutes() % 60,
+            duration.num_seconds() % 60,
+        )
+    }
 }
 
 pub fn main() {
@@ -191,11 +213,10 @@ pub fn main() {
     let mut always_show: HashSet<_> = by_local_score.iter().take(5).map(|(id, _)| *id).collect();
     always_show.insert(*USER_ID);
 
-    println!();
-    println!("Top per solution:");
-    for (solution_name, ranked) in &by_speed_per_solution {
-        print!(" {solution_name}:  ");
-        for (rank, (id, _)) in ranked.iter().enumerate() {
+    println!("Top competitors per solution:");
+    for ((day, part), ranked) in &by_speed_per_solution {
+        print!(" {day:0>2}-{part}:");
+        for (rank, (id, solve_ts)) in ranked.iter().enumerate() {
             let rank = if rank < 3 {
                 (rank + 1).to_string()
             } else if always_show.contains(id) {
@@ -205,9 +226,10 @@ pub fn main() {
             };
 
             let (style, name) = &names[&id];
+            let solve_time = format!("[{}]", format_solve_time(&data, *day, *solve_ts));
             print!(
                 "{}",
-                style.paint(format!("  {rank}) {name:NAME_MAX_LENGTH$}"))
+                style.paint(format!("  {rank}) {name:NAME_MAX_LENGTH$} {solve_time:10}"))
             );
         }
         println!();
