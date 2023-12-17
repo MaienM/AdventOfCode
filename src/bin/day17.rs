@@ -49,11 +49,7 @@ impl PartialOrd for State {
 }
 impl Ord for State {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.cost.cmp(&other.cost) {
-            Ordering::Less => Ordering::Greater,
-            Ordering::Greater => Ordering::Less,
-            Ordering::Equal => self.position.sum().cmp(&other.position.sum()),
-        }
+        other.cost.cmp(&self.cost)
     }
 }
 
