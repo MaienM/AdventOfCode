@@ -44,11 +44,7 @@ struct State {
 }
 impl PartialOrd for State {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match self.cost.partial_cmp(&other.cost) {
-            Some(Ordering::Less) => Some(Ordering::Greater),
-            Some(Ordering::Greater) => Some(Ordering::Less),
-            _ => self.position.sum().partial_cmp(&other.position.sum()),
-        }
+        Some(self.cmp(other))
     }
 }
 impl Ord for State {
@@ -61,7 +57,7 @@ impl Ord for State {
     }
 }
 
-fn find_path(map: &Map) -> usize {
+fn find_path(map: &Map, min_before_turn: u8, max_before_turn: u8) -> usize {
     let bounds = Point::new(map[0].len(), map.len());
     let end = Point::new(bounds.x - 1, bounds.y - 1);
     let mut visited: HashSet<(Point, Direction, u8)> = HashSet::new();
@@ -89,43 +85,38 @@ fn find_path(map: &Map) -> usize {
         visited.insert((state.position, state.direction, state.moved_straight));
 
         next_directions.clear();
-
-        if state.position.y > 0
-            && state.direction != Direction::South
-            && !(state.direction == Direction::North && state.moved_straight >= 3)
-        {
+        if state.position.y > 0 && state.direction != Direction::South {
             next_directions.push(Direction::North);
         }
-        if state.position.y < end.x
-            && state.direction != Direction::North
-            && !(state.direction == Direction::South && state.moved_straight >= 3)
-        {
+        if state.position.y < end.x && state.direction != Direction::North {
             next_directions.push(Direction::South);
         }
-        if state.position.x > 0
-            && state.direction != Direction::East
-            && !(state.direction == Direction::West && state.moved_straight >= 3)
-        {
+        if state.position.x > 0 && state.direction != Direction::East {
             next_directions.push(Direction::West);
         }
-        if state.position.x < end.y
-            && state.direction != Direction::West
-            && !(state.direction == Direction::East && state.moved_straight >= 3)
-        {
+        if state.position.x < end.y && state.direction != Direction::West {
             next_directions.push(Direction::East);
         }
 
         for direction in &next_directions {
+            let moved_straight = if direction == &state.direction {
+                if state.moved_straight >= max_before_turn {
+                    continue;
+                }
+                state.moved_straight + 1
+            } else {
+                if state.moved_straight < min_before_turn {
+                    continue;
+                }
+                1
+            };
+
             let position = *direction + state.position;
             next.push(State {
                 cost: state.cost + (map[position.y][position.x] as usize),
                 position,
                 direction: *direction,
-                moved_straight: if direction == &state.direction {
-                    state.moved_straight + 1
-                } else {
-                    1
-                },
+                moved_straight,
             });
         }
     }
@@ -134,7 +125,12 @@ fn find_path(map: &Map) -> usize {
 
 pub fn part1(input: &str) -> usize {
     let map = parse_input(input);
-    find_path(&map)
+    find_path(&map, 0, 3)
+}
+
+pub fn part2(input: &str) -> usize {
+    let map = parse_input(input);
+    find_path(&map, 4, 10)
 }
 
 aoc::cli::single::generate_main!();
@@ -146,7 +142,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 102, test)]
+    #[example_input(part1 = 102, part2 = 94, test)]
     static EXAMPLE_INPUT: &str = "
         2413432311323
         3215453535623
