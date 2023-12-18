@@ -6,6 +6,24 @@ use ansi_term::{
 };
 use once_cell::sync::Lazy;
 
+/// Trait for timing framework, as we cannot use [`std::time::Instant`] on WASM.
+pub trait Timer {
+    fn start() -> Self;
+    fn elapsed(&self) -> Duration;
+}
+struct InstantTimer(Instant);
+impl Timer for InstantTimer {
+    #[inline]
+    fn start() -> Self {
+        Self(Instant::now())
+    }
+
+    #[inline]
+    fn elapsed(&self) -> Duration {
+        self.0.elapsed()
+    }
+}
+
 /// A function that takes the input file as a string and returns the solution to one of the assignments.
 #[derive(Clone)]
 pub enum Solver<T> {
@@ -25,11 +43,18 @@ where
     T: ToString,
 {
     pub fn run(&self, input: &str, solution: Option<String>) -> SolverRunResult {
+        self.run_with_timer::<InstantTimer>(input, solution)
+    }
+
+    pub fn run_with_timer<Ti>(&self, input: &str, solution: Option<String>) -> SolverRunResult
+    where
+        Ti: Timer,
+    {
         let Solver::Implemented(runnable) = self else {
             return SolverRunResult::Error("Not implemented.".to_string());
         };
 
-        let start = Instant::now();
+        let start = Ti::start();
         let result = runnable(input);
         let duration = start.elapsed();
 

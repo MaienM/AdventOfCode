@@ -1,6 +1,6 @@
 [package]
 name = "aoc"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 
 [features]
@@ -13,10 +13,10 @@ leaderboard = [
 ]
 
 [dependencies]
-# for bin 'bench'
+# for bench
 criterion = { version = "0.5.1", optional = true }
 
-# for bin 'leaderboard'
+# for leaderboard
 chrono = { version = "0.4.31", optional = true }
 serde = { version = "1.0.193", optional = true, features = ["derive"] }
 serde_json = { version = "1.0.108", optional = true }

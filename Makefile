@@ -3,7 +3,7 @@ RUST_BACKTRACE ?= 0
 setaf6 = $(shell tput setaf 6)
 sgr0 = $(shell tput sgr0)
 
-.PHONY: run-all test-libs benchmark-all test-and-run-day% benchmark-day%
+.PHONY: run-all test-libs benchmark-all test-and-run-day% benchmark-day% web-dev web-build
 .SECONDARY:
 
 run-all:
@@ -70,3 +70,11 @@ benchmark-set-baseline-day%: inputs/day%.txt
 leaderboard: .leaderboard.json
 	@echo "$(setaf6)>>>>> Processing leaderboard json <<<<<$(sgr0)"
 	@cargo run --quiet --bin leaderboard --features leaderboard -- .leaderboard.json
+
+web-dev:
+	@wasm-pack build ./wasm --target web -- --features debug
+	@(cd web && npm install && npm run start)
+
+web-build:
+	@wasm-pack build ./wasm --target web -- --features debug
+	@(cd web && npm install && rm -rf dist/ && npm run build)
