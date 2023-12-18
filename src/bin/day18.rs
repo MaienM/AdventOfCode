@@ -1,13 +1,14 @@
-use std::ops::Add;
+use std::{
+    collections::HashSet,
+    ops::{Add, RangeInclusive},
+};
 
 use aoc::utils::{ext::iter::IterExt, parse, point::Point2};
 
-type Point = Point2;
+type Point = Point2<isize>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 enum Tile {
-    Vertical,
-    Horizontal,
     NorthEast,
     NorthWest,
     SouthEast,
@@ -27,12 +28,6 @@ impl From<(Direction, Direction)> for Tile {
             }
             (Direction::South, Direction::West) | (Direction::East, Direction::North) => {
                 Tile::NorthWest
-            }
-            (Direction::North, Direction::North) | (Direction::South, Direction::South) => {
-                Tile::Vertical
-            }
-            (Direction::East, Direction::East) | (Direction::West, Direction::West) => {
-                Tile::Horizontal
             }
             _ => panic!("Invalid corner {value:?}."),
         }
@@ -73,14 +68,14 @@ impl From<&str> for Direction {
 #[derive(Debug, PartialEq)]
 struct Instruction<'a> {
     direction: Direction,
-    distance: u8,
+    distance: usize,
     color: &'a str,
 }
 
 fn parse_input(input: &str) -> Vec<Instruction> {
     parse!(input => {
         [instructions split on '\n' with
-            { direction " " [distance as u8] " (#" color ")" }
+            { direction " " [distance as usize] " (#" color ")" }
             => Instruction {
                 direction: direction.into(),
                 distance,
@@ -90,54 +85,146 @@ fn parse_input(input: &str) -> Vec<Instruction> {
     } => instructions)
 }
 
-const OFFSET: usize = 100_000;
-
-pub fn part1(input: &str) -> usize {
-    let instructions = parse_input(input);
-
-    let mut map = Vec::new();
-    let mut current = Point::new(OFFSET, OFFSET);
-
-    let mut last_direction = instructions.last().unwrap().direction;
-    for instruction in instructions {
-        for _ in 0..(instruction.distance) {
-            let tile: Tile = (last_direction, instruction.direction).into();
-            map.push((tile, current));
-
-            last_direction = instruction.direction;
-            current = instruction.direction + current;
-        }
+fn verticals_to_ranges(verticals: &HashSet<isize>) -> Vec<RangeInclusive<isize>> {
+    let mut iter = verticals.iter().sort_unstable();
+    let mut ranges = Vec::new();
+    while let (Some(start), Some(end)) = (iter.next(), iter.next()) {
+        ranges.push(*start..=*end);
     }
+    ranges
+}
 
-    let bounds = (
-        map.iter().map(|(_, p)| p.y).min().unwrap(),
-        map.iter().map(|(_, p)| p.y).max().unwrap(),
-    );
-    let mut sum = 0;
-    for y in (bounds.0)..=(bounds.1) {
-        let row = map
-            .iter()
-            .filter(|(_, p)| p.y == y)
-            .sort_unstable_by_key(|(_, p)| p.x);
-        let mut inside_start = None;
-        for (tile, point) in row {
-            match (tile, inside_start) {
-                (Tile::Vertical | Tile::NorthEast | Tile::NorthWest, None) => {
-                    inside_start = Some(point.x);
-                    sum += 1;
-                }
-                (Tile::Vertical | Tile::NorthEast | Tile::NorthWest, Some(start)) => {
-                    sum += point.x - start;
-                    inside_start = None;
-                }
-                (_, None) => {
-                    sum += 1;
-                }
-                _ => {}
+fn count_inside(verticals: &HashSet<isize>) -> usize {
+    verticals_to_ranges(verticals)
+        .into_iter()
+        .map(|r| (r.end() - r.start() + 1) as usize)
+        .sum()
+}
+
+fn count_overlap(old_verticals: &HashSet<isize>, new_verticals: &HashSet<isize>) -> usize {
+    let mut count = 0;
+    for old_range in verticals_to_ranges(old_verticals) {
+        for new_range in verticals_to_ranges(new_verticals) {
+            if old_range.contains(new_range.start())
+                || old_range.contains(new_range.end())
+                || new_range.contains(old_range.start())
+                || new_range.contains(old_range.end())
+            {
+                let start = old_range.start().max(new_range.start());
+                let end = old_range.end().min(new_range.end());
+                count += (end - start + 1) as usize;
             }
         }
     }
+    count
+}
+
+fn solve(instructions: &[Instruction]) -> usize {
+    let mut map = Vec::new();
+    let mut current = Point::new(0, 0);
+
+    let mut last_direction = instructions.last().unwrap().direction;
+    for instruction in instructions {
+        let tile: Tile = (last_direction, instruction.direction).into();
+        map.push((tile, current));
+
+        last_direction = instruction.direction;
+        match instruction.direction {
+            Direction::North => {
+                current.y = current
+                    .y
+                    .checked_sub(instruction.distance as isize)
+                    .unwrap();
+            }
+            Direction::South => {
+                current.y = current
+                    .y
+                    .checked_add(instruction.distance as isize)
+                    .unwrap();
+            }
+            Direction::East => {
+                current.x = current
+                    .x
+                    .checked_add(instruction.distance as isize)
+                    .unwrap();
+            }
+            Direction::West => {
+                current.x = current
+                    .x
+                    .checked_sub(instruction.distance as isize)
+                    .unwrap();
+            }
+        };
+    }
+
+    let mut by_row: Vec<(isize, Vec<(Tile, Point)>)> = map
+        .iter()
+        .map(|(_, p)| p.y)
+        .count_occurences()
+        .into_keys()
+        .map(|y| (y, map.iter().filter(|(_, p)| p.y == y).copied().collect()))
+        .collect();
+    by_row.sort_unstable_by_key(|(y, _)| *y);
+
+    let mut sum = 0usize;
+    let mut last_y = by_row.first().unwrap().0;
+    let mut verticals = HashSet::new();
+    for (y, row) in by_row {
+        // Add size of rectangles formed until this point.
+        sum += count_inside(&verticals) * (y - last_y + 1) as usize;
+
+        // Update verticals.
+        let mut new_verticals = verticals.clone();
+        for (tile, point) in row {
+            match tile {
+                Tile::NorthEast | Tile::NorthWest => {
+                    new_verticals.remove(&point.x);
+                }
+                Tile::SouthEast | Tile::SouthWest => {
+                    new_verticals.insert(point.x);
+                }
+            }
+        }
+
+        // Remove overlap between old and new rectangles, else these would be counted twice.
+        sum -= count_overlap(&verticals, &new_verticals);
+
+        last_y = y;
+        verticals = new_verticals;
+    }
     sum
+}
+
+fn swap_instructions(instructions: Vec<Instruction>) -> Vec<Instruction> {
+    instructions
+        .into_iter()
+        .map(|instruction| {
+            let distance = usize::from_str_radix(&instruction.color[..5], 16).unwrap();
+            let direction = match &instruction.color[5..6] {
+                "0" => Direction::East,
+                "1" => Direction::South,
+                "2" => Direction::West,
+                "3" => Direction::North,
+                d => panic!("Invalid direction {d:?}."),
+            };
+            Instruction {
+                direction,
+                distance,
+                color: instruction.color,
+            }
+        })
+        .collect()
+}
+
+pub fn part1(input: &str) -> usize {
+    let instructions = parse_input(input);
+    solve(&instructions)
+}
+
+pub fn part2(input: &str) -> usize {
+    let instructions = parse_input(input);
+    let instructions = swap_instructions(instructions);
+    solve(&instructions)
 }
 
 aoc::cli::single::generate_main!();
@@ -149,7 +236,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 62, test)]
+    #[example_input(part1 = 62, part2 = 952_408_144_115, test)]
     static EXAMPLE_INPUT: &str = "
         R 6 (#70c710)
         D 5 (#0dc571)
@@ -243,5 +330,155 @@ mod tests {
             },
         ];
         assert_eq!(actual, expected);
+    }
+
+    #[allow(clippy::too_many_lines)]
+    #[test]
+    fn swap_instructions() {
+        let start = vec![
+            Instruction {
+                direction: Direction::East,
+                distance: 6,
+                color: "70c710",
+            },
+            Instruction {
+                direction: Direction::South,
+                distance: 5,
+                color: "0dc571",
+            },
+            Instruction {
+                direction: Direction::West,
+                distance: 2,
+                color: "5713f0",
+            },
+            Instruction {
+                direction: Direction::South,
+                distance: 2,
+                color: "d2c081",
+            },
+            Instruction {
+                direction: Direction::East,
+                distance: 2,
+                color: "59c680",
+            },
+            Instruction {
+                direction: Direction::South,
+                distance: 2,
+                color: "411b91",
+            },
+            Instruction {
+                direction: Direction::West,
+                distance: 5,
+                color: "8ceee2",
+            },
+            Instruction {
+                direction: Direction::North,
+                distance: 2,
+                color: "caa173",
+            },
+            Instruction {
+                direction: Direction::West,
+                distance: 1,
+                color: "1b58a2",
+            },
+            Instruction {
+                direction: Direction::North,
+                distance: 2,
+                color: "caa171",
+            },
+            Instruction {
+                direction: Direction::East,
+                distance: 2,
+                color: "7807d2",
+            },
+            Instruction {
+                direction: Direction::North,
+                distance: 3,
+                color: "a77fa3",
+            },
+            Instruction {
+                direction: Direction::West,
+                distance: 2,
+                color: "015232",
+            },
+            Instruction {
+                direction: Direction::North,
+                distance: 2,
+                color: "7a21e3",
+            },
+        ];
+        let expected = vec![
+            Instruction {
+                direction: Direction::East,
+                distance: 461_937,
+                color: "70c710",
+            },
+            Instruction {
+                direction: Direction::South,
+                distance: 56_407,
+                color: "0dc571",
+            },
+            Instruction {
+                direction: Direction::East,
+                distance: 356_671,
+                color: "5713f0",
+            },
+            Instruction {
+                direction: Direction::South,
+                distance: 863_240,
+                color: "d2c081",
+            },
+            Instruction {
+                direction: Direction::East,
+                distance: 367_720,
+                color: "59c680",
+            },
+            Instruction {
+                direction: Direction::South,
+                distance: 266_681,
+                color: "411b91",
+            },
+            Instruction {
+                direction: Direction::West,
+                distance: 577_262,
+                color: "8ceee2",
+            },
+            Instruction {
+                direction: Direction::North,
+                distance: 829_975,
+                color: "caa173",
+            },
+            Instruction {
+                direction: Direction::West,
+                distance: 112_010,
+                color: "1b58a2",
+            },
+            Instruction {
+                direction: Direction::South,
+                distance: 829_975,
+                color: "caa171",
+            },
+            Instruction {
+                direction: Direction::West,
+                distance: 491_645,
+                color: "7807d2",
+            },
+            Instruction {
+                direction: Direction::North,
+                distance: 686_074,
+                color: "a77fa3",
+            },
+            Instruction {
+                direction: Direction::West,
+                distance: 5411,
+                color: "015232",
+            },
+            Instruction {
+                direction: Direction::North,
+                distance: 500_254,
+                color: "7a21e3",
+            },
+        ];
+        assert_eq!(super::swap_instructions(start), expected);
     }
 }
