@@ -2,15 +2,15 @@
 
 use aoc::utils::parse;
 
-fn parse_input(input: &str) -> usize {
+fn parse_input(input: &str) -> Vec<usize> {
     parse!(input => {
-        [num as usize]
+        [num split on '\n' as usize]
     } => num)
 }
 
 pub fn part1(input: &str) -> usize {
     let input = parse_input(input);
-    0
+    1
 }
 
 // aoc::cli::single::generate_main!();
@@ -26,14 +26,14 @@ mod tests {
 
     #[example_input(part1 = 1, test)]
     static EXAMPLE_INPUT: &str = "
-        FOO
-        BAR
+        1
+        2
     ";
 
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
-        let expected = 1;
+        let expected = vec![1, 2];
         assert_eq!(actual, expected);
     }
 }
