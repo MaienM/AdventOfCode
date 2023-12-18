@@ -1,5 +1,6 @@
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { GitRevisionPlugin } = require('git-revision-webpack-plugin');
 
 module.exports = {
 	entry: './bootstrap.js',
@@ -36,6 +37,7 @@ module.exports = {
 				},
 			],
 		}),
+		new GitRevisionPlugin(),
 	],
 	devServer: {
 		headers: {

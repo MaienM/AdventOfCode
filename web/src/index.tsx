@@ -14,7 +14,14 @@ await initWASM();
 
 const root = createRoot(document.getElementById('app'));
 root.render((
-	<Context.Provider value={{ minTimerResolution: +aoc.get_timer_resolution() }}>
-		<Root days={aoc.list()} />
+	<Context.Provider
+		value={{
+			minTimerResolution: +aoc.get_timer_resolution(),
+		}}
+	>
+		<Root
+			days={aoc.list()}
+			commitHash={await (await fetch('./COMMITHASH')).text()}
+		/>
 	</Context.Provider>
 ));
