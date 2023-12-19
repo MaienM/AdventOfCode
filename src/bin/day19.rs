@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 use aoc::utils::parse;
 
@@ -165,6 +165,73 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
+fn count_accepted(
+    input: &Input,
+    current: &str,
+    mut x: RangeInclusive<u16>,
+    mut m: RangeInclusive<u16>,
+    mut a: RangeInclusive<u16>,
+    mut s: RangeInclusive<u16>,
+) -> usize {
+    let workflow = input.workflows.get(current).unwrap();
+    let mut sum = 0;
+    for instruction in &workflow.instructions {
+        let (mut match_x, mut match_m, mut match_a, mut match_s) =
+            (x.clone(), m.clone(), a.clone(), s.clone());
+        #[allow(clippy::range_minus_one)]
+        match (&instruction.var, &instruction.op) {
+            (Var::X, Op::Gt) => {
+                match_x = (instruction.val + 1)..=(*x.end());
+                x = (*x.start())..=(instruction.val);
+            }
+            (Var::X, Op::Lt) => {
+                match_x = (*x.start())..=(instruction.val - 1);
+                x = (instruction.val)..=(*x.end());
+            }
+            (Var::M, Op::Gt) => {
+                match_m = (instruction.val + 1)..=(*m.end());
+                m = (*m.start())..=(instruction.val);
+            }
+            (Var::M, Op::Lt) => {
+                match_m = (*m.start())..=(instruction.val - 1);
+                m = (instruction.val)..=(*m.end());
+            }
+            (Var::A, Op::Gt) => {
+                match_a = (instruction.val + 1)..=(*a.end());
+                a = (*a.start())..=(instruction.val);
+            }
+            (Var::A, Op::Lt) => {
+                match_a = (*a.start())..=(instruction.val - 1);
+                a = (instruction.val)..=(*a.end());
+            }
+            (Var::S, Op::Gt) => {
+                match_s = (instruction.val + 1)..=(*s.end());
+                s = (*s.start())..=(instruction.val);
+            }
+            (Var::S, Op::Lt) => {
+                match_s = (*s.start())..=(instruction.val - 1);
+                s = (instruction.val)..=(*s.end());
+            }
+        };
+        sum += match instruction.outcome {
+            Outcome::Result(true) => match_x.len() * match_m.len() * match_a.len() * match_s.len(),
+            Outcome::Result(false) => 0,
+            Outcome::GoTo(next) => count_accepted(input, next, match_x, match_m, match_a, match_s),
+        };
+    }
+    sum += match workflow.fallback {
+        Outcome::Result(true) => x.len() * m.len() * a.len() * s.len(),
+        Outcome::Result(false) => 0,
+        Outcome::GoTo(next) => count_accepted(input, next, x, m, a, s),
+    };
+    sum
+}
+
+pub fn part2(input: &str) -> usize {
+    let input = parse_input(input);
+    count_accepted(&input, "in", 1..=4000, 1..=4000, 1..=4000, 1..=4000)
+}
+
 aoc::cli::single::generate_main!();
 
 #[cfg(test)]
@@ -175,7 +242,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 19_114, test)]
+    #[example_input(part1 = 19_114, part2 = 167_409_079_868_000, test)]
     static EXAMPLE_INPUT: &str = "
         px{a<2006:qkq,m>2090:A,rfg}
         pv{a>1716:R,A}
