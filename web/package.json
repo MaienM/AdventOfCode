@@ -34,6 +34,7 @@
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
     "aoc-wasm": "file:../wasm/pkg",
+    "comlink": "^4.4.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

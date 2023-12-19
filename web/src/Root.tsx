@@ -1,5 +1,5 @@
 import { Container, CssBaseline, Typography } from '@mui/material';
-import { Day } from 'aoc-wasm';
+import type { Day } from 'aoc-wasm';
 import * as React from 'react';
 import DayComponent from './Day';
 

@@ -4,19 +4,14 @@ import {
 } from '@mui/material';
 import * as React from 'react';
 import Context from './context';
-
-export interface Result {
-	success: boolean;
-	message: string;
-	duration: number;
-}
+import type { Result } from './worker';
 
 interface Props {
 	label: string;
 	result?: Result;
 }
 
-const formatFixed = (value: number, precision: number): string => (+value).toFixed(precision).replace(/(\.0+)?$/, '');
+const formatFixed = (value: number, precision: number): string => value.toFixed(precision).replace(/(\.0+)?$/, '');
 
 const formatDuration = (duration: number): string => {
 	let remainder = duration;
@@ -48,12 +43,11 @@ const ResultComponent = ({ label, result }: Props) => {
 		);
 	} else if (result.success) {
 		const context = React.useContext(Context);
-		const duration = +result.duration;
-		const durationMin = formatDuration(duration);
-		const durationMid = formatDuration(duration + context.minTimerResolution / 2);
-		const durationMax = formatDuration(duration + context.minTimerResolution);
+		const durationMin = formatDuration(result.duration);
+		const durationMid = formatDuration(result.duration + context.minTimerResolution / 2);
+		const durationMax = formatDuration(result.duration + context.minTimerResolution);
 		const resolution = formatDuration(context.minTimerResolution);
-		const resolutionIsSignificant = duration <= context.minTimerResolution * 100;
+		const resolutionIsSignificant = result.duration <= context.minTimerResolution * 100;
 
 		return (
 			<Alert severity="success">

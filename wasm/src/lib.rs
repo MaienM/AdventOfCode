@@ -10,6 +10,9 @@ use web_sys::Performance;
 
 #[wasm_bindgen]
 extern "C" {
+    #[no_mangle]
+    static performance: Performance;
+
     #[wasm_bindgen(typescript_type = number)]
     pub type Number;
 }
@@ -39,20 +42,18 @@ mod time {
 }
 
 /// Timer based on [`web_sys::Performance`].
-struct PerformanceTimer(Performance, f64);
+struct PerformanceTimer(f64);
 impl Timer for PerformanceTimer {
     #[inline]
     fn start() -> Self {
-        let performance = web_sys::window().unwrap().performance().unwrap();
-        let start = performance.now();
-        Self(performance, start)
+        Self(performance.now())
     }
 
     #[inline]
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn elapsed(&self) -> Duration {
-        let end = self.0.now();
-        time::elapsed_to_duration(end - self.1)
+        let end = performance.now();
+        time::elapsed_to_duration(end - self.0)
     }
 }
 
@@ -61,7 +62,6 @@ impl Timer for PerformanceTimer {
 /// This will block for the length of one resolution, the worst I've seen is `16.66ms` (1/60th of a second).
 #[wasm_bindgen]
 pub fn get_timer_resolution() -> Number {
-    let performance = web_sys::window().unwrap().performance().unwrap();
     let start = performance.now();
     let mut end = start;
     #[allow(clippy::float_cmp)]
@@ -81,40 +81,6 @@ impl Day {
     #[wasm_bindgen(getter)]
     pub fn num(&self) -> u8 {
         self.0.num
-    }
-
-    /// Whether part 1 has been implemented for this day.
-    #[wasm_bindgen(getter)]
-    pub fn has_part1(&self) -> bool {
-        self.0.part1.is_some()
-    }
-
-    /// Whether part 2 has been implemented for this day.
-    #[wasm_bindgen(getter)]
-    pub fn has_part2(&self) -> bool {
-        self.0.part2.is_some()
-    }
-
-    fn run_part(part: Solver<String>, input: &str) -> Result<SolverRunResult, String> {
-        match std::panic::catch_unwind(move || {
-            let result: Result<SolverRunResult, String> = part
-                .run_with_timer::<PerformanceTimer>(input, None)
-                .try_into();
-            result
-        }) {
-            Ok(value) => value,
-            Err(_) => Err("solution panicked".to_string()),
-        }
-    }
-
-    /// Run part 1.
-    pub fn part1(&self, input: &str) -> Result<SolverRunResult, String> {
-        Day::run_part(self.0.part1.into(), input)
-    }
-
-    /// Run part 2.
-    pub fn part2(&self, input: &str) -> Result<SolverRunResult, String> {
-        Day::run_part(self.0.part2.into(), input)
     }
 
     /// The examples
@@ -139,18 +105,6 @@ impl Example {
     #[wasm_bindgen(getter)]
     pub fn input(&self) -> String {
         self.0.input.to_owned()
-    }
-
-    /// The expected result of part 1, cast to a string.
-    #[wasm_bindgen(getter)]
-    pub fn part1(&self) -> Option<String> {
-        self.0.part1.map(ToOwned::to_owned)
-    }
-
-    /// The expected result of part 2, cast to a string.
-    #[wasm_bindgen(getter)]
-    pub fn part2(&self) -> Option<String> {
-        self.0.part2.map(ToOwned::to_owned)
     }
 }
 
@@ -191,6 +145,28 @@ impl TryFrom<aoc::cli::runner::SolverRunResult> for SolverRunResult {
 #[wasm_bindgen]
 pub fn list() -> Vec<Day> {
     DAYS.iter().map(Day).collect()
+}
+
+/// Run a single solution.
+#[wasm_bindgen]
+pub fn run(day: u8, part: u8, input: &str) -> Result<SolverRunResult, String> {
+    let day = DAYS
+        .iter()
+        .find(|d| d.num == day)
+        .ok_or(format!("Cannot find implementation for day {day}."))?;
+    let solver: Solver<String> = match part {
+        1 => day.part1,
+        2 => day.part2,
+        _ => return Err(format!("Invalid part {part}.")),
+    }
+    .into();
+
+    std::panic::catch_unwind(move || {
+        solver
+            .run_with_timer::<PerformanceTimer>(input, None)
+            .try_into()
+    })
+    .map_err(|_| "solution panicked".to_string())?
 }
 
 pub fn main() {

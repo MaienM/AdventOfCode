@@ -9,53 +9,41 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
-import { Day } from 'aoc-wasm';
+import type { Day } from 'aoc-wasm';
 import * as React from 'react';
-import ResultComponent, { Result } from './Result';
-
-const runPart = (solver: Day['part1'], input: string): Result => {
-	try {
-		const result = solver(input);
-		const transformed = {
-			success: true,
-			message: result.result,
-			duration: result.duration,
-		};
-		result.free();
-		return transformed;
-	} catch (e) {
-		return {
-			success: false,
-			message: `${e}`,
-			duration: 0,
-		};
-	}
-};
+import Context from './context';
+import ResultComponent from './Result';
+import type { Result } from './worker';
 
 interface Props {
 	day: Day;
-
 }
 
 /**
  * Component to display and run a single day.
  */
 export default ({ day }: Props) => {
+	const context = React.useContext(Context);
+
 	const [input, setInput] = React.useState<string>(day.examples[0]?.input || '');
 	const [running, setRunning] = React.useState(false);
 	const [part1, setPart1] = React.useState<Result | undefined>(undefined);
 	const [part2, setPart2] = React.useState<Result | undefined>(undefined);
 
-	const run = () => {
+	const run = async () => {
+		if (running) {
+			return;
+		}
+
 		setRunning(true);
 		setPart1(undefined);
 		setPart2(undefined);
 		{
-			const result = runPart(day.part1.bind(day), input.trimEnd());
+			const result = await context.worker.run(day.num, 1, input.trimEnd());
 			setPart1(result);
 		}
 		{
-			const result = runPart(day.part2.bind(day), input.trimEnd());
+			const result = await context.worker.run(day.num, 2, input.trimEnd());
 			setPart2(result);
 		}
 		setRunning(false);
@@ -66,6 +54,7 @@ export default ({ day }: Props) => {
 			<AccordionSummary>
 				<Typography variant="h6">
 					Day
+					&nbsp;
 					{day.num}
 				</Typography>
 			</AccordionSummary>
@@ -77,8 +66,19 @@ export default ({ day }: Props) => {
 							multiline
 							maxRows={20}
 							value={input}
-							onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+							onChange={(event) => {
 								setInput(event.target.value);
+							}}
+							onBlur={(_) => {
+								setInput(input.trimEnd());
+							}}
+							onPaste={(event) => {
+								const input = event.target as HTMLTextAreaElement;
+								if (input.selectionStart === 0 && input.selectionEnd === input.value.length) {
+									event.preventDefault();
+									const text = event.clipboardData.getData('text/plain').trimEnd();
+									setInput(text);
+								}
 							}}
 							fullWidth
 							inputProps={{
@@ -117,6 +117,7 @@ export default ({ day }: Props) => {
 								<Button
 									variant="contained"
 									endIcon={<PlayArrow />}
+									// eslint-disable-next-line @typescript-eslint/no-misused-promises
 									onClick={run}
 								>
 									Run

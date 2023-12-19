@@ -5,7 +5,7 @@ const { GitRevisionPlugin } = require('git-revision-webpack-plugin');
 module.exports = {
 	entry: './bootstrap.js',
 	output: {
-		filename: 'bootstrap.js',
+		filename: 'index.js',
 		path: path.resolve(__dirname, 'dist'),
 	},
 	module: {
@@ -48,8 +48,6 @@ module.exports = {
 	},
 	ignoreWarnings: [
 		// Circular dependency in rayon, see https://github.com/GoogleChromeLabs/wasm-bindgen-rayon/issues/42#issuecomment-1839656249.
-		{
-			message: /circular dependency.*main.*rayon/i,
-		},
+		{ message: /circular dependency.*rayon/i },
 	],
 };
