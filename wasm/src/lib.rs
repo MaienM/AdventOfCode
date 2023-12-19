@@ -5,6 +5,7 @@ use aoc::{
     DAYS,
 };
 use wasm_bindgen::prelude::*;
+pub use wasm_bindgen_rayon::init_thread_pool;
 use web_sys::Performance;
 
 #[wasm_bindgen]

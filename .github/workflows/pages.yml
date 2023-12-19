@@ -49,6 +49,9 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: nightly
+          target: wasm32-unknown-unknown
+          components: rust-src
+          rustflags: ''
       
       - name: Install wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0

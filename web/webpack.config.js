@@ -46,4 +46,10 @@ module.exports = {
 			'Cross-Origin-Embedder-Policy': 'require-corp',
 		},
 	},
+	ignoreWarnings: [
+		// Circular dependency in rayon, see https://github.com/GoogleChromeLabs/wasm-bindgen-rayon/issues/42#issuecomment-1839656249.
+		{
+			message: /circular dependency.*main.*rayon/i,
+		},
+	],
 };

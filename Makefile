@@ -76,5 +76,5 @@ web-dev:
 	@(cd web && npm install && npm run start)
 
 web-build:
-	@wasm-pack build ./wasm --target web -- --features debug
+	@wasm-pack build ./wasm --target web
 	@(cd web && npm install && rm -rf dist/ && npm run build)
