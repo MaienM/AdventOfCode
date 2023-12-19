@@ -3,11 +3,7 @@
 use clap::{builder::ArgPredicate, value_parser, Parser};
 use criterion::Criterion;
 
-use super::{
-    multi::{parse_args_with_targets, TargetArgs},
-    runner::Solver,
-};
-use crate::derived::Day;
+use super::{multi::TargetArgs, runner::Solver};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -40,7 +36,7 @@ struct BenchArgs {
     samples: u64,
 }
 
-pub fn main(days: &[Day]) {
+pub fn main() {
     let args = BenchArgs::parse();
 
     let mut criterion = Criterion::default();
