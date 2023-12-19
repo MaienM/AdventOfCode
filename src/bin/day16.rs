@@ -1,7 +1,7 @@
 use std::{collections::HashSet, ops::Add, sync::Arc};
 
-use aoc::utils::{ext::iter::IterExt as _, parse, point::Point2};
-use threadpool::ThreadPool;
+use aoc::utils::{parse, point::Point2};
+use rayon::prelude::*;
 
 type Point = Point2;
 
@@ -165,11 +165,8 @@ pub fn part2(input: &str) -> usize {
     options.extend((0..bounds.y).map(|y| (Point::new(0, y), Direction::East)));
     options.extend((0..bounds.y).map(|y| (Point::new(bounds.x, y), Direction::West)));
     options
-        .into_iter()
-        .map(|(p, d)| (map.clone(), bounds.clone(), p, d))
-        .threaded_map(&ThreadPool::new(10), |(map, bounds, point, direction)| {
-            solve_from_position(&map, &bounds, point, direction)
-        })
+        .into_par_iter()
+        .map(|(point, direction)| solve_from_position(&map, &bounds, point, direction))
         .max()
         .unwrap()
 }

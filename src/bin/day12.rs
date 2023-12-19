@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use aoc::utils::{ext::iter::IterExt, parse};
-use threadpool::ThreadPool;
+use aoc::utils::parse;
+use rayon::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
 enum Condition {
@@ -104,10 +104,8 @@ fn find_valid_options(
 pub fn part1(input: &str) -> usize {
     let records = parse_input(input);
     records
-        .into_iter()
-        .threaded_map(&ThreadPool::new(7), |mut record| {
-            find_valid_options(&mut HashMap::new(), &mut record, 0, 0, 0)
-        })
+        .into_par_iter()
+        .map(|mut record| find_valid_options(&mut HashMap::new(), &mut record, 0, 0, 0))
         .sum()
 }
 
@@ -115,8 +113,8 @@ pub fn part2(input: &str) -> usize {
     let records = parse_input(input);
 
     records
-        .into_iter()
-        .threaded_map(&ThreadPool::new(15), |record| {
+        .into_par_iter()
+        .map(|record| {
             let mut conditions = Vec::new();
             conditions.append(&mut record.conditions.clone());
             conditions.push(Condition::Unknown);

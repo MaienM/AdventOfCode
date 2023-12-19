@@ -3,8 +3,8 @@ use std::{
     sync::Arc,
 };
 
-use aoc::utils::{ext::iter::IterExt, parse};
-use threadpool::ThreadPool;
+use aoc::utils::parse;
+use rayon::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Direction {
@@ -105,11 +105,11 @@ pub fn part2(input: &str) -> usize {
     let cycles: Vec<_> = instructions
         .maps
         .keys()
+        .par_bridge()
         .filter(|k| k.ends_with('A'))
-        .map(|k| (instructions.clone(), k.to_owned()))
-        .threaded_map(&ThreadPool::new(4), |(instructions, k)| {
+        .map(|k| {
             #[allow(unused_variables)]
-            let (first, k) = run_until(&instructions, 0, &k, |c| c.ends_with('Z'));
+            let (first, k) = run_until(&instructions, 0, k, |c| c.ends_with('Z'));
             #[cfg(debug_assertions)]
             {
                 let (cycle, _) = run_until(&instructions, first, &k, |c| c.ends_with('Z'));

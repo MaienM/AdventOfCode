@@ -1,6 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap, hash::Hash, sync::mpsc};
-
-use threadpool::ThreadPool;
+use std::{cmp::Ordering, collections::HashMap, hash::Hash};
 
 pub trait IterExt<T> {
     /// Count how often each item occurs.
@@ -45,26 +43,6 @@ pub trait IterExt<T> {
     where
         F: FnMut(&T) -> K,
         K: Ord;
-
-    /// Like [`Iterator::filter`], but with the calls being executed inside threads from a threadpool.
-    fn threaded_filter<F>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = T>
-    where
-        F: Fn(&T) -> bool + Send + Copy + 'static,
-        T: Send + 'static;
-
-    /// Like [`Iterator::filter_map`], but with the calls being executed inside threads from a threadpool.
-    fn threaded_filter_map<F, R>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = R>
-    where
-        F: Fn(T) -> Option<R> + Send + Copy + 'static,
-        T: Send + 'static,
-        R: Send + 'static;
-
-    /// Like [`Iterator::map`], but with the calls being executed inside threads from a threadpool.
-    fn threaded_map<F, R>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = R>
-    where
-        F: Fn(T) -> R + Send + Copy + 'static,
-        T: Send + 'static,
-        R: Send + 'static;
 }
 impl<I, T> IterExt<T> for I
 where
@@ -145,74 +123,6 @@ where
         let mut list: Vec<_> = self.collect();
         list.sort_unstable_by_key(f);
         list.into_iter()
-    }
-
-    fn threaded_filter<F>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = T>
-    where
-        F: Fn(&T) -> bool + Send + Copy + 'static,
-        T: Send + 'static,
-    {
-        let (tx, rx) = mpsc::channel();
-        let mut len = 0;
-        for (idx, item) in self.enumerate() {
-            len += 1;
-            let tx = tx.clone();
-            pool.execute(move || {
-                let result = f(&item);
-                tx.send((idx, result, item)).unwrap();
-            });
-        }
-
-        let mut results: Vec<_> = rx.iter().take(len).collect();
-        results.sort_unstable_by_key(|(idx, _, _)| *idx);
-        results
-            .into_iter()
-            .filter(|(_, m, _)| *m)
-            .map(|(_, _, v)| v)
-    }
-
-    fn threaded_filter_map<F, R>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = R>
-    where
-        F: Fn(T) -> Option<R> + Send + Copy + 'static,
-        T: Send + 'static,
-        R: Send + 'static,
-    {
-        let (tx, rx) = mpsc::channel();
-        let mut len = 0;
-        for (idx, item) in self.enumerate() {
-            len += 1;
-            let tx = tx.clone();
-            pool.execute(move || {
-                let result = f(item);
-                tx.send((idx, result)).unwrap();
-            });
-        }
-
-        let mut results: Vec<_> = rx.iter().take(len).collect();
-        results.sort_unstable_by_key(|(idx, _)| *idx);
-        results.into_iter().filter_map(|(_, v)| v)
-    }
-
-    fn threaded_map<F, R>(self, pool: &ThreadPool, f: F) -> impl Iterator<Item = R>
-    where
-        F: Fn(T) -> R + Send + Copy + 'static,
-        T: Send + 'static,
-        R: Send + 'static,
-    {
-        let (tx, rx) = mpsc::channel();
-        let mut len = 0;
-        for (idx, item) in self.enumerate() {
-            len += 1;
-            let tx = tx.clone();
-            pool.execute(move || {
-                let result = f(item);
-                tx.send((idx, result)).unwrap();
-            });
-        }
-
-        let mut results: Vec<_> = rx.iter().take(len).collect();
-        results.sort_unstable_by_key(|(idx, _)| *idx);
-        results.into_iter().map(|(_, v)| v)
     }
 }
 
@@ -316,39 +226,5 @@ mod tests {
         assert_eq!(counts["foo"], 3);
         assert_eq!(counts["bar"], 2);
         assert_eq!(counts["baz"], 1);
-    }
-
-    #[test]
-    fn threaded_filter_map() {
-        assert_eq!(
-            (0..200)
-                .threaded_filter_map(&ThreadPool::new(5), |v| if v % 2 == 0 {
-                    Some(v * 2)
-                } else {
-                    None
-                })
-                .collect::<Vec<_>>(),
-            (0..400).step_by(4).collect::<Vec<_>>(),
-        );
-    }
-
-    #[test]
-    fn threaded_filter() {
-        assert_eq!(
-            (0..200)
-                .threaded_filter(&ThreadPool::new(5), |v| v % 2 == 0)
-                .collect::<Vec<_>>(),
-            (0..200).step_by(2).collect::<Vec<_>>(),
-        );
-    }
-
-    #[test]
-    fn threaded_map() {
-        assert_eq!(
-            (0..200)
-                .threaded_map(&ThreadPool::new(5), |v| v * 2)
-                .collect::<Vec<_>>(),
-            (0..400).step_by(2).collect::<Vec<_>>(),
-        );
     }
 }
