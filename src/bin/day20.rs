@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use aoc::utils::parse;
 
@@ -31,49 +31,38 @@ impl Input {
         }
         (low_count, high_count)
     }
-
-    fn is_starting_state(&self) -> bool {
-        self.modules.values().all(Module::is_starting_state)
-    }
 }
 
 #[derive(Debug, PartialEq)]
-enum Module {
-    FlipFlop {
-        outputs: Vec<String>,
-        state: bool,
-    },
-    Conjunction {
-        outputs: Vec<String>,
-        inputs: HashMap<String, bool>,
-    },
+struct Module {
+    inputs: HashSet<String>,
+    outputs: Vec<String>,
+    ty: ModuleType,
+}
+#[derive(Debug, PartialEq)]
+enum ModuleType {
+    FlipFlop(bool),
+    Conjunction(HashMap<String, bool>),
 }
 impl Module {
     fn pulse(&mut self, pulse: bool, from: &String) -> Vec<(String, bool)> {
-        match self {
-            Module::FlipFlop {
-                outputs,
-                ref mut state,
-            } => {
+        match self.ty {
+            ModuleType::FlipFlop(ref mut state) => {
                 if pulse {
                     Vec::new()
                 } else {
                     *state = !*state;
-                    outputs.iter().map(|k| (k.to_owned(), *state)).collect()
+                    self.outputs
+                        .iter()
+                        .map(|k| (k.to_owned(), *state))
+                        .collect()
                 }
             }
-            Module::Conjunction { outputs, inputs } => {
-                *inputs.get_mut(from).unwrap() = pulse;
-                let pulse = !inputs.values().all(|last| *last);
-                outputs.iter().map(|k| (k.clone(), pulse)).collect()
+            ModuleType::Conjunction(ref mut input_states) => {
+                *input_states.get_mut(from).unwrap() = pulse;
+                let pulse = !input_states.values().all(|last| *last);
+                self.outputs.iter().map(|k| (k.clone(), pulse)).collect()
             }
-        }
-    }
-
-    fn is_starting_state(&self) -> bool {
-        match self {
-            Module::FlipFlop { state, .. } => !state,
-            Module::Conjunction { inputs, .. } => inputs.values().all(|last| !*last),
         }
     }
 }
@@ -83,50 +72,54 @@ fn parse_input(input: &str) -> Input {
         [modules split on '\n' into (HashMap<_, _>) with
             { nametype " -> " [outputs split on ", " as String] }
             => {
-                let module = match &nametype[0..1] {
-                    "%" | "b" => Module::FlipFlop {
-                        outputs,
-                        state: false,
-                    },
-                    "&" => Module::Conjunction {
-                        outputs,
-                        inputs: HashMap::new(),
-                    },
+                let ty = match &nametype[0..1] {
+                    "%" | "b" => ModuleType::FlipFlop(false),
+                    "&" => ModuleType::Conjunction(HashMap::new()),
                     prefix => panic!("Invalid prefix {prefix:?}."),
                 };
-                (nametype[1..].to_owned(), module)
+                (
+                    nametype[1..].to_owned(),
+                    Module {
+                        outputs,
+                        ty,
+                        inputs: HashSet::new(),
+                    },
+                )
             }
         ]
     );
 
-    let Module::FlipFlop {
+    // Get broadcaster.
+    let Some(Module {
         outputs: broadcaster,
         ..
-    } = modules.remove(&"roadcaster".to_owned()).unwrap()
+    }) = modules.remove(&"roadcaster".to_owned())
     else {
         panic!("Failed to parse broadcaster in input.");
     };
 
-    let mut module_inputs: HashMap<_, _> =
-        modules.keys().map(|k| (k.clone(), Vec::new())).collect();
+    // Determine inputs for each module.
+    let mut module_inputs: HashMap<_, _> = modules
+        .keys()
+        .map(|k| (k.clone(), HashSet::new()))
+        .collect();
     for (name, module) in &modules {
-        let (Module::FlipFlop { outputs, .. } | Module::Conjunction { outputs, .. }) = module;
-        for output in outputs {
+        for output in &module.outputs {
             if let Some(module_inputs) = module_inputs.get_mut(output) {
-                module_inputs.push(name.clone());
+                module_inputs.insert(name.clone());
             }
         }
     }
+    for name in &broadcaster {
+        if let Some(module_inputs) = module_inputs.get_mut(name) {
+            module_inputs.insert("broadcaster".to_owned());
+        }
+    }
     for (name, module) in &mut modules {
-        let Module::Conjunction { ref mut inputs, .. } = module else {
-            continue;
+        module.inputs = module_inputs.remove(name).unwrap();
+        if let ModuleType::Conjunction(ref mut input_states) = module.ty {
+            *input_states = module.inputs.iter().map(|k| (k.clone(), false)).collect();
         };
-        *inputs = module_inputs
-            .remove(name)
-            .unwrap()
-            .into_iter()
-            .map(|k| (k.clone(), false))
-            .collect();
     }
 
     Input {
@@ -137,23 +130,68 @@ fn parse_input(input: &str) -> Input {
 
 pub fn part1(input: &str) -> usize {
     let mut input = parse_input(input);
-    let mut pulses = Vec::new();
-    let mut cycle = 0;
-    loop {
-        cycle += 1;
-        pulses.push(input.run_cycle());
-        if input.is_starting_state() || cycle >= 1000 {
+    let mut low_total = 0;
+    let mut high_total = 0;
+    for _ in 0..1000 {
+        let (low, high) = input.run_cycle();
+        low_total += low;
+        high_total += high;
+    }
+    low_total * high_total
+}
+
+fn calculate_counter_period(input: &Input, start: &String) -> usize {
+    let module = input.modules.get(start).unwrap();
+    let mut sum = 0;
+    for name in &module.outputs {
+        match input.modules.get(name).unwrap().ty {
+            ModuleType::FlipFlop(_) => sum += calculate_counter_period(input, name) * 2,
+            ModuleType::Conjunction(_) => sum += 1,
+        }
+    }
+    sum
+}
+
+fn prime_factors(num: usize) -> HashSet<usize> {
+    let mut current = num;
+    let mut factors = HashSet::new();
+    for i in 2.. {
+        while current % i == 0 {
+            current /= i;
+            factors.insert(i);
+        }
+        if current == 1 {
             break;
         }
     }
-    let mut low_total = 0;
-    let mut high_total = 0;
-    for (idx, (low, high)) in pulses.into_iter().enumerate() {
-        let repetitions = (999 + cycle - idx) / cycle;
-        low_total += low * repetitions;
-        high_total += high * repetitions;
+    factors
+}
+
+fn least_common_multiple(mut numbers: Vec<usize>) -> usize {
+    match (numbers.pop(), numbers.pop()) {
+        (Some(a), Some(b)) => {
+            let factors_a = prime_factors(a);
+            let factors_b = prime_factors(b);
+            let gcf = factors_a.intersection(&factors_b).max().unwrap_or(&1);
+            numbers.push(a * b / gcf);
+            least_common_multiple(numbers)
+        }
+        (Some(a), None) => a,
+        _ => panic!("Should never happen"),
     }
-    low_total * high_total
+}
+
+// Each of the targets of the broadcaster is a separate subgraph. Each of these subgraphs contains a long chain of flip-flops and a single central conjunction, which some (but not all) the flip-flops connect to. Together these elements function as a counter, with each consecutive flip-flop represening another bit of the number. Once all the bits that connect back to the conjunction are set to true the conjunction will send out a pulse and then reset the counter.
+//
+// The conjunctions of these subgraphs combine in another conjunction that leads to the target, which will receive a pulse when all counters reset at the same time.
+pub fn part2(input: &str) -> usize {
+    let input = parse_input(input);
+    let nums: Vec<_> = input
+        .broadcaster
+        .iter()
+        .map(|start| calculate_counter_period(&input, start))
+        .collect();
+    least_common_multiple(nums)
 }
 
 aoc::cli::single::generate_main!();
@@ -161,7 +199,7 @@ aoc::cli::single::generate_main!();
 #[cfg(test)]
 mod tests {
     use aoc_derive::example_input;
-    use common_macros::hash_map;
+    use common_macros::{hash_map, hash_set};
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -187,26 +225,40 @@ mod tests {
     #[test]
     fn example_parse_1() {
         let actual = parse_input(&EXAMPLE_INPUT_1);
+        println!("{actual:#?}");
         let expected = Input {
             broadcaster: vec!["a".to_owned(), "b".to_owned(), "c".to_owned()],
             modules: hash_map![
-                "a".to_owned() => Module::FlipFlop {
-                    outputs: vec!["b".to_owned()],
-                    state: false,
-                },
-                "b".to_owned() => Module::FlipFlop {
-                    outputs: vec!["c".to_owned()],
-                    state: false,
-                },
-                "c".to_owned() => Module::FlipFlop {
-                    outputs: vec!["inv".to_owned()],
-                    state: false,
-                },
-                "inv".to_owned() => Module::Conjunction {
-                    outputs: vec!["a".to_owned()],
-                    inputs: hash_map![
-                        "c".to_owned() => false,
+                "a".to_owned() => Module {
+                    inputs: hash_set![
+                        "broadcaster".to_owned(),
+                        "inv".to_owned(),
                     ],
+                    outputs: vec!["b".to_owned()],
+                    ty: ModuleType::FlipFlop(false),
+                },
+                "b".to_owned() => Module {
+                    inputs: hash_set![
+                        "a".to_owned(),
+                        "broadcaster".to_owned(),
+                    ],
+                    outputs: vec!["c".to_owned()],
+                    ty: ModuleType::FlipFlop(false),
+                },
+                "c".to_owned() => Module {
+                    inputs: hash_set![
+                        "b".to_owned(),
+                        "broadcaster".to_owned(),
+                    ],
+                    outputs: vec!["inv".to_owned()],
+                    ty: ModuleType::FlipFlop(false),
+                },
+                "inv".to_owned() => Module {
+                    inputs: hash_set!["c".to_owned()],
+                    outputs: vec!["a".to_owned()],
+                    ty: ModuleType::Conjunction(hash_map![
+                        "c".to_owned() => false,
+                    ]),
                 },
             ],
         };
@@ -219,26 +271,30 @@ mod tests {
         let expected = Input {
             broadcaster: vec!["a".to_owned()],
             modules: hash_map![
-                "a".to_owned() => Module::FlipFlop {
+                "a".to_owned() => Module {
+                    inputs: hash_set!["broadcaster".to_owned()],
                     outputs: vec!["inv".to_owned(), "con".to_owned()],
-                    state: false,
+                    ty: ModuleType::FlipFlop(false),
                 },
-                "inv".to_owned() => Module::Conjunction {
+                "inv".to_owned() => Module {
+                    inputs: hash_set!["a".to_owned()],
                     outputs: vec!["b".to_owned()],
-                    inputs: hash_map![
+                    ty: ModuleType::Conjunction(hash_map![
                         "a".to_owned() => false,
-                    ],
+                    ]),
                 },
-                "b".to_owned() => Module::FlipFlop {
+                "b".to_owned() => Module {
+                    inputs: hash_set!["inv".to_owned()],
                     outputs: vec!["con".to_owned()],
-                    state: false,
+                    ty: ModuleType::FlipFlop(false),
                 },
-                "con".to_owned() => Module::Conjunction {
+                "con".to_owned() => Module {
+                    inputs: hash_set!["a".to_owned(), "b".to_owned()],
                     outputs: vec!["output".to_owned()],
-                    inputs: hash_map![
+                    ty: ModuleType::Conjunction(hash_map![
                         "a".to_owned() => false,
                         "b".to_owned() => false,
-                    ],
+                    ]),
                 },
             ],
         };
@@ -247,70 +303,16 @@ mod tests {
 
     #[test]
     fn example_cycle_1() {
-        let mut input = Input {
-            broadcaster: vec!["a".to_owned(), "b".to_owned(), "c".to_owned()],
-            modules: hash_map![
-                "a".to_owned() => Module::FlipFlop {
-                    outputs: vec!["b".to_owned()],
-                    state: false,
-                },
-                "b".to_owned() => Module::FlipFlop {
-                    outputs: vec!["c".to_owned()],
-                    state: false,
-                },
-                "c".to_owned() => Module::FlipFlop {
-                    outputs: vec!["inv".to_owned()],
-                    state: false,
-                },
-                "inv".to_owned() => Module::Conjunction {
-                    outputs: vec!["a".to_owned()],
-                    inputs: hash_map![
-                        "c".to_owned() => false,
-                    ],
-                },
-            ],
-        };
-        assert!(input.is_starting_state());
+        let mut input = parse_input(&EXAMPLE_INPUT_1);
         assert_eq!(input.run_cycle(), (8, 4));
-        assert!(input.is_starting_state());
     }
 
     #[test]
     fn example_cycle_2() {
-        let mut input = Input {
-            broadcaster: vec!["a".to_owned()],
-            modules: hash_map![
-                "a".to_owned() => Module::FlipFlop {
-                    outputs: vec!["inv".to_owned(), "con".to_owned()],
-                    state: false,
-                },
-                "inv".to_owned() => Module::Conjunction {
-                    outputs: vec!["b".to_owned()],
-                    inputs: hash_map![
-                        "a".to_owned() => false,
-                    ],
-                },
-                "b".to_owned() => Module::FlipFlop {
-                    outputs: vec!["con".to_owned()],
-                    state: false,
-                },
-                "con".to_owned() => Module::Conjunction {
-                    outputs: vec!["output".to_owned()],
-                    inputs: hash_map![
-                        "a".to_owned() => false,
-                        "b".to_owned() => false,
-                    ],
-                },
-            ],
-        };
-        assert!(input.is_starting_state());
+        let mut input = parse_input(&EXAMPLE_INPUT_2);
         assert_eq!(input.run_cycle(), (4, 4));
-        assert!(!input.is_starting_state());
         assert_eq!(input.run_cycle(), (4, 2));
-        assert!(!input.is_starting_state());
         assert_eq!(input.run_cycle(), (5, 3));
-        assert!(!input.is_starting_state());
         assert_eq!(input.run_cycle(), (4, 2));
-        assert!(input.is_starting_state());
     }
 }
