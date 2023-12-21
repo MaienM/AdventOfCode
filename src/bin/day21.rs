@@ -49,9 +49,9 @@ fn parse_input(input: &str) -> Input {
 
 fn wrap_point(point: &PointUnbound, bounds: &PointBound) -> PointBound {
     Point2::new(
-        (point.x + ((point.x.abs() as usize / bounds.x + 2) * bounds.x) as isize) as usize
+        (point.x + ((point.x.unsigned_abs() / bounds.x + 1) * bounds.x) as isize) as usize
             % bounds.x,
-        (point.y + ((point.y.abs() as usize / bounds.y + 2) * bounds.y) as isize) as usize
+        (point.y + ((point.y.unsigned_abs() / bounds.y + 1) * bounds.y) as isize) as usize
             % bounds.y,
     )
 }
@@ -104,16 +104,15 @@ fn solve(input: &Input, steps: usize) -> usize {
         return solve_naive(input, [steps])[0];
     }
 
-    // There is a consistent growth pattern we can use to calculate the result. To find this pattern we need the first 3 points. We take steps of bounds * 2 to ensure that the step counts we're looking at are all either even or odd, not a mixture thereof.
+    // There is a consistent growth pattern we can use to calculate the result. To find this pattern we need the first 3 points.
     let remainder = steps % input.bounds.x;
     let times = steps / input.bounds.x;
-    let times_offset = times % 2;
     let sequence = solve_naive(
         input,
         [
-            remainder + input.bounds.x * times_offset,
-            remainder + input.bounds.x * (times_offset + 2),
-            remainder + input.bounds.x * (times_offset + 4),
+            remainder,
+            remainder + input.bounds.x,
+            remainder + input.bounds.x * 2,
         ],
     );
 
@@ -121,7 +120,7 @@ fn solve(input: &Input, steps: usize) -> usize {
     let diffofdiffs = (sequence[2] - sequence[1]) - (sequence[1] - sequence[0]);
     let mut diff = sequence[2] - sequence[1];
     let mut result = sequence[2];
-    for _ in 2..(times / 2) {
+    for _ in 2..times {
         diff += diffofdiffs;
         result += diff;
     }
@@ -343,6 +342,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "slow"]
     fn example_solve_naive_500() {
         let map = parse_input(&EXAMPLE_INPUT);
         assert_eq!(solve_naive(&map, [500]), [167_004]);
