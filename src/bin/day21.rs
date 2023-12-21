@@ -2,47 +2,73 @@ use std::collections::HashSet;
 
 use aoc::utils::point::Point2;
 
-type Point = Point2;
+type PointUnbound = Point2<isize>;
+type PointBound = Point2<usize>;
+
+#[derive(Debug, PartialEq)]
+enum Tile {
+    Rock,
+    Plot,
+}
 
 #[derive(Debug, PartialEq)]
 struct Input {
-    start: Point,
-    rocks: HashSet<Point>,
+    start: PointUnbound,
+    bounds: PointBound,
+    tiles: Vec<Vec<Tile>>,
 }
 
 fn parse_input(input: &str) -> Input {
-    let mut rocks = HashSet::new();
     let mut start = None;
+    let mut tiles = Vec::new();
     for (y, line) in input.split('\n').enumerate() {
+        let mut line_tiles = Vec::new();
         for (x, chr) in line.char_indices() {
             match chr {
                 'S' => {
-                    start = Some(Point2::new(x, y));
+                    start = Some(Point2::new(x as isize, y as isize));
+                    line_tiles.push(Tile::Plot);
+                }
+                '.' => {
+                    line_tiles.push(Tile::Plot);
                 }
                 '#' => {
-                    rocks.insert(Point2::new(x, y));
+                    line_tiles.push(Tile::Rock);
                 }
-                '.' => {}
-                _ => panic!("Invalid map tile {chr:?}."),
+                _ => panic!("Invalid tile {chr:?}."),
             };
         }
+        tiles.push(line_tiles);
     }
     Input {
         start: start.unwrap(),
-        rocks,
+        bounds: Point2::new(tiles[0].len(), tiles.len()),
+        tiles,
     }
 }
 
-fn solve(input: &Input, steps: usize) -> usize {
+fn wrap_point(point: &PointUnbound, bounds: &PointBound) -> PointBound {
+    Point2::new(
+        (point.x + ((point.x.abs() as usize / bounds.x + 2) * bounds.x) as isize) as usize
+            % bounds.x,
+        (point.y + ((point.y.abs() as usize / bounds.y + 2) * bounds.y) as isize) as usize
+            % bounds.y,
+    )
+}
+
+fn solve_naive<const N: usize>(input: &Input, targets: [usize; N]) -> [usize; N] {
     let mut visited_even = HashSet::new();
     let mut visited_odd = HashSet::new();
-    let mut current = HashSet::new();
-
     visited_even.insert(input.start);
+
+    let mut current = HashSet::new();
     current.insert(input.start);
 
-    for remaining in (0..steps).rev() {
-        let visited = if remaining % 2 == 0 {
+    let mut targetidx = 0;
+    let mut results = [0; N];
+
+    for steps in 1.. {
+        let visited = if steps % 2 == 0 {
             &mut visited_even
         } else {
             &mut visited_odd
@@ -51,7 +77,8 @@ fn solve(input: &Input, steps: usize) -> usize {
         let mut next = HashSet::new();
         for point in current {
             for neighbor in point.neighbours_ortho() {
-                if input.rocks.contains(&neighbor) {
+                let wrapped = wrap_point(&neighbor, &input.bounds);
+                if input.tiles[wrapped.y][wrapped.x] == Tile::Rock {
                     continue;
                 }
                 if visited.insert(neighbor) {
@@ -60,8 +87,45 @@ fn solve(input: &Input, steps: usize) -> usize {
             }
         }
         current = next;
+
+        if steps == targets[targetidx] {
+            results[targetidx] = visited.len();
+            targetidx += 1;
+            if targetidx == N {
+                break;
+            }
+        }
     }
-    visited_even.len()
+    results
+}
+
+fn solve(input: &Input, steps: usize) -> usize {
+    if steps < input.bounds.x * 6 {
+        return solve_naive(input, [steps])[0];
+    }
+
+    // There is a consistent growth pattern we can use to calculate the result. To find this pattern we need the first 3 points. We take steps of bounds * 2 to ensure that the step counts we're looking at are all either even or odd, not a mixture thereof.
+    let remainder = steps % input.bounds.x;
+    let times = steps / input.bounds.x;
+    let times_offset = times % 2;
+    let sequence = solve_naive(
+        input,
+        [
+            remainder + input.bounds.x * times_offset,
+            remainder + input.bounds.x * (times_offset + 2),
+            remainder + input.bounds.x * (times_offset + 4),
+        ],
+    );
+
+    // The difference between two results are not consistent, but the difference between these differences are, so calculate this.
+    let diffofdiffs = (sequence[2] - sequence[1]) - (sequence[1] - sequence[0]);
+    let mut diff = sequence[2] - sequence[1];
+    let mut result = sequence[2];
+    for _ in 2..(times / 2) {
+        diff += diffofdiffs;
+        result += diff;
+    }
+    result
 }
 
 pub fn part1(input: &str) -> usize {
@@ -69,12 +133,16 @@ pub fn part1(input: &str) -> usize {
     solve(&input, 64)
 }
 
+pub fn part2(input: &str) -> usize {
+    let input = parse_input(input);
+    solve(&input, 26_501_365)
+}
+
 aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
     use aoc_derive::example_input;
-    use common_macros::hash_set;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -94,60 +162,219 @@ mod tests {
         ...........
     ";
 
+    #[allow(clippy::too_many_lines)]
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
         let expected = Input {
-            start: Point::new(5, 5),
-            rocks: hash_set![
-                Point::new(5, 1),
-                Point::new(6, 1),
-                Point::new(7, 1),
-                Point::new(9, 1),
-                Point::new(1, 2),
-                Point::new(2, 2),
-                Point::new(3, 2),
-                Point::new(5, 2),
-                Point::new(6, 2),
-                Point::new(9, 2),
-                Point::new(2, 3),
-                Point::new(4, 3),
-                Point::new(8, 3),
-                Point::new(4, 4),
-                Point::new(6, 4),
-                Point::new(1, 5),
-                Point::new(2, 5),
-                Point::new(6, 5),
-                Point::new(7, 5),
-                Point::new(8, 5),
-                Point::new(9, 5),
-                Point::new(1, 6),
-                Point::new(2, 6),
-                Point::new(5, 6),
-                Point::new(9, 6),
-                Point::new(7, 7),
-                Point::new(8, 7),
-                Point::new(1, 8),
-                Point::new(2, 8),
-                Point::new(4, 8),
-                Point::new(6, 8),
-                Point::new(7, 8),
-                Point::new(8, 8),
-                Point::new(9, 8),
-                Point::new(1, 9),
-                Point::new(2, 9),
-                Point::new(5, 9),
-                Point::new(6, 9),
-                Point::new(8, 9),
-                Point::new(9, 9),
+            start: PointUnbound::new(5, 5),
+            bounds: PointBound::new(11, 11),
+            tiles: vec![
+                vec![
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                    Tile::Rock,
+                    Tile::Rock,
+                    Tile::Plot,
+                ],
+                vec![
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                    Tile::Plot,
+                ],
             ],
         };
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn example_solve() {
+    fn example_solve_naive_6() {
         let map = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(solve(&map, 6), 16);
+        assert_eq!(solve_naive(&map, [6]), [16]);
+    }
+
+    #[test]
+    fn example_solve_naive_10() {
+        let map = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&map, [10]), [50]);
+    }
+
+    #[test]
+    fn example_solve_naive_50() {
+        let map = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&map, [50]), [1594]);
+    }
+
+    #[test]
+    fn example_solve_naive_100() {
+        let map = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&map, [100]), [6536]);
+    }
+
+    #[test]
+    fn example_solve_naive_500() {
+        let map = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&map, [500]), [167_004]);
+    }
+
+    #[test]
+    #[ignore = "slow"]
+    fn example_solve_naive_1000() {
+        let map = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&map, [1000]), [668_697]);
+    }
+
+    #[test]
+    #[ignore = "slow"]
+    fn example_solve_naive_5000() {
+        let map = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&map, [5000]), [16_733_044]);
+    }
+
+    #[test]
+    fn wrap_point() {
+        assert_eq!(
+            super::wrap_point(&PointUnbound::new(-2, -616), &PointBound::new(10, 10)),
+            PointBound::new(8, 4)
+        );
+        assert_eq!(
+            super::wrap_point(&PointUnbound::new(4, 8), &PointBound::new(10, 10)),
+            PointBound::new(4, 8)
+        );
+        assert_eq!(
+            super::wrap_point(&PointUnbound::new(492, 812), &PointBound::new(10, 10)),
+            PointBound::new(2, 2)
+        );
     }
 }
