@@ -15,8 +15,9 @@
       in
       {
         defaultPackage = fenix.packages.x86_64-linux.minimal.toolchain;
-        devShell = pkgs.mkShell {
-          buildInputs = [
+        devShell = pkgs.mkShell rec {
+          buildInputs = with pkgs; [
+            # Core.
             (fenixPkgs.combine [
               (fenixPkgs.latest.withComponents [
                 "cargo"
@@ -25,21 +26,27 @@
                 "rustc"
                 "rustfmt"
               ])
+              # WASM platform for web version.
               (fenixPkgs.targets.wasm32-unknown-unknown.latest.withComponents [
                 "rust-std"
               ])
             ])
             fenixPkgs.rust-analyzer
-            pkgs.cargo-nextest
-            pkgs.critcmp
-            pkgs.gnumake
-            pkgs.gnuplot
-            pkgs.wasm-pack
+            gnumake
 
-            pkgs.dprint
-            pkgs.nodePackages.eslint_d
-            pkgs.nodePackages.npm
-            pkgs.nodePackages.typescript-language-server
+            # Tests.
+            cargo-nextest
+
+            # Benchmarks.
+            critcmp
+            gnuplot
+
+            # Web version.
+            wasm-pack
+            dprint
+            nodePackages.eslint_d
+            nodePackages.npm
+            nodePackages.typescript-language-server
           ];
           NODE_OPTIONS = "--openssl-legacy-provider";
         };
