@@ -1,4 +1,4 @@
-use std::{mem, ops::Add};
+use std::{collections::HashMap, mem, ops::Add};
 
 use aoc::utils::{parse, point::Point2};
 
@@ -61,10 +61,12 @@ fn parse_input(input: &str) -> Map {
     }
 }
 
-fn find_longest_path(map: &Map, from: Point) -> usize {
+type Graph = HashMap<Point, HashMap<Point, usize>>;
+
+fn _to_graph(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut steps: usize) {
+    let node = graph.entry(from_node).or_default();
     let mut prev = from;
     let mut curr = from;
-    let mut steps = 0;
 
     // Our starting point (either at the start of the maze or right after a junction) will always only have a single Tile::Open next to it.
     for neighbour in curr.neighbours_ortho() {
@@ -74,12 +76,12 @@ fn find_longest_path(map: &Map, from: Point) -> usize {
             break;
         }
     }
-    debug_assert_eq!(steps, 1);
 
     // As long as the neighbor that we didn't just come from remains a Tile::Open there are no branches and we can just follow the path.
     'step: loop {
         if curr == map.end {
-            return steps;
+            node.insert(curr, steps);
+            return;
         }
 
         for neighbour in curr.neighbours_ortho() {
@@ -101,45 +103,80 @@ fn find_longest_path(map: &Map, from: Point) -> usize {
         break;
     }
 
-    // We've arrived at a junction. Branch for each possible result.
-    steps += 3; // past current Tile::OneWay + junction + past next Tile::OneWay
+    // We've arrived at a junction, add the found path to the graph.
     if let Tile::OneWay(direction) = map.tiles[curr.y][curr.x] {
         curr = direction + curr;
+        steps += 1;
     } else {
         panic!("Expected one-way tile at {curr:?}.");
     }
-    steps += curr
-        .neighbours_ortho()
-        .into_iter()
-        .filter_map(|neighbour| {
-            if neighbour == prev {
-                return None;
+    node.insert(curr, steps);
+
+    // Move into it, add it to the graph, anBranch for each possible result.
+    for neighbour in curr.neighbours_ortho() {
+        if neighbour == prev {
+            continue;
+        }
+        #[allow(clippy::match_on_vec_items)]
+        match map.tiles[neighbour.y][neighbour.x] {
+            Tile::Wall => {}
+            Tile::Open => panic!(
+                "Open tile at {neighbour:?} next to junction tile {curr:?}, this should not happen."
+            ),
+            Tile::OneWay(direction) => {
+                let next = direction + neighbour;
+                if next != curr {
+                    _to_graph(map, graph, curr, next, 2);
+                }
             }
-            #[allow(clippy::match_on_vec_items)]
-            match map.tiles[neighbour.y][neighbour.x] {
-                Tile::Wall => None,
-                Tile::Open => panic!(
-                    "Open tile at {neighbour:?} next to junction tile {curr:?}, this should not happen."
-                ),
-                Tile::OneWay(direction) => {
-                    let next = direction + neighbour;
-                    if next == curr {
-                        None
-                    } else {
-                        Some(find_longest_path(map, next))
-                    }
-                },
-            }
-        })
+        }
+    }
+}
+
+fn to_graph(map: &Map) -> Graph {
+    let mut graph = Graph::new();
+    _to_graph(map, &mut graph, map.start, map.start, 0);
+    graph
+}
+
+fn make_graph_bidirectional(graph: &mut Graph) {
+    for (start, edges) in graph.clone() {
+        for (end, steps) in edges {
+            graph.entry(end).or_default().insert(start, steps);
+        }
+    }
+}
+
+fn find_longest_path(graph: &Graph, path: &mut Vec<Point>, from: Point, to: Point) -> isize {
+    if from == to {
+        return 0;
+    }
+    if path.contains(&from) {
+        return isize::MIN;
+    }
+    path.push(from);
+    let result = graph
+        .get(&from)
+        .unwrap()
+        .iter()
+        .map(|(curr, steps)| *steps as isize + find_longest_path(graph, path, *curr, to))
         .max()
         .unwrap();
-
-    steps
+    path.pop();
+    result
 }
 
 pub fn part1(input: &str) -> usize {
     let map = parse_input(input);
-    find_longest_path(&map, map.start)
+    let graph = to_graph(&map);
+    find_longest_path(&graph, &mut Vec::new(), map.start, map.end) as usize
+}
+
+pub fn part2(input: &str) -> usize {
+    let map = parse_input(input);
+    let mut graph = to_graph(&map);
+    make_graph_bidirectional(&mut graph);
+    find_longest_path(&graph, &mut Vec::new(), map.start, map.end) as usize
 }
 
 aoc::cli::single::generate_main!();
@@ -147,6 +184,7 @@ aoc::cli::single::generate_main!();
 #[cfg(test)]
 mod tests {
     use aoc_derive::example_input;
+    use common_macros::hash_map;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -764,5 +802,34 @@ mod tests {
             ],
         };
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn make_graph_bidirectional() {
+        let mut graph = hash_map![
+            Point::new(0, 0) => hash_map![
+                Point::new(1, 0) => 15,
+                Point::new(2, 0) => 8,
+            ],
+            Point::new(2, 0) => hash_map![
+                Point::new(1, 0) => 10,
+            ],
+        ];
+        super::make_graph_bidirectional(&mut graph);
+        let expected = hash_map![
+            Point::new(0, 0) => hash_map![
+                Point::new(1, 0) => 15,
+                Point::new(2, 0) => 8,
+            ],
+            Point::new(1, 0) => hash_map![
+                Point::new(0, 0) => 15,
+                Point::new(2, 0) => 10,
+            ],
+            Point::new(2, 0) => hash_map![
+                Point::new(0, 0) => 8,
+                Point::new(1, 0) => 10,
+            ],
+        ];
+        assert_eq!(graph, expected);
     }
 }
