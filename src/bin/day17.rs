@@ -35,12 +35,14 @@ impl Add<Point> for Direction {
     }
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 struct State {
     cost: usize,
     position: Point,
     direction: Direction,
     moved_straight: u8,
+    #[cfg(feature = "visual")]
+    path: Vec<Point>,
 }
 impl PartialOrd for State {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -63,22 +65,32 @@ fn find_path(map: &Map, min_before_turn: u8, max_before_turn: u8) -> usize {
         position: Point::new(0, 0),
         direction: Direction::East,
         moved_straight: 0,
+        #[cfg(feature = "visual")]
+        path: vec![Point::new(0, 0)],
     });
     next.push(State {
         cost: 0,
         position: Point::new(0, 0),
         direction: Direction::South,
         moved_straight: 0,
+        #[cfg(feature = "visual")]
+        path: vec![Point::new(0, 0)],
     });
     let mut next_directions = Vec::with_capacity(3);
+    #[cfg(feature = "visual")]
+    let tx = VISUAL_CHANNEL.clone();
     while let Some(state) = next.pop() {
         if state.position == end {
+            #[cfg(feature = "visual")]
+            tx.send(visual::Info::Done(state.clone())).unwrap();
             return state.cost;
         }
         if visited.contains(&(state.position, state.direction, state.moved_straight)) {
             continue;
         }
         visited.insert((state.position, state.direction, state.moved_straight));
+        #[cfg(feature = "visual")]
+        tx.send(visual::Info::Step(state.clone())).unwrap();
 
         next_directions.clear();
         if state.position.y > 0 && state.direction != Direction::South {
@@ -113,6 +125,12 @@ fn find_path(map: &Map, min_before_turn: u8, max_before_turn: u8) -> usize {
                 position,
                 direction: *direction,
                 moved_straight,
+                #[cfg(feature = "visual")]
+                path: {
+                    let mut p = state.path.clone();
+                    p.push(position);
+                    p
+                },
             });
         }
     }
@@ -174,5 +192,131 @@ mod tests {
             vec![4, 3, 2, 2, 6, 7, 4, 6, 5, 5, 5, 3, 3],
         ];
         assert_eq!(actual, expected);
+    }
+}
+
+#[aoc_derive::visual]
+pub mod visual {
+    use aoc::visual::{ToRenderable, Visual};
+    use aoc_derive::ToRenderable;
+    use raqote::{DrawOptions, Point, SolidSource, Source};
+
+    pub(super) enum Info {
+        Step(super::State),
+        Done(super::State),
+    }
+
+    struct RenderConfig {
+        step: usize,
+        build: u8,
+        drop: u8,
+    }
+
+    struct Tile {
+        strength: u8,
+    }
+
+    #[derive(ToRenderable)]
+    struct Renderer {
+        config: RenderConfig,
+        map: Vec<Vec<Tile>>,
+        result: Option<Vec<super::Point>>,
+    }
+    impl Visual for Renderer {
+        type Info = Info;
+
+        fn update<I>(&mut self, info: I)
+        where
+            I: Iterator<Item = Self::Info>,
+        {
+            if let Some(path) = &self.result {
+                for (y, row) in self.map.iter_mut().enumerate() {
+                    for (x, tile) in row.iter_mut().enumerate() {
+                        tile.strength = if path.contains(&super::Point::new(x, y)) {
+                            tile.strength.saturating_add(self.config.drop)
+                        } else {
+                            tile.strength.saturating_sub(self.config.drop)
+                        };
+                    }
+                }
+                return;
+            }
+
+            for row in &mut self.map {
+                for tile in row {
+                    tile.strength = tile.strength.saturating_sub(self.config.drop);
+                }
+            }
+
+            for info in info.take(self.config.step) {
+                match info {
+                    Info::Step(state) => {
+                        let strength = &mut self.map[state.position.y][state.position.x].strength;
+                        *strength = strength.saturating_add(self.config.build);
+                    }
+                    Info::Done(state) => {
+                        self.result = Some(state.path);
+                    }
+                }
+            }
+        }
+
+        fn draw(&self, dt: &mut raqote::DrawTarget, _config: &aoc::visual::Config) {
+            let cs = 8.0;
+
+            for (y, row) in self.map.iter().enumerate() {
+                for (x, tile) in row.iter().enumerate() {
+                    let point = Point::new(x as f32 * cs, y as f32 * cs);
+                    dt.fill_rect(
+                        point.x + 1.0,
+                        point.y + 1.0,
+                        cs - 2.0,
+                        cs - 2.0,
+                        &Source::Solid(SolidSource::from_unpremultiplied_argb(
+                            0xff,
+                            0xff,
+                            0xff - tile.strength,
+                            0xff,
+                        )),
+                        &DrawOptions::new(),
+                    );
+                }
+            }
+        }
+    }
+    impl Renderer {
+        fn new(input: &str, config: RenderConfig) -> Self {
+            let map = super::parse_input(input)
+                .into_iter()
+                .map(|row| row.into_iter().map(|_| Tile { strength: 0 }).collect())
+                .collect();
+            Self {
+                config,
+                map,
+                result: None,
+            }
+        }
+    }
+
+    pub fn part1(input: &str) -> impl ToRenderable {
+        Renderer::new(
+            input,
+            RenderConfig {
+                step: 2000,
+                build: 24,
+                drop: 32,
+            },
+        )
+    }
+
+    pub fn part2(input: &str) -> impl ToRenderable {
+        Renderer::new(
+            input,
+            RenderConfig {
+                step: 5000,
+                build: 16,
+                drop: 48,
+            },
+        )
     }
 }
