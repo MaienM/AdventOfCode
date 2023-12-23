@@ -2,6 +2,7 @@
 
 mod examples;
 mod scanner;
+mod visual;
 
 use proc_macro::TokenStream;
 
@@ -27,4 +28,20 @@ pub fn inject_day(input: TokenStream, annotated_item: TokenStream) -> TokenStrea
 #[proc_macro_attribute]
 pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     examples::example_input(input, annotated_item)
+}
+
+/// Mark a module as the one used for visualizations.
+///
+/// Must be used exactly once in days where the [`inform_visual!`] macro is used.
+#[proc_macro_attribute]
+pub fn visual(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    visual::visual(input, annotated_item)
+}
+
+/// Derive macro for [`aoc::visual::ToRenderable`].
+///
+/// Requires annotated struct to implement [`aoc::visual::Visual`] and to be located in a module annotated with [`aoc_derive::visual`].
+#[proc_macro_derive(ToRenderable)]
+pub fn derive_renderable(item: TokenStream) -> TokenStream {
+    visual::derive_renderable(item)
 }

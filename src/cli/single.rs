@@ -65,12 +65,46 @@ pub fn main(day: &Day) {
         }
     };
 
-    for (i, part, solution_path) in [(1, &day.part1, part1_path), (2, &day.part2, part2_path)] {
+    for (i, part, visual, solution_path) in [
+        (
+            1,
+            &day.part1,
+            #[cfg(feature = "visual")]
+            day.visual1,
+            #[cfg(not(feature = "visual"))]
+            None::<()>,
+            part1_path,
+        ),
+        (
+            2,
+            &day.part2,
+            #[cfg(feature = "visual")]
+            day.visual2,
+            #[cfg(not(feature = "visual"))]
+            None::<()>,
+            part2_path,
+        ),
+    ] {
+        #[cfg(not(feature = "visual"))]
+        let _ = visual;
+
         let solution = solution_path.read_maybe();
         let result = match solution {
             Ok(solution) => {
+                #[cfg(feature = "visual")]
+                let vis_handle = visual.map(|f| {
+                    let input = input.clone();
+                    crate::visual::spawn_window(move || f(&input))
+                });
+
                 let solver: Solver<_> = (*part).into();
-                solver.run(&input, solution)
+                let result = solver.run(&input, solution);
+
+                #[cfg(feature = "visual")]
+                vis_handle.map(::std::thread::JoinHandle::join);
+
+                #[cfg_attr(not(feature = "visual"), allow(clippy::let_and_return))]
+                result
             }
             Err(err) => SolverRunResult::Error(err),
         };

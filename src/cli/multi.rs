@@ -216,6 +216,11 @@ struct MainArgs {
 }
 
 pub fn main() {
+    assert!(
+        !cfg!(feature = "visual"),
+        "this entrypoint doesn't support feature 'visual'."
+    );
+
     let args = MainArgs::parse();
 
     let days = args.targets.filtered_days();

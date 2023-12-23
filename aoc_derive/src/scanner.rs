@@ -8,8 +8,8 @@ use syn::{
     punctuated::Punctuated,
     spanned::Spanned,
     visit::{self, Visit},
-    Error, Expr, ExprPath, ForeignItemStatic, ItemFn, ItemStatic, LitStr, Meta, PathSegment, Token,
-    Type,
+    Error, Expr, ExprPath, ForeignItemStatic, ItemFn, ItemMod, ItemStatic, LitStr, Meta,
+    PathSegment, Token, Type,
 };
 
 use crate::examples;
@@ -25,12 +25,20 @@ macro_rules! return_err {
     };
 }
 
+fn optional_expr(expr: &Option<Expr>) -> Expr {
+    expr.as_ref()
+        .map_or(parse_quote!(None), |f| parse_quote!(Some(#f)))
+}
+
 struct BinScanner {
     mod_root_path: Punctuated<PathSegment, Token![::]>,
+    mod_visual_path: Punctuated<PathSegment, Token![::]>,
     current_path: Punctuated<PathSegment, Token![::]>,
     pub(crate) name: String,
     pub(crate) part1: Option<Expr>,
     pub(crate) part2: Option<Expr>,
+    pub(crate) visual1: Option<Expr>,
+    pub(crate) visual2: Option<Expr>,
     pub(crate) examples: Vec<Expr>,
 }
 impl BinScanner {
@@ -38,9 +46,16 @@ impl BinScanner {
         let mut scanner = Self {
             name: path.split('/').last().unwrap().replace(".rs", ""),
             mod_root_path: modpath.path.segments.clone(),
+            mod_visual_path: {
+                let mut p = modpath.path.segments.clone();
+                p.push(parse_quote!(does_not_exist));
+                p
+            },
             current_path: modpath.path.segments,
             part1: None,
             part2: None,
+            visual1: None,
+            visual2: None,
             examples: Vec::new(),
         };
 
@@ -55,14 +70,10 @@ impl BinScanner {
         let BinScanner { name, examples, .. } = self;
 
         let num: u8 = name[3..].parse().unwrap();
-        let part1: Expr = self
-            .part1
-            .as_ref()
-            .map_or(parse_quote!(None), |f| parse_quote!(Some(#f)));
-        let part2: Expr = self
-            .part2
-            .as_ref()
-            .map_or(parse_quote!(None), |f| parse_quote!(Some(#f)));
+        let part1 = optional_expr(&self.part1);
+        let part2 = optional_expr(&self.part2);
+        let visual1 = optional_expr(&self.visual1);
+        let visual2 = optional_expr(&self.visual2);
 
         parse_quote! {
             ::aoc::derived::Day {
@@ -70,14 +81,26 @@ impl BinScanner {
                 num: #num,
                 part1: #part1,
                 part2: #part2,
+                #[cfg(feature = "visual")]
+                visual1: #visual1,
+                #[cfg(feature = "visual")]
+                visual2: #visual2,
                 examples: vec![ #(#examples),* ],
             }
         }
     }
 }
 impl<'ast> Visit<'ast> for BinScanner {
-    fn visit_item_mod(&mut self, node: &'ast syn::ItemMod) {
+    fn visit_item_mod(&mut self, node: &'ast ItemMod) {
         self.current_path.push(node.ident.clone().into());
+
+        if node.attrs.iter().any(|a| {
+            a.meta == Meta::Path(parse_quote!(visual))
+                || a.meta == Meta::Path(parse_quote!(aoc_derive::visual))
+        }) {
+            self.mod_visual_path = self.current_path.clone();
+        }
+
         visit::visit_item_mod(self, node);
         self.current_path.pop();
     }
@@ -88,6 +111,12 @@ impl<'ast> Visit<'ast> for BinScanner {
             match node.sig.ident.to_string().as_str() {
                 "part1" => self.part1 = Some(parse_quote!(|i| #cp::part1(i).to_string())),
                 "part2" => self.part2 = Some(parse_quote!(|i| #cp::part2(i).to_string())),
+                _ => {}
+            }
+        } else if cp == &self.mod_visual_path {
+            match node.sig.ident.to_string().as_str() {
+                "part1" => self.visual1 = Some(parse_quote!(|i| #cp::part1(i).into())),
+                "part2" => self.visual2 = Some(parse_quote!(|i| #cp::part2(i).into())),
                 _ => {}
             }
         }

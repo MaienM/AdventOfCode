@@ -2,6 +2,8 @@
 
 use std::ops::Deref;
 
+type Processor<T> = Option<fn(&str) -> T>;
+
 /// The main components of the implementation of a single day.
 #[derive(Clone)]
 pub struct Day {
@@ -12,10 +14,18 @@ pub struct Day {
     pub num: u8,
 
     /// The runnable for part 1, with the result cast to a string.
-    pub part1: Option<fn(&str) -> String>,
+    pub part1: Processor<String>,
 
     /// The runnable for part 2, with the result cast to a string.
-    pub part2: Option<fn(&str) -> String>,
+    pub part2: Processor<String>,
+
+    /// The visualizer for part 1.
+    #[cfg(feature = "visual")]
+    pub visual1: Processor<Box<dyn crate::visual::Renderable>>,
+
+    /// The visualizer for part 2.
+    #[cfg(feature = "visual")]
+    pub visual2: Processor<Box<dyn crate::visual::Renderable>>,
 
     /// The examples.
     pub examples: Vec<Example>,

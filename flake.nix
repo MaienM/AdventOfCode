@@ -47,6 +47,10 @@
             nodePackages.eslint_d
             nodePackages.npm
             nodePackages.typescript-language-server
+
+            cmake
+            pkg-config
+            fontconfig
           ];
           NODE_OPTIONS = "--openssl-legacy-provider";
         };
