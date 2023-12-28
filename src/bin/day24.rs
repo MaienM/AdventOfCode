@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use aoc::utils::{parse, point::Point3};
+use aoc::utils::{matrix::Matrix, parse, point::Point3};
 
 type Point = Point3<f64>;
 
@@ -85,6 +85,131 @@ fn count_intersections(hailstones: &[Hailstone], range: Range<f64>) -> usize {
 pub fn part1(input: &str) -> usize {
     let hailstones = parse_input(input);
     count_intersections(&hailstones, 200_000_000_000_000f64..400_000_000_000_000f64)
+}
+
+pub fn part2(input: &str) -> usize {
+    let hailstones = parse_input(input);
+
+    // Let Xn, Yn, Zn be the starting position of stone N, and XVn, YVn and ZVn be the velocity of the same stone. Let N = 0 for the thrown stone, and N = 1.. for the hailstones from the input file. Let Tn be the time when stone N intersects with the thrown stone.
+    //
+    // This gives us the following equations:
+    //
+    // X1 + XV1T1 = X0 + XV0T1
+    // Y1 + YV1T1 = Y0 + YV0T1
+    //
+    // Rewrite to an equation for T1:
+    //
+    // X1 - X0 + T1(XV1 - XV0)
+    // T1(XV1 - XV0) = X0 - X1
+    // T1 = (X0 - X1) / (XV1 - XV0)
+    //
+    // We can do the same for Y, yielding two different equations for T1. We can combine these to eliminate T1 from the equations entirely:
+    //
+    // (X0 - X1) / (XV1 - XV0) = (Y0 - Y1) / (YV1 - YV0)
+    // (X0 - X1)(YV1 - YV0) - (Y0 - Y1)(XV1 - XV0) = 0
+    //
+    // We can do the same thing for N = 2, and we can combine these. This results in a number of quadratic unknowns appearing on both sides allowing us to eliminate these.
+    //
+    // (X0 - X1)(YV1 - YV0) - (Y0 - Y1)(XV1 - XV0) = (X0 - X2)(YV2 - YV0) - (Y0 - Y2)(XV2 - XV0)
+    // X0YV1 - X0YV0 - X1YV1 + X1YV0 - Y0XV1 + Y0XV0 + Y1XV1 - Y1XV0 = X0YV2 - X0YV0 - X2YV2 + X2YV0 - Y0XV2 + Y0XV0 + Y2XV2 - Y2XV0
+    // X0YV1 - X1YV1 + X1YV0 - Y0XV1 + Y1XV1 - Y1XV0 = X0YV2 - X2YV2 + X2YV0 - Y0XV2 + Y2XV2 - Y2XV0
+    //
+    // This is now a linear equation. Lets rewrite it a bit further to be easier to put into a matrix:
+    //
+    // X0YV1 - X1YV1 + X1YV0 - Y0XV1 + Y1XV1 - Y1XV0 - X0YV2 + X2YV2 - X2YV0 + Y0XV2 - Y2XV2 + Y2XV0 = 0
+    // X0(YV1 - YV2) + Y0(XV2 - XV1) + XV0(Y2 - Y1) + YV0(X1 - X2) = X1YV1 - Y1XV1 - X2YV2 + Y2XV2
+    //
+    // This gives us 4 unknowns (X0, Y0, XV0, YV0) with known factors, using (X, Y) of hailstones (1, 2). We can do the same for (X, Z) and (Y, Z) for the same hailstones, and then also for hailstones (1, 3). This gives us 6 linear equations for the 6 unknowns (X0, Y0, Z0, XV0, YV0, ZV0), which should be sufficient. We'll put these equations into an augmented matrix [X0, Y0, Z0, XV0, YV0, ZV0, C] and use Gauss-Jordan elimination to solve them.
+
+    let mut matrix = Matrix::new([
+        // (X, Y) for (1, 2).
+        [
+            hailstones[0].velocity.y - hailstones[1].velocity.y,
+            hailstones[1].velocity.x - hailstones[0].velocity.x,
+            0.0,
+            hailstones[1].position.y - hailstones[0].position.y,
+            hailstones[0].position.x - hailstones[1].position.x,
+            0.0,
+            hailstones[0].position.x * hailstones[0].velocity.y
+                - hailstones[0].position.y * hailstones[0].velocity.x
+                - hailstones[1].position.x * hailstones[1].velocity.y
+                + hailstones[1].position.y * hailstones[1].velocity.x,
+        ],
+        // (X, Z) for (1, 2).
+        [
+            hailstones[0].velocity.z - hailstones[1].velocity.z,
+            0.0,
+            hailstones[1].velocity.x - hailstones[0].velocity.x,
+            hailstones[1].position.z - hailstones[0].position.z,
+            0.0,
+            hailstones[0].position.x - hailstones[1].position.x,
+            hailstones[0].position.x * hailstones[0].velocity.z
+                - hailstones[0].position.z * hailstones[0].velocity.x
+                - hailstones[1].position.x * hailstones[1].velocity.z
+                + hailstones[1].position.z * hailstones[1].velocity.x,
+        ],
+        // (Y, Z) for (1, 2).
+        [
+            0.0,
+            hailstones[0].velocity.z - hailstones[1].velocity.z,
+            hailstones[1].velocity.y - hailstones[0].velocity.y,
+            0.0,
+            hailstones[1].position.z - hailstones[0].position.z,
+            hailstones[0].position.y - hailstones[1].position.y,
+            hailstones[0].position.y * hailstones[0].velocity.z
+                - hailstones[0].position.z * hailstones[0].velocity.y
+                - hailstones[1].position.y * hailstones[1].velocity.z
+                + hailstones[1].position.z * hailstones[1].velocity.y,
+        ],
+        // (X, Y) for (1, 3).
+        [
+            hailstones[0].velocity.y - hailstones[2].velocity.y,
+            hailstones[2].velocity.x - hailstones[0].velocity.x,
+            0.0,
+            hailstones[2].position.y - hailstones[0].position.y,
+            hailstones[0].position.x - hailstones[2].position.x,
+            0.0,
+            hailstones[0].position.x * hailstones[0].velocity.y
+                - hailstones[0].position.y * hailstones[0].velocity.x
+                - hailstones[2].position.x * hailstones[2].velocity.y
+                + hailstones[2].position.y * hailstones[2].velocity.x,
+        ],
+        // (X, Z) for (1, 3).
+        [
+            hailstones[0].velocity.z - hailstones[2].velocity.z,
+            0.0,
+            hailstones[2].velocity.x - hailstones[0].velocity.x,
+            hailstones[2].position.z - hailstones[0].position.z,
+            0.0,
+            hailstones[0].position.x - hailstones[2].position.x,
+            hailstones[0].position.x * hailstones[0].velocity.z
+                - hailstones[0].position.z * hailstones[0].velocity.x
+                - hailstones[2].position.x * hailstones[2].velocity.z
+                + hailstones[2].position.z * hailstones[2].velocity.x,
+        ],
+        // (Y, Z) for (1, 3).
+        [
+            0.0,
+            hailstones[0].velocity.z - hailstones[2].velocity.z,
+            hailstones[2].velocity.y - hailstones[0].velocity.y,
+            0.0,
+            hailstones[2].position.z - hailstones[0].position.z,
+            hailstones[0].position.y - hailstones[2].position.y,
+            hailstones[0].position.y * hailstones[0].velocity.z
+                - hailstones[0].position.z * hailstones[0].velocity.y
+                - hailstones[2].position.y * hailstones[2].velocity.z
+                + hailstones[2].position.z * hailstones[2].velocity.y,
+        ],
+    ]);
+    matrix.gauss_jordan_elimination();
+    let stone = Hailstone {
+        position: Point::new(matrix[0][6], matrix[1][6], matrix[2][6]),
+        velocity: Point::new(matrix[3][6], matrix[4][6], matrix[5][6]),
+    };
+
+    stone.position.x.round() as usize
+        + stone.position.y.round() as usize
+        + stone.position.z.round() as usize
 }
 
 aoc::cli::single::generate_main!();

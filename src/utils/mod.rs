@@ -1,4 +1,5 @@
 pub mod ext;
+pub mod matrix;
 pub mod parser;
 pub mod point;
 
