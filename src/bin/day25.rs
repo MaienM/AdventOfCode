@@ -20,74 +20,44 @@ fn parse_input(input: &str) -> Graph {
     map
 }
 
-fn cut(graph: &mut Graph, edge: (&str, &str)) {
-    graph.get_mut(edge.0).unwrap().remove(edge.1);
-    graph.get_mut(edge.1).unwrap().remove(edge.0);
-}
-
-fn count_reachable_from(graph: &Graph, start: &str) -> usize {
-    let mut seen = HashSet::new();
-    let mut todo = Vec::from([start]);
-    while let Some(node) = todo.pop() {
-        for edge in graph.get(node).unwrap() {
-            if seen.insert(edge) {
-                todo.push(edge);
-            }
-        }
-    }
-    seen.len()
-}
-
-fn get_within<'a>(
-    graph: &Graph<'a>,
-    start: &'a str,
-    from: &'a str,
-    steps: u32,
-) -> HashSet<&'a str> {
-    let mut nodes = HashSet::new();
-    let mut stack = Vec::from([(start, steps)]);
-    while let Some((node, steps)) = stack.pop() {
-        if steps == 0 || node == from || !nodes.insert(node) {
-            continue;
-        }
-        for next in graph.get(node).unwrap() {
-            stack.push((next, steps - 1));
-        }
-    }
-    nodes
-}
-
-fn edge_connectivity(graph: &Graph, steps: u32, edge: (&str, &str)) -> usize {
-    let left = get_within(graph, edge.0, edge.1, steps);
-    let right = get_within(graph, edge.1, edge.0, steps);
-    left.len() + right.len() - left.intersection(&right).count() * 2
-}
-
 pub fn part1(input: &str) -> usize {
-    let mut graph = parse_input(input);
+    let graph = parse_input(input);
 
-    let steps = graph.len().ilog(3) + 1;
-    let mut connected = Vec::new();
-    for (from, edges) in &graph {
-        for to in edges {
-            // Avoid processing each edge twice needlessly.
-            if from > to {
-                continue;
+    // Flood fill starting at a random node, continuing until there are exactly three unvisited neighbors, all of which neighbor only a single of our currently covered nodes.
+    // This will work when starting from most nodes, but we attempt all nodes until we get a success just in case the first one we try is one of the ones that doesn't work (e.g. a node that is directly adjacent to one of the cuts that should be made). In most cases this will only end up running for a single node.
+    graph
+        .iter()
+        .find_map(|first| {
+            let mut group = HashSet::from([first.0]);
+            let mut unvisited: HashMap<_, _> = first.1.iter().map(|e| (e, 2)).collect();
+
+            loop {
+                let Some((node, count)) = unvisited.iter().max_by_key(|(_, c)| *c) else {
+                    break;
+                };
+                if *count <= 1 && unvisited.len() == 3 {
+                    break;
+                }
+
+                let node = *node;
+                unvisited.remove(&node);
+                group.insert(node);
+
+                for edge in graph.get(node).unwrap() {
+                    if !group.contains(edge) {
+                        *unvisited.entry(edge).or_default() += 1;
+                    }
+                }
             }
-            let edge = (*from, *to);
-            connected.push((edge_connectivity(&graph, steps, edge), edge));
-        }
-    }
-    connected.sort_unstable();
 
-    let mut start = "will_be_set_in_loop";
-    for (_, edge) in connected.into_iter().rev().take(3) {
-        cut(&mut graph, edge);
-        start = edge.0;
-    }
-
-    let size_a = count_reachable_from(&graph, start);
-    size_a * (graph.len() - size_a)
+            if unvisited.len() == 3 {
+                let size = group.len();
+                Some(size * (graph.len() - size))
+            } else {
+                None
+            }
+        })
+        .unwrap()
 }
 
 aoc::cli::single::generate_main!();
