@@ -1,6 +1,7 @@
 use std::{collections::HashMap, mem, ops::Add};
 
 use aoc::utils::{parse, point::Point2};
+use rayon::prelude::*;
 
 type Point = Point2<usize>;
 
@@ -194,7 +195,7 @@ fn _find_longest_path(
         .graph
         .get(&from)
         .unwrap()
-        .iter()
+        .par_iter()
         .map(|(curr, steps)| {
             *steps as isize + _find_longest_path(graph, abort_if, visited, *curr, to)
         })
