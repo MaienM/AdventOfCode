@@ -171,20 +171,33 @@ fn to_graph(map: &Map) -> Graph {
     graph
 }
 
-fn _find_longest_path(graph: &Graph, mut path: usize, from: usize, to: usize) -> isize {
+fn _find_longest_path(
+    graph: &Graph,
+    abort_if: &[usize],
+    mut visited: usize,
+    from: usize,
+    to: usize,
+) -> isize {
     if from == to {
         return 0;
     }
-    if path & from > 0 {
+    if visited & from > 0 {
         return isize::MIN;
     }
-    path |= from;
+    for flag in abort_if {
+        if visited & flag == *flag {
+            return isize::MIN;
+        }
+    }
+    visited |= from;
     let result = graph
         .graph
         .get(&from)
         .unwrap()
         .iter()
-        .map(|(curr, steps)| *steps as isize + _find_longest_path(graph, path, *curr, to))
+        .map(|(curr, steps)| {
+            *steps as isize + _find_longest_path(graph, abort_if, visited, *curr, to)
+        })
         .max()
         .unwrap();
     result
@@ -193,7 +206,12 @@ fn _find_longest_path(graph: &Graph, mut path: usize, from: usize, to: usize) ->
 fn find_longest_path(graph: &mut Graph, from: Point, to: Point) -> isize {
     let from = graph.get_id(from);
     let to = graph.get_id(to);
-    _find_longest_path(graph, 0, from, to)
+
+    // Determine some states where the we can easily detect that there is no longer any path to the end.
+    let mut abort_if = vec![graph.graph.get(&to).map_or(0, |e| e.keys().sum())];
+    abort_if.retain(|v| *v > 0);
+
+    _find_longest_path(graph, &abort_if, 0, from, to)
 }
 
 pub fn part1(input: &str) -> usize {
