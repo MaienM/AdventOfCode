@@ -61,10 +61,42 @@ fn parse_input(input: &str) -> Map {
     }
 }
 
-type Graph = HashMap<Point, HashMap<Point, usize>>;
+struct Graph {
+    ids: HashMap<Point, usize>,
+    graph: HashMap<usize, HashMap<usize, usize>>,
+}
+impl Graph {
+    fn new() -> Self {
+        Self {
+            ids: HashMap::new(),
+            graph: HashMap::new(),
+        }
+    }
+
+    fn get_id(&mut self, point: Point) -> usize {
+        let len = self.ids.len();
+        *self
+            .ids
+            .entry(point)
+            .or_insert_with(|| 2usize.pow(len as u32))
+    }
+
+    fn connect(&mut self, from: Point, to: Point, steps: usize) {
+        let from = self.get_id(from);
+        let to = self.get_id(to);
+        self.graph.entry(from).or_default().insert(to, steps);
+    }
+
+    fn make_bidirectional(&mut self) {
+        for (start, edges) in self.graph.clone() {
+            for (end, steps) in edges {
+                self.graph.entry(end).or_default().insert(start, steps);
+            }
+        }
+    }
+}
 
 fn _to_graph(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut steps: usize) {
-    let node = graph.entry(from_node).or_default();
     let mut prev = from;
     let mut curr = from;
 
@@ -80,7 +112,7 @@ fn _to_graph(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut st
     // As long as the neighbor that we didn't just come from remains a Tile::Open there are no branches and we can just follow the path.
     'step: loop {
         if curr == map.end {
-            node.insert(curr, steps);
+            graph.connect(from_node, curr, steps);
             return;
         }
 
@@ -110,7 +142,7 @@ fn _to_graph(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut st
     } else {
         panic!("Expected one-way tile at {curr:?}.");
     }
-    node.insert(curr, steps);
+    graph.connect(from_node, curr, steps);
 
     // Move into it, add it to the graph, anBranch for each possible result.
     for neighbour in curr.neighbours_ortho() {
@@ -139,44 +171,42 @@ fn to_graph(map: &Map) -> Graph {
     graph
 }
 
-fn make_graph_bidirectional(graph: &mut Graph) {
-    for (start, edges) in graph.clone() {
-        for (end, steps) in edges {
-            graph.entry(end).or_default().insert(start, steps);
-        }
-    }
-}
-
-fn find_longest_path(graph: &Graph, path: &mut Vec<Point>, from: Point, to: Point) -> isize {
+fn _find_longest_path(graph: &Graph, mut path: usize, from: usize, to: usize) -> isize {
     if from == to {
         return 0;
     }
-    if path.contains(&from) {
+    if path & from > 0 {
         return isize::MIN;
     }
-    path.push(from);
+    path |= from;
     let result = graph
+        .graph
         .get(&from)
         .unwrap()
         .iter()
-        .map(|(curr, steps)| *steps as isize + find_longest_path(graph, path, *curr, to))
+        .map(|(curr, steps)| *steps as isize + _find_longest_path(graph, path, *curr, to))
         .max()
         .unwrap();
-    path.pop();
     result
+}
+
+fn find_longest_path(graph: &mut Graph, from: Point, to: Point) -> isize {
+    let from = graph.get_id(from);
+    let to = graph.get_id(to);
+    _find_longest_path(graph, 0, from, to)
 }
 
 pub fn part1(input: &str) -> usize {
     let map = parse_input(input);
-    let graph = to_graph(&map);
-    find_longest_path(&graph, &mut Vec::new(), map.start, map.end) as usize
+    let mut graph = to_graph(&map);
+    find_longest_path(&mut graph, map.start, map.end) as usize
 }
 
 pub fn part2(input: &str) -> usize {
     let map = parse_input(input);
     let mut graph = to_graph(&map);
-    make_graph_bidirectional(&mut graph);
-    find_longest_path(&graph, &mut Vec::new(), map.start, map.end) as usize
+    graph.make_bidirectional();
+    find_longest_path(&mut graph, map.start, map.end) as usize
 }
 
 aoc::cli::single::generate_main!();
@@ -806,30 +836,37 @@ mod tests {
 
     #[test]
     fn make_graph_bidirectional() {
-        let mut graph = hash_map![
-            Point::new(0, 0) => hash_map![
-                Point::new(1, 0) => 15,
-                Point::new(2, 0) => 8,
+        let mut graph = Graph {
+            ids: hash_map![
+                Point::new(0, 0) => 1,
+                Point::new(1, 0) => 2,
+                Point::new(2, 0) => 4,
             ],
-            Point::new(2, 0) => hash_map![
-                Point::new(1, 0) => 10,
+            graph: hash_map![
+                1 => hash_map![
+                    2 => 15,
+                    4 => 8,
+                ],
+                4 => hash_map![
+                    2 => 10,
+                ],
             ],
-        ];
-        super::make_graph_bidirectional(&mut graph);
+        };
+        graph.make_bidirectional();
         let expected = hash_map![
-            Point::new(0, 0) => hash_map![
-                Point::new(1, 0) => 15,
-                Point::new(2, 0) => 8,
+            1 => hash_map![
+                2 => 15,
+                4 => 8,
             ],
-            Point::new(1, 0) => hash_map![
-                Point::new(0, 0) => 15,
-                Point::new(2, 0) => 10,
+            2 => hash_map![
+                1 => 15,
+                4 => 10,
             ],
-            Point::new(2, 0) => hash_map![
-                Point::new(0, 0) => 8,
-                Point::new(1, 0) => 10,
+            4 => hash_map![
+                1 => 8,
+                2 => 10,
             ],
         ];
-        assert_eq!(graph, expected);
+        assert_eq!(graph.graph, expected);
     }
 }
