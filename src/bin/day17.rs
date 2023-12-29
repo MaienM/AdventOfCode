@@ -1,38 +1,21 @@
 use std::{
     cmp::Ordering,
     collections::{BinaryHeap, HashSet},
-    ops::Add,
 };
 
-use aoc::utils::{parse, point::Point2};
+use aoc::utils::{
+    parse,
+    point::{Direction2, Point2},
+};
 
 type Point = Point2;
+type Direction = Direction2;
 type Map = Vec<Vec<u8>>;
 
 fn parse_input(input: &str) -> Map {
     parse!(input => {
         [map split on '\n' with [chars as u8]]
     } => map)
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
-impl Add<Point> for Direction {
-    type Output = Point;
-
-    fn add(self, rhs: Point) -> Self::Output {
-        match self {
-            Direction::North => Point::new(rhs.x, rhs.y.wrapping_sub(1)),
-            Direction::East => Point::new(rhs.x + 1, rhs.y),
-            Direction::South => Point::new(rhs.x, rhs.y + 1),
-            Direction::West => Point::new(rhs.x.wrapping_sub(1), rhs.y),
-        }
-    }
 }
 
 #[derive(Eq, PartialEq, Clone)]
@@ -119,7 +102,7 @@ fn find_path(map: &Map, min_before_turn: u8, max_before_turn: u8) -> usize {
                 1
             };
 
-            let position = *direction + state.position;
+            let position = state.position + *direction;
             next.push(State {
                 cost: state.cost + (map[position.y][position.x] as usize),
                 position,

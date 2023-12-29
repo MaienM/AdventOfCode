@@ -1,11 +1,13 @@
-use std::{
-    collections::HashSet,
-    ops::{Add, RangeInclusive},
+use std::{collections::HashSet, ops::RangeInclusive};
+
+use aoc::utils::{
+    ext::iter::IterExt,
+    parse,
+    point::{Direction2, Point2},
 };
 
-use aoc::utils::{ext::iter::IterExt, parse, point::Point2};
-
 type Point = Point2<isize>;
+type Direction = Direction2;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 enum Tile {
@@ -34,34 +36,13 @@ impl From<(Direction, Direction)> for Tile {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
-impl Add<Point> for Direction {
-    type Output = Point;
-
-    fn add(self, rhs: Point) -> Self::Output {
-        match self {
-            Direction::North => Point::new(rhs.x, rhs.y.wrapping_sub(1)),
-            Direction::East => Point::new(rhs.x + 1, rhs.y),
-            Direction::South => Point::new(rhs.x, rhs.y + 1),
-            Direction::West => Point::new(rhs.x.wrapping_sub(1), rhs.y),
-        }
-    }
-}
-impl From<&str> for Direction {
-    fn from(value: &str) -> Self {
-        match value {
-            "U" => Direction::North,
-            "R" => Direction::East,
-            "D" => Direction::South,
-            "L" => Direction::West,
-            _ => panic!("Invalid direction {value:?}."),
-        }
+fn parse_direction(value: &str) -> Direction {
+    match value {
+        "U" => Direction::North,
+        "R" => Direction::East,
+        "D" => Direction::South,
+        "L" => Direction::West,
+        _ => panic!("Invalid direction {value:?}."),
     }
 }
 
@@ -75,12 +56,8 @@ struct Instruction<'a> {
 fn parse_input(input: &str) -> Vec<Instruction> {
     parse!(input => {
         [instructions split on '\n' with
-            { direction " " [distance as usize] " (#" color ")" }
-            => Instruction {
-                direction: direction.into(),
-                distance,
-                color,
-            }
+            { [direction with (parse_direction)] " " [distance as usize] " (#" color ")" }
+            => Instruction { direction, distance, color }
         ]
     } => instructions)
 }

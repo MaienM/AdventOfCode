@@ -1,9 +1,13 @@
-use std::{collections::HashMap, mem, ops::Add};
+use std::{collections::HashMap, mem};
 
-use aoc::utils::{parse, point::Point2};
+use aoc::utils::{
+    parse,
+    point::{Direction2, Point2},
+};
 use rayon::prelude::*;
 
 type Point = Point2<usize>;
+type Direction = Direction2;
 
 #[derive(Debug, PartialEq)]
 enum Tile {
@@ -21,26 +25,6 @@ impl From<char> for Tile {
             'v' => Tile::OneWay(Direction::South),
             '<' => Tile::OneWay(Direction::West),
             _ => panic!("Invalid tile {value:?}."),
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
-impl Add<Point> for Direction {
-    type Output = Point;
-
-    fn add(self, rhs: Point) -> Self::Output {
-        match self {
-            Direction::North => Point::new(rhs.x, rhs.y.wrapping_sub(1)),
-            Direction::East => Point::new(rhs.x + 1, rhs.y),
-            Direction::South => Point::new(rhs.x, rhs.y + 1),
-            Direction::West => Point::new(rhs.x.wrapping_sub(1), rhs.y),
         }
     }
 }
@@ -138,7 +122,7 @@ fn _to_graph(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut st
 
     // We've arrived at a junction, add the found path to the graph.
     if let Tile::OneWay(direction) = map.tiles[curr.y][curr.x] {
-        curr = direction + curr;
+        curr += direction;
         steps += 1;
     } else {
         panic!("Expected one-way tile at {curr:?}.");
@@ -157,7 +141,7 @@ fn _to_graph(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut st
                 "Open tile at {neighbour:?} next to junction tile {curr:?}, this should not happen."
             ),
             Tile::OneWay(direction) => {
-                let next = direction + neighbour;
+                let next = neighbour + direction;
                 if next != curr {
                     _to_graph(map, graph, curr, next, 2);
                 }

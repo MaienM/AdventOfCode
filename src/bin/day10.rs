@@ -1,8 +1,12 @@
-use std::{collections::HashSet, ops::Add};
+use std::collections::HashSet;
 
-use aoc::utils::{parse, point::Point2};
+use aoc::utils::{
+    parse,
+    point::{Direction2, Point2},
+};
 
 type Point = Point2<usize>;
+type Direction = Direction2;
 
 #[derive(Debug, PartialEq)]
 enum Tile {
@@ -27,26 +31,6 @@ impl From<char> for Tile {
             'S' => Tile::Start,
             '.' => Tile::None,
             _ => panic!("Unknown character {value:?}."),
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
-impl Add<Point> for Direction {
-    type Output = Point;
-
-    fn add(self, rhs: Point) -> Self::Output {
-        match self {
-            Direction::North => Point::new(rhs.x, rhs.y.wrapping_sub(1)),
-            Direction::East => Point::new(rhs.x + 1, rhs.y),
-            Direction::South => Point::new(rhs.x, rhs.y + 1),
-            Direction::West => Point::new(rhs.x.wrapping_sub(1), rhs.y),
         }
     }
 }
@@ -88,23 +72,24 @@ fn extract_start(map: &mut [Vec<Tile>]) -> Point {
         })
         .collect();
 
-    map[start.y][start.x] = if connections.contains(&(Direction::North + start)) {
-        if connections.contains(&(Direction::West + start)) {
-            Tile::NorthWest
-        } else if connections.contains(&(Direction::East + start)) {
-            Tile::NorthEast
+    map[start.y][start.x] =
+        if connections.contains(&start.wrapping_add_direction(Direction::North, &1)) {
+            if connections.contains(&start.wrapping_add_direction(Direction::West, &1)) {
+                Tile::NorthWest
+            } else if connections.contains(&start.wrapping_add_direction(Direction::East, &1)) {
+                Tile::NorthEast
+            } else {
+                Tile::Vertical
+            }
+        } else if connections.contains(&start.wrapping_add_direction(Direction::South, &1)) {
+            if connections.contains(&start.wrapping_add_direction(Direction::West, &1)) {
+                Tile::SouthWest
+            } else {
+                Tile::SouthEast
+            }
         } else {
-            Tile::Vertical
-        }
-    } else if connections.contains(&(Direction::South + start)) {
-        if connections.contains(&(Direction::West + start)) {
-            Tile::SouthWest
-        } else {
-            Tile::SouthEast
-        }
-    } else {
-        Tile::Horizontal
-    };
+            Tile::Horizontal
+        };
 
     start
 }
@@ -160,7 +145,7 @@ fn find_loop(map: &[Vec<Tile>], start: Point) -> Vec<Point> {
             }
             _ => panic!("Ended up on {tile:?} at {point:?}, cannot proceed."),
         };
-        let next = direction + point;
+        let next = point + direction;
         prev = point;
         curr = (next, &map[next.y][next.x]);
 

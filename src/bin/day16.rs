@@ -1,9 +1,13 @@
-use std::{collections::HashSet, ops::Add, sync::Arc};
+use std::{collections::HashSet, sync::Arc};
 
-use aoc::utils::{parse, point::Point2};
+use aoc::utils::{
+    parse,
+    point::{Direction2, Point2},
+};
 use rayon::prelude::*;
 
 type Point = Point2;
+type Direction = Direction2;
 
 type Map<T> = Vec<Vec<T>>;
 
@@ -24,26 +28,6 @@ impl From<char> for Tile {
             '\\' => Self::MirrorUpLeft,
             '.' => Self::None,
             _ => panic!("Invalid tile {value:?}."),
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
-impl Add<Point> for Direction {
-    type Output = Point;
-
-    fn add(self, rhs: Point) -> Self::Output {
-        match self {
-            Direction::North => Point::new(rhs.x, rhs.y.wrapping_sub(1)),
-            Direction::East => Point::new(rhs.x + 1, rhs.y),
-            Direction::South => Point::new(rhs.x, rhs.y + 1),
-            Direction::West => Point::new(rhs.x.wrapping_sub(1), rhs.y),
         }
     }
 }
@@ -85,7 +69,7 @@ fn track_beams(
                     bounds,
                     energized,
                     processed,
-                    direction + point,
+                    point.wrapping_add_direction(direction, &1),
                     direction,
                 );
                 return;
@@ -102,7 +86,7 @@ fn track_beams(
                     bounds,
                     energized,
                     processed,
-                    direction + point,
+                    point.wrapping_add_direction(direction, &1),
                     direction,
                 );
                 return;
@@ -122,7 +106,7 @@ fn track_beams(
             _ => {}
         }
 
-        point = direction + point;
+        point = point.wrapping_add_direction(direction, &1);
     }
 }
 

@@ -71,7 +71,7 @@ macro_rules! __parse {
     ([[ $($tmpnames:ident)+ ]] $input:expr => [ $ident:ident as $type:tt ]) => {
         let $ident = $crate::utils::parser::__parse_type__!($input => str => $type);
     };
-    ([[ $($tmpnames:ident)+ ]] $input:expr => [ $ident:ident with ($transformer:expr) ]) => {
+    ([[ $($tmpnames:ident)+ ]] $input:expr => [ $ident:ident with $transformer:expr ]) => {
         let $ident = $transformer($input);
     };
     ([[ $($tmpnames:ident)+ ]] $input:expr => [ $ident:ident with { $($nested:tt)+ } => $result:expr ]) => {
@@ -289,6 +289,12 @@ mod tests {
     fn parse_singular_type() {
         parse!("12" => [foo as u8]);
         assert_eq!(foo, 12);
+    }
+
+    #[test]
+    fn parse_singular_custom() {
+        parse!("Hello" => [foo with str::to_lowercase]);
+        assert_eq!(foo, "hello");
     }
 
     #[test]
