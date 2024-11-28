@@ -6,18 +6,18 @@ mod visual;
 
 use proc_macro::TokenStream;
 
-/// Define a static that will hold a list of all [`aoc::derived::Day`]s for all days.
+/// Define a static that will hold a list of all [`aoc::derived::Bin`]s for all binaries.
 ///
-/// This will also include all days as modules.
+/// This will also include all binaries as modules.
 #[proc_macro_attribute]
-pub fn inject_days(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    scanner::inject_days(input, annotated_item)
+pub fn inject_binaries(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    scanner::inject_binaries(input, annotated_item)
 }
 
-/// Define a static that will hold the [`aoc::derived::Day`] for the current file.
+/// Define a static that will hold the [`aoc::derived::Bin`] for the current file.
 #[proc_macro_attribute]
-pub fn inject_day(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    scanner::inject_day(input, annotated_item)
+pub fn inject_binary(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    scanner::inject_binary(input, annotated_item)
 }
 
 /// Mark an attribute as an example input.
@@ -32,7 +32,7 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
 
 /// Mark a module as the one used for visualizations.
 ///
-/// Must be used exactly once in days where the [`inform_visual!`] macro is used.
+/// Must be used exactly once in binaries where the [`inform_visual!`] macro is used.
 #[proc_macro_attribute]
 pub fn visual(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     visual::visual(input, annotated_item)

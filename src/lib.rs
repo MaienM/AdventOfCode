@@ -3,8 +3,8 @@ pub mod derived;
 pub mod utils;
 pub mod visual;
 
-use aoc_derive::inject_days;
+use aoc_derive::inject_binaries;
 
 extern crate self as aoc;
-#[inject_days(path = "bin")]
-pub static DAYS: Vec<Day>;
+#[inject_binaries(path = "bin")]
+pub static BINS: Vec<Bin>;

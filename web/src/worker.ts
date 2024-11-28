@@ -1,7 +1,7 @@
 import initWASM, * as aoc from 'aoc-wasm';
 import * as Comlink from 'comlink';
 
-export type Day = Omit<aoc.Day, 'free'>;
+export type Bin = Omit<aoc.Bin, 'free'>;
 export type Example = Omit<aoc.Example, 'free'>;
 
 export interface Result {
@@ -28,21 +28,23 @@ class Worker {
 		return +aoc.get_timer_resolution();
 	}
 
-	async list(): Promise<aoc.Day[]> {
+	async list(): Promise<aoc.Bin[]> {
 		await this.initWASMPromise;
-		return aoc.list().map((day) => ({
-			num: day.num,
-			examples: day.examples.map((example) => ({
+		return aoc.list().map((bin) => ({
+			name: bin.name,
+			year: bin.year,
+			day: bin.day,
+			examples: bin.examples.map((example) => ({
 				name: example.name,
 				input: example.input,
 			})),
-		} as aoc.Day));
+		} as aoc.Bin));
 	}
 
-	async run(day: number, part: number, input: string): Promise<Result> {
+	async run(name: string, part: number, input: string): Promise<Result> {
 		await this.initWASMPromise;
 		try {
-			const result = aoc.run(day, part, input);
+			const result = aoc.run(name, part, input);
 			const transformed = {
 				success: true,
 				message: result.result,

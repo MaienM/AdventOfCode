@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use aoc::{
     cli::runner::{Solver, Timer},
-    DAYS,
+    BINS,
 };
 use wasm_bindgen::prelude::*;
 pub use wasm_bindgen_rayon::init_thread_pool;
@@ -10,6 +10,7 @@ use web_sys::Performance;
 
 #[wasm_bindgen]
 extern "C" {
+    #[allow(non_upper_case_globals)]
     #[no_mangle]
     static performance: Performance;
 
@@ -72,15 +73,27 @@ pub fn get_timer_resolution() -> Number {
     time::duration_to_js(&duration)
 }
 
-/// WASM wrapper for [`aoc::derived::Day`].
+/// WASM wrapper for [`aoc::derived::Bin`].
 #[wasm_bindgen]
-pub struct Day(&'static aoc::derived::Day);
+pub struct Bin(&'static aoc::derived::Bin);
 #[wasm_bindgen]
-impl Day {
-    /// The number of the day.
+impl Bin {
+    /// The name of the binary.
     #[wasm_bindgen(getter)]
-    pub fn num(&self) -> u8 {
-        self.0.num
+    pub fn name(&self) -> String {
+        self.0.name.to_owned()
+    }
+
+    /// The year that the binary is for.
+    #[wasm_bindgen(getter)]
+    pub fn year(&self) -> u8 {
+        self.0.year
+    }
+
+    /// The day that the binary is for.
+    #[wasm_bindgen(getter)]
+    pub fn day(&self) -> u8 {
+        self.0.day
     }
 
     /// The examples
@@ -141,22 +154,22 @@ impl TryFrom<aoc::cli::runner::SolverRunResult> for SolverRunResult {
     }
 }
 
-/// Get list of all days.
+/// Get list of all binaries.
 #[wasm_bindgen]
-pub fn list() -> Vec<Day> {
-    DAYS.iter().map(Day).collect()
+pub fn list() -> Vec<Bin> {
+    BINS.iter().map(Bin).collect()
 }
 
 /// Run a single solution.
 #[wasm_bindgen]
-pub fn run(day: u8, part: u8, input: &str) -> Result<SolverRunResult, String> {
-    let day = DAYS
+pub fn run(name: &str, part: u8, input: &str) -> Result<SolverRunResult, String> {
+    let bin = BINS
         .iter()
-        .find(|d| d.num == day)
-        .ok_or(format!("Cannot find implementation for day {day}."))?;
+        .find(|d| d.name == name)
+        .ok_or(format!("Cannot find implementation for {name}."))?;
     let solver: Solver<String> = match part {
-        1 => day.part1,
-        2 => day.part2,
+        1 => bin.part1,
+        2 => bin.part2,
         _ => return Err(format!("Invalid part {part}.")),
     }
     .into();
@@ -170,6 +183,7 @@ pub fn run(day: u8, part: u8, input: &str) -> Result<SolverRunResult, String> {
 }
 
 pub fn main() {
+    #[allow(unexpected_cfgs)]
     #[cfg(feature = "debug")]
     console_error_panic_hook::set_once();
 }

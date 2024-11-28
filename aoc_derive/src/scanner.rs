@@ -3,6 +3,7 @@ use std::{env, fs::read_to_string, path::PathBuf};
 use proc_macro::{Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
+use regex::Regex;
 use syn::{
     parse_file, parse_macro_input, parse_quote,
     punctuated::Punctuated,
@@ -34,6 +35,7 @@ struct BinScanner {
     mod_root_path: Punctuated<PathSegment, Token![::]>,
     mod_visual_path: Punctuated<PathSegment, Token![::]>,
     current_path: Punctuated<PathSegment, Token![::]>,
+    pub(crate) path: String,
     pub(crate) name: String,
     pub(crate) part1: Option<Expr>,
     pub(crate) part2: Option<Expr>,
@@ -44,6 +46,7 @@ struct BinScanner {
 impl BinScanner {
     pub(crate) fn scan_file(path: &str, modpath: ExprPath) -> Self {
         let mut scanner = Self {
+            path: path.to_owned(),
             name: path.split('/').last().unwrap().replace(".rs", ""),
             mod_root_path: modpath.path.segments.clone(),
             mod_visual_path: {
@@ -69,16 +72,18 @@ impl BinScanner {
     pub(crate) fn to_expr(&self) -> Expr {
         let BinScanner { name, examples, .. } = self;
 
-        let num: u8 = name[3..].parse().unwrap();
+        let year: u8 = name[0..2].parse().unwrap();
+        let day: u8 = name[3..5].parse().unwrap();
         let part1 = optional_expr(&self.part1);
         let part2 = optional_expr(&self.part2);
         let visual1 = optional_expr(&self.visual1);
         let visual2 = optional_expr(&self.visual2);
 
         parse_quote! {
-            ::aoc::derived::Day {
+            ::aoc::derived::Bin {
                 name: #name,
-                num: #num,
+                year: #year,
+                day: #day,
                 part1: #part1,
                 part2: #part2,
                 #[cfg(feature = "visual")]
@@ -190,7 +195,8 @@ fn get_source_path() -> Result<PathBuf, String> {
     }
 }
 
-fn scan_days(path: String) -> Result<Vec<BinScanner>, String> {
+fn scan_binaries(path: String) -> Result<Vec<BinScanner>, String> {
+    let filename_regex = Regex::new(r"^\d{2}-\d{2}\.rs$").unwrap();
     let source_path = get_source_path()?;
     let abs_path = env::current_dir()
         .map_err(|err| format!("error determining working directory: {err}"))?
@@ -214,11 +220,11 @@ fn scan_days(path: String) -> Result<Vec<BinScanner>, String> {
             let err = err.into_string().unwrap();
             format!("error getting filename for {entry:?}: {err}")
         })?;
-        if !fname.starts_with("day") || !fname.ends_with(".rs") {
+        if !filename_regex.is_match(&fname) {
             continue;
         }
 
-        let modident = format_ident!("{}", fname.replace(".rs", ""));
+        let modident = format_ident!("_{}", fname.replace(".rs", "").replace('-', "_"));
         scanners.push(BinScanner::scan_file(
             entry
                 .path()
@@ -231,7 +237,7 @@ fn scan_days(path: String) -> Result<Vec<BinScanner>, String> {
     Ok(scanners)
 }
 
-pub fn inject_days(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+pub fn inject_binaries(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let mut path = ".".to_owned();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("path") {
@@ -244,34 +250,35 @@ pub fn inject_days(input: TokenStream, annotated_item: TokenStream) -> TokenStre
     parse_macro_input!(input with args_parser);
 
     let itemdef = parse_macro_input!(annotated_item as ForeignItemStatic);
-    if itemdef.ty != parse_quote!(Vec<Day>) {
-        return Error::new(itemdef.ty.span(), "must be of type Vec<Day>".to_owned())
+    if itemdef.ty != parse_quote!(Vec<Bin>) {
+        return Error::new(itemdef.ty.span(), "must be of type Vec<Bin>".to_owned())
             .to_compile_error()
             .into();
     }
 
     let mut binmods: Vec<TokenStream2> = Vec::new();
-    let mut dayexprs: Vec<TokenStream2> = Vec::new();
+    let mut binexprs: Vec<TokenStream2> = Vec::new();
 
-    let scanners = return_err!(scan_days(path.clone()), itemdef.ty.span());
+    let scanners = return_err!(scan_binaries(path.clone()), itemdef.ty.span());
     for scanner in scanners {
-        let modident = format_ident!("{}", scanner.name);
+        let modident = format_ident!("_{}", scanner.name.replace('-', "_"));
+        let path = &scanner.path;
         binmods.push(quote! {
+            #[path = #path]
             pub mod #modident;
         });
-        dayexprs.push(scanner.to_expr().into_token_stream());
+        binexprs.push(scanner.to_expr().into_token_stream());
     }
 
     let itemdef = fill_static(
         itemdef,
-        parse_quote!(once_cell::sync::Lazy<Vec<::aoc::derived::Day>>),
-        parse_quote!(once_cell::sync::Lazy::new(|| vec![ #(#dayexprs),* ])),
+        parse_quote!(once_cell::sync::Lazy<Vec<::aoc::derived::Bin>>),
+        parse_quote!(once_cell::sync::Lazy::new(|| vec![ #(#binexprs),* ])),
     );
 
     quote! {
         #itemdef
 
-        #[path = #path]
         #[allow(dead_code)]
         #[allow(unused_imports)]
         #[allow(unused_variables)]
@@ -282,10 +289,10 @@ pub fn inject_days(input: TokenStream, annotated_item: TokenStream) -> TokenStre
     .into()
 }
 
-pub fn inject_day(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+pub fn inject_binary(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let itemdef = parse_macro_input!(annotated_item as ForeignItemStatic);
-    if itemdef.ty != parse_quote!(Day) {
-        return Error::new(itemdef.ty.span(), "must be of type Day".to_owned())
+    if itemdef.ty != parse_quote!(Bin) {
+        return Error::new(itemdef.ty.span(), "must be of type Bin".to_owned())
             .to_compile_error()
             .into();
     }
@@ -296,7 +303,7 @@ pub fn inject_day(_input: TokenStream, annotated_item: TokenStream) -> TokenStre
 
     fill_static(
         itemdef,
-        parse_quote!(once_cell::sync::Lazy<::aoc::derived::Day>),
+        parse_quote!(once_cell::sync::Lazy<::aoc::derived::Bin>),
         parse_quote!(once_cell::sync::Lazy::new(|| #expr )),
     )
     .into_token_stream()

@@ -9,23 +9,23 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
-import type { Day } from 'aoc-wasm';
+import type { Bin } from 'aoc-wasm';
 import * as React from 'react';
 import Context from './context';
 import ResultComponent from './Result';
 import type { Result } from './worker';
 
 interface Props {
-	day: Day;
+	bin: Bin;
 }
 
 /**
- * Component to display and run a single day.
+ * Component to display and run a single binary.
  */
-export default ({ day }: Props) => {
+export default ({ bin }: Props) => {
 	const context = React.useContext(Context);
 
-	const [input, setInput] = React.useState<string>(day.examples[0]?.input || '');
+	const [input, setInput] = React.useState<string>(bin.examples[0]?.input || '');
 	const [running, setRunning] = React.useState(false);
 	const [part1, setPart1] = React.useState<Result | undefined>(undefined);
 	const [part2, setPart2] = React.useState<Result | undefined>(undefined);
@@ -39,11 +39,11 @@ export default ({ day }: Props) => {
 		setPart1(undefined);
 		setPart2(undefined);
 		{
-			const result = await context.worker.run(day.num, 1, input.trimEnd());
+			const result = await context.worker.run(bin.name, 1, input.trimEnd());
 			setPart1(result);
 		}
 		{
-			const result = await context.worker.run(day.num, 2, input.trimEnd());
+			const result = await context.worker.run(bin.name, 2, input.trimEnd());
 			setPart2(result);
 		}
 		setRunning(false);
@@ -53,9 +53,9 @@ export default ({ day }: Props) => {
 		<Accordion>
 			<AccordionSummary>
 				<Typography variant="h6">
-					Day
-					&nbsp;
-					{day.num}
+					{`20${bin.year}`}
+					&nbsp; day &nbsp;
+					{bin.day}
 				</Typography>
 			</AccordionSummary>
 			<AccordionDetails>
@@ -90,7 +90,7 @@ export default ({ day }: Props) => {
 					</Grid>
 					<Grid item xs={12} md={3} lg={2}>
 						<Stack spacing={1}>
-							{day.examples.map((example) => (
+							{bin.examples.map((example) => (
 								<Button
 									key={example.name}
 									variant="outlined"

@@ -1,17 +1,17 @@
 import { Container, CssBaseline, Typography } from '@mui/material';
-import type { Day } from 'aoc-wasm';
+import type { Bin } from 'aoc-wasm';
 import * as React from 'react';
-import DayComponent from './Day';
+import BinComponent from './Bin';
 
 interface Props {
 	commitHash: string;
-	days: Day[];
+	bins: Bin[];
 }
 
 /**
  * Component for the root of the application.
  */
-export default ({ commitHash, days }: Props) => (
+export default ({ commitHash, bins }: Props) => (
 	<>
 		<CssBaseline />
 		<Container component="main" sx={{ p: 2 }} maxWidth={false}>
@@ -19,7 +19,7 @@ export default ({ commitHash, days }: Props) => (
 				Advent of Code
 			</Typography>
 
-			{days.map((day) => <DayComponent key={day.num} day={day} />)}
+			{bins.map((bin) => <BinComponent key={bin.name} bin={bin} />)}
 
 			<Typography
 				component="footer"

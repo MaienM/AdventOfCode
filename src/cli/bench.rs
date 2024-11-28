@@ -52,13 +52,13 @@ pub fn main() {
     }
     criterion = criterion.sample_size(args.samples as usize);
 
-    let days = args.targets.filtered_days();
-    for target in args.targets.get_targets(&days) {
+    let bins = args.targets.filtered_binaries();
+    for target in args.targets.get_targets(&bins) {
         let Solver::Implemented(runnable) = target.solver else {
             continue;
         };
 
-        let mut name = format!("{}/part{}", target.day, target.part);
+        let mut name = format!("{}/part{}", target.bin, target.part);
         if let Some(source) = target.source_name {
             name = format!("{name}/{source}");
         }

@@ -122,14 +122,16 @@ impl TypedValueParser for SourceValueParser {
 }
 
 macro_rules! source_path_fill_tokens {
-    ($path:expr, day = $day:expr) => {
+    ($path:expr, bin = $bin:expr) => {
         $path.mutate_path(|p| {
-            p.replace("{day}", &$day.num.to_string())
-                .replace("{day0}", &$day.name[3..])
+            p.replace("{name}", &$bin.name)
+                .replace("{year}", &$bin.year.to_string())
+                .replace("{day}", &$bin.day.to_string())
+                .replace("{day0}", &$bin.name[3..])
         })
     };
-    ($path:expr, day = $day:expr, part = $part:expr) => {
-        source_path_fill_tokens!($path, day = $day)
+    ($path:expr, bin = $bin:expr, part = $part:expr) => {
+        source_path_fill_tokens!($path, bin = $bin)
             .mutate_path(|p| p.replace("{part}", &$part.to_string()))
     };
 }

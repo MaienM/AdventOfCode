@@ -6,12 +6,15 @@ type Processor<T> = Option<fn(&str) -> T>;
 
 /// The main components of the implementation of a single day.
 #[derive(Clone)]
-pub struct Day {
-    /// The name of the day.
+pub struct Bin {
+    /// The name of the binary.
     pub name: &'static str,
 
-    /// The numer of the day.
-    pub num: u8,
+    /// The year that the binary is for.
+    pub year: u8,
+
+    /// The day that the binary is for.
+    pub day: u8,
 
     /// The runnable for part 1, with the result cast to a string.
     pub part1: Processor<String>,

@@ -8,7 +8,7 @@ use crate::{
         runner::{DurationThresholds, Solver, SolverRunResult},
         source::{source_path_fill_tokens, Source, SourceValueParser},
     },
-    derived::Day,
+    derived::Bin,
 };
 
 #[derive(Parser, Debug)]
@@ -17,7 +17,7 @@ struct SingleArgs {
     /// Path to a file containing the input.
     #[arg(
         value_hint = ValueHint::FilePath,
-        default_value = "inputs/day{day0}.txt",
+        default_value = "inputs/{name}.txt",
         value_parser = SourceValueParser,
     )]
     input: Source,
@@ -25,7 +25,7 @@ struct SingleArgs {
     /// Path to a file containing the expected result of part 1.
     #[arg(
         value_hint = ValueHint::FilePath,
-        default_value = "inputs/day{day0}.solution{part}.txt",
+        default_value = "inputs/{name}.solution{part}.txt",
         value_parser = SourceValueParser,
     )]
     part1: Source,
@@ -33,7 +33,7 @@ struct SingleArgs {
     /// Path to a file containing the expected result of part 2.
     #[arg(
         value_hint = ValueHint::FilePath,
-        default_value = "inputs/day{day0}.solution{part}.txt",
+        default_value = "inputs/{name}.solution{part}.txt",
         value_parser = SourceValueParser,
     )]
     part2: Source,
@@ -44,16 +44,16 @@ const THRESHOLDS: DurationThresholds = DurationThresholds {
     acceptable: Duration::from_secs(1),
 };
 
-pub fn main(day: &Day) {
+pub fn main(bin: &Bin) {
     let args = SingleArgs::parse();
 
-    let input_path = source_path_fill_tokens!(args.input, day = day);
-    let part1_path = source_path_fill_tokens!(args.part1, day = day, part = 1);
-    let part2_path = source_path_fill_tokens!(args.part2, day = day, part = 2);
+    let input_path = source_path_fill_tokens!(args.input, bin = bin);
+    let part1_path = source_path_fill_tokens!(args.part1, bin = bin, part = 1);
+    let part2_path = source_path_fill_tokens!(args.part2, bin = bin, part = 2);
 
     println!(
         "Running {} using input {}...",
-        Cyan.paint(format!("day {}", day.num)),
+        Cyan.paint(bin.name),
         Cyan.paint(input_path.source().unwrap()),
     );
 
@@ -68,18 +68,18 @@ pub fn main(day: &Day) {
     for (i, part, visual, solution_path) in [
         (
             1,
-            &day.part1,
+            &bin.part1,
             #[cfg(feature = "visual")]
-            day.visual1,
+            bin.visual1,
             #[cfg(not(feature = "visual"))]
             None::<()>,
             part1_path,
         ),
         (
             2,
-            &day.part2,
+            &bin.part2,
             #[cfg(feature = "visual")]
-            day.visual2,
+            bin.visual2,
             #[cfg(not(feature = "visual"))]
             None::<()>,
             part2_path,
@@ -113,14 +113,14 @@ pub fn main(day: &Day) {
 }
 
 #[macro_export]
-macro_rules! __generate_day_main {
+macro_rules! __generate_bin_main {
     () => {
-        #[::aoc_derive::inject_day]
-        static DAY: Day;
+        #[::aoc_derive::inject_binary]
+        static BIN: Bin;
 
         pub fn main() {
-            ::aoc::cli::single::main(&*DAY);
+            ::aoc::cli::single::main(&*BIN);
         }
     };
 }
-pub use __generate_day_main as generate_main;
+pub use __generate_bin_main as generate_main;

@@ -23,7 +23,7 @@ root.render((
 		}}
 	>
 		<Root
-			days={await aocWorker.list()}
+			bins={await aocWorker.list()}
 			commitHash={await (await fetch('./COMMITHASH')).text()}
 		/>
 	</Context.Provider>

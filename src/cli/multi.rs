@@ -12,79 +12,82 @@ use crate::{
         runner::{DurationThresholds, Solver, SolverRunResult},
         source::{Source, SourceValueParser},
     },
-    derived::Day,
-    utils::parse,
-    DAYS,
+    derived::Bin,
+    BINS,
 };
 
 /// Create parser for --only/--skip.
-fn create_target_value_parser(days: &[Day]) -> impl TypedValueParser {
-    fn create_value(num: u8, suffix: &str) -> PossibleValue {
-        let mut v = PossibleValue::new(format!("{num}{suffix}"));
-        if num < 10 {
-            v = v.alias(format!("0{num}{suffix}"));
-        }
-        v
+fn create_target_value_parser(bins: &[Bin]) -> impl TypedValueParser {
+    fn create_value(name: &str, suffix: &str) -> PossibleValue {
+        PossibleValue::new(format!("{name}{suffix}"))
     }
 
     let mut options = Vec::new();
-    for day in days {
-        options.push(create_value(day.num, ""));
-        if day.part1.is_some() {
-            options.push(create_value(day.num, "-1"));
+    for bin in bins {
+        options.push(PossibleValue::new(bin.year.to_string()));
+        options.push(create_value(bin.name, ""));
+        if bin.part1.is_some() {
+            options.push(create_value(bin.name, "-1"));
         }
-        if day.part2.is_some() {
-            options.push(create_value(day.num, "-2"));
+        if bin.part2.is_some() {
+            options.push(create_value(bin.name, "-2"));
         }
     }
     let parser = PossibleValuesParser::new(options);
 
-    parser.map(|s| {
-        let s = s.trim_start_matches('0');
-        if s.contains('-') {
-            parse!(s => [day as u8] "-" [part as u8]);
-            vec![(day, part)]
-        } else {
-            let day = s.parse().unwrap();
-            vec![(day, 1), (day, 2)]
+    parser.map(|item| {
+        let parts: Vec<u8> = item
+            .split('-')
+            .map(str::parse)
+            .map(Result::unwrap)
+            .collect();
+        match parts.len() {
+            3 => vec![(parts[0], parts[1], parts[2])],
+            2 => vec![(parts[0], parts[1], 1), (parts[0], parts[1], 2)],
+            1 => (1..=25)
+                .flat_map(|d| vec![(parts[0], d, 1), (parts[0], d, 2)])
+                .collect(),
+            _ => panic!("Invalid filter item {item:?}."),
         }
     })
 }
 
 #[derive(Parser, Debug)]
 pub(super) struct TargetArgs {
-    /// Only run the listed days.
+    /// Only run the listed binaries.
     ///
-    /// The syntax {day}-{part} can be used to target only a single part for a day.
+    /// This can be either {year} for all binaries for a year, {year}-{day} for a single day, or {year}-{day}-{part} for a single part of a single day.
     #[arg(
         long,
         value_delimiter = ',',
-        value_name = "1,3,8-1",
-        value_parser = create_target_value_parser(&DAYS),
+        value_name = "21,22-01,22-08-1",
+        value_parser = create_target_value_parser(&BINS),
         group = "targets",
     )]
-    only: Option<Vec<Vec<(u8, u8)>>>,
+    only: Option<Vec<Vec<(u8, u8, u8)>>>,
 
-    /// Skip the listed days.
+    /// Skip the listed binaries.
     ///
-    /// The syntax {day}-{part} can be used to target only a single part for a day.
+    /// This can be either {year} for all binaries for a year, {year}-{day} for a single day, or {year}-{day}-{part} for a single part of a single day.
     #[arg(
         long,
         value_delimiter = ',',
-        value_name = "1,3,8-1",
-        value_parser = create_target_value_parser(&DAYS),
+        value_name = "21,22-01,22-08-1",
+        value_parser = create_target_value_parser(&BINS),
         group = "targets",
     )]
-    skip: Option<Vec<Vec<(u8, u8)>>>,
+    skip: Option<Vec<Vec<(u8, u8, u8)>>>,
 
     /// Pattern for paths to files containing the inputs.
     ///
     /// The following tokens will be replaced:
-    /// - `{day}`: the number of the day (`1`, `13`, etc).
-    /// - `{day0}`: the number of the day as two digits (`01`, `13`, etc).
+    /// - `{name}`: the name of the binary (`21-01`, etc).
+    /// - `{year}`: the name of the binary (`21`, etc).
+    /// - `{day}`: the day of the binary (`1`, etc).
+    /// - `{day0}`: the zero padded day of the binary (`01`, etc).
     #[arg(
         long,
-        default_value = "inputs/day{day0}.txt",
+        default_value = "inputs/{name}.txt",
         value_parser = SourceValueParser,
         verbatim_doc_comment,
         conflicts_with = "use_examples",
@@ -94,12 +97,14 @@ pub(super) struct TargetArgs {
     /// Pattern for paths to files containing the expected results.
     ///
     /// The following tokens will be replaced:
-    /// - `{day}`: the number of the day (`1`, `13`, etc).
-    /// - `{day0}`: the number of the day as two digits (`01`, `13`, etc).
+    /// - `{name}`: the name of the binary (`21-01`, etc).
+    /// - `{year}`: the name of the binary (`21`, etc).
+    /// - `{day}`: the day of the binary (`1`, etc).
+    /// - `{day0}`: the zero padded day of the binary (`01`, etc).
     /// - `{part}`: the number of the part (`1` or `2`).
     #[arg(
         long,
-        default_value = "inputs/day{day0}.solution{part}.txt",
+        default_value = "inputs/{name}.solution{part}.txt",
         value_parser = SourceValueParser,
         verbatim_doc_comment,
         conflicts_with = "use_examples",
@@ -111,42 +116,42 @@ pub(super) struct TargetArgs {
     use_examples: bool,
 }
 impl TargetArgs {
-    pub(super) fn filtered_days(&self) -> Vec<Day> {
-        let mut days = DAYS.to_owned();
+    pub(super) fn filtered_binaries(&self) -> Vec<Bin> {
+        let mut bins = BINS.to_owned();
         if let Some(only) = &self.only {
             let only: HashSet<_> = only.iter().flatten().collect();
-            for day in &mut days {
-                if !only.contains(&(day.num, 1)) {
-                    day.part1 = None;
+            for bin in &mut bins {
+                if !only.contains(&(bin.year, bin.day, 1)) {
+                    bin.part1 = None;
                 }
-                if !only.contains(&(day.num, 2)) {
-                    day.part2 = None;
+                if !only.contains(&(bin.year, bin.day, 2)) {
+                    bin.part2 = None;
                 }
             }
         } else if let Some(skip) = &self.skip {
             let skip: HashSet<_> = skip.iter().flatten().collect();
-            for day in &mut days {
-                if skip.contains(&(day.num, 1)) {
-                    day.part1 = None;
+            for bin in &mut bins {
+                if skip.contains(&(bin.year, bin.day, 1)) {
+                    bin.part1 = None;
                 }
-                if skip.contains(&(day.num, 2)) {
-                    day.part2 = None;
+                if skip.contains(&(bin.year, bin.day, 2)) {
+                    bin.part2 = None;
                 }
             }
         }
-        days.into_iter()
-            .filter(|day| day.part1.is_some() || day.part2.is_some())
+        bins.into_iter()
+            .filter(|bin| bin.part1.is_some() || bin.part2.is_some())
             .collect()
     }
 
-    pub(super) fn get_targets(&self, days: &[Day]) -> Vec<Target> {
+    pub(super) fn get_targets(&self, bins: &[Bin]) -> Vec<Target> {
         let mut targets = Vec::new();
         if self.use_examples {
-            for day in days {
-                for example in &day.examples {
+            for bin in bins {
+                for example in &bin.examples {
                     for (i, solver, solution) in [
-                        (1, &day.part1, example.part1),
-                        (2, &day.part2, example.part2),
+                        (1, &bin.part1, example.part1),
+                        (2, &bin.part2, example.part2),
                     ] {
                         if !solver.is_some() {
                             continue;
@@ -155,7 +160,7 @@ impl TargetArgs {
                             continue;
                         };
                         targets.push(Target {
-                            day: day.name.to_owned(),
+                            bin: bin.name.to_owned(),
                             part: i,
                             source_name: Some(example.name.to_owned()),
                             solver: (*solver).into(),
@@ -172,16 +177,16 @@ impl TargetArgs {
                 }
             }
         } else {
-            for day in days {
-                let input = source_path_fill_tokens!(self.input_pattern, day = day);
-                for (i, solver) in [(1, &day.part1), (2, &day.part2)] {
+            for bin in bins {
+                let input = source_path_fill_tokens!(self.input_pattern, bin = bin);
+                for (i, solver) in [(1, &bin.part1), (2, &bin.part2)] {
                     if solver.is_none() {
                         continue;
                     }
                     let solution =
-                        source_path_fill_tokens!(self.result_pattern, day = day, part = i);
+                        source_path_fill_tokens!(self.result_pattern, bin = bin, part = i);
                     targets.push(Target {
-                        day: day.name.to_owned(),
+                        bin: bin.name.to_owned(),
                         part: i,
                         source_name: None,
                         solver: (*solver).into(),
@@ -196,7 +201,7 @@ impl TargetArgs {
 }
 
 pub(super) struct Target {
-    pub(super) day: String,
+    pub(super) bin: String,
     pub(super) part: u8,
     pub(super) source_name: Option<String>,
     pub(super) solver: Solver<String>,
@@ -223,24 +228,24 @@ pub fn main() {
 
     let args = MainArgs::parse();
 
-    let days = args.targets.filtered_days();
-    let targets = args.targets.get_targets(&days);
+    let bins = args.targets.filtered_binaries();
+    let targets = args.targets.get_targets(&bins);
     println!(
-        "Running {} runs, across {} parts, across {} days...",
+        "Running {} runs, across {} parts, across {} bins...",
         Cyan.paint(targets.len().to_string()),
         Cyan.paint(
-            days.iter()
+            bins.iter()
                 .map(|d| u8::from(d.part1.is_some()) + u8::from(d.part2.is_some()))
                 .sum::<u8>()
                 .to_string()
         ),
-        Cyan.paint(days.len().to_string()),
+        Cyan.paint(bins.len().to_string()),
     );
 
     let runs: Vec<(String, SolverRunResult)> = targets
         .into_iter()
         .map(|target| {
-            let mut name = format!("{} part {}", target.day.replace("day", "Day "), target.part);
+            let mut name = format!("{} part {}", target.bin, target.part);
             if let Some(source) = target.source_name {
                 name = format!("{name} {source}");
             }
