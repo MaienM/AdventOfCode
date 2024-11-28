@@ -1,0 +1,22 @@
+{
+	"typescript": {
+		"lineWidth": 120,
+		"indentWidth": 3,
+		"useTabs": true,
+		"quoteStyle": "preferSingle",
+		"quoteProps": "asNeeded",
+		"arrowFunction.useParentheses": "force",
+		"memberExpression.linePerExpression": true,
+		// The ESLint rule I have for this has better heuristics.
+		"module.sortImportDeclarations": "maintain",
+	},
+	"includes": [
+		"**/*.{ts,tsx,js,jsx,mjs}",
+	],
+	"excludes": [
+		"**/node_modules",
+	],
+	"plugins": [
+		"https://plugins.dprint.dev/typescript-0.85.0.wasm",
+	],
+}
