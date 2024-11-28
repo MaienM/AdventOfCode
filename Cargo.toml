@@ -47,7 +47,7 @@ num = "0.4.1"
 pretty_assertions = "1.0.0"
 
 [lints.clippy]
-pedantic = "warn"
+pedantic = { level = "warn", priority = -1 }
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 module_name_repetitions = "allow"

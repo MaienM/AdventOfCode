@@ -69,7 +69,7 @@ impl<'a> From<&'a str> for Instruction<'a> {
         }
     }
 }
-impl<'a> Instruction<'a> {
+impl Instruction<'_> {
     fn matches(&self, part: &Part) -> bool {
         match (&self.var, &self.op) {
             (Var::X, Op::Gt) => part.x > self.val,
@@ -99,7 +99,7 @@ impl<'a> From<&'a str> for Workflow<'a> {
         }
     }
 }
-impl<'a> Workflow<'a> {
+impl Workflow<'_> {
     fn outcome(&self, part: &Part) -> &Outcome {
         for instruction in &self.instructions {
             if instruction.matches(part) {

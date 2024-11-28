@@ -93,7 +93,7 @@ fn parse_input(input: &str) -> Input {
     let Some(Module {
         outputs: broadcaster,
         ..
-    }) = modules.remove(&"roadcaster".to_owned())
+    }) = modules.remove("roadcaster")
     else {
         panic!("Failed to parse broadcaster in input.");
     };

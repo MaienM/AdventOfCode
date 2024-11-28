@@ -81,7 +81,7 @@ impl Graph {
     }
 }
 
-fn _to_graph(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut steps: usize) {
+fn to_graph_inner(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut steps: usize) {
     let mut prev = from;
     let mut curr = from;
 
@@ -143,7 +143,7 @@ fn _to_graph(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut st
             Tile::OneWay(direction) => {
                 let next = neighbour + direction;
                 if next != curr {
-                    _to_graph(map, graph, curr, next, 2);
+                    to_graph_inner(map, graph, curr, next, 2);
                 }
             }
         }
@@ -152,11 +152,11 @@ fn _to_graph(map: &Map, graph: &mut Graph, from_node: Point, from: Point, mut st
 
 fn to_graph(map: &Map) -> Graph {
     let mut graph = Graph::new();
-    _to_graph(map, &mut graph, map.start, map.start, 0);
+    to_graph_inner(map, &mut graph, map.start, map.start, 0);
     graph
 }
 
-fn _find_longest_path(
+fn find_longest_path_inner(
     graph: &Graph,
     abort_if: &[usize],
     mut visited: usize,
@@ -181,7 +181,7 @@ fn _find_longest_path(
         .unwrap()
         .par_iter()
         .map(|(curr, steps)| {
-            *steps as isize + _find_longest_path(graph, abort_if, visited, *curr, to)
+            *steps as isize + find_longest_path_inner(graph, abort_if, visited, *curr, to)
         })
         .max()
         .unwrap();
@@ -196,7 +196,7 @@ fn find_longest_path(graph: &mut Graph, from: Point, to: Point) -> isize {
     let mut abort_if = vec![graph.graph.get(&to).map_or(0, |e| e.keys().sum())];
     abort_if.retain(|v| *v > 0);
 
-    _find_longest_path(graph, &abort_if, 0, from, to)
+    find_longest_path_inner(graph, &abort_if, 0, from, to)
 }
 
 pub fn part1(input: &str) -> usize {
