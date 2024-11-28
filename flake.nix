@@ -3,7 +3,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
     fenix.url = "github:nix-community/fenix";
-    fenix.inputs.nixpkgs.follows = "nixpkgs";
+    # fenix.inputs.nixpkgs.follows = "nixpkgs";
 
     flake-utils.url = "github:numtide/flake-utils";
   };
@@ -15,7 +15,7 @@
       in
       {
         defaultPackage = fenix.packages.x86_64-linux.minimal.toolchain;
-        devShell = pkgs.mkShell rec {
+        devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
             # Core.
             (fenixPkgs.combine [
