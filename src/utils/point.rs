@@ -14,9 +14,11 @@ use num::traits::{
 use crate::utils::abs_diff;
 
 // These traits don't exist (and they shouldn't, there's no point to them), but it makes the generation easier if they do, so we'll define them here and then never expose them.
+#[allow(dead_code)]
 trait SaturatingDiv {
     fn saturating_div(&self, v: &Self) -> Self;
 }
+#[allow(dead_code)]
 trait WrappingDiv {
     fn wrapping_div(&self, v: &Self) -> Self;
 }
