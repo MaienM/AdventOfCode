@@ -4,6 +4,7 @@
 		"indentWidth": 3,
 		"useTabs": true,
 		"quoteStyle": "preferSingle",
+		"jsx.quoteStyle": "preferDouble",
 		"quoteProps": "asNeeded",
 		"arrowFunction.useParentheses": "force",
 		"memberExpression.linePerExpression": true,
