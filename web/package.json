@@ -44,7 +44,6 @@
     "@types/react-dom": "^18.2.18",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.8.1",
-    "eslint-plugin-unicorn": "^49.0.0",
     "git-revision-webpack-plugin": "^5.0.0",
     "style-loader": "^3.3.3",
     "ts-loader": "^9.5.1",
