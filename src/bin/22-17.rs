@@ -201,7 +201,7 @@ fn do_drops<'a>(
     top
 }
 
-fn simulate(input: &str, cycles: usize) -> (usize, HashSet<Point>) {
+fn simulate(input: &str, cycles: u64) -> (usize, HashSet<Point>) {
     let moves = parse_input(input);
     let stones = get_stones();
 
@@ -220,9 +220,15 @@ fn simulate(input: &str, cycles: usize) -> (usize, HashSet<Point>) {
     let mut loop_size = 0;
     let mut change_per_loop = 0;
     'findloop: while finished < cycles {
-        let drops = usize::min(cycles - finished, stones.len());
+        let drops = u64::min(cycles - finished, stones.len() as u64);
         finished += drops;
-        let new_top = do_drops(top, &mut points, &mut moveloop, &mut stoneloop, drops);
+        let new_top = do_drops(
+            top,
+            &mut points,
+            &mut moveloop,
+            &mut stoneloop,
+            drops as usize,
+        );
         changes.push(new_top - top);
         top = new_top;
 
@@ -240,8 +246,8 @@ fn simulate(input: &str, cycles: usize) -> (usize, HashSet<Point>) {
     }
 
     // Figure out how many times the loop needs to be repeated.
-    let loops = (cycles - finished) / loop_size;
-    finished += loops * loop_size;
+    let loops = (cycles - finished) / loop_size as u64;
+    finished += loops * loop_size as u64;
 
     // Run the leftover cycles.
     top = do_drops(
@@ -249,11 +255,11 @@ fn simulate(input: &str, cycles: usize) -> (usize, HashSet<Point>) {
         &mut points,
         &mut moveloop,
         &mut stoneloop,
-        cycles - finished,
+        (cycles - finished) as usize,
     );
 
     // Apply the loops to the height.
-    top += loops * change_per_loop;
+    top += loops as usize * change_per_loop;
 
     (top, points)
 }
