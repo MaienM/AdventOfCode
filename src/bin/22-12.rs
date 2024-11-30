@@ -3,41 +3,40 @@ use std::{
     collections::{BinaryHeap, HashSet},
 };
 
-use aoc::{
-    grid::{Grid as BaseGrid, Point},
-    runner::run,
-};
+use aoc::utils::{parse, point::Point2};
 use derive_new::new;
 
-type Grid = BaseGrid<u8>;
+type Grid = Vec<Vec<u8>>;
+type Point = Point2;
 
 fn parse_input(input: &str) -> (Grid, Point, Point) {
+    let placeholder_start = 100;
+    let placeholder_end = 101;
+
+    parse!(input =>
+        [grid split on '\n' with
+            [chars with |c| match c {
+                'S' => placeholder_start,
+                'E' => placeholder_end,
+                c => c as u8 - b'a',
+            } ]
+        ]
+    );
+
     let mut start = Option::None;
     let mut end = Option::None;
-    let grid: Vec<Vec<u8>> = input
-        .trim()
-        .split('\n')
-        .map(str::trim)
-        .map(|line| {
-            line.chars()
-                .map(|c| match c {
-                    'S' => 100,
-                    'E' => 101,
-                    c => c as u8 - b'a',
-                })
-                .collect()
-        })
-        .collect();
-    let mut grid = Grid::from(grid);
-    for (point, value) in grid.mut_by_cell() {
-        if value == &100 {
-            *value = 0;
-            start = Option::Some(point);
-        } else if value == &101 {
-            *value = 25;
-            end = Option::Some(point);
+    for (y, row) in grid.iter_mut().enumerate() {
+        for (x, value) in row.iter_mut().enumerate() {
+            if value == &placeholder_start {
+                *value = 0;
+                start = Option::Some(Point::new(x, y));
+            } else if value == &placeholder_end {
+                *value = 25;
+                end = Option::Some(Point::new(x, y));
+            }
         }
     }
+
     (grid, start.unwrap(), end.unwrap())
 }
 
@@ -63,26 +62,28 @@ fn pathfind(
     grid: &Grid,
     start: Point,
     predicate_valid: fn(u8, u8) -> bool,
-    predicate_done: impl Fn(Point) -> bool,
+    predicate_done: impl Fn(Point, u8) -> bool,
 ) -> u16 {
     let mut visited: HashSet<Point> = HashSet::new();
     let mut paths: BinaryHeap<PartialPath> = BinaryHeap::new();
-    paths.push(PartialPath::new(0, *grid.getp(start).unwrap(), start));
+    paths.push(PartialPath::new(0, grid[start.y][start.x], start));
     loop {
         let current = paths.pop().unwrap();
-        for point in grid.neighbours(current.point, false) {
+        for point in current.point.neighbours_ortho() {
             if visited.contains(&point) {
                 continue;
             }
 
-            let height = *grid.getp(point).unwrap();
-            if predicate_valid(height, current.height) {
-                if predicate_done(point) {
+            let Some(height) = grid.get(point.y).and_then(|row| row.get(point.x)) else {
+                continue;
+            };
+            if predicate_valid(*height, current.height) {
+                if predicate_done(point, *height) {
                     return current.steps + 1;
                 }
 
                 visited.insert(point);
-                paths.push(PartialPath::new(current.steps + 1, height, point));
+                paths.push(PartialPath::new(current.steps + 1, *height, point));
             }
         }
     }
@@ -94,31 +95,31 @@ pub fn part1(input: &str) -> u16 {
         &grid,
         start,
         |height, current| height <= current + 1,
-        |point| point == end,
+        |point, _| point == end,
     )
 }
 
 pub fn part2(input: &str) -> u16 {
-    let (grid, _start, end) = parse_input(input);
+    let (grid, _, end) = parse_input(input);
     pathfind(
         &grid,
         end,
         |height, current| current <= height + 1,
-        |point| grid.getp(point).unwrap() == &0,
+        |_, height| height == 0,
     )
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 31, part2 = 29)]
+    static EXAMPLE_INPUT: &str = "
         Sabqponm
         abcryxxl
         accszExk
@@ -128,7 +129,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = (
             Grid::from(vec![
                 vec![0, 0, 1, 16, 15, 14, 13, 12],
@@ -141,15 +142,5 @@ mod tests {
             Point::new(5, 2),
         );
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 31);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 29);
     }
 }

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use aoc::runner::run;
+use aoc::utils::parse;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Rucksack(HashSet<char>, HashSet<char>);
@@ -15,18 +15,18 @@ fn get_priority(chr: char) -> u16 {
 }
 
 fn parse_input(input: &str) -> Vec<Rucksack> {
-    return input
-        .trim()
-        .split('\n')
-        .map(str::trim)
-        .map(|line| {
-            let size = line.len();
-            let mut chars = line.chars();
-            let left = chars.by_ref().take(size / 2).collect::<HashSet<_>>();
-            let right = chars.by_ref().collect::<HashSet<_>>();
-            Rucksack(left, right)
-        })
-        .collect();
+    parse!(input => {
+        [rucksacks split on '\n' with
+            { line }
+            => {
+                let size = line.len();
+                let mut chars = line.chars();
+                let left = chars.by_ref().take(size / 2).collect::<HashSet<_>>();
+                let right = chars.by_ref().collect::<HashSet<_>>();
+                Rucksack(left, right)
+            }
+        ]
+    } => rucksacks)
 }
 
 pub fn part1(input: &str) -> u16 {
@@ -54,17 +54,17 @@ pub fn part2(input: &str) -> u16 {
     }
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 157, part2 = 70)]
+    static EXAMPLE_INPUT: &str = "
         vJrwpWtwJgWrhcsFMMfFFhFp
         jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
         PmmdzqPrVvPwwTWBwg
@@ -75,7 +75,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             Rucksack(
                 HashSet::from(['g', 'J', 'p', 'r', 't', 'v', 'w', 'W']),
@@ -113,15 +113,5 @@ mod tests {
         assert_eq!(get_priority('v'), 22);
         assert_eq!(get_priority('t'), 20);
         assert_eq!(get_priority('s'), 19);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 157);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 70);
     }
 }

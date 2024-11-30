@@ -1,24 +1,25 @@
 use std::collections::HashSet;
 
-use aoc::{grid::Point as BasePoint, runner::run};
+use aoc::utils::point::{Direction2, Point2};
 
-type Point = BasePoint<isize>;
+type Point = Point2<isize>;
 
 fn parse_input(input: &str) -> HashSet<Point> {
-    return input
-        .trim()
+    input
         .split('\n')
         .enumerate()
         .flat_map(|(y, line)| {
-            line.trim()
-                .char_indices()
+            line.char_indices()
                 .filter(|(_, c)| c == &'#')
                 .map(|(x, _)| Point::new(x as isize, y as isize))
                 .collect::<Vec<Point>>()
         })
-        .collect();
+        .collect()
 }
 
+// TODO: There is a neighbour method on Point2, but this one seems to be substantially faster,
+// probably because this one is (a) unchecked and (b) just an array instead of a HashSet. It should
+// be possible to generate unchecked versions of this method on Point as well.
 fn neighbours(point: &Point) -> [Point; 8] {
     [
         Point::new(point.x - 1, point.y - 1),
@@ -32,51 +33,42 @@ fn neighbours(point: &Point) -> [Point; 8] {
     ]
 }
 
-#[derive(Debug, Eq, PartialEq)]
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
-impl Direction {
-    fn get_points(&self, point: &Point) -> [Point; 3] {
-        match self {
-            Direction::North => [
-                Point::new(point.x - 1, point.y - 1),
-                Point::new(point.x, point.y - 1),
-                Point::new(point.x + 1, point.y - 1),
-            ],
-            Direction::East => [
-                Point::new(point.x + 1, point.y - 1),
-                Point::new(point.x + 1, point.y),
-                Point::new(point.x + 1, point.y + 1),
-            ],
-            Direction::South => [
-                Point::new(point.x - 1, point.y + 1),
-                Point::new(point.x, point.y + 1),
-                Point::new(point.x + 1, point.y + 1),
-            ],
-            Direction::West => [
-                Point::new(point.x - 1, point.y - 1),
-                Point::new(point.x - 1, point.y),
-                Point::new(point.x - 1, point.y + 1),
-            ],
-        }
+fn get_direction_points(direction: Direction2, point: &Point) -> [Point; 3] {
+    match direction {
+        Direction2::North => [
+            Point::new(point.x - 1, point.y - 1),
+            Point::new(point.x, point.y - 1),
+            Point::new(point.x + 1, point.y - 1),
+        ],
+        Direction2::East => [
+            Point::new(point.x + 1, point.y - 1),
+            Point::new(point.x + 1, point.y),
+            Point::new(point.x + 1, point.y + 1),
+        ],
+        Direction2::South => [
+            Point::new(point.x - 1, point.y + 1),
+            Point::new(point.x, point.y + 1),
+            Point::new(point.x + 1, point.y + 1),
+        ],
+        Direction2::West => [
+            Point::new(point.x - 1, point.y - 1),
+            Point::new(point.x - 1, point.y),
+            Point::new(point.x - 1, point.y + 1),
+        ],
     }
 }
 
-const DIRECTIONS: [Direction; 4] = [
-    Direction::North,
-    Direction::South,
-    Direction::West,
-    Direction::East,
+const DIRECTIONS: [Direction2; 4] = [
+    Direction2::North,
+    Direction2::South,
+    Direction2::West,
+    Direction2::East,
 ];
 
 #[derive(Debug, Eq, PartialEq)]
 struct State {
     elves: HashSet<Point>,
-    directions: Vec<Direction>,
+    directions: Vec<Direction2>,
 }
 
 fn cycle(state: &mut State) {
@@ -98,7 +90,7 @@ fn cycle(state: &mut State) {
             }
 
             'direction: for direction in &state.directions {
-                let points = direction.get_points(start);
+                let points = get_direction_points(*direction, start);
                 for point in points {
                     if state.elves.contains(&point) {
                         continue 'direction;
@@ -164,22 +156,22 @@ pub fn part2(input: &str) -> usize {
             return round;
         }
 
-        prev = state.elves.clone();
+        prev.clone_from(&state.elves);
     }
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use common_macros::hash_set;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT_SMALL: &str = "
+    #[example_input]
+    static EXAMPLE_INPUT_SMALL: &str = "
         .....
         ..##.
         ..#..
@@ -188,7 +180,8 @@ mod tests {
         .....
     ";
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 110, part2 = 20)]
+    static EXAMPLE_INPUT: &str = "
         ....#..
         ..###.#
         #...#.#
@@ -200,7 +193,7 @@ mod tests {
 
     #[test]
     fn example_parse_small() {
-        let actual = parse_input(EXAMPLE_INPUT_SMALL);
+        let actual = parse_input(&EXAMPLE_INPUT_SMALL);
         let expected = hash_set![
             Point::new(2, 1),
             Point::new(3, 1),
@@ -213,7 +206,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = hash_set![
             Point::new(4, 0),
             Point::new(2, 1),
@@ -266,10 +259,10 @@ mod tests {
                     Point::new(3, 3),
                 ],
                 directions: vec![
-                    Direction::South,
-                    Direction::West,
-                    Direction::East,
-                    Direction::North,
+                    Direction2::South,
+                    Direction2::West,
+                    Direction2::East,
+                    Direction2::North,
                 ],
             }
         );
@@ -286,10 +279,10 @@ mod tests {
                     Point::new(4, 3),
                 ],
                 directions: vec![
-                    Direction::West,
-                    Direction::East,
-                    Direction::North,
-                    Direction::South,
+                    Direction2::West,
+                    Direction2::East,
+                    Direction2::North,
+                    Direction2::South,
                 ],
             }
         );
@@ -306,10 +299,10 @@ mod tests {
                     Point::new(4, 3),
                 ],
                 directions: vec![
-                    Direction::East,
-                    Direction::North,
-                    Direction::South,
-                    Direction::West,
+                    Direction2::East,
+                    Direction2::North,
+                    Direction2::South,
+                    Direction2::West,
                 ],
             }
         );
@@ -326,10 +319,10 @@ mod tests {
                     Point::new(4, 3),
                 ],
                 directions: vec![
-                    Direction::North,
-                    Direction::South,
-                    Direction::West,
-                    Direction::East,
+                    Direction2::North,
+                    Direction2::South,
+                    Direction2::West,
+                    Direction2::East,
                 ],
             }
         );
@@ -396,10 +389,10 @@ mod tests {
                     Point::new(7, 9)
                 ],
                 directions: vec![
-                    Direction::South,
-                    Direction::West,
-                    Direction::East,
-                    Direction::North,
+                    Direction2::South,
+                    Direction2::West,
+                    Direction2::East,
+                    Direction2::North,
                 ],
             }
         );
@@ -434,10 +427,10 @@ mod tests {
                     Point::new(7, 9)
                 ],
                 directions: vec![
-                    Direction::West,
-                    Direction::East,
-                    Direction::North,
-                    Direction::South,
+                    Direction2::West,
+                    Direction2::East,
+                    Direction2::North,
+                    Direction2::South,
                 ],
             }
         );
@@ -472,10 +465,10 @@ mod tests {
                     Point::new(7, 10)
                 ],
                 directions: vec![
-                    Direction::East,
-                    Direction::North,
-                    Direction::South,
-                    Direction::West,
+                    Direction2::East,
+                    Direction2::North,
+                    Direction2::South,
+                    Direction2::West,
                 ],
             }
         );
@@ -510,10 +503,10 @@ mod tests {
                     Point::new(7, 10)
                 ],
                 directions: vec![
-                    Direction::North,
-                    Direction::South,
-                    Direction::West,
-                    Direction::East,
+                    Direction2::North,
+                    Direction2::South,
+                    Direction2::West,
+                    Direction2::East,
                 ],
             }
         );
@@ -548,10 +541,10 @@ mod tests {
                     Point::new(7, 10)
                 ],
                 directions: vec![
-                    Direction::South,
-                    Direction::West,
-                    Direction::East,
-                    Direction::North,
+                    Direction2::South,
+                    Direction2::West,
+                    Direction2::East,
+                    Direction2::North,
                 ],
             }
         );
@@ -588,22 +581,12 @@ mod tests {
                     Point::new(10, 10)
                 ],
                 directions: vec![
-                    Direction::West,
-                    Direction::East,
-                    Direction::North,
-                    Direction::South,
+                    Direction2::West,
+                    Direction2::East,
+                    Direction2::North,
+                    Direction2::South,
                 ],
             }
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 110);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 20);
     }
 }

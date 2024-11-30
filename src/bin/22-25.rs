@@ -1,4 +1,4 @@
-use aoc::runner::run;
+use aoc::utils::parse;
 
 fn to_snafu(mut num: u64) -> String {
     let mut chars = Vec::new();
@@ -34,26 +34,25 @@ fn from_snafu(num: &str) -> u64 {
 }
 
 pub fn part1(input: &str) -> String {
-    let lines = input.trim().split('\n').map(str::trim);
-    let numbers = lines.map(from_snafu);
-    to_snafu(numbers.sum())
+    parse!(input => [numbers split on '\n' with from_snafu]);
+    to_snafu(numbers.into_iter().sum())
 }
 
 pub fn part2(_input: &str) -> &'static str {
     "I did it!"
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = "2=-1=0")]
+    static EXAMPLE_INPUT: &str = "
         1=-0-2
         12111
         2=0=
@@ -83,7 +82,7 @@ mod tests {
         (15, "1=0"),
         (20, "1-0"),
         (2022, "1=11-2"),
-        (12345, "1-0---0"),
+        (12_345, "1-0---0"),
         (314_159_265, "1121-1110-1=0"),
     ];
 
@@ -99,15 +98,5 @@ mod tests {
         for (num, snafu) in EXAMPLES {
             assert_eq!(to_snafu(num), snafu);
         }
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), "2=-1=0");
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), "I did it!");
     }
 }

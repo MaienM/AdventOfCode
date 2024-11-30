@@ -1,11 +1,24 @@
 use std::ops::RangeInclusive;
 
-use aoc::runner::run;
+use aoc::utils::parse;
 
-type Range = RangeInclusive<i16>;
+type Range = RangeInclusive<u16>;
+
+fn parse_range(input: &str) -> Range {
+    parse!(input => { [start as u16] "-" [end as u16] } => start..=end)
+}
+
+fn parse_input(input: &str) -> Vec<(Range, Range)> {
+    parse!(input => {
+        [ranges split on '\n' with
+            { [left with parse_range] "," [right with parse_range] }
+            => (left, right)
+        ]
+    } => ranges)
+}
 
 fn range_is_subset(left: &Range, right: &Range) -> bool {
-    return left.contains(right.start()) && left.contains(right.end());
+    left.contains(right.start()) && left.contains(right.end())
 }
 
 fn range_is_subset_two_ways(left: &Range, right: &Range) -> bool {
@@ -13,36 +26,10 @@ fn range_is_subset_two_ways(left: &Range, right: &Range) -> bool {
 }
 
 fn ranges_overlap(left: &Range, right: &Range) -> bool {
-    return left.contains(right.start())
+    left.contains(right.start())
         || left.contains(right.end())
         || right.contains(left.start())
-        || right.contains(left.end());
-}
-
-fn parse_input(input: &str) -> Vec<(Range, Range)> {
-    return input
-        .trim()
-        .split('\n')
-        .map(|line| {
-            let [left, right]: [Range; 2] = line
-                .trim()
-                .splitn(2, ',')
-                .map(|part| {
-                    let [lower, upper]: [i16; 2] = part
-                        .splitn(2, '-')
-                        .map(str::parse)
-                        .map(Result::unwrap)
-                        .collect::<Vec<i16>>()
-                        .try_into()
-                        .unwrap();
-                    lower..=upper
-                })
-                .collect::<Vec<Range>>()
-                .try_into()
-                .unwrap();
-            (left, right)
-        })
-        .collect();
+        || right.contains(left.end())
 }
 
 pub fn part1(input: &str) -> usize {
@@ -61,17 +48,17 @@ pub fn part2(input: &str) -> usize {
         .count()
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 2, part2 = 4)]
+    static EXAMPLE_INPUT: &str = "
         2-4,6-8
         2-3,4-5
         5-7,7-9
@@ -82,7 +69,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             (2..=4, 6..=8),
             (2..=3, 4..=5),
@@ -92,6 +79,13 @@ mod tests {
             (2..=6, 4..=8),
         ];
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_range_is_subset() {
+        assert_eq!(range_is_subset(&(0..=8), &(1..=7)), true);
+        assert_eq!(range_is_subset(&(1..=7), &(0..=8)), false);
+        assert_eq!(range_is_subset(&(1..=9), &(0..=8)), false);
     }
 
     #[test]
@@ -106,15 +100,5 @@ mod tests {
         assert_eq!(ranges_overlap(&(0..=5), &(2..=7)), true);
         assert_eq!(ranges_overlap(&(5..=7), &(0..=5)), true);
         assert_eq!(ranges_overlap(&(6..=7), &(0..=5)), false);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 2);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 4);
     }
 }

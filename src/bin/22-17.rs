@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 
-use aoc::{grid::Point, runner::run};
+use aoc::utils::{parse, point::Point2};
+
+type Point = Point2;
 
 #[derive(Clone, Debug)]
 struct Stone {
@@ -20,21 +22,21 @@ impl Stone {
                 if self.points[0].x == 0 {
                     return self.clone();
                 }
-                return Stone {
+                Stone {
                     width: self.width,
                     top: self.top,
                     points: self.points.iter().map(|p| *p - Point::new(1, 0)).collect(),
-                };
+                }
             }
             Move::Right => {
                 if self.points[0].x + self.width == 7 {
                     return self.clone();
                 }
-                return Stone {
+                Stone {
                     width: self.width,
                     top: self.top,
                     points: self.points.iter().map(|p| *p + Point::new(1, 0)).collect(),
-                };
+                }
             }
             Move::Down => Stone {
                 width: self.width,
@@ -109,6 +111,19 @@ enum Move {
     Right,
     Down,
 }
+impl From<char> for Move {
+    fn from(value: char) -> Self {
+        match value {
+            '<' => Move::Left,
+            '>' => Move::Right,
+            _ => panic!(),
+        }
+    }
+}
+
+fn parse_input(input: &str) -> Vec<Move> {
+    parse!(input => { [moves chars as Move] } => moves)
+}
 
 #[allow(dead_code)]
 fn print_field(stone: &Stone, points: &HashSet<Point>, name: &str) {
@@ -130,18 +145,6 @@ fn print_field(stone: &Stone, points: &HashSet<Point>, name: &str) {
     }
     println!("+-------+");
     println!(" 0123456");
-}
-
-fn parse_input(input: &str) -> Vec<Move> {
-    return input
-        .trim()
-        .chars()
-        .map(|c| match c {
-            '<' => Move::Left,
-            '>' => Move::Right,
-            _ => panic!(),
-        })
-        .collect();
 }
 
 fn do_drop<'a>(
@@ -211,7 +214,7 @@ fn simulate(input: &str, cycles: usize) -> (usize, HashSet<Point>) {
         points.insert(Point::new(x, 0));
     }
 
-    // Run a full cycles until we detect a stable loop.
+    // Repeatedly run a full cycle until we detect a stable loop.
     let mut finished = 0;
     let mut changes = Vec::new();
     let mut loop_size = 0;
@@ -263,21 +266,21 @@ pub fn part2(input: &str) -> usize {
     simulate(input, 1_000_000_000_000).0
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
+    #[example_input(part1 = 3_068, part2 = 1_514_285_714_288)]
+    static EXAMPLE_INPUT: &str = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             Move::Right,
             Move::Right,
@@ -324,16 +327,6 @@ mod tests {
     }
 
     #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 3_068);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 1_514_285_714_288);
-    }
-
-    #[test]
     #[allow(clippy::too_many_lines)]
     fn example_do_drop() {
         let mut before = HashSet::new();
@@ -341,7 +334,7 @@ mod tests {
             before.insert(Point::new(x, 0));
         }
 
-        let (top, points) = simulate(EXAMPLE_INPUT, 1);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 1);
         assert_eq!(top, 1);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -356,7 +349,7 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT, 2);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 2);
         assert_eq!(top, 4);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -372,7 +365,7 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT, 3);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 3);
         assert_eq!(top, 6);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -388,7 +381,7 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT, 4);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 4);
         assert_eq!(top, 7);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -403,7 +396,7 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT, 5);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 5);
         assert_eq!(top, 9);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -418,7 +411,7 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT, 6);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 6);
         assert_eq!(top, 10);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -433,7 +426,7 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT, 7);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 7);
         assert_eq!(top, 13);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -449,7 +442,7 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT, 8);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 8);
         assert_eq!(top, 15);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -465,7 +458,7 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT, 9);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 9);
         assert_eq!(top, 17);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),
@@ -480,7 +473,7 @@ mod tests {
         );
 
         let before = points;
-        let (top, points) = simulate(EXAMPLE_INPUT, 10);
+        let (top, points) = simulate(&EXAMPLE_INPUT, 10);
         assert_eq!(top, 17);
         assert_eq!(
             points.difference(&before).collect::<HashSet<&Point>>(),

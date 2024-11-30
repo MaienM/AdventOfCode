@@ -1,7 +1,5 @@
 use std::collections::HashSet;
 
-use aoc::runner::run;
-
 fn find_marker(sequence: &str, length: usize) -> usize {
     for i in 0..=(sequence.len() - length) {
         if sequence[i..(i + length)]
@@ -24,31 +22,26 @@ pub fn part2(input: &str) -> usize {
     find_marker(input, 14)
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
-    use pretty_assertions::assert_eq;
+    use aoc_derive::example_input;
 
     use super::*;
 
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1("mjqjpqmgbljsphdztnvjfqwrcgsmlb"), 7);
-        assert_eq!(part1("bvwbjplbgvbhsrlpgdmjqwftvncz"), 5);
-        assert_eq!(part1("nppdvjthqldpwncqszvftbrmjlhg"), 6);
-        assert_eq!(part1("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"), 10);
-        assert_eq!(part1("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"), 11);
-    }
+    #[example_input(part1 = 7, part2 = 19)]
+    static EXAMPLE_INPUT_1: &str = "mjqjpqmgbljsphdztnvjfqwrcgsmlb";
 
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2("mjqjpqmgbljsphdztnvjfqwrcgsmlb"), 19);
-        assert_eq!(part2("bvwbjplbgvbhsrlpgdmjqwftvncz"), 23);
-        assert_eq!(part2("nppdvjthqldpwncqszvftbrmjlhg"), 23);
-        assert_eq!(part2("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"), 29);
-        assert_eq!(part2("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"), 26);
-    }
+    #[example_input(part1 = 5, part2 = 23)]
+    static EXAMPLE_INPUT_2: &str = "bvwbjplbgvbhsrlpgdmjqwftvncz";
+
+    #[example_input(part1 = 6, part2 = 23)]
+    static EXAMPLE_INPUT_3: &str = "nppdvjthqldpwncqszvftbrmjlhg";
+
+    #[example_input(part1 = 10, part2 = 29)]
+    static EXAMPLE_INPUT_4: &str = "nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg";
+
+    #[example_input(part1 = 11, part2 = 26)]
+    static EXAMPLE_INPUT_5: &str = "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw";
 }

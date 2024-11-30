@@ -1,8 +1,8 @@
 use std::{collections::HashSet, ops::Range};
 
-use aoc::{grid::Point as BasePoint, runner::run};
+use aoc::utils::point::Point2;
 
-type Point = BasePoint<u8>;
+type Point = Point2<u8>;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Direction {
@@ -75,7 +75,7 @@ impl Map {
 }
 
 fn parse_input(input: &str) -> Map {
-    let lines: Vec<&str> = input.trim().split('\n').map(str::trim).collect();
+    let lines: Vec<&str> = input.split('\n').collect();
     let x_range = 1..((lines[0].len() - 1) as u8);
     let y_range = 1..((lines.len() - 1) as u8);
     let start = Point::new(
@@ -176,18 +176,18 @@ pub fn part2(input: &str) -> usize {
     navigate(&mut map, start, end) + navigate(&mut map, end, start) + navigate(&mut map, start, end)
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use common_macros::hash_set;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 18, part2 = 54)]
+    static EXAMPLE_INPUT: &str = "
         #.######
         #>>.<^<#
         #.<..<<#
@@ -198,7 +198,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = Map {
             x_range: 1..7,
             y_range: 1..5,
@@ -385,15 +385,5 @@ mod tests {
                 Blizard(Point::new(3, 4), Direction::East),
             ]
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 18);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 54);
     }
 }

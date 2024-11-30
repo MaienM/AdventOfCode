@@ -3,7 +3,7 @@ use std::{
     collections::{BinaryHeap, HashMap, HashSet},
 };
 
-use aoc::{counter::Counter, runner::run};
+use aoc::utils::parse;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct Point(i8, i8, i8);
@@ -25,7 +25,6 @@ impl Ord for Point {
             .cmp(&(self.0.abs() + self.1.abs() + self.2.abs()))
     }
 }
-
 impl PartialOrd for Point {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
@@ -33,22 +32,12 @@ impl PartialOrd for Point {
 }
 
 fn parse_input(input: &str) -> Vec<Point> {
-    return input
-        .trim()
-        .split('\n')
-        .map(|line| {
-            let mut parts = line
-                .trim()
-                .splitn(3, ',')
-                .map(str::parse)
-                .map(Result::unwrap);
-            Point(
-                parts.next().unwrap(),
-                parts.next().unwrap(),
-                parts.next().unwrap(),
-            )
-        })
-        .collect();
+    parse!(input => {
+        [points split on '\n' with 
+            { [coords split on ',' as i8] }
+            => Point(coords[0], coords[1], coords[2])
+        ]
+    } => points)
 }
 
 enum Air {
@@ -80,7 +69,7 @@ fn get_counts(points: &[Point]) -> HashMap<Point, u16> {
     let mut neighbour_counts = HashMap::new();
     for point in points {
         for neighbour in point.neighbours() {
-            neighbour_counts.count(neighbour, 1);
+            *(neighbour_counts.entry(neighbour).or_default()) += 1;
         }
     }
     for point in points {
@@ -119,17 +108,17 @@ pub fn part2(input: &str) -> u16 {
     cooling
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 64, part2 = 58)]
+    static EXAMPLE_INPUT: &str = "
         2,2,2
         1,2,2
         3,2,2
@@ -147,7 +136,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             Point(2, 2, 2),
             Point(1, 2, 2),
@@ -164,15 +153,5 @@ mod tests {
             Point(2, 3, 5),
         ];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 64);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 58);
     }
 }

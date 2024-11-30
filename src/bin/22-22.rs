@@ -3,9 +3,10 @@ use std::{
     ops::{Add, Sub},
 };
 
-use aoc::{grid::Point, runner::run};
+use aoc::utils::{parse, point::Point2};
 
-type BlockPoint = Point<isize>;
+type Point = Point2;
+type BlockPoint = Point2<isize>;
 
 fn get_block(point: &Point, block_size: usize) -> BlockPoint {
     BlockPoint::new(
@@ -14,6 +15,10 @@ fn get_block(point: &Point, block_size: usize) -> BlockPoint {
     )
 }
 
+// An important observation about the grid is that it is comprised of 6 square sections of the same
+// size. To optimize this grid we store the size of these blocks and their relative coordinates,
+// and these two bits are enough to figure out whether a given point is simply on the grid or
+// requires wrapping.
 #[derive(Debug, Eq, PartialEq)]
 struct Grid {
     walls: HashSet<Point>,
@@ -43,17 +48,16 @@ enum Action {
 type Actions = Vec<Action>;
 
 fn parse_input(input: &str) -> (Grid, Actions) {
-    let [grid, path]: [&str; 2] = input
-        .splitn(2, "\n\n")
-        .collect::<Vec<&str>>()
-        .try_into()
-        .unwrap();
+    parse!(input =>
+        [grid split on '\n']
+        "\n\n"
+        path
+    );
 
     let mut walls = HashSet::new();
-    let lines = grid.split('\n');
-    let block_size = lines.map(str::trim).map(str::len).min().unwrap();
+    let block_size = grid.iter().map(|l| l.trim().len()).min().unwrap();
     let mut blocks = HashSet::new();
-    for (y, line) in grid.split('\n').enumerate() {
+    for (y, line) in grid.into_iter().enumerate() {
         for (x, c) in line.char_indices() {
             if c == '#' {
                 let point = Point::new(x, y);
@@ -303,10 +307,10 @@ fn process(grid: Grid, actions: Actions, directions: Directions) -> usize {
 
 fn map_faces_grid(grid: &Grid) -> Directions {
     let blocks = grid.blocks;
-    return blocks
+    blocks
         .iter()
         .map(|block| {
-            let top = if block.y > 0 && blocks.contains(&Point::new(block.x, block.y - 1)) {
+            let top = if block.y > 0 && blocks.contains(&BlockPoint::new(block.x, block.y - 1)) {
                 BlockPoint::new(block.x, block.y - 1)
             } else {
                 *blocks
@@ -363,7 +367,7 @@ fn map_faces_grid(grid: &Grid) -> Directions {
         })
         .collect::<Vec<Face>>()
         .try_into()
-        .unwrap();
+        .unwrap()
 }
 
 // Paths that can be taken to get to the face that is on the top edge of the starting face, and the
@@ -413,7 +417,7 @@ fn find_cube_edge(grid: &Grid, start: &BlockPoint, direction: Direction) -> Edge
 fn map_faces_cube(grid: &Grid) -> Directions {
     let blocks = grid.blocks;
 
-    return blocks
+    blocks
         .iter()
         .map(|block| {
             let top = find_cube_edge(grid, block, Direction::Up);
@@ -429,7 +433,7 @@ fn map_faces_cube(grid: &Grid) -> Directions {
         })
         .collect::<Vec<Face>>()
         .try_into()
-        .unwrap();
+        .unwrap()
 }
 
 pub fn part1(input: &str) -> usize {
@@ -444,21 +448,36 @@ pub fn part2(input: &str) -> usize {
     process(grid, actions, directions)
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "        ...#\n        .#..\n        #...\n        ....\n...#.......#\n........#...\n..#....#....\n..........#.\n        ...#....\n        .....#..\n        .#......\n        ......#.\n\n10R5L5R10L4R5L5";
+    #[example_input(part1 = 6032, part2 = 5031)]
+    static EXAMPLE_INPUT: &str = "
+                ...#
+                .#..
+                #...
+                ....
+        ...#.......#
+        ........#...
+        ..#....#....
+        ..........#.
+                ...#....
+                .....#..
+                .#......
+                ......#.
+
+        10R5L5R10L4R5L5
+    ";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let grid = Grid {
             walls: vec![
                 Point::new(11, 0),
@@ -479,12 +498,12 @@ mod tests {
             .collect(),
             block_size: 4,
             blocks: [
-                Point::new(2, 0),
-                Point::new(0, 1),
-                Point::new(1, 1),
-                Point::new(2, 1),
-                Point::new(2, 2),
-                Point::new(3, 2),
+                BlockPoint::new(2, 0),
+                BlockPoint::new(0, 1),
+                BlockPoint::new(1, 1),
+                BlockPoint::new(2, 1),
+                BlockPoint::new(2, 2),
+                BlockPoint::new(3, 2),
             ],
         };
         let actions = vec![
@@ -512,12 +531,12 @@ mod tests {
             walls: HashSet::new(),
             block_size: 4,
             blocks: [
-                Point::new(2, 0),
-                Point::new(0, 1),
-                Point::new(1, 1),
-                Point::new(2, 1),
-                Point::new(2, 2),
-                Point::new(3, 2),
+                BlockPoint::new(2, 0),
+                BlockPoint::new(0, 1),
+                BlockPoint::new(1, 1),
+                BlockPoint::new(2, 1),
+                BlockPoint::new(2, 2),
+                BlockPoint::new(3, 2),
             ],
         };
         let expected = [
@@ -647,12 +666,12 @@ mod tests {
             walls: HashSet::new(),
             block_size: 4,
             blocks: [
-                Point::new(2, 0),
-                Point::new(0, 1),
-                Point::new(1, 1),
-                Point::new(2, 1),
-                Point::new(2, 2),
-                Point::new(3, 2),
+                BlockPoint::new(2, 0),
+                BlockPoint::new(0, 1),
+                BlockPoint::new(1, 1),
+                BlockPoint::new(2, 1),
+                BlockPoint::new(2, 2),
+                BlockPoint::new(3, 2),
             ],
         };
         let expected = [
@@ -773,15 +792,5 @@ mod tests {
         ];
         let actual = map_faces_cube(&grid);
         assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 6_032);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 5_031);
     }
 }

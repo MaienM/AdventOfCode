@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use aoc::runner::run;
+use aoc::utils::parse;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Operation {
@@ -8,6 +8,16 @@ enum Operation {
     Rem,
     Mul,
     Div,
+}
+impl Operation {
+    fn apply(&self, lhs: u64, rhs: u64) -> u64 {
+        match self {
+            Operation::Add => lhs + rhs,
+            Operation::Rem => lhs - rhs,
+            Operation::Mul => lhs * rhs,
+            Operation::Div => lhs / rhs,
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -17,32 +27,29 @@ enum Job<'a> {
 }
 
 fn parse_input(input: &str) -> HashMap<&str, Job> {
-    return input
-        .trim()
-        .split('\n')
-        .map(|line| {
-            let mut parts = line.trim().split(' ');
-            let name = parts.next().unwrap().strip_suffix(':').unwrap();
-            let job = match (parts.next(), parts.next(), parts.next()) {
-                (Option::Some(num), Option::None, Option::None) => {
-                    Job::Number(num.parse().unwrap())
-                }
-                (Option::Some(lhs), Option::Some(operation), Option::Some(rhs)) => Job::Operation(
-                    lhs,
-                    match operation {
-                        "+" => Operation::Add,
-                        "-" => Operation::Rem,
-                        "*" => Operation::Mul,
-                        "/" => Operation::Div,
-                        _ => panic!(),
-                    },
-                    rhs,
-                ),
-                _ => panic!(),
-            };
-            (name, job)
-        })
-        .collect();
+    parse!(input => {
+        [monkeys split on '\n' into (HashMap<_, _>) with
+            { name ": " [job split] }
+            => {
+                let job = match job[..] {
+                    [num] => Job::Number(num.parse().unwrap()),
+                    [lhs, op, rhs] => Job::Operation(
+                        lhs,
+                        match op {
+                            "+" => Operation::Add,
+                            "-" => Operation::Rem,
+                            "*" => Operation::Mul,
+                            "/" => Operation::Div,
+                            _ => panic!(),
+                        },
+                        rhs,
+                    ),
+                    _ => panic!(),
+                };
+                (name, job)
+            }
+        ]
+    } => monkeys)
 }
 
 pub fn part1(input: &str) -> u64 {
@@ -65,12 +72,7 @@ pub fn part1(input: &str) -> u64 {
                 if results.contains_key(lhs) && results.contains_key(rhs) {
                     let lhs = *results.get(lhs).unwrap();
                     let rhs = *results.get(rhs).unwrap();
-                    let num = match operation {
-                        Operation::Add => lhs + rhs,
-                        Operation::Rem => lhs - rhs,
-                        Operation::Mul => lhs * rhs,
-                        Operation::Div => lhs / rhs,
-                    };
+                    let num = operation.apply(lhs, rhs);
                     results.insert(name, num);
                     return false;
                 }
@@ -80,7 +82,7 @@ pub fn part1(input: &str) -> u64 {
         });
     }
 
-    return *results.get("root").unwrap();
+    *results.get("root").unwrap()
 }
 
 pub fn part2(input: &str) -> u64 {
@@ -108,12 +110,7 @@ pub fn part2(input: &str) -> u64 {
                 if results.contains_key(lhs) && results.contains_key(rhs) {
                     let lhs = *results.get(lhs).unwrap();
                     let rhs = *results.get(rhs).unwrap();
-                    let num = match operation {
-                        Operation::Add => lhs + rhs,
-                        Operation::Rem => lhs - rhs,
-                        Operation::Mul => lhs * rhs,
-                        Operation::Div => lhs / rhs,
-                    };
+                    let num = operation.apply(lhs, rhs);
                     results.insert(name, num);
                     return false;
                 }
@@ -178,17 +175,17 @@ pub fn part2(input: &str) -> u64 {
     }
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 152, part2 = 301)]
+    static EXAMPLE_INPUT: &str = "
         root: pppw + sjmn
         dbpl: 5
         cczh: sllz + lgvd
@@ -208,7 +205,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             ("root", Job::Operation("pppw", Operation::Add, "sjmn")),
             ("dbpl", Job::Number(5)),
@@ -229,15 +226,5 @@ mod tests {
         .into_iter()
         .collect();
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 152);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 301);
     }
 }

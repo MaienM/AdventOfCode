@@ -1,45 +1,36 @@
 use std::collections::HashSet;
 
-use aoc::{grid::Point as BasePoint, runner::run};
+use aoc::utils::{
+    parse,
+    point::{Direction2, Point2},
+};
 use derive_new::new;
 
-type Point = BasePoint<isize>;
-
-#[non_exhaustive]
-struct Direction {}
-impl Direction {
-    pub const UP: Point = Point { x: 0, y: 1 };
-    pub const DOWN: Point = Point { x: 0, y: -1 };
-    pub const LEFT: Point = Point { x: -1, y: 0 };
-    pub const RIGHT: Point = Point { x: 1, y: 0 };
-}
+type Point = Point2<isize>;
 
 #[derive(new, Eq, PartialEq, Debug)]
 struct Move {
-    direction: Point,
+    direction: Direction2,
     distance: usize,
 }
 
+fn parse_direction(input: &str) -> Direction2 {
+    match input {
+        "U" => Direction2::North,
+        "D" => Direction2::South,
+        "L" => Direction2::West,
+        "R" => Direction2::East,
+        _ => panic!(),
+    }
+}
+
 fn parse_input(input: &str) -> Vec<Move> {
-    return input
-        .trim()
-        .split('\n')
-        .map(str::trim)
-        .map(|line| {
-            let direction = match &line[0..1] {
-                "U" => Direction::UP,
-                "D" => Direction::DOWN,
-                "L" => Direction::LEFT,
-                "R" => Direction::RIGHT,
-                _ => panic!(),
-            };
-            let distance = line[2..].parse().unwrap();
-            Move {
-                direction,
-                distance,
-            }
-        })
-        .collect();
+    parse!(input => {
+        [moves split on '\n' with
+            { [direction with parse_direction] " " [distance as usize] }
+            => Move { direction, distance }
+        ]
+    } => moves)
 }
 
 fn follow(follower: &Point, leader: &Point) -> Point {
@@ -84,17 +75,17 @@ pub fn part2(input: &str) -> usize {
     visited.len()
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT_1: &str = "
+    #[example_input(part1 = 13)]
+    static EXAMPLE_INPUT_1: &str = "
         R 4
         U 4
         L 3
@@ -104,7 +95,9 @@ mod tests {
         L 5
         R 2
     ";
-    const EXAMPLE_INPUT_2: &str = "
+
+    #[example_input(part2 = 36)]
+    static EXAMPLE_INPUT_2: &str = "
         R 5
         U 8
         L 8
@@ -117,27 +110,17 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT_1);
+        let actual = parse_input(&EXAMPLE_INPUT_1);
         let expected = vec![
-            Move::new(Direction::RIGHT, 4),
-            Move::new(Direction::UP, 4),
-            Move::new(Direction::LEFT, 3),
-            Move::new(Direction::DOWN, 1),
-            Move::new(Direction::RIGHT, 4),
-            Move::new(Direction::DOWN, 1),
-            Move::new(Direction::LEFT, 5),
-            Move::new(Direction::RIGHT, 2),
+            Move::new(Direction2::East, 4),
+            Move::new(Direction2::North, 4),
+            Move::new(Direction2::West, 3),
+            Move::new(Direction2::South, 1),
+            Move::new(Direction2::East, 4),
+            Move::new(Direction2::South, 1),
+            Move::new(Direction2::West, 5),
+            Move::new(Direction2::East, 2),
         ];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT_1), 13);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT_2), 36);
     }
 }

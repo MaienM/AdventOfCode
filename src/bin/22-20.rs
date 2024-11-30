@@ -1,15 +1,9 @@
 use std::collections::VecDeque;
 
-use aoc::runner::run;
+use aoc::utils::parse;
 
 fn parse_input(input: &str) -> Vec<i64> {
-    return input
-        .trim()
-        .split('\n')
-        .map(str::trim)
-        .map(str::parse)
-        .map(Result::unwrap)
-        .collect();
+    parse!(input => { [numbers split on '\n' as i64] } => numbers)
 }
 
 fn mix(numbers: Vec<i64>, times: usize) -> Vec<i64> {
@@ -62,17 +56,17 @@ pub fn part2(input: &str) -> i64 {
     get_coordinates(&numbers)
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 3, part2 = 1_623_178_306)]
+    static EXAMPLE_INPUT: &str = "
         1
         2
         -3
@@ -96,7 +90,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![1, 2, -3, 3, -2, 0, 4];
         assert_eq!(actual, expected);
     }
@@ -247,15 +241,5 @@ mod tests {
                 811_589_153,
             ]
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 3);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 1_623_178_306);
     }
 }

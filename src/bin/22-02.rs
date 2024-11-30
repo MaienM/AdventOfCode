@@ -1,4 +1,5 @@
-use aoc::runner::run;
+use aoc::utils::parse;
+use derive_new::new;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Shape {
@@ -6,9 +7,25 @@ enum Shape {
     Paper = 2,
     Scisors = 3,
 }
-impl Shape {
-    pub fn score(self, other: Shape) -> u16 {
-        match (self, other) {
+impl From<&str> for Shape {
+    fn from(value: &str) -> Self {
+        match value {
+            "A" => Shape::Rock,
+            "B" => Shape::Paper,
+            "C" => Shape::Scisors,
+            _ => panic!("Unknown shape {value:?}."),
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, new)]
+struct Round {
+    player: Shape,
+    opponent: Shape,
+}
+impl Round {
+    pub fn score(&self) -> u16 {
+        match (self.player, self.opponent) {
             (Shape::Rock, Shape::Paper) => 1,
             (Shape::Paper, Shape::Scisors) => 2,
             (Shape::Scisors, Shape::Rock) => 3,
@@ -24,86 +41,61 @@ impl Shape {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
-struct Round {
-    player: Shape,
-    opponent: Shape,
-}
-
 fn parse_input_part1(input: &str) -> Vec<Round> {
-    return input
-        .trim()
-        .split('\n')
-        .map(|line| {
-            let mut parts = line.trim().splitn(2, ' ');
-            let opponent = match parts.next() {
-                Some("A") => Shape::Rock,
-                Some("B") => Shape::Paper,
-                Some("C") => Shape::Scisors,
-                v => panic!("Invalid opponent choice {v:?}."),
-            };
-            let player = match parts.next() {
-                Some("X") => Shape::Rock,
-                Some("Y") => Shape::Paper,
-                Some("Z") => Shape::Scisors,
-                v => panic!("Invalid player choice {v:?}."),
-            };
-            Round { player, opponent }
-        })
-        .collect();
+    parse!(input => {
+        [rounds split on '\n' with
+            { [opponent as Shape] " " p }
+            => {
+                let player = match p {
+                    "X" => Shape::Rock,
+                    "Y" => Shape::Paper,
+                    "Z" => Shape::Scisors,
+                    v => panic!("Invalid player choice {v:?}."),
+                };
+                Round { player, opponent }
+            }
+        ]
+    } => rounds)
 }
 
 fn parse_input_part2(input: &str) -> Vec<Round> {
-    return input
-        .trim()
-        .split('\n')
-        .map(|line| {
-            let mut parts = line.trim().splitn(2, ' ');
-            let opponent = match parts.next() {
-                Some("A") => Shape::Rock,
-                Some("B") => Shape::Paper,
-                Some("C") => Shape::Scisors,
-                v => panic!("Invalid opponent choice {v:?}."),
-            };
-            let player = match parts.next() {
-                Some("X") => [Shape::Scisors, Shape::Rock, Shape::Paper][opponent as usize - 1], // lose
-                Some("Y") => [Shape::Rock, Shape::Paper, Shape::Scisors][opponent as usize - 1], // draw
-                Some("Z") => [Shape::Paper, Shape::Scisors, Shape::Rock][opponent as usize - 1], // win
-                v => panic!("Invalid round outcome {v:?}."),
-            };
-            Round { player, opponent }
-        })
-        .collect();
-}
-
-fn get_score(rounds: &[Round]) -> u16 {
-    return rounds
-        .iter()
-        .map(|round| round.player.score(round.opponent))
-        .sum();
+    parse!(input => {
+        [rounds split on '\n' with
+            { [opponent as Shape] " " p }
+            => {
+                let player = match p {
+                    "X" => [Shape::Scisors, Shape::Rock, Shape::Paper][opponent as usize - 1], // lose
+                    "Y" => [Shape::Rock, Shape::Paper, Shape::Scisors][opponent as usize - 1], // draw
+                    "Z" => [Shape::Paper, Shape::Scisors, Shape::Rock][opponent as usize - 1], // win
+                    v => panic!("Invalid round outcome {v:?}."),
+                };
+                Round { player, opponent }
+            }
+        ]
+    } => rounds)
 }
 
 pub fn part1(input: &str) -> u16 {
     let rounds = parse_input_part1(input);
-    get_score(&rounds)
+    rounds.iter().map(Round::score).sum()
 }
 
 pub fn part2(input: &str) -> u16 {
     let rounds = parse_input_part2(input);
-    get_score(&rounds)
+    rounds.iter().map(Round::score).sum()
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 15, part2 = 12)]
+    static EXAMPLE_INPUT: &str = "
         A Y
         B X
         C Z
@@ -111,63 +103,36 @@ mod tests {
 
     #[test]
     fn shape_score() {
-        assert_eq!(Shape::Rock.score(Shape::Rock), 4);
-        assert_eq!(Shape::Rock.score(Shape::Paper), 1);
-        assert_eq!(Shape::Rock.score(Shape::Scisors), 7);
-        assert_eq!(Shape::Paper.score(Shape::Rock), 8);
-        assert_eq!(Shape::Paper.score(Shape::Paper), 5);
-        assert_eq!(Shape::Paper.score(Shape::Scisors), 2);
-        assert_eq!(Shape::Scisors.score(Shape::Rock), 3);
-        assert_eq!(Shape::Scisors.score(Shape::Paper), 9);
-        assert_eq!(Shape::Scisors.score(Shape::Scisors), 6);
+        assert_eq!(Round::new(Shape::Rock, Shape::Rock).score(), 4);
+        assert_eq!(Round::new(Shape::Rock, Shape::Paper).score(), 1);
+        assert_eq!(Round::new(Shape::Rock, Shape::Scisors).score(), 7);
+        assert_eq!(Round::new(Shape::Paper, Shape::Rock).score(), 8);
+        assert_eq!(Round::new(Shape::Paper, Shape::Paper).score(), 5);
+        assert_eq!(Round::new(Shape::Paper, Shape::Scisors).score(), 2);
+        assert_eq!(Round::new(Shape::Scisors, Shape::Rock).score(), 3);
+        assert_eq!(Round::new(Shape::Scisors, Shape::Paper).score(), 9);
+        assert_eq!(Round::new(Shape::Scisors, Shape::Scisors).score(), 6);
     }
 
     #[test]
     fn example_parse_part1() {
-        let actual = parse_input_part1(EXAMPLE_INPUT);
+        let actual = parse_input_part1(&EXAMPLE_INPUT);
         let expected = vec![
-            Round {
-                player: Shape::Paper,
-                opponent: Shape::Rock,
-            },
-            Round {
-                player: Shape::Rock,
-                opponent: Shape::Paper,
-            },
-            Round {
-                player: Shape::Scisors,
-                opponent: Shape::Scisors,
-            },
+            Round::new(Shape::Paper, Shape::Rock),
+            Round::new(Shape::Rock, Shape::Paper),
+            Round::new(Shape::Scisors, Shape::Scisors),
         ];
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn example_parse_part2() {
-        let actual = parse_input_part2(EXAMPLE_INPUT);
+        let actual = parse_input_part2(&EXAMPLE_INPUT);
         let expected = vec![
-            Round {
-                player: Shape::Rock,
-                opponent: Shape::Rock,
-            },
-            Round {
-                player: Shape::Rock,
-                opponent: Shape::Paper,
-            },
-            Round {
-                player: Shape::Rock,
-                opponent: Shape::Scisors,
-            },
+            Round::new(Shape::Rock, Shape::Rock),
+            Round::new(Shape::Rock, Shape::Paper),
+            Round::new(Shape::Rock, Shape::Scisors),
         ];
         assert_eq!(actual, expected);
-    }
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 15);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 12);
     }
 }

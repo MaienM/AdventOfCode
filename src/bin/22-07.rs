@@ -1,7 +1,5 @@
 use std::{collections::HashMap, iter::Peekable, vec::IntoIter};
 
-use aoc::runner::run;
-
 type Listing<'a> = HashMap<&'a str, Entry<'a>>;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -9,7 +7,7 @@ enum Entry<'a> {
     File(usize),
     Dir(Listing<'a>),
 }
-impl<'a> Entry<'a> {
+impl Entry<'_> {
     fn size(&self) -> usize {
         match self {
             Entry::File(fsize) => *fsize,
@@ -63,19 +61,17 @@ fn parse_input_lines<'a>(
     }
 }
 
-fn parse_input<'a>(input: &'a str) -> Entry {
-    let mut lines: Peekable<IntoIter<&'a str>> = input
-        .trim()
-        .split('\n')
-        .map(str::trim)
-        .collect::<Vec<&'a str>>()
+fn parse_input(input: &str) -> Entry {
+    let mut lines: Peekable<IntoIter<&'_ str>> = input
+        .lines()
+        .collect::<Vec<&'_ str>>()
         .into_iter()
         .peekable();
     let mut root = Listing::new();
     while lines.peek().is_some() {
         parse_input_lines(&mut root, &mut lines);
     }
-    return Entry::Dir(root);
+    Entry::Dir(root)
 }
 
 fn get_dir_sizes(matches: &mut Vec<usize>, entry: &Entry) {
@@ -106,18 +102,18 @@ pub fn part2(input: &str) -> usize {
         .unwrap()
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use common_macros::hash_map;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 95_437, part2 = 24_933_642)]
+    static EXAMPLE_INPUT: &str = "
         $ cd /
         $ ls
         dir a
@@ -145,8 +141,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let input = EXAMPLE_INPUT;
-        let actual = parse_input(input);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = Entry::Dir(hash_map! {
             "a" => Entry::Dir(hash_map!{
                 "e" => Entry::Dir(hash_map!{
@@ -166,15 +161,5 @@ mod tests {
             }),
         });
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 95_437);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 24_933_642);
     }
 }

@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use aoc::runner::run;
+use aoc::utils::parse;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Instruction {
@@ -17,16 +17,15 @@ impl Instruction {
 }
 
 fn parse_input(input: &str) -> Vec<Instruction> {
-    return input
-        .trim()
-        .split('\n')
-        .map(str::trim)
-        .map(|line| match &line[0..4] {
-            "addx" => Instruction::AddX(line[5..].parse().unwrap()),
-            "noop" => Instruction::NoOp,
-            _ => panic!(),
-        })
-        .collect();
+    parse!(input => {
+        [instructions split on '\n' with |line| {
+            match &line[0..4] {
+                "addx" => Instruction::AddX(line[5..].parse().unwrap()),
+                "noop" => Instruction::NoOp,
+                _ => panic!(),
+            }
+        }]
+    } => instructions)
 }
 
 fn run_instructions(instructions: Vec<Instruction>, callback: &mut impl FnMut(usize, i16)) {
@@ -69,20 +68,30 @@ pub fn part2(input: &str) -> String {
             output += "\n";
         }
     });
-    output
+    output.trim_end_matches('\n').to_string()
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(
+        part1 = 13_140,
+        part2 = "
+            ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  
+            ███   ███   ███   ███   ███   ███   ███ 
+            ████    ████    ████    ████    ████    
+            █████     █████     █████     █████     
+            ██████      ██████      ██████      ████
+            ███████       ███████       ███████     
+        "
+    )]
+    static EXAMPLE_INPUT: &str = "
         addx 15
         addx -11
         addx 6
@@ -234,7 +243,7 @@ mod tests {
     #[test]
     #[allow(clippy::too_many_lines)]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             Instruction::AddX(15),
             Instruction::AddX(-11),
@@ -384,26 +393,5 @@ mod tests {
             Instruction::NoOp,
         ];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 13_140);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(
-            part2(EXAMPLE_INPUT).trim(),
-            "
-██  ██  ██  ██  ██  ██  ██  ██  ██  ██  
-███   ███   ███   ███   ███   ███   ███ 
-████    ████    ████    ████    ████    
-█████     █████     █████     █████     
-██████      ██████      ██████      ████
-███████       ███████       ███████     
-            "
-            .trim()
-        );
     }
 }

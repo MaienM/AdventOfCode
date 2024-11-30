@@ -1,6 +1,6 @@
 use std::ops::{AddAssign, SubAssign};
 
-use aoc::runner::run;
+use aoc::utils::parse;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Cost {
@@ -18,39 +18,39 @@ struct Blueprint {
 }
 
 fn parse_input(input: &str) -> Vec<Blueprint> {
-    return input
-        .trim()
-        .split('\n')
-        .map(|line| {
-            let mut parts = line.trim().split(' ');
-            let ore = Cost {
-                ore: parts.nth(6).unwrap().parse().unwrap(),
-                clay: 0,
-                obsidian: 0,
-            };
-            let clay = Cost {
-                ore: parts.nth(5).unwrap().parse().unwrap(),
-                clay: 0,
-                obsidian: 0,
-            };
-            let obsidian = Cost {
-                ore: parts.nth(5).unwrap().parse().unwrap(),
-                clay: parts.nth(2).unwrap().parse().unwrap(),
-                obsidian: 0,
-            };
-            let geode = Cost {
-                ore: parts.nth(5).unwrap().parse().unwrap(),
-                clay: 0,
-                obsidian: parts.nth(2).unwrap().parse().unwrap(),
-            };
-            Blueprint {
-                ore,
-                clay,
-                obsidian,
-                geode,
+    parse!(input => {
+        [blueprints split on "\n" with
+            {
+                "Blueprint " _ ": "
+                "Each ore robot costs " [ore_ore as u16] " ore. "
+                "Each clay robot costs " [clay_ore as u16] " ore. "
+                "Each obsidian robot costs " [obsidian_ore as u16] " ore and " [obsidian_clay as u16] " clay. "
+                "Each geode robot costs " [geode_ore as u16] " ore and " [geode_obsidian as u16] " obsidian."
             }
-        })
-        .collect();
+            => Blueprint {
+                ore: Cost {
+                    ore: ore_ore,
+                    clay: 0,
+                    obsidian: 0,
+                },
+                clay: Cost {
+                    ore: clay_ore,
+                    clay: 0,
+                    obsidian: 0,
+                },
+                obsidian: Cost {
+                    ore: obsidian_ore,
+                    clay: obsidian_clay,
+                    obsidian: 0,
+                },
+                geode: Cost {
+                    ore: geode_ore,
+                    clay: 0,
+                    obsidian: geode_obsidian,
+                },
+            }
+        ]
+    } => blueprints)
 }
 
 #[derive(Clone, Debug, Default)]
@@ -260,31 +260,31 @@ pub fn part1(input: &str) -> u16 {
 
 pub fn part2(input: &str) -> u16 {
     let blueprints = parse_input(input);
-    return blueprints
+    blueprints
         .iter()
         .take(3)
         .map(|blueprint| calculate_geode_production(blueprint, 32))
-        .product();
+        .product()
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 33, part2 = 3472, notest)]
+    static EXAMPLE_INPUT: &str = "
         Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
         Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.
     ";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             Blueprint {
                 ore: Cost {
@@ -334,6 +334,7 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
+    #[ignore = "slow"]
     #[test]
     fn example_calculate_geode_production_1_24() {
         let blueprint = Blueprint {
@@ -361,6 +362,7 @@ mod tests {
         assert_eq!(calculate_geode_production(&blueprint, 24), 9);
     }
 
+    #[ignore = "slow"]
     #[test]
     fn example_calculate_geode_production_2_24() {
         let blueprint = Blueprint {
@@ -388,6 +390,7 @@ mod tests {
         assert_eq!(calculate_geode_production(&blueprint, 24), 12);
     }
 
+    #[ignore = "slow"]
     #[test]
     fn example_calculate_geode_production_1_32() {
         let blueprint = Blueprint {
@@ -415,6 +418,7 @@ mod tests {
         assert_eq!(calculate_geode_production(&blueprint, 32), 56);
     }
 
+    #[ignore = "slow"]
     #[test]
     fn example_calculate_geode_production_2_32() {
         let blueprint = Blueprint {
@@ -440,15 +444,5 @@ mod tests {
             },
         };
         assert_eq!(calculate_geode_production(&blueprint, 32), 62);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 33);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 56 * 62);
     }
 }

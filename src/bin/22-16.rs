@@ -1,6 +1,6 @@
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
-use aoc::runner::run;
+use aoc::utils::parse;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Valve<'a> {
@@ -11,25 +11,12 @@ struct Valve<'a> {
 type Valves<'a> = HashMap<&'a str, Valve<'a>>;
 
 fn parse_input(input: &str) -> Valves {
-    return input
-        .trim()
-        .split('\n')
-        .map(|line| {
-            let mut parts = line.trim().splitn(10, ' ');
-            let name = parts.nth(1).unwrap();
-            let flow = parts
-                .nth(2)
-                .unwrap()
-                .strip_prefix("rate=")
-                .unwrap()
-                .strip_suffix(';')
-                .unwrap()
-                .parse()
-                .unwrap();
-            let tunnels = parts.nth(4).unwrap().split(", ").collect();
-            (name, Valve { flow, tunnels })
-        })
-        .collect();
+    parse!(input => {
+        [valves split on '\n' into (Valves) with
+            { "Valve " name " has flow rate=" [flow as u16] ';' _ "to valve" _ ' ' [tunnels split on ", "] }
+            => (name, Valve { flow, tunnels })
+        ]
+    } => valves)
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -77,7 +64,7 @@ fn calculate_paths<'a>(valves: &Valves<'a>) -> ValvesWithPaths<'a> {
         }
     }
 
-    return valves
+    valves
         .iter()
         .map(|(k, v)| {
             (
@@ -88,7 +75,7 @@ fn calculate_paths<'a>(valves: &Valves<'a>) -> ValvesWithPaths<'a> {
                 },
             )
         })
-        .collect();
+        .collect()
 }
 
 struct GlobalState<'a> {
@@ -105,7 +92,7 @@ struct State<'a, const C: usize> {
     flow: u16,
     total: u16,
 }
-impl<'a, const C: usize> State<'a, C> {
+impl<const C: usize> State<'_, C> {
     pub fn is_done(&self) -> bool {
         self.closed.is_empty()
     }
@@ -266,17 +253,17 @@ pub fn part2(input: &str) -> u16 {
     run_cycles::<2>(&valves, 26)
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 1651, part2 = 1707)]
+    static EXAMPLE_INPUT: &str = "
         Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
         Valve BB has flow rate=13; tunnels lead to valves CC, AA
         Valve CC has flow rate=2; tunnels lead to valves DD, BB
@@ -291,7 +278,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let mut expected = HashMap::new();
         expected.insert(
             "AA",
@@ -364,15 +351,5 @@ mod tests {
             },
         );
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 1_651);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 1_707);
     }
 }

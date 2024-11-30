@@ -1,8 +1,8 @@
 use std::{iter, ops::Range};
 
-use aoc::{grid::Point as BasePoint, runner::run};
+use aoc::utils::{parse, point::Point2};
 
-type Point = BasePoint<isize>;
+type Point = Point2<isize>;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Sensor {
@@ -15,53 +15,17 @@ fn distance(left: &Point, right: &Point) -> isize {
 }
 
 fn parse_input(input: &str) -> Vec<Sensor> {
-    return input
-        .trim()
-        .split('\n')
-        .map(|line| {
-            let mut words = line.trim().split(' ');
-
-            let x = words
-                .nth(2)
-                .unwrap()
-                .strip_prefix("x=")
-                .unwrap()
-                .strip_suffix(',')
-                .unwrap()
-                .parse()
-                .unwrap();
-            let y = words
-                .next()
-                .unwrap()
-                .strip_prefix("y=")
-                .unwrap()
-                .strip_suffix(':')
-                .unwrap()
-                .parse()
-                .unwrap();
-            let point = Point::new(x, y);
-
-            let x: isize = words
-                .nth(4)
-                .unwrap()
-                .strip_prefix("x=")
-                .unwrap()
-                .strip_suffix(',')
-                .unwrap()
-                .parse()
-                .unwrap();
-            let y: isize = words
-                .next()
-                .unwrap()
-                .strip_prefix("y=")
-                .unwrap()
-                .parse()
-                .unwrap();
-            let range = (point.x - x).abs() + (point.y - y).abs();
-
-            Sensor { point, range }
-        })
-        .collect();
+    parse!(input => {
+        [lines split on '\n' with
+            { "Sensor at x=" [sx as isize] ", y=" [sy as isize] ": closest beacon is at x=" [bx as isize] ", y=" [by as isize] }
+            => {
+                let point = Point::new(sx, sy);
+                let beacon = Point::new(bx, by);
+                let range = distance(&point, &beacon);
+                Sensor { point, range }
+            }
+        ]
+    } => lines)
 }
 
 fn ranges_overlap(left: &Range<isize>, right: &Range<isize>) -> bool {
@@ -143,17 +107,17 @@ pub fn part2(input: &str) -> isize {
     point.x * 4_000_000 + point.y
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input]
+    static EXAMPLE_INPUT: &str = "
         Sensor at x=2, y=18: closest beacon is at x=-2, y=15
         Sensor at x=9, y=16: closest beacon is at x=10, y=16
         Sensor at x=13, y=2: closest beacon is at x=15, y=3
@@ -172,7 +136,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             Sensor {
                 point: Point::new(2, 18),
@@ -236,13 +200,13 @@ mod tests {
 
     #[test]
     fn example_count_known_at_y() {
-        let sensors = parse_input(EXAMPLE_INPUT);
+        let sensors = parse_input(&EXAMPLE_INPUT);
         assert_eq!(count_known_at_y(sensors, 10), 26);
     }
 
     #[test]
     fn example_get_beacon() {
-        let sensors = parse_input(EXAMPLE_INPUT);
+        let sensors = parse_input(&EXAMPLE_INPUT);
         assert_eq!(get_beacon(&sensors, 20), Point::new(14, 11));
     }
 }

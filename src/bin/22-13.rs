@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use aoc::runner::run;
+use aoc::utils::parse;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum Item {
@@ -43,18 +43,12 @@ fn parse_line(line: &str) -> Item {
 }
 
 fn parse_input(input: &str) -> Vec<(Item, Item)> {
-    return input
-        .trim()
-        .split("\n\n")
-        .map(str::trim)
-        .map(|block| {
-            let mut lines = block.split('\n');
-            let left = parse_line(lines.next().unwrap().trim());
-            let right = parse_line(lines.next().unwrap().trim());
-            assert!(lines.next().is_none());
-            (left, right)
-        })
-        .collect();
+    parse!(input => {
+        [pairs split on "\n\n" with
+            { left '\n' right }
+            => (parse_line(left), parse_line(right))
+        ]
+    } => pairs)
 }
 
 fn compare(left: &Item, right: &Item) -> Ordering {
@@ -111,17 +105,17 @@ pub fn part2(input: &str) -> usize {
     panic!();
 }
 
-fn main() {
-    run(part1, part2);
-}
+aoc::cli::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
+    use aoc_derive::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &str = "
+    #[example_input(part1 = 13, part2 = 140)]
+    static EXAMPLE_INPUT: &str = "
         [1,1,3,1,1]
         [1,1,5,1,1]
 
@@ -149,7 +143,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             (
                 Item::List(vec![
@@ -243,15 +237,5 @@ mod tests {
             ),
         ];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT), 13);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT), 140);
     }
 }
