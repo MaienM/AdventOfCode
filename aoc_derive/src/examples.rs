@@ -67,24 +67,43 @@ impl Parser for ExampleStringParser<'_> {
     }
 }
 
-fn get_part_args(part: &Option<Expr>) -> Expr {
-    match part {
-        Some(Expr::Lit(lit)) => match &lit.lit {
-            Lit::Int(lit) => {
-                let num = lit.base10_digits();
-                parse_quote!(Some(#num))
+macro_rules! parse_string_expr {
+    ($expr:expr, $indent:expr) => {
+        {
+            let parser = ExampleStringParser($indent);
+            let expr = ($expr).to_token_stream().into();
+            parse_macro_input!(expr with parser)
+        }
+    };
+}
+
+macro_rules! parse_part_arg {
+    ($expr:expr, $indent:expr) => {
+        {
+            let part: &Option<Expr> = $expr;
+            match part {
+                Some(Expr::Lit(lit)) => match &lit.lit {
+                    Lit::Str(lit) => {
+                        let string = parse_string_expr!(lit, $indent);
+                        parse_quote!(Some(#string))
+                    }
+                    Lit::Int(lit) => {
+                        let num = lit.base10_digits();
+                        parse_quote!(Some(#num))
+                    }
+                    Lit::Float(lit) => {
+                        let num = lit.base10_digits();
+                        parse_quote!(Some(#num))
+                    }
+                    lit => {
+                        parse_quote!(Some(stringify!(#lit)))
+                    }
+                },
+                Some(_) => panic!("Part solution {part:?} cannot be converted to a static string."),
+                None => parse_quote!(None),
             }
-            Lit::Float(lit) => {
-                let num = lit.base10_digits();
-                parse_quote!(Some(#num))
-            }
-            lit => {
-                parse_quote!(Some(stringify!(#lit)))
-            }
-        },
-        Some(_) => panic!("Part solution {part:?} cannot be converted to a static string."),
-        None => parse_quote!(None),
-    }
+        }
+    };
 }
 
 pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
@@ -120,17 +139,16 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
             .into();
     }
     {
-        let parser = ExampleStringParser(&args.indent);
-        let expr = example.expr.to_token_stream().into();
-        let text = parse_macro_input!(expr with parser);
+        let result_indent = format!("{}    ", args.indent);
 
         let name = example.ident.to_string();
-        let part1 = get_part_args(&args.part1);
-        let part2 = get_part_args(&args.part2);
+        let input = parse_string_expr!(example.expr, &args.indent);
+        let part1: Expr = parse_part_arg!(&args.part1, &result_indent);
+        let part2: Expr = parse_part_arg!(&args.part2, &result_indent);
         *example.expr = parse_quote! {
             ::aoc::derived::Example {
                 name: #name,
-                input: #text,
+                input: #input,
                 part1: #part1,
                 part2: #part2,
             }
@@ -142,7 +160,7 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
 
     if args.test {
         for (part, expr) in [("part1", &args.part1), ("part2", &args.part2)] {
-            if let Some(expr) = expr {
+            if expr.is_some() {
                 let ident = &example.ident;
                 let lident = format_ident!("{}_{}", ident.to_string().to_lowercase(), part);
                 let part = format_ident!("{part}");
@@ -150,7 +168,7 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
                     #[cfg(test)]
                     #[test]
                     fn #lident() {
-                        assert_eq!(#part(#ident.input), #expr);
+                        assert_eq!(#part(#ident.input).to_string(), #ident.#part.unwrap());
                     }
                 })
             }
