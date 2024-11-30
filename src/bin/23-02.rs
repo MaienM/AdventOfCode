@@ -76,7 +76,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 8, part2 = 2286, test)]
+    #[example_input(part1 = 8, part2 = 2286)]
     static EXAMPLE_INPUT: &str = "
         Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
         Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue

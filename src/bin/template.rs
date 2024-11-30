@@ -24,7 +24,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 1, test)]
+    #[example_input(part1 = 1)]
     static EXAMPLE_INPUT: &str = "
         1
         2

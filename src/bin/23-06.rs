@@ -45,7 +45,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 288, part2 = 71_503, test)]
+    #[example_input(part1 = 288, part2 = 71_503)]
     static EXAMPLE_INPUT: &str = "
         Time:      7  15   30
         Distance:  9  40  200

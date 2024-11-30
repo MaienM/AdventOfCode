@@ -116,7 +116,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 4361, part2 = 467_835, test)]
+    #[example_input(part1 = 4361, part2 = 467_835)]
     static EXAMPLE_INPUT: &str = "
         467..114..
         ...*......

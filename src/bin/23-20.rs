@@ -204,7 +204,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 32_000_000, test)]
+    #[example_input(part1 = 32_000_000)]
     static EXAMPLE_INPUT_1: &str = "
         broadcaster -> a, b, c
         %a -> b
@@ -213,7 +213,7 @@ mod tests {
         &inv -> a
     ";
 
-    #[example_input(part1 = 11_687_500, test)]
+    #[example_input(part1 = 11_687_500)]
     static EXAMPLE_INPUT_2: &str = "
         broadcaster -> a
         %a -> inv, con

@@ -152,7 +152,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 21, part2 = 525_152, test)]
+    #[example_input(part1 = 21, part2 = 525_152)]
     static EXAMPLE_INPUT: &str = "
         ???.### 1,1,3
         .??..??...?##. 1,1,3
@@ -162,32 +162,32 @@ mod tests {
         ?###???????? 3,2,1
     ";
 
-    #[example_input(part1 = 1, part2 = 1, test)]
+    #[example_input(part1 = 1, part2 = 1)]
     static EXAMPLE_INPUT_LINE1: &str = "
         ???.### 1,1,3
     ";
 
-    #[example_input(part1 = 4, part2 = 16_384, test)]
+    #[example_input(part1 = 4, part2 = 16_384)]
     static EXAMPLE_INPUT_LINE2: &str = "
         .??..??...?##. 1,1,3
     ";
 
-    #[example_input(part1 = 1, part2 = 1, test)]
+    #[example_input(part1 = 1, part2 = 1)]
     static EXAMPLE_INPUT_LINE3: &str = "
         ?#?#?#?#?#?#?#? 1,3,1,6
     ";
 
-    #[example_input(part1 = 1, part2 = 16, test)]
+    #[example_input(part1 = 1, part2 = 16)]
     static EXAMPLE_INPUT_LINE4: &str = "
         ????.#...#... 4,1,1
     ";
 
-    #[example_input(part1 = 4, part2 = 2500, test)]
+    #[example_input(part1 = 4, part2 = 2500)]
     static EXAMPLE_INPUT_LINE5: &str = "
         ????.######..#####. 1,6,5
     ";
 
-    #[example_input(part1 = 10, part2 = 506_250, test)]
+    #[example_input(part1 = 10, part2 = 506_250)]
     static EXAMPLE_INPUT_LINE6: &str = "
         ?###???????? 3,2,1
     ";

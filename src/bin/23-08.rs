@@ -131,7 +131,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 2, test)]
+    #[example_input(part1 = 2)]
     static EXAMPLE_INPUT_1: &str = "
         RL
 
@@ -144,7 +144,7 @@ mod tests {
         ZZZ = (ZZZ, ZZZ)
     ";
 
-    #[example_input(part1 = 6, test)]
+    #[example_input(part1 = 6)]
     static EXAMPLE_INPUT_2: &str = "
         LLR
 
@@ -153,7 +153,7 @@ mod tests {
         ZZZ = (ZZZ, ZZZ)
     ";
 
-    #[example_input(part2 = 6, test)]
+    #[example_input(part2 = 6)]
     static EXAMPLE_INPUT_3: &str = "
         LR
 

@@ -139,7 +139,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 102, part2 = 94, test)]
+    #[example_input(part1 = 102, part2 = 94)]
     static EXAMPLE_INPUT: &str = "
         2413432311323
         3215453535623

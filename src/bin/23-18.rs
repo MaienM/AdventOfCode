@@ -213,7 +213,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 62, part2 = 952_408_144_115, test)]
+    #[example_input(part1 = 62, part2 = 952_408_144_115)]
     static EXAMPLE_INPUT: &str = "
         R 6 (#70c710)
         D 5 (#0dc571)

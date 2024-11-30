@@ -22,7 +22,7 @@ impl Default for Args {
             indent: " ".repeat(8),
             part1: None,
             part2: None,
-            test: false,
+            test: true,
         }
     }
 }
@@ -123,8 +123,8 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
             args.part1 = Some(meta.value()?.parse()?);
         } else if meta.path.is_ident("part2") {
             args.part2 = Some(meta.value()?.parse()?);
-        } else if meta.path.is_ident("test") {
-            args.test = true;
+        } else if meta.path.is_ident("notest") {
+            args.test = false;
         } else {
             return Err(meta.error("unsupported property"));
         }

@@ -57,7 +57,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 13, part2 = 30, test)]
+    #[example_input(part1 = 13, part2 = 30)]
     static EXAMPLE_INPUT: &str = "
         Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
         Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19

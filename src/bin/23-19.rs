@@ -242,7 +242,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 19_114, part2 = 167_409_079_868_000, test)]
+    #[example_input(part1 = 19_114, part2 = 167_409_079_868_000)]
     static EXAMPLE_INPUT: &str = "
         px{a<2006:qkq,m>2090:A,rfg}
         pv{a>1716:R,A}

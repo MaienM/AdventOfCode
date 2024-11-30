@@ -201,7 +201,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 4, test)]
+    #[example_input(part1 = 4)]
     static EXAMPLE_INPUT_1: &str = "
         .....
         .S-7.
@@ -210,7 +210,7 @@ mod tests {
         .....
     ";
 
-    #[example_input(part1 = 8, test)]
+    #[example_input(part1 = 8)]
     static EXAMPLE_INPUT_2: &str = "
         ..F7.
         .FJ|.
@@ -219,7 +219,7 @@ mod tests {
         LJ...
     ";
 
-    #[example_input(part2 = 4, test)]
+    #[example_input(part2 = 4)]
     static EXAMPLE_INPUT_3: &str = "
         ..........
         .S------7.
@@ -232,7 +232,7 @@ mod tests {
         ..........
     ";
 
-    #[example_input(part2 = 8, test)]
+    #[example_input(part2 = 8)]
     static EXAMPLE_INPUT_4: &str = "
         .F----7F7F7F7F-7....
         .|F--7||||||||FJ....
@@ -246,7 +246,7 @@ mod tests {
         ....L---J.LJ.LJLJ...
     ";
 
-    #[example_input(part2 = 10, test)]
+    #[example_input(part2 = 10)]
     static EXAMPLE_INPUT_5: &str = "
         FF7FSF7F7F7F7F7F---7
         L|LJ||||||||||||F--J
