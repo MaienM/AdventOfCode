@@ -50,7 +50,7 @@ run-all:
 	@cargo run --release --bin aoc --quiet
 
 run-%:
-	@echo cargo run --release --bin aoc --quiet --only $(subst run-,,$@)
+	@cargo run --release --bin aoc --quiet -- --only $(subst run-,,$@)
 
 test-libs:
 	@cargo nextest run --lib --no-fail-fast --cargo-quiet
