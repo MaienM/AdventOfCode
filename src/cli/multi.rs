@@ -231,7 +231,7 @@ pub fn main() {
     let bins = args.targets.filtered_binaries();
     let targets = args.targets.get_targets(&bins);
     println!(
-        "Running {} runs, across {} parts, across {} bins...",
+        "Running {} solves across {} solutions across {} binaries...",
         Cyan.paint(targets.len().to_string()),
         Cyan.paint(
             bins.iter()
