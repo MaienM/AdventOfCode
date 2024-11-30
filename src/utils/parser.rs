@@ -433,6 +433,12 @@ mod tests {
     }
 
     #[test]
+    fn parse_list_with_transform() {
+        parse!("Hello WORLD" => [items split with str::to_lowercase]);
+        assert_eq!(items, vec!["hello", "world"]);
+    }
+
+    #[test]
     fn parse_chars() {
         parse!("12" => [items chars]);
         assert_eq!(items, vec!['1', '2']);
@@ -454,6 +460,12 @@ mod tests {
     fn parse_chars_try_as() {
         parse!("1a2b" => [items chars try as u8]);
         assert_eq!(items, vec![1, 2]);
+    }
+
+    #[test]
+    fn parse_chars_with_transformer() {
+        parse!("1a" => [items chars with |c| c.to_digit(16).unwrap()]);
+        assert_eq!(items, vec![1, 10]);
     }
 
     #[test]
