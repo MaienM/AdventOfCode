@@ -60,6 +60,10 @@ pub fn part1(input: &str) -> usize {
         .unwrap()
 }
 
+pub fn part2(_input: &str) -> &'static str {
+    "I did it!"
+}
+
 aoc::cli::single::generate_main!();
 
 #[cfg(test)]
