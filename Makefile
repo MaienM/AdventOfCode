@@ -29,18 +29,19 @@ inputs/%.txt: .session
 
 # Whenever this target is run this shell command will first be executed, altering the timestamp of the tracker file. If this causes the tracker file to be newer than the json file itself this will cause the it to be considered out-of-date and to be re-downloaded; otherwise it will be considered up-to-date and skipped. In effect this means the json file will be updated if it's been longer than the time passed to touch since it was last updated.
 .leaderboard.json: $(shell touch -d '-1 hour' .leaderboard.json.timestamp-tracker)
+.leaderboard.json: year = $(shell echo $$(( $$(date +'%Y') - $$([ $$(date +'%m') -eq 12 ] && echo 0 || echo 1) )))
 .leaderboard.json: .session .leaderboard.json.timestamp-tracker
-	@if [ -z "$LEADERBOARD_ID" ]; then \
+	@if [ -z "$$LEADERBOARD_ID" ]; then \
 		echo >&2 "Please set the LEADERBOARD_ID environment variable."; \
 		exit 1; \
 	fi
 
-	@echo "$(setaf6)>>>>> Downloading leaderboard json <<<<<$(sgr0)"
+	@echo "$(setaf6)>>>>> Downloading leaderboard json for ${year} <<<<<$(sgr0)"
 	@curl \
 		-H "Cookie: session=$$(cat .session)" \
 		--fail \
 		--output $@ \
-		"https://adventofcode.com/$(date +'%Y')/leaderboard/private/view/${LEADERBOARD_ID}.json"
+		"https://adventofcode.com/${year}/leaderboard/private/view/$$LEADERBOARD_ID.json"
 
 #
 # Basic run/test commands.
@@ -90,8 +91,9 @@ benchmark-set-baseline-%: inputs/%.txt
 # Leaderboard.
 #
 
+leaderboard: year = $(shell echo $$(( $$(date +'%Y') - $$([ $$(date +'%m') -eq 12 ] && echo 0 || echo 1) )))
 leaderboard: .leaderboard.json
-	@echo "$(setaf6)>>>>> Processing leaderboard json <<<<<$(sgr0)"
+	@echo "$(setaf6)>>>>> Processing leaderboard json for ${year} <<<<<$(sgr0)"
 	@cargo run --quiet --bin leaderboard --features leaderboard -- .leaderboard.json
 
 #
