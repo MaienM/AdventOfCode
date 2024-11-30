@@ -36,6 +36,11 @@ impl<'a> Parser for ExampleStringParser<'a> {
 
         let span = tokens.span();
         let text = syn::parse::<LitStr>(tokens.into())?.value();
+
+        if !text.contains('\n') {
+            return Ok(text);
+        }
+
         let text = text
             .strip_prefix('\n')
             .ok_or_else(|| Error::new(span, "must begin with a newline"))?;
