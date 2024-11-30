@@ -135,10 +135,7 @@ impl<'ast> Visit<'ast> for BinScanner {
             let Meta::List(ref list) = attr.meta else {
                 return None;
             };
-            let is_example = list
-                .path
-                .get_ident()
-                .map_or(false, |i| *i == "example_input");
+            let is_example = list.path.get_ident().is_some_and(|i| *i == "example_input");
             if is_example {
                 Some(list)
             } else {

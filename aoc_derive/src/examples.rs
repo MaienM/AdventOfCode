@@ -28,7 +28,7 @@ impl Default for Args {
 }
 
 struct ExampleStringParser<'a>(&'a str);
-impl<'a> Parser for ExampleStringParser<'a> {
+impl Parser for ExampleStringParser<'_> {
     type Output = String;
 
     fn parse2(self, tokens: TokenStream2) -> Result<Self::Output, Error> {
