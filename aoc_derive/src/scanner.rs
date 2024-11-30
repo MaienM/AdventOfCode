@@ -177,7 +177,22 @@ fn fill_static(def: ForeignItemStatic, ty: Type, expr: Expr) -> ItemStatic {
     }
 }
 
-fn get_source_path() -> Result<PathBuf, String> {
+enum SourcePath {
+    Ok(PathBuf),
+    Empty,
+    Error(String),
+}
+impl SourcePath {
+    pub fn unwrap(self) -> Result<PathBuf, String> {
+        match self {
+            SourcePath::Ok(path) => Ok(path),
+            SourcePath::Empty => Err("path of source file is empty".to_owned()),
+            SourcePath::Error(err) => Err(err),
+        }
+    }
+}
+
+fn get_source_path() -> SourcePath {
     let file = {
         let mut span = Span::call_site();
         while let Some(parent) = span.parent() {
@@ -186,15 +201,21 @@ fn get_source_path() -> Result<PathBuf, String> {
         span.source_file()
     };
     if file.is_real() {
-        Ok(file.path())
+        let path = file.path();
+        if file.path().to_str() == Some("") {
+            // This is likely a tool such as rust_analyzer, which provides an call site with an empty path.
+            SourcePath::Empty
+        } else {
+            SourcePath::Ok(path)
+        }
     } else {
-        Err("unable to determine path of source file".to_owned())
+        SourcePath::Error("unable to determine path of source file".to_owned())
     }
 }
 
 fn scan_binaries(path: String) -> Result<Vec<BinScanner>, String> {
     let filename_regex = Regex::new(r"^\d{2}-\d{2}\.rs$").unwrap();
-    let source_path = get_source_path()?;
+    let source_path = get_source_path().unwrap()?;
     let abs_path = env::current_dir()
         .map_err(|err| format!("error determining working directory: {err}"))?
         .join(source_path.clone())
@@ -294,9 +315,18 @@ pub fn inject_binary(_input: TokenStream, annotated_item: TokenStream) -> TokenS
             .into();
     }
 
-    let path = return_err!(get_source_path(), itemdef.ty.span());
-    let scanner = BinScanner::scan_file(path.to_str().unwrap(), parse_quote!(self));
-    let expr = scanner.to_expr();
+    let expr = match get_source_path() {
+        SourcePath::Ok(path) => {
+            let scanner = BinScanner::scan_file(path.to_str().unwrap(), parse_quote!(self));
+            scanner.to_expr()
+        }
+        SourcePath::Empty => {
+            parse_quote! { ::core::todo!() }
+        }
+        SourcePath::Error(err) => {
+            return Error::new(itemdef.ty.span(), err).to_compile_error().into();
+        }
+    };
 
     fill_static(
         itemdef,
