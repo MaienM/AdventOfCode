@@ -3,47 +3,51 @@
 macro_rules! __parse_type {
     ($var:expr => str => str) => ($var);
 
-    ($var:expr => str => try str) => (Some($var));
+    ($var:expr => str => try str) => (Ok($var));
     ($var:expr => str => try char) => ({
         let t = $var;
         if t.len() == 1 {
             t.chars().next()
         } else {
-            None
+            Err(format!("cannot convert {t:?} to char as it's more than one character"))
         }
     });
-    ($var:expr => str => try usize) => ($var.parse::<usize>().ok());
-    ($var:expr => str => try u128) => ($var.parse::<u128>().ok());
-    ($var:expr => str => try u64) => ($var.parse::<u64>().ok());
-    ($var:expr => str => try u32) => ($var.parse::<u32>().ok());
-    ($var:expr => str => try u16) => ($var.parse::<u16>().ok());
-    ($var:expr => str => try u8) => ($var.parse::<u8>().ok());
-    ($var:expr => str => try isize) => ($var.parse::<isize>().ok());
-    ($var:expr => str => try i128) => ($var.parse::<i128>().ok());
-    ($var:expr => str => try i64) => ($var.parse::<i64>().ok());
-    ($var:expr => str => try i32) => ($var.parse::<i32>().ok());
-    ($var:expr => str => try i16) => ($var.parse::<i16>().ok());
-    ($var:expr => str => try i8) => ($var.parse::<i8>().ok());
-    ($var:expr => str => try f64) => ($var.parse::<f64>().ok());
-    ($var:expr => str => try f32) => ($var.parse::<f32>().ok());
+    ($var:expr => str => try usize) => ($var.parse::<usize>());
+    ($var:expr => str => try u128) => ($var.parse::<u128>());
+    ($var:expr => str => try u64) => ($var.parse::<u64>());
+    ($var:expr => str => try u32) => ($var.parse::<u32>());
+    ($var:expr => str => try u16) => ($var.parse::<u16>());
+    ($var:expr => str => try u8) => ($var.parse::<u8>());
+    ($var:expr => str => try isize) => ($var.parse::<isize>());
+    ($var:expr => str => try i128) => ($var.parse::<i128>());
+    ($var:expr => str => try i64) => ($var.parse::<i64>());
+    ($var:expr => str => try i32) => ($var.parse::<i32>());
+    ($var:expr => str => try i16) => ($var.parse::<i16>());
+    ($var:expr => str => try i8) => ($var.parse::<i8>());
+    ($var:expr => str => try f64) => ($var.parse::<f64>());
+    ($var:expr => str => try f32) => ($var.parse::<f32>());
 
     ($var:expr => char => char) => ($var);
     ($var:expr => char => str) => ($var.to_string());
 
-    ($var:expr => char => try usize) => ($var.to_digit(10).map(|v| v as usize));
-    ($var:expr => char => try u128) => ($var.to_digit(10).map(|v| v as u128));
-    ($var:expr => char => try u64) => ($var.to_digit(10).map(|v| v as u64));
-    ($var:expr => char => try u32) => ($var.to_digit(10));
-    ($var:expr => char => try u16) => ($var.to_digit(10).map(|v| v as u16));
-    ($var:expr => char => try u8) => ($var.to_digit(10).map(|v| v as u8));
-    ($var:expr => char => try isize) => ($var.to_digit(10).map(|v| v as isize));
-    ($var:expr => char => try i128) => ($var.to_digit(10).map(|v| v as i128));
-    ($var:expr => char => try i64) => ($var.to_digit(10).map(|v| v as i64));
-    ($var:expr => char => try i32) => ($var.to_digit(10).map(|v| v as i32));
-    ($var:expr => char => try i16) => ($var.to_digit(10).map(|v| v as i16));
-    ($var:expr => char => try i8) => ($var.to_digit(10).map(|v| v as i8));
-    ($var:expr => char => try f64) => ($var.to_digit(10).map(|v| v as f64));
-    ($var:expr => char => try f32) => ($var.to_digit(10).map(|v| v as f32));
+    ($var:expr => char to digit) => ({
+        let t = $var;
+        t.to_digit(10).ok_or_else(|| format!("cannot convert character {t} to a number"))
+    });
+    ($var:expr => char => try usize) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as usize));
+    ($var:expr => char => try u128) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as u128));
+    ($var:expr => char => try u64) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as u64));
+    ($var:expr => char => try u32) => ($crate::utils::parser::__parse_type__!($var => char to digit));
+    ($var:expr => char => try u16) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as u16));
+    ($var:expr => char => try u8) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as u8));
+    ($var:expr => char => try isize) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as isize));
+    ($var:expr => char => try i128) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as i128));
+    ($var:expr => char => try i64) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as i64));
+    ($var:expr => char => try i32) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as i32));
+    ($var:expr => char => try i16) => ($crate::utils::parser::__parse_type__!($var => char to digit => char to digit));
+    ($var:expr => char => try i8) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as i8));
+    ($var:expr => char => try f64) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as f64));
+    ($var:expr => char => try f32) => ($crate::utils::parser::__parse_type__!($var => char to digit).map(|v| v as f32));
 
     ($var:expr => $from:tt => $to:tt) => {
         $crate::utils::parser::__parse_type__!($var => $from => try $to).unwrap()
@@ -165,7 +169,7 @@ macro_rules! __parse {
         $input.split($sep)
     };
     (split; $input:expr => [[ on $sep:literal with::[try] $transformer:expr ]];) => {
-        $input.split($sep).filter_map($transformer)
+        $input.split($sep).map($transformer).filter_map(Result::ok)
     };
     (split; $input:expr => [[ on $sep:literal with::[] $transformer:expr ]];) => {
         $input.split($sep).map($transformer)
@@ -230,14 +234,16 @@ macro_rules! __parse {
         $input.chars()
     };
     (chars; $input:expr => [[ with::[try] $transformer:expr ]];) => {
-        $input.chars().filter_map($transformer)
+        $input.chars().map($transformer).filter_map(Result::ok)
     };
     (chars; $input:expr => [[ with::[] $transformer:expr ]];) => {
         $input.chars().map($transformer)
     };
 
     // Empty tail.
-    ([[ $($tmpnames:ident)+ ]] $input:expr =>) => {};
+    ([[ $($tmpnames:ident)+ ]] $input:expr =>) => {
+        assert_eq!($input, "", "unparsed tokens in input");
+    };
 
     // Ignore element.
     ([[ $($tmpnames:ident)+ ]] $input:expr => _) => {
@@ -247,15 +253,31 @@ macro_rules! __parse {
     // Recursively process everything until the next instance of a given literal.
     ([[ $($tmpnames:ident)+ ]] $input:expr => $first:tt $sep:literal $($rest:tt)*) => {
         ::paste::paste!{
-            let mut [< $($tmpnames)+ >] = $input.splitn(2, $sep);
+            let [< $($tmpnames)+ _input >] = $input;
+            let mut [< $($tmpnames)+ >] = [< $($tmpnames)+ _input >].splitn(2, $sep);
         };
         $crate::utils::parser::parse!([[ $($tmpnames)+ _1 ]] ::paste::paste!([< $($tmpnames)+ >]).next().unwrap() => $first);
-        $crate::utils::parser::parse!([[ $($tmpnames)+ _2 ]] ::paste::paste!([< $($tmpnames)+ >]).next().unwrap() => $($rest)*);
+        $crate::utils::parser::parse!([[ $($tmpnames)+ _2 ]] ::paste::paste!([< $($tmpnames)+ >]).next().ok_or_else(|| {
+            format!(
+                "couldn't find literal {:?} in {:?}",
+                $sep,
+                ::paste::paste!([< $($tmpnames)+ _input >]),
+            )
+        }).unwrap() => $($rest)*);
     };
 
     // Leading literal.
     ([[ $($tmpnames:ident)+ ]] $input:expr => $prefix:literal $($rest:tt)*) => {
-        $crate::utils::parser::parse!([[ $($tmpnames)+ ]] $input.strip_prefix($prefix).unwrap() => $($rest)*);
+        ::paste::paste!{
+            let [< $($tmpnames)+ >] = $input;
+        };
+        $crate::utils::parser::parse!([[ $($tmpnames)+ ]] ::paste::paste!([< $($tmpnames)+ >]).strip_prefix($prefix).ok_or_else(|| {
+            format!(
+                "couldn't find literal {:?} at the start of {:?}",
+                $prefix,
+                ::paste::paste!([< $($tmpnames)+ >]),
+            )
+        }).unwrap() => $($rest)*);
     };
 
     // Entrypoint.
@@ -472,5 +494,41 @@ mod tests {
     fn parse_result_expression() {
         let result = parse!("foo bar" => { foo " " bar } => (foo, bar));
         assert_eq!(result, ("foo", "bar"));
+    }
+
+    #[test]
+    #[should_panic = "unparsed tokens in input"]
+    fn parse_fail_incomplete() {
+        parse!("1 a" => _ ' ');
+    }
+
+    #[test]
+    #[should_panic = "couldn't find literal"]
+    fn parse_fail_unmatched_literal() {
+        parse!("1 a" => _ '-' _);
+    }
+
+    #[test]
+    #[should_panic = "couldn't find literal"]
+    fn parse_fail_unmatched_literal_leading() {
+        parse!("a1" => 'b' _);
+    }
+
+    #[test]
+    #[should_panic = "couldn't find literal"]
+    fn parse_fail_unmatched_literal_trailing() {
+        parse!("1a" => _ 'b');
+    }
+
+    #[test]
+    #[should_panic = "'d'"]
+    fn parse_fail_unmatched_literal_chain_message() {
+        parse!("1a2b3c4" => _ 'a' _ 'b' _ 'd' _);
+    }
+
+    #[test]
+    #[should_panic = "ParseIntError"]
+    fn parse_fail_typecast() {
+        parse!("a" => [_v as u8]);
     }
 }
