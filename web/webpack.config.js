@@ -29,6 +29,9 @@ module.exports = {
 	},
 	resolve: {
 		extensions: ['.tsx', '.ts', '.js'],
+		fallback: {
+			url: path.resolve(__dirname, 'url-shim.js'),
+		},
 	},
 	experiments: {
 		asyncWebAssembly: true,
@@ -39,6 +42,10 @@ module.exports = {
 			patterns: [
 				{
 					from: 'public/',
+					to: '',
+				},
+				{
+					from: 'package.json',
 					to: '',
 				},
 			],

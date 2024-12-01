@@ -1,4 +1,4 @@
-import { PlayArrow, Reply } from '@mui/icons-material';
+import { PlayArrow, Reply, Source } from '@mui/icons-material';
 import {
 	Accordion,
 	AccordionDetails,
@@ -104,26 +104,37 @@ export default ({ bin }: Props) => {
 						</Stack>
 					</Grid>
 					<Grid item xs={12}>
-						{running
-							? (
-								<Button
-									variant="contained"
-									disabled
-									endIcon={<CircularProgress size={20} />}
-								>
-									Running...
-								</Button>
-							)
-							: (
-								<Button
-									variant="contained"
-									endIcon={<PlayArrow />}
-									// eslint-disable-next-line @typescript-eslint/no-misused-promises
-									onClick={run}
-								>
-									Run
-								</Button>
-							)}
+						<Stack spacing={2} direction="row">
+							{running
+								? (
+									<Button
+										variant="contained"
+										disabled
+										endIcon={<CircularProgress size={20} />}
+									>
+										Running...
+									</Button>
+								)
+								: (
+									<Button
+										variant="contained"
+										endIcon={<PlayArrow />}
+										// eslint-disable-next-line @typescript-eslint/no-misused-promises
+										onClick={run}
+									>
+										Run
+									</Button>
+								)}
+							<Button
+								variant="outlined"
+								startIcon={<Source />}
+								href={context.repository.browse(`src/bin/${bin.name}.rs`)}
+								target="blank"
+								rel="noopener"
+							>
+								View source
+							</Button>
+						</Stack>
 					</Grid>
 					<Grid item xs={12}>
 						<ResultComponent label="Part 1" result={part1} running={part1 ? false : running} />

@@ -33,12 +33,14 @@
     "@mui/material": "^6.1.9",
     "aoc-wasm": "file:../wasm/pkg",
     "comlink": "^4.4.2",
+    "hosted-git-info": "^8.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "use-elapsed-time": "^3.0.4"
   },
   "devDependencies": {
     "@maienm/eslint-config": "^1.10.0",
+    "@types/hosted-git-info": "^3.0.5",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "copy-webpack-plugin": "^12.0.2",
