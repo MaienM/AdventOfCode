@@ -48,7 +48,7 @@ const TimerChip = React.forwardRef<HTMLDivElement, ChipProps>((props: ChipProps,
 /**
  * Component to display the result of running a single part.
  */
-const ResultComponent = ({ label, result, running }: Props) => {
+const ResultComponent = ({ label, result = undefined, running }: Props) => {
 	const context = React.useContext(Context);
 	const { elapsedTime, reset: resetElapsedTime } = useElapsedTime({ isPlaying: running });
 
@@ -107,8 +107,5 @@ const ResultComponent = ({ label, result, running }: Props) => {
 			</Alert>
 		);
 	}
-};
-ResultComponent.defaultProps = {
-	result: undefined,
 };
 export default ResultComponent;
