@@ -100,7 +100,7 @@ leaderboard: .leaderboard.json
 # Web version.
 #
 
-wasm/pkg: $(wildcard wasm/src/*)
+wasm/pkg: $(shell find src web/src -type f -print)
 	@rm -rf wasm/pkg
 	@wasm-pack build ./wasm --target web
 
