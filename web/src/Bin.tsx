@@ -1,10 +1,10 @@
-import { PlayArrow, Reply, Source, StarRate } from '@mui/icons-material';
+import { Reply, Source, StarRate } from '@mui/icons-material';
+import LoadingButton from '@mui/lab/LoadingButton';
 import {
 	Accordion,
 	AccordionDetails,
 	AccordionSummary,
 	Button,
-	CircularProgress,
 	Grid,
 	Stack,
 	TextField,
@@ -105,26 +105,14 @@ export default ({ bin }: Props) => {
 					</Grid>
 					<Grid item xs={12}>
 						<Stack spacing={2} direction="row">
-							{running
-								? (
-									<Button
-										variant="contained"
-										disabled
-										endIcon={<CircularProgress size={20} />}
-									>
-										Running...
-									</Button>
-								)
-								: (
-									<Button
-										variant="contained"
-										endIcon={<PlayArrow />}
-										// eslint-disable-next-line @typescript-eslint/no-misused-promises
-										onClick={run}
-									>
-										Run
-									</Button>
-								)}
+							<LoadingButton
+								variant="contained"
+								disabled={running}
+								onClick={run}
+								loading={running}
+							>
+								Solve
+							</LoadingButton>
 							<Button
 								variant="outlined"
 								startIcon={<Source />}

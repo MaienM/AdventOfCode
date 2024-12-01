@@ -70,7 +70,7 @@ const ResultComponent = ({ label, result = undefined, running }: Props) => {
 		return (
 			<Alert severity="info">
 				<AlertTitle>{label}</AlertTitle>
-				<Typography>Not yet run</Typography>
+				<Typography>Not yet run.</Typography>
 			</Alert>
 		);
 	} else if (result.success) {

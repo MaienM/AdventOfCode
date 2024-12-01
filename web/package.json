@@ -30,6 +30,7 @@
     "@fontsource/roboto": "^5.1.0",
     "@fontsource/roboto-mono": "^5.1.0",
     "@mui/icons-material": "^6.1.9",
+    "@mui/lab": "^6.0.0-beta.17",
     "@mui/material": "^6.1.9",
     "aoc-wasm": "file:../wasm/pkg",
     "comlink": "^4.4.2",
