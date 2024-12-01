@@ -1,4 +1,4 @@
-import { PlayArrow, Reply, Source } from '@mui/icons-material';
+import { PlayArrow, Reply, Source, StarRate } from '@mui/icons-material';
 import {
 	Accordion,
 	AccordionDetails,
@@ -133,6 +133,15 @@ export default ({ bin }: Props) => {
 								rel="noopener"
 							>
 								View source
+							</Button>
+							<Button
+								variant="outlined"
+								startIcon={<StarRate />}
+								href={`https://adventofcode.com/20${bin.year}/day/${bin.day}`}
+								target="blank"
+								rel="noopener"
+							>
+								View puzzle
 							</Button>
 						</Stack>
 					</Grid>
