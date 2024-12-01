@@ -1,6 +1,7 @@
 use std::ops::{AddAssign, SubAssign};
 
 use aoc::utils::parse;
+use rayon::prelude::*;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Cost {
@@ -251,17 +252,17 @@ fn calculate_geode_production(blueprint: &Blueprint, cycles: u16) -> u16 {
 
 pub fn part1(input: &str) -> u16 {
     let blueprints = parse_input(input);
-    let mut result = 0;
-    for (i, blueprint) in blueprints.iter().enumerate() {
-        result += (i + 1) as u16 * calculate_geode_production(blueprint, 24);
-    }
-    result
+    blueprints
+        .par_iter()
+        .enumerate()
+        .map(|(i, blueprint)| (i + 1) as u16 * calculate_geode_production(blueprint, 24))
+        .sum()
 }
 
 pub fn part2(input: &str) -> u16 {
     let blueprints = parse_input(input);
     blueprints
-        .iter()
+        .par_iter()
         .take(3)
         .map(|blueprint| calculate_geode_production(blueprint, 32))
         .product()
