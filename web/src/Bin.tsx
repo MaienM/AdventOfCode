@@ -126,10 +126,10 @@ export default ({ bin }: Props) => {
 							)}
 					</Grid>
 					<Grid item xs={12}>
-						<ResultComponent label="Part 1" result={part1} />
+						<ResultComponent label="Part 1" result={part1} running={part1 ? false : running} />
 					</Grid>
 					<Grid item xs={12}>
-						<ResultComponent label="Part 2" result={part2} />
+						<ResultComponent label="Part 2" result={part2} running={part1 ? running : false} />
 					</Grid>
 				</Grid>
 			</AccordionDetails>

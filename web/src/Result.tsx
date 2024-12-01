@@ -1,14 +1,14 @@
 import { Timer } from '@mui/icons-material';
-import {
-	Alert, AlertTitle, Chip, Tooltip, Typography,
-} from '@mui/material';
+import { Alert, AlertTitle, Chip, ChipProps, Tooltip, Typography } from '@mui/material';
 import * as React from 'react';
+import { useElapsedTime } from 'use-elapsed-time';
 import Context from './context';
 import type { Result } from './worker';
 
 interface Props {
 	label: string;
 	result?: Result;
+	running: boolean;
 }
 
 const formatFixed = (value: number, precision: number): string => value.toFixed(precision).replace(/(\.0+)?$/, '');
@@ -30,11 +30,43 @@ const formatDuration = (duration: number): string => {
 	}
 };
 
+const TimerChip = React.forwardRef<HTMLDivElement, ChipProps>((props: ChipProps, ref) => (
+	// dprint-ignore
+	<Chip
+		// eslint-disable-next-line react/jsx-props-no-spreading
+		{...props}
+		ref={ref}
+		icon={<Timer />}
+		size="small"
+		sx={{
+			marginLeft: '0.5em',
+			marginTop: '-4px',
+		}}
+	/>
+));
+
 /**
  * Component to display the result of running a single part.
  */
-const ResultComponent = ({ label, result }: Props) => {
-	if (result === undefined) {
+const ResultComponent = ({ label, result, running }: Props) => {
+	const context = React.useContext(Context);
+	const { elapsedTime, reset: resetElapsedTime } = useElapsedTime({ isPlaying: running });
+
+	if (elapsedTime > 0 && !running) {
+		resetElapsedTime();
+	}
+
+	if (running) {
+		return (
+			<Alert severity="info">
+				<AlertTitle>
+					{label}
+					<TimerChip label={formatDuration(elapsedTime * 1000 * 1000 * 1000)} />
+				</AlertTitle>
+				<Typography>Running...</Typography>
+			</Alert>
+		);
+	} else if (result === undefined) {
 		return (
 			<Alert severity="info">
 				<AlertTitle>{label}</AlertTitle>
@@ -42,7 +74,6 @@ const ResultComponent = ({ label, result }: Props) => {
 			</Alert>
 		);
 	} else if (result.success) {
-		const context = React.useContext(Context);
 		const durationMin = formatDuration(result.duration);
 		const durationMid = formatDuration(result.duration + context.minTimerResolution / 2);
 		const durationMax = formatDuration(result.duration + context.minTimerResolution);
@@ -54,19 +85,11 @@ const ResultComponent = ({ label, result }: Props) => {
 				<AlertTitle>
 					{label}
 					<Tooltip
-						title={`The timing resolution in the current environment is ${resolution}, so this could be anywhere between ${durationMin} and ${durationMax}.`}
+						title={`The timer resolution in the current environment is ${resolution}, so this could be anywhere between ${durationMin} and ${durationMax}.`}
 						disableHoverListener={!resolutionIsSignificant}
 						disableTouchListener={!resolutionIsSignificant}
 					>
-						<Chip
-							icon={<Timer />}
-							label={`In ${resolutionIsSignificant ? '~' : ''}${durationMid}`}
-							size="small"
-							sx={{
-								marginLeft: '0.5em',
-								marginTop: '-4px',
-							}}
-						/>
+						<TimerChip label={`${resolutionIsSignificant ? '~' : ''}${durationMid}`} />
 					</Tooltip>
 				</AlertTitle>
 				<Typography component="pre" sx={{ fontFamily: 'Roboto Mono' }}>
