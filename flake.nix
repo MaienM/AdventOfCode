@@ -14,7 +14,43 @@
         fenixPkgs = fenix.packages."${system}";
       in
       {
-        defaultPackage = fenix.packages.x86_64-linux.minimal.toolchain;
+        apps =
+          let
+            platform = pkgs.makeRustPlatform rec {
+              cargo = fenixPkgs.minimal.toolchain;
+              rustc = cargo;
+            };
+            aoc = platform.buildRustPackage {
+              pname = "advent-of-code";
+              version = "0.0.0";
+              src = ./.;
+              cargoLock.lockFile = ./Cargo.lock;
+            };
+            mkApp = name: {
+              type = "app";
+              program = "${aoc}/bin/${name}";
+            };
+            binaries = builtins.concatMap
+              (name:
+                let match = builtins.match "([[:digit:]]{2}-[[:digit:]]{2})\\.rs" name;
+                in if match == null then [ ] else match
+              )
+              (builtins.attrNames (builtins.readDir ./src/bin));
+            apps = builtins.listToAttrs (
+              builtins.map
+              (
+                name: {
+                  inherit name;
+                  value = mkApp name;
+                }
+              )
+              (binaries ++ [ "aoc" ])
+            );
+          in
+          apps // {
+            default = apps.aoc;
+          };
+
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
             # Core.
