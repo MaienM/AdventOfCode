@@ -1,5 +1,19 @@
 # Advent of Code
 
+## Webassembly
+
+You can run the precompiled webassembly version in the browser [here](https://maienm.github.io/AdventOfCode). The performance of this is (obviously) worse than when running it natively, but (depending on the solution and browser used) this might only be by as little as 20%.
+
+Chromium based browsers will yield better runtimes and more accurate timings than Firefox.
+
+## Development
+
+Using Nix you can get an environment with all required dependencies by running:
+
+``` shell
+nix develop
+```
+
 To run a given day use either:
 
 ``` shell
