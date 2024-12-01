@@ -1,15 +1,7 @@
 import { Reply, Source, StarRate } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import {
-	Accordion,
-	AccordionDetails,
-	AccordionSummary,
-	Button,
-	Grid,
-	Stack,
-	TextField,
-	Typography,
-} from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Button, Stack, TextField, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import type { Bin } from 'aoc-wasm';
 import * as React from 'react';
 import Context from './context';
@@ -51,7 +43,7 @@ export default ({ bin }: Props) => {
 	};
 
 	return (
-		<Accordion>
+		<Accordion defaultExpanded={['22-19'].includes(bin.name)}>
 			<AccordionSummary>
 				<Typography variant="h6">
 					{`20${bin.year}`}
@@ -61,7 +53,7 @@ export default ({ bin }: Props) => {
 			</AccordionSummary>
 			<AccordionDetails>
 				<Grid container spacing={2}>
-					<Grid item xs={12} md={9} lg={10}>
+					<Grid size={{ xs: 12, md: 9, lg: 10 }}>
 						<TextField
 							label="Input"
 							multiline
@@ -89,7 +81,7 @@ export default ({ bin }: Props) => {
 							}}
 						/>
 					</Grid>
-					<Grid item xs={12} md={3} lg={2}>
+					<Grid size={{ xs: 12, md: 3, lg: 2 }}>
 						<Stack spacing={1}>
 							{bin.examples.map((example) => (
 								<Button
@@ -103,7 +95,7 @@ export default ({ bin }: Props) => {
 							))}
 						</Stack>
 					</Grid>
-					<Grid item xs={12}>
+					<Grid size={{ xs: 12 }}>
 						<Stack spacing={2} direction="row">
 							<LoadingButton
 								variant="contained"
@@ -133,10 +125,10 @@ export default ({ bin }: Props) => {
 							</Button>
 						</Stack>
 					</Grid>
-					<Grid item xs={12}>
+					<Grid size={{ xs: 12 }}>
 						<ResultComponent label="Part 1" result={part1} running={part1 ? false : running} />
 					</Grid>
-					<Grid item xs={12}>
+					<Grid size={{ xs: 12 }}>
 						<ResultComponent label="Part 2" result={part2} running={part1 ? running : false} />
 					</Grid>
 				</Grid>
