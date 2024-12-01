@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use ansi_term::Colour::{Cyan, Red};
-use clap::{Parser, ValueHint};
+use clap::{CommandFactory, FromArgMatches, Parser, ValueHint};
 
 use crate::{
     cli::{
@@ -44,8 +44,31 @@ const THRESHOLDS: DurationThresholds = DurationThresholds {
     acceptable: Duration::from_secs(1),
 };
 
+macro_rules! arg_default_value_fill_tokens {
+    (replace; $chain:expr, $(,)?) => {
+        $chain
+    };
+    (replace; $chain:expr, $name:ident = $value:expr $(, $($restname:ident = $restvalue:expr),*)?) => {
+        arg_default_value_fill_tokens!(replace; $chain.replace(&format!("{{{}}}", stringify!($name)), &$value.to_string()), $($($restname = $restvalue),*)?)
+    };
+    ($cmd:ident, $arg:expr, $($name:ident = $value:expr),+ $(,)?) => {
+        $cmd.mut_arg($arg, |a| {
+            let value = a.get_default_values()[0].to_str().unwrap();
+            let value = arg_default_value_fill_tokens!(replace; value, $($name = $value),+);
+            a.default_value(value)
+        })
+    }
+}
+
 pub fn main(bin: &Bin) {
-    let args = SingleArgs::parse();
+    // Replace the placeholders in the default values.
+    let mut cmd = SingleArgs::command_for_update();
+    cmd = arg_default_value_fill_tokens!(cmd, "input", name = bin.name);
+    cmd = arg_default_value_fill_tokens!(cmd, "part1", name = bin.name, part = 1);
+    cmd = arg_default_value_fill_tokens!(cmd, "part2", name = bin.name, part = 2);
+
+    let mut matches = cmd.get_matches();
+    let args = SingleArgs::from_arg_matches_mut(&mut matches).unwrap();
 
     let input_path = source_path_fill_tokens!(args.input, bin = bin);
     let part1_path = source_path_fill_tokens!(args.part1, bin = bin, part = 1);
