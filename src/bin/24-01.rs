@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+use aoc::utils::{ext::iter::IterExt, parse};
 
 fn parse_input(input: &str) -> (Vec<usize>, Vec<usize>) {
     let mut leftlist = Vec::new();
@@ -26,9 +26,10 @@ pub fn part1(input: &str) -> usize {
 
 pub fn part2(input: &str) -> usize {
     let (left, right) = parse_input(input);
+    let rcounts = right.into_iter().count_occurences();
     let mut score = 0;
     for l in left {
-        score += l * right.iter().filter(|r| *r == &l).count();
+        score += l * *rcounts.get(&l).unwrap_or(&0);
     }
     score
 }
