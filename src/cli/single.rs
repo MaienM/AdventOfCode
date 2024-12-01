@@ -25,7 +25,7 @@ struct SingleArgs {
     /// Path to a file containing the expected result of part 1.
     #[arg(
         value_hint = ValueHint::FilePath,
-        default_value = "inputs/{name}.solution{part}.txt",
+        default_value = "inputs/{name}-{part}.txt",
         value_parser = SourceValueParser,
     )]
     part1: Source,
@@ -33,7 +33,7 @@ struct SingleArgs {
     /// Path to a file containing the expected result of part 2.
     #[arg(
         value_hint = ValueHint::FilePath,
-        default_value = "inputs/{name}.solution{part}.txt",
+        default_value = "inputs/{name}-{part}.txt",
         value_parser = SourceValueParser,
     )]
     part2: Source,

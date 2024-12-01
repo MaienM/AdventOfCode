@@ -104,7 +104,7 @@ pub(super) struct TargetArgs {
     /// - `{part}`: the number of the part (`1` or `2`).
     #[arg(
         long,
-        default_value = "inputs/{name}.solution{part}.txt",
+        default_value = "inputs/{name}-{part}.txt",
         value_parser = SourceValueParser,
         verbatim_doc_comment,
         conflicts_with = "use_examples",
