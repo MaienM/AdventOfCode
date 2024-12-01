@@ -1,9 +1,10 @@
-import { Loop, PlayArrow, Reply } from '@mui/icons-material';
+import { PlayArrow, Reply } from '@mui/icons-material';
 import {
 	Accordion,
 	AccordionDetails,
 	AccordionSummary,
 	Button,
+	CircularProgress,
 	Grid,
 	Stack,
 	TextField,
@@ -108,7 +109,7 @@ export default ({ bin }: Props) => {
 								<Button
 									variant="contained"
 									disabled
-									endIcon={<Loop />}
+									endIcon={<CircularProgress size={20} />}
 								>
 									Running...
 								</Button>
