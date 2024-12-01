@@ -24,6 +24,15 @@ pub fn part1(input: &str) -> usize {
     diff
 }
 
+pub fn part2(input: &str) -> usize {
+    let (left, right) = parse_input(input);
+    let mut score = 0;
+    for l in left {
+        score += l * right.iter().filter(|r| *r == &l).count();
+    }
+    score
+}
+
 aoc::cli::single::generate_main!();
 
 #[cfg(test)]
@@ -33,7 +42,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 11)]
+    #[example_input(part1 = 11, part2 = 31)]
     static EXAMPLE_INPUT: &str = "
         3   4
         4   3
