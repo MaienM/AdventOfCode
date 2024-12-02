@@ -43,7 +43,7 @@ export default ({ bin }: Props) => {
 	};
 
 	return (
-		<Accordion defaultExpanded={['22-19'].includes(bin.name)}>
+		<Accordion>
 			<AccordionSummary>
 				<Typography variant="h6">
 					{`20${bin.year}`}
