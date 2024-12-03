@@ -115,6 +115,7 @@ dependencies = [
  "pretty_assertions",
  "raqote",
  "rayon",
+ "regex",
  "serde",
  "serde_json",
  "tap",
