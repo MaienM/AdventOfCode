@@ -1,3 +1,5 @@
+import { ThemeProvider } from '@emotion/react';
+import { createTheme, CssBaseline } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import * as Comlink from 'comlink';
@@ -37,6 +39,22 @@ const repository = await (async () => {
 	return repo;
 })();
 
+const theme = createTheme({
+	colorSchemes: {
+		light: true,
+		dark: true,
+	},
+});
+
+const Router = () => (
+	<HashRouter>
+		<Routes>
+			<Route path="/" element={<Overview />} />
+			<Route path="/:bin" element={<BinDetails />} />
+		</Routes>
+	</HashRouter>
+);
+
 const root = createRoot(document.getElementById('app'));
 root.render(
 	(
@@ -49,12 +67,10 @@ root.render(
 			}}
 		>
 			<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enGB}>
-				<HashRouter>
-					<Routes>
-						<Route path="/" element={<Overview />} />
-						<Route path="/:bin" element={<BinDetails />} />
-					</Routes>
-				</HashRouter>
+				<ThemeProvider theme={theme}>
+					<CssBaseline />
+					<Router />
+				</ThemeProvider>
 			</LocalizationProvider>
 		</Context.Provider>
 	),

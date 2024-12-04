@@ -1,5 +1,5 @@
 import { GitHub } from '@mui/icons-material';
-import { AppBar, Container, CssBaseline, Grid2, IconButton, Toolbar, Typography } from '@mui/material';
+import { AppBar, Container, Grid2, IconButton, Toolbar, Typography } from '@mui/material';
 import { uniq } from 'lodash-es';
 import * as React from 'react';
 import BinCalendar from './BinCalendar';
@@ -17,7 +17,6 @@ export default () => {
 
 	return (
 		<>
-			<CssBaseline />
 			<AppBar position="static">
 				<Toolbar>
 					<Typography variant="h6" sx={{ flexGrow: 1 }}>
