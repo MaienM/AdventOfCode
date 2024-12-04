@@ -1,6 +1,6 @@
-import { ArrowBack, Reply, Source, StarRate } from '@mui/icons-material';
+import { ArrowBack, KeyboardArrowDown, Publish, Source, StarRate } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Button, Grid2, IconButton, Stack, TextField, Toolbar, Typography } from '@mui/material';
+import { Button, IconButton, Menu, MenuItem, Stack, TextField, Toolbar, Typography } from '@mui/material';
 import * as React from 'react';
 import { Link, useParams } from 'react-router';
 import Context from './context';
@@ -19,6 +19,7 @@ export default () => {
 	const [running, setRunning] = React.useState(false);
 	const [part1, setPart1] = React.useState<Result | undefined>(undefined);
 	const [part2, setPart2] = React.useState<Result | undefined>(undefined);
+	const [exampleMenuAnchor, setExampleMenuAnchor] = React.useState<HTMLElement | null>(null);
 
 	const run = async () => {
 		if (running) {
@@ -57,89 +58,93 @@ export default () => {
 					{bin.day}
 				</Typography>
 			</Toolbar>
-			<Grid2 container spacing={2}>
-				<Grid2 size={{ xs: 12, md: 9, lg: 10 }}>
-					<TextField
-						label="Input"
-						multiline
-						maxRows={20}
-						value={input}
-						onChange={(event) => {
-							setInput(event.target.value);
-						}}
-						onBlur={(_) => {
-							setInput(input.trimEnd());
-						}}
-						onPaste={(event) => {
-							const input = event.target as HTMLTextAreaElement;
-							if (input.selectionStart === 0 && input.selectionEnd === input.value.length) {
-								event.preventDefault();
-								const text = event.clipboardData.getData('text/plain').trimEnd();
-								setInput(text);
-							}
-						}}
-						fullWidth
-						slotProps={{
-							htmlInput: {
-								sx: {
-									fontFamily: 'Roboto Mono',
-								},
+			<Stack padding={2} spacing={2}>
+				<TextField
+					label="Input"
+					multiline
+					maxRows={20}
+					value={input}
+					onChange={(event) => {
+						setInput(event.target.value);
+					}}
+					onBlur={(_) => {
+						setInput(input.trimEnd());
+					}}
+					onPaste={(event) => {
+						const input = event.target as HTMLTextAreaElement;
+						if (input.selectionStart === 0 && input.selectionEnd === input.value.length) {
+							event.preventDefault();
+							const text = event.clipboardData.getData('text/plain').trimEnd();
+							setInput(text);
+						}
+					}}
+					fullWidth
+					slotProps={{
+						htmlInput: {
+							sx: {
+								fontFamily: 'Roboto Mono',
 							},
-						}}
-					/>
-				</Grid2>
-				<Grid2 size={{ xs: 12, md: 3, lg: 2 }}>
-					<Stack spacing={1}>
+						},
+					}}
+				/>
+
+				<Stack spacing={2} direction={{ xs: 'column', sm: 'row' }}>
+					<LoadingButton
+						variant="contained"
+						disabled={running}
+						// eslint-disable-next-line @typescript-eslint/no-misused-promises
+						onClick={run}
+						loading={running}
+					>
+						Solve
+					</LoadingButton>
+					<Button
+						variant="outlined"
+						startIcon={<Publish />}
+						endIcon={<KeyboardArrowDown />}
+						onClick={(e) => setExampleMenuAnchor(e.currentTarget)}
+					>
+						Load examples
+					</Button>
+					<Menu
+						open={!!exampleMenuAnchor}
+						anchorEl={exampleMenuAnchor}
+						onClose={() => setExampleMenuAnchor(null)}
+					>
 						{bin.examples.map((example) => (
-							<Button
-								key={example.name}
-								variant="outlined"
-								startIcon={<Reply />}
-								onClick={() => setInput(example.input)}
+							<MenuItem
+								onClick={() => {
+									setInput(example.input);
+									setExampleMenuAnchor(null);
+								}}
 							>
 								{example.name}
-							</Button>
+							</MenuItem>
 						))}
-					</Stack>
-				</Grid2>
-				<Grid2 size={{ xs: 12 }}>
-					<Stack spacing={2} direction={{ xs: 'column', sm: 'row' }}>
-						<LoadingButton
-							variant="contained"
-							disabled={running}
-							// eslint-disable-next-line @typescript-eslint/no-misused-promises
-							onClick={run}
-							loading={running}
-						>
-							Solve
-						</LoadingButton>
-						<Button
-							variant="outlined"
-							startIcon={<Source />}
-							href={context.repository.browse(`src/bin/${bin.name}.rs`)}
-							target="blank"
-							rel="noopener"
-						>
-							View source
-						</Button>
-						<Button
-							variant="outlined"
-							startIcon={<StarRate />}
-							href={`https://adventofcode.com/${bin.year}/day/${bin.day}`}
-							target="blank"
-							rel="noopener"
-						>
-							View puzzle
-						</Button>
-					</Stack>
-				</Grid2>
-				<Grid2 size={{ xs: 12 }}>
-					<ResultComponent label="Part 1" result={part1} running={part1 ? false : running} />
-				</Grid2>
-				<Grid2 size={{ xs: 12 }}>
-					<ResultComponent label="Part 2" result={part2} running={part1 ? running : false} />
-				</Grid2>
-			</Grid2>
+					</Menu>
+					<Button
+						variant="outlined"
+						startIcon={<Source />}
+						href={context.repository.browse(`src/bin/${bin.name}.rs`)}
+						target="blank"
+						rel="noopener"
+					>
+						View source
+					</Button>
+					<Button
+						variant="outlined"
+						startIcon={<StarRate />}
+						href={`https://adventofcode.com/${bin.year}/day/${bin.day}`}
+						target="blank"
+						rel="noopener"
+					>
+						View puzzle
+					</Button>
+				</Stack>
+
+				<ResultComponent label="Part 1" result={part1} running={part1 ? false : running} />
+				<ResultComponent label="Part 2" result={part2} running={part1 ? running : false} />
+			</Stack>
 		</>
 	);
 };
