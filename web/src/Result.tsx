@@ -31,9 +31,7 @@ const formatDuration = (duration: number): string => {
 };
 
 const TimerChip = React.forwardRef<HTMLDivElement, ChipProps>((props: ChipProps, ref) => (
-	// dprint-ignore
 	<Chip
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		{...props}
 		ref={ref}
 		icon={<Timer />}

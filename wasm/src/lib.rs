@@ -96,6 +96,12 @@ impl Bin {
         self.0.day
     }
 
+    // How many parts are implemented in this binary.
+    #[wasm_bindgen(getter)]
+    pub fn parts(&self) -> u8 {
+        u8::from(self.0.part1.is_some()) + u8::from(self.0.part2.is_some())
+    }
+
     /// The examples
     #[wasm_bindgen(getter)]
     pub fn examples(&self) -> Vec<Example> {

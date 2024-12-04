@@ -1,4 +1,7 @@
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import * as Comlink from 'comlink';
+import { enGB } from 'date-fns/locale';
 import GitHost from 'hosted-git-info';
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -42,7 +45,9 @@ root.render(
 				repository,
 			}}
 		>
-			<Root bins={await aocWorker.list()} />
+			<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enGB}>
+				<Root bins={await aocWorker.list()} />
+			</LocalizationProvider>
 		</Context.Provider>
 	),
 );

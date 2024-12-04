@@ -81,6 +81,7 @@ dependencies = [
  "once_cell",
  "paste",
  "rayon",
+ "regex",
  "tap",
 ]
 

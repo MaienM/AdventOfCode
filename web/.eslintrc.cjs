@@ -9,5 +9,7 @@ module.exports = {
 			namedComponents: 'arrow-function',
 			unnamedComponents: 'arrow-function',
 		}],
+		'react/jsx-props-no-spreading': 'off',
+		'react/require-default-props': 'off',
 	},
 };
