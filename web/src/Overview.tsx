@@ -1,25 +1,19 @@
 import { GitHub } from '@mui/icons-material';
 import { AppBar, Container, CssBaseline, Grid2, IconButton, Toolbar, Typography } from '@mui/material';
-import type { Bin } from 'aoc-wasm';
-import { groupBy } from 'lodash-es';
+import { uniq } from 'lodash-es';
 import * as React from 'react';
 import BinCalendar from './BinCalendar';
 import Context from './context';
 
-interface Props {
-	bins: Bin[];
-}
-
 /**
  * Component for the root of the application.
  */
-export default ({ bins }: Props) => {
+export default () => {
 	const context = React.useContext(Context);
-	const byYear = React.useMemo(
-		() => groupBy(bins, (bin) => bin.year),
-		[bins],
+	const years = React.useMemo(
+		() => uniq(context.bins.map((bin) => bin.year)),
+		[context.bins],
 	);
-	const years = Object.keys(byYear).sort();
 
 	return (
 		<>
@@ -43,10 +37,7 @@ export default ({ bins }: Props) => {
 				<Grid2 container>
 					{years.map((year) => (
 						<Grid2 key={year} size={{ xs: 12, sm: 6, xl: 4 }}>
-							<BinCalendar
-								year={+year}
-								bins={byYear[year]}
-							/>
+							<BinCalendar year={+year} />
 						</Grid2>
 					))}
 				</Grid2>

@@ -5,8 +5,10 @@ import { enGB } from 'date-fns/locale';
 import GitHost from 'hosted-git-info';
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
+import { HashRouter, Route, Routes } from 'react-router';
+import BinDetails from './BinDetails';
 import Context from './context';
-import Root from './Root';
+import Overview from './Overview';
 import type { AOCWorker } from './worker';
 
 import '@fontsource/roboto/300.css';
@@ -41,12 +43,18 @@ root.render(
 		<Context.Provider
 			value={{
 				worker: aocWorker,
+				bins: await aocWorker.list(),
 				minTimerResolution: await aocWorker.getTimerResolution(),
 				repository,
 			}}
 		>
 			<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={enGB}>
-				<Root bins={await aocWorker.list()} />
+				<HashRouter>
+					<Routes>
+						<Route path="/" element={<Overview />} />
+						<Route path="/:bin" element={<BinDetails />} />
+					</Routes>
+				</HashRouter>
 			</LocalizationProvider>
 		</Context.Provider>
 	),
