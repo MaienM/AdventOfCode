@@ -8,28 +8,43 @@ fn parse_input(input: &str) -> Vec<Vec<char>> {
     } => chars)
 }
 
-fn test(chars: &[Vec<char>], start: Point, offset: Point) -> bool {
-    chars[(start.y + offset.y) as usize][(start.x + offset.x) as usize] == 'M'
-        && chars[(start.y + offset.y * 2) as usize][(start.x + offset.x * 2) as usize] == 'A'
-        && chars[(start.y + offset.y * 3) as usize][(start.x + offset.x * 3) as usize] == 'S'
+fn test_mas_from(chars: &[Vec<char>], start: Point, offset: Point) -> bool {
+    test_mas(chars, start + offset, offset)
 }
 
-fn test_all_directions(chars: &[Vec<char>], dimensions: &Point, start: Point) -> usize {
+fn test_mas(chars: &[Vec<char>], start: Point, offset: Point) -> bool {
+    chars[start.y as usize][start.x as usize] == 'M'
+        && chars[(start.y + offset.y) as usize][(start.x + offset.x) as usize] == 'A'
+        && chars[(start.y + offset.y * 2) as usize][(start.x + offset.x * 2) as usize] == 'S'
+}
+
+fn test_xmas_all_directions(chars: &[Vec<char>], dimensions: &Point, start: Point) -> usize {
     [
-        start.x >= 3 && test(chars, start, Point::new(-1, 0)),
-        start.x >= 3 && start.y >= 3 && test(chars, start, Point::new(-1, -1)),
-        start.x >= 3 && dimensions.y - start.y >= 4 && test(chars, start, Point::new(-1, 1)),
-        (dimensions.x - start.x) >= 4 && test(chars, start, Point::new(1, 0)),
-        (dimensions.x - start.x) >= 4 && start.y >= 3 && test(chars, start, Point::new(1, -1)),
+        start.x >= 3 && test_mas_from(chars, start, Point::new(-1, 0)),
+        start.x >= 3 && start.y >= 3 && test_mas_from(chars, start, Point::new(-1, -1)),
+        start.x >= 3
+            && dimensions.y - start.y >= 4
+            && test_mas_from(chars, start, Point::new(-1, 1)),
+        (dimensions.x - start.x) >= 4 && test_mas_from(chars, start, Point::new(1, 0)),
+        (dimensions.x - start.x) >= 4
+            && start.y >= 3
+            && test_mas_from(chars, start, Point::new(1, -1)),
         (dimensions.x - start.x) >= 4
             && dimensions.y - start.y >= 4
-            && test(chars, start, Point::new(1, 1)),
-        start.y >= 3 && test(chars, start, Point::new(0, -1)),
-        dimensions.y - start.y >= 4 && test(chars, start, Point::new(0, 1)),
+            && test_mas_from(chars, start, Point::new(1, 1)),
+        start.y >= 3 && test_mas_from(chars, start, Point::new(0, -1)),
+        dimensions.y - start.y >= 4 && test_mas_from(chars, start, Point::new(0, 1)),
     ]
     .into_iter()
     .filter(|v| *v)
     .count()
+}
+
+fn test_x_mas(chars: &[Vec<char>], tl: Point) -> bool {
+    (test_mas(chars, tl, Point::new(1, 1))
+        || test_mas(chars, Point::new(tl.x + 2, tl.y + 2), Point::new(-1, -1)))
+        && (test_mas(chars, Point::new(tl.x + 2, tl.y), Point::new(-1, 1))
+            || test_mas(chars, Point::new(tl.x, tl.y + 2), Point::new(1, -1)))
 }
 
 pub fn part1(input: &str) -> usize {
@@ -39,7 +54,21 @@ pub fn part1(input: &str) -> usize {
     for y in 0..dimensions.y {
         for x in 0..dimensions.x {
             if chars[y as usize][x as usize] == 'X' {
-                result += test_all_directions(&chars, &dimensions, Point::new(x, y));
+                result += test_xmas_all_directions(&chars, &dimensions, Point::new(x, y));
+            }
+        }
+    }
+    result
+}
+
+pub fn part2(input: &str) -> usize {
+    let chars = parse_input(input);
+    let dimensions = Point::new(chars[0].len() as isize, chars[0].len() as isize);
+    let mut result = 0;
+    for y in 0..(dimensions.y - 2) {
+        for x in 0..(dimensions.x - 2) {
+            if test_x_mas(&chars, Point::new(x, y)) {
+                result += 1;
             }
         }
     }
@@ -55,7 +84,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 18)]
+    #[example_input(part1 = 18, part2 = 9)]
     static EXAMPLE_INPUT: &str = "
         MMMSXXMASM
         MSAMXMSMSA
