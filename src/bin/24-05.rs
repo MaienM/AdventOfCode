@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 
 use aoc::utils::parse;
+use rayon::prelude::*;
 
 fn parse_input(input: &str) -> (Vec<(u16, u16)>, Vec<Vec<u16>>) {
     parse!(input => {
@@ -40,7 +41,7 @@ fn reorder(update: &mut [u16], rules: &[(u16, u16)]) {
 pub fn part1(input: &str) -> u16 {
     let (rules, updates) = parse_input(input);
     updates
-        .into_iter()
+        .into_par_iter()
         .filter(|u| is_ordered(u, &rules))
         .map(|u| u[u.len() / 2])
         .sum()
@@ -49,7 +50,7 @@ pub fn part1(input: &str) -> u16 {
 pub fn part2(input: &str) -> u16 {
     let (rules, updates) = parse_input(input);
     updates
-        .into_iter()
+        .into_par_iter()
         .filter(|u| !is_ordered(u, &rules))
         .map(|mut u| {
             reorder(&mut u, &rules);
