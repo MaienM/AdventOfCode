@@ -14,13 +14,15 @@ fn parse_input(input: &str) -> (Vec<(u16, u16)>, Vec<Vec<u16>>) {
 }
 
 fn is_ordered(update: &[u16], rules: &[(u16, u16)]) -> bool {
-    for rule in rules {
-        let mut matches = update.iter().filter(|v| **v == rule.0 || **v == rule.1);
-        if let (Some(left), Some(_)) = (matches.next(), matches.next()) {
-            if rule.0 != *left {
-                return false;
-            }
+    let mut forbidden = Vec::new();
+    for page in update.iter().rev() {
+        if forbidden.contains(page) {
+            return false;
         }
+        rules
+            .iter()
+            .filter(|(l, _)| l == page)
+            .for_each(|(_, r)| forbidden.push(*r));
     }
     true
 }
