@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use ansi_term::Colour::{Cyan, Red};
 use clap::{CommandFactory, FromArgMatches, Parser, ValueHint};
+use rayon::ThreadPoolBuilder;
 
 use crate::{
     cli::{
@@ -87,6 +88,9 @@ pub fn main(bin: &Bin) {
             return;
         }
     };
+
+    // Initialize the thread pool now. This will happen automatically when it's first needed, but if this is inside a solution this will add to the runtime of that solution, unfairly penalizing it for being the first to use rayon while the other solutions that also do so get a free pass.
+    ThreadPoolBuilder::new().build_global().unwrap();
 
     for (i, part, visual, solution_path) in [
         (

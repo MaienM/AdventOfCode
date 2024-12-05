@@ -5,6 +5,7 @@ use clap::{
     builder::{PossibleValue, PossibleValuesParser, TypedValueParser},
     Parser,
 };
+use rayon::ThreadPoolBuilder;
 
 use super::source::source_path_fill_tokens;
 use crate::{
@@ -241,6 +242,9 @@ pub fn main() {
         ),
         Cyan.paint(bins.len().to_string()),
     );
+
+    // Initialize the thread pool now. This will happen automatically when it's first needed, but if this is inside a solution this will add to the runtime of that solution, unfairly penalizing it for being the first to use rayon while the other solutions that also do so get a free pass.
+    ThreadPoolBuilder::new().build_global().unwrap();
 
     let runs: Vec<(String, SolverRunResult)> = targets
         .into_iter()
