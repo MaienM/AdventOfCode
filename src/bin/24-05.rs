@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use aoc::utils::parse;
 
 fn parse_input(input: &str) -> (Vec<(u16, u16)>, Vec<Vec<u16>>) {
@@ -23,12 +25,34 @@ fn is_ordered(update: &[u16], rules: &[(u16, u16)]) -> bool {
     true
 }
 
+fn reorder(update: &mut [u16], rules: &[(u16, u16)]) {
+    update.sort_unstable_by(|l, r| {
+        if rules.contains(&(*l, *r)) {
+            Ordering::Less
+        } else {
+            Ordering::Equal
+        }
+    });
+}
+
 pub fn part1(input: &str) -> u16 {
     let (rules, updates) = parse_input(input);
     updates
         .into_iter()
         .filter(|u| is_ordered(u, &rules))
         .map(|u| u[u.len() / 2])
+        .sum()
+}
+
+pub fn part2(input: &str) -> u16 {
+    let (rules, updates) = parse_input(input);
+    updates
+        .into_iter()
+        .filter(|u| !is_ordered(u, &rules))
+        .map(|mut u| {
+            reorder(&mut u, &rules);
+            u[u.len() / 2]
+        })
         .sum()
 }
 
@@ -41,7 +65,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 143)]
+    #[example_input(part1 = 143, part2 = 123)]
     static EXAMPLE_INPUT: &str = "
         47|53
         97|13
