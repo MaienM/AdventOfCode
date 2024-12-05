@@ -48,9 +48,11 @@ inputs/%.txt: .session
 #
 
 run-all:
+	@cargo build --release --bin aoc
 	@cargo run --release --bin aoc --quiet
 
 run-%:
+	@cargo build --release --bin aoc
 	@cargo run --release --bin aoc --quiet -- --only $(subst run-,,$@)
 
 test-libs:
@@ -62,6 +64,7 @@ test-and-run-%: inputs/%.txt
 	@cargo nextest run --lib --bin ${bin} --no-fail-fast --cargo-quiet --status-level fail
 
 	@echo "$(setaf6)>>>>> Running ${bin} <<<<<$(sgr0)"
+	@cargo build --bin ${bin} --release --quiet
 	@cargo run --bin ${bin} --release --quiet
 
 #
