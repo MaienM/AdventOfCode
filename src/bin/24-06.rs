@@ -27,6 +27,30 @@ fn parse_input(input: &str) -> (Point, HashSet<Point>, Point) {
     (guard.unwrap(), obstacles, bounds)
 }
 
+fn get_path_out(guard: &Point, obstacles: &HashSet<Point>, bounds: &Point) -> HashSet<Point> {
+    let mut visited = HashSet::new();
+    visited.insert(*guard);
+    let mut guard = (*guard, Direction2::North);
+    while let Some(nextpoint) = guard.0.checked_add_direction(guard.1, &1) {
+        if obstacles.contains(&nextpoint) {
+            guard.1 = match guard.1 {
+                Direction2::North => Direction2::East,
+                Direction2::East => Direction2::South,
+                Direction2::South => Direction2::West,
+                Direction2::West => Direction2::North,
+            };
+            continue;
+        }
+
+        if nextpoint.x >= bounds.x || nextpoint.y >= bounds.y {
+            break;
+        }
+        visited.insert(nextpoint);
+        guard.0 = nextpoint;
+    }
+    visited
+}
+
 fn check_loop(
     guard: &Point,
     obstacles: &HashSet<Point>,
@@ -59,41 +83,20 @@ fn check_loop(
 
 pub fn part1(input: &str) -> usize {
     let (guard, obstacles, bounds) = parse_input(input);
-    let mut visited = HashSet::new();
-    visited.insert(guard);
-    let mut guard = (guard, Direction2::North);
-    while let Some(nextpoint) = guard.0.checked_add_direction(guard.1, &1) {
-        if obstacles.contains(&nextpoint) {
-            guard.1 = match guard.1 {
-                Direction2::North => Direction2::East,
-                Direction2::East => Direction2::South,
-                Direction2::South => Direction2::West,
-                Direction2::West => Direction2::North,
-            };
-            continue;
-        }
-
-        if nextpoint.x > bounds.x || nextpoint.y > bounds.y {
-            break;
-        }
-        visited.insert(nextpoint);
-        guard.0 = nextpoint;
-    }
-    visited.len() - 1
+    let visited = get_path_out(&guard, &obstacles, &bounds);
+    visited.len()
 }
 
 pub fn part2(input: &str) -> usize {
     let (guard, obstacles, bounds) = parse_input(input);
+    let visited = get_path_out(&guard, &obstacles, &bounds);
     let mut loops = 0;
-    for x in 0..bounds.x {
-        for y in 0..bounds.y {
-            let point = Point::new(x, y);
-            if point == guard || obstacles.contains(&point) {
-                continue;
-            }
-            if check_loop(&guard, &obstacles, &point, &bounds) {
-                loops += 1;
-            }
+    for point in visited {
+        if point == guard {
+            continue;
+        }
+        if check_loop(&guard, &obstacles, &point, &bounds) {
+            loops += 1;
         }
     }
     loops
