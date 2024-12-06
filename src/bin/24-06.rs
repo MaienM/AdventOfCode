@@ -27,6 +27,36 @@ fn parse_input(input: &str) -> (Point, HashSet<Point>, Point) {
     (guard.unwrap(), obstacles, bounds)
 }
 
+fn check_loop(
+    guard: &Point,
+    obstacles: &HashSet<Point>,
+    extra_obstacle: &Point,
+    bounds: &Point,
+) -> bool {
+    let mut bumped = HashSet::new();
+    let mut guard = (*guard, Direction2::North);
+    while let Some(nextpoint) = guard.0.checked_add_direction(guard.1, &1) {
+        if obstacles.contains(&nextpoint) || &nextpoint == extra_obstacle {
+            if !bumped.insert((nextpoint, guard.1)) {
+                return true;
+            }
+            guard.1 = match guard.1 {
+                Direction2::North => Direction2::East,
+                Direction2::East => Direction2::South,
+                Direction2::South => Direction2::West,
+                Direction2::West => Direction2::North,
+            };
+            continue;
+        }
+
+        if nextpoint.x > bounds.x || nextpoint.y > bounds.y {
+            return false;
+        }
+        guard.0 = nextpoint;
+    }
+    false
+}
+
 pub fn part1(input: &str) -> usize {
     let (guard, obstacles, bounds) = parse_input(input);
     let mut visited = HashSet::new();
@@ -52,6 +82,23 @@ pub fn part1(input: &str) -> usize {
     visited.len() - 1
 }
 
+pub fn part2(input: &str) -> usize {
+    let (guard, obstacles, bounds) = parse_input(input);
+    let mut loops = 0;
+    for x in 0..bounds.x {
+        for y in 0..bounds.y {
+            let point = Point::new(x, y);
+            if point == guard || obstacles.contains(&point) {
+                continue;
+            }
+            if check_loop(&guard, &obstacles, &point, &bounds) {
+                loops += 1;
+            }
+        }
+    }
+    loops
+}
+
 aoc::cli::single::generate_main!();
 
 #[cfg(test)]
@@ -61,7 +108,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 41)]
+    #[example_input(part1 = 41, part2 = 6)]
     static EXAMPLE_INPUT: &str = "
         ....#.....
         .........#
