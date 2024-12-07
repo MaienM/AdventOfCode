@@ -11,7 +11,15 @@ fn parse_input(input: &str) -> Vec<Equation> {
     } => equations)
 }
 
-fn test_inner(equation: &Equation, running_total: usize, offset: usize, concat: bool) -> bool {
+fn concat(left: usize, right: usize) -> usize {
+    let mut mul = 10;
+    while mul <= right {
+        mul *= 10;
+    }
+    left * mul + right
+}
+
+fn test_inner(equation: &Equation, running_total: usize, offset: usize, do_concat: bool) -> bool {
     if offset == equation.1.len() {
         return running_total == equation.0;
     }
@@ -22,19 +30,13 @@ fn test_inner(equation: &Equation, running_total: usize, offset: usize, concat: 
     let next = equation.1[offset];
     let offset = offset + 1;
 
-    test_inner(equation, running_total * next, offset, concat)
-        || test_inner(equation, running_total + next, offset, concat)
-        || (concat
-            && test_inner(
-                equation,
-                format!("{running_total}{next}").parse().unwrap(),
-                offset,
-                concat,
-            ))
+    test_inner(equation, running_total * next, offset, do_concat)
+        || test_inner(equation, running_total + next, offset, do_concat)
+        || (do_concat && test_inner(equation, concat(running_total, next), offset, do_concat))
 }
 
-fn test(equation: &Equation, concat: bool) -> bool {
-    test_inner(equation, equation.1[0], 1, concat)
+fn test(equation: &Equation, do_concat: bool) -> bool {
+    test_inner(equation, equation.1[0], 1, do_concat)
 }
 
 pub fn part1(input: &str) -> usize {
