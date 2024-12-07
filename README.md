@@ -41,3 +41,12 @@ make run-all
 ```
 
 This will not attempt to download any new inputs.
+
+## Timing
+
+The timings are _only_ for the actual solution, starting right before the main function is called (with the input passed in as a string), and it ends as soon as this function returns. This means the following are all excluded from the displayed runtimes:
+
+- Parsing arguments.
+- Reading the input/expected answer files from disk.
+- Initializing the threadpool.
+- Validating & displaying the results
