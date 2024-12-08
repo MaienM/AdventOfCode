@@ -1,4 +1,5 @@
 use aoc::utils::parse;
+use rayon::prelude::*;
 
 type Equation = (usize, Vec<usize>);
 
@@ -42,7 +43,7 @@ fn test(equation: &Equation, do_concat: bool) -> bool {
 pub fn part1(input: &str) -> usize {
     let equations = parse_input(input);
     equations
-        .into_iter()
+        .into_par_iter()
         .filter(|e| test(e, false))
         .map(|e| e.0)
         .sum()
@@ -51,7 +52,7 @@ pub fn part1(input: &str) -> usize {
 pub fn part2(input: &str) -> usize {
     let equations = parse_input(input);
     equations
-        .into_iter()
+        .into_par_iter()
         .filter(|e| test(e, true))
         .map(|e| e.0)
         .sum()
