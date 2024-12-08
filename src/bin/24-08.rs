@@ -22,6 +22,10 @@ fn parse_input(input: &str) -> (HashMap<char, Vec<Point>>, Point) {
     (map, bounds)
 }
 
+fn in_bounds(node: &Point, bounds: &Point) -> bool {
+    0 <= node.x && node.x < bounds.x && 0 <= node.y && node.y < bounds.y
+}
+
 pub fn part1(input: &str) -> usize {
     let (map, bounds) = parse_input(input);
     let mut antinodes = HashSet::new();
@@ -39,8 +43,36 @@ pub fn part1(input: &str) -> usize {
     }
     antinodes
         .into_iter()
-        .filter(|an| 0 <= an.x && an.x < bounds.x && 0 <= an.y && an.y < bounds.y)
+        .filter(|an| in_bounds(an, &bounds))
         .count()
+}
+
+pub fn part2(input: &str) -> usize {
+    let (map, bounds) = parse_input(input);
+    let mut antinodes = HashSet::new();
+    for nodes in map.into_values() {
+        for node1 in &nodes {
+            for node2 in &nodes {
+                if node1 == node2 {
+                    continue;
+                }
+                let diff = *node1 - *node2;
+
+                let mut node = *node1;
+                while in_bounds(&node, &bounds) {
+                    antinodes.insert(node);
+                    node += diff;
+                }
+
+                let mut node = *node2;
+                while in_bounds(&node, &bounds) {
+                    antinodes.insert(node);
+                    node -= diff;
+                }
+            }
+        }
+    }
+    antinodes.len()
 }
 
 aoc::cli::single::generate_main!();
@@ -53,7 +85,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 14)]
+    #[example_input(part1 = 14, part2 = 34)]
     static EXAMPLE_INPUT: &str = "
         ............
         ........0...
@@ -67,6 +99,20 @@ mod tests {
         .........A..
         ............
         ............
+    ";
+
+    #[example_input(part2 = 9)]
+    static EXAMPLE_INPUT_2: &str = "
+        T.........
+        ...T......
+        .T........
+        ..........
+        ..........
+        ..........
+        ..........
+        ..........
+        ..........
+        ..........
     ";
 
     #[test]
