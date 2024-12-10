@@ -1,4 +1,7 @@
+use std::collections::HashSet;
+
 use aoc::utils::{parse, point::Point2};
+use rayon::prelude::*;
 
 type Map = Vec<Vec<u8>>;
 
@@ -16,7 +19,28 @@ fn parse_input(input: &str) -> (Map, Point2) {
     (map, bounds)
 }
 
-fn find_trails(map: &Map, current: &Point2, target_height: u8) -> usize {
+fn find_reachable_summits(
+    map: &Map,
+    current: &Point2,
+    target_height: u8,
+    found: &mut HashSet<Point2>,
+) {
+    if target_height == 10 {
+        found.insert(*current);
+        return;
+    }
+
+    for point in current.neighbours_ortho() {
+        let Some(height) = map.get(point.y).and_then(|r| r.get(point.x)) else {
+            continue;
+        };
+        if *height == target_height {
+            find_reachable_summits(map, &point, target_height + 1, found);
+        }
+    }
+}
+
+fn find_trails_to_summits(map: &Map, current: &Point2, target_height: u8) -> usize {
     if target_height == 10 {
         return 1;
     }
@@ -29,7 +53,7 @@ fn find_trails(map: &Map, current: &Point2, target_height: u8) -> usize {
                 return 0;
             };
             if *height == target_height {
-                find_trails(map, point, target_height + 1)
+                find_trails_to_summits(map, point, target_height + 1)
             } else {
                 0
             }
@@ -42,8 +66,22 @@ pub fn part1(input: &str) -> usize {
     (0..bounds.y)
         .flat_map(|y| (0..bounds.x).map(|x| Point2::new(x, y)).collect::<Vec<_>>())
         .filter(|start| map[start.y][start.x] == 0)
-        .map(|start| find_trails(&map, &start, 1))
-        .map(|v| v)
+        .par_bridge()
+        .map(|start| {
+            let mut found = HashSet::new();
+            find_reachable_summits(&map, &start, 1, &mut found);
+            found.len()
+        })
+        .sum()
+}
+
+pub fn part2(input: &str) -> usize {
+    let (map, bounds) = parse_input(input);
+    (0..bounds.y)
+        .flat_map(|y| (0..bounds.x).map(|x| Point2::new(x, y)).collect::<Vec<_>>())
+        .filter(|start| map[start.y][start.x] == 0)
+        .par_bridge()
+        .map(|start| find_trails_to_summits(&map, &start, 1))
         .sum()
 }
 
@@ -56,41 +94,73 @@ mod tests {
 
     use super::*;
 
-    // #[example_input(part1 = 2)]
-    // static EXAMPLE_INPUT_1: &str = "
-    //     ...0...
-    //     ...1...
-    //     ...2...
-    //     6543456
-    //     7.....7
-    //     8.....8
-    //     9.....9
-    // ";
-    //
-    // #[example_input(part1 = 4)]
-    // static EXAMPLE_INPUT_2: &str = "
-    //     ..90..9
-    //     ...1.98
-    //     ...2..7
-    //     6543456
-    //     765.987
-    //     876....
-    //     987....
-    // ";
-    //
-    // #[example_input(part1 = 3)]
-    // static EXAMPLE_INPUT_3: &str = "
-    //     1055955
-    //     2555855
-    //     3555755
-    //     4567654
-    //     5558553
-    //     5559552
-    //     5555501
-    // ";
+    #[example_input(part1 = 2)]
+    static EXAMPLE_INPUT_1_1: &str = "
+        ...0...
+        ...1...
+        ...2...
+        6543456
+        7.....7
+        8.....8
+        9.....9
+    ";
 
-    #[example_input(part1 = 81)]
-    static EXAMPLE_INPUT_4: &str = "
+    #[example_input(part1 = 4)]
+    static EXAMPLE_INPUT_1_2: &str = "
+        ..90..9
+        ...1.98
+        ...2..7
+        6543456
+        765.987
+        876....
+        987....
+    ";
+
+    #[example_input(part1 = 3)]
+    static EXAMPLE_INPUT_1_3: &str = "
+        10..9..
+        2...8..
+        3...7..
+        4567654
+        ...8..3
+        ...9..2
+        .....01
+    ";
+
+    #[example_input(part2 = 3)]
+    static EXAMPLE_INPUT_2_1: &str = "
+        .....0.
+        ..4321.
+        ..5..2.
+        ..6543.
+        ..7..4.
+        ..8765.
+        ..9....
+    ";
+
+    #[example_input(part2 = 13)]
+    static EXAMPLE_INPUT_2_2: &str = "
+        ..90..9
+        ...1.98
+        ...2..7
+        6543456
+        765.987
+        876....
+        987....
+    ";
+
+    #[example_input(part2 = 227)]
+    static EXAMPLE_INPUT_2_3: &str = "
+        012345
+        123456
+        234567
+        345678
+        4.6789
+        56789.
+    ";
+
+    #[example_input(part1 = 36, part2 = 81)]
+    static EXAMPLE_INPUT: &str = "
         89010123
         78121874
         87430965
@@ -101,41 +171,9 @@ mod tests {
         10456732
     ";
 
-    #[example_input(part1 = 3)]
-    static EXAMPLE_INPUT_5: &str = "
-        .....0.
-        ..4321.
-        ..5..2.
-        ..6543.
-        ..7..4.
-        ..8765.
-        ..9....
-    ";
-
-    #[example_input(part1 = 13)]
-    static EXAMPLE_INPUT_6: &str = "
-        ..90..9
-        ...1.98
-        ...2..7
-        6543456
-        765.987
-        876....
-        987....
-    ";
-
-    #[example_input(part1 = 227)]
-    static EXAMPLE_INPUT_7: &str = "
-        012345
-        123456
-        234567
-        345678
-        4.6789
-        56789.
-    ";
-
     #[test]
     fn example_parse() {
-        let actual = parse_input(&EXAMPLE_INPUT_4);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = (
             vec![
                 vec![8, 9, 0, 1, 0, 1, 2, 3],
