@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use aoc::utils::{parse, point::Point2};
 
 type Map = Vec<Vec<u8>>;
@@ -18,20 +16,25 @@ fn parse_input(input: &str) -> (Map, Point2) {
     (map, bounds)
 }
 
-fn find_trails(map: &Map, current: &Point2, target_height: u8, found: &mut HashSet<Point2>) {
+fn find_trails(map: &Map, current: &Point2, target_height: u8) -> usize {
     if target_height == 10 {
-        found.insert(*current);
-        return;
+        return 1;
     }
 
-    for point in current.neighbours_ortho() {
-        let Some(height) = map.get(point.y).and_then(|r| r.get(point.x)) else {
-            continue;
-        };
-        if *height == target_height {
-            find_trails(map, &point, target_height + 1, found);
-        }
-    }
+    current
+        .neighbours_ortho()
+        .iter()
+        .map(|point| {
+            let Some(height) = map.get(point.y).and_then(|r| r.get(point.x)) else {
+                return 0;
+            };
+            if *height == target_height {
+                find_trails(map, point, target_height + 1)
+            } else {
+                0
+            }
+        })
+        .sum()
 }
 
 pub fn part1(input: &str) -> usize {
@@ -39,11 +42,8 @@ pub fn part1(input: &str) -> usize {
     (0..bounds.y)
         .flat_map(|y| (0..bounds.x).map(|x| Point2::new(x, y)).collect::<Vec<_>>())
         .filter(|start| map[start.y][start.x] == 0)
-        .map(|start| {
-            let mut found = HashSet::new();
-            find_trails(&map, &start, 1, &mut found);
-            found.len()
-        })
+        .map(|start| find_trails(&map, &start, 1))
+        .map(|v| v)
         .sum()
 }
 
@@ -56,40 +56,40 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 2)]
-    static EXAMPLE_INPUT_1: &str = "
-        ...0...
-        ...1...
-        ...2...
-        6543456
-        7.....7
-        8.....8
-        9.....9
-    ";
+    // #[example_input(part1 = 2)]
+    // static EXAMPLE_INPUT_1: &str = "
+    //     ...0...
+    //     ...1...
+    //     ...2...
+    //     6543456
+    //     7.....7
+    //     8.....8
+    //     9.....9
+    // ";
+    //
+    // #[example_input(part1 = 4)]
+    // static EXAMPLE_INPUT_2: &str = "
+    //     ..90..9
+    //     ...1.98
+    //     ...2..7
+    //     6543456
+    //     765.987
+    //     876....
+    //     987....
+    // ";
+    //
+    // #[example_input(part1 = 3)]
+    // static EXAMPLE_INPUT_3: &str = "
+    //     1055955
+    //     2555855
+    //     3555755
+    //     4567654
+    //     5558553
+    //     5559552
+    //     5555501
+    // ";
 
-    #[example_input(part1 = 4)]
-    static EXAMPLE_INPUT_2: &str = "
-        ..90..9
-        ...1.98
-        ...2..7
-        6543456
-        765.987
-        876....
-        987....
-    ";
-
-    #[example_input(part1 = 3)]
-    static EXAMPLE_INPUT_3: &str = "
-        10..9..
-        2...8..
-        3...7..
-        4567654
-        ...8..3
-        ...9..2
-        .....01
-    ";
-
-    #[example_input(part1 = 36)]
+    #[example_input(part1 = 81)]
     static EXAMPLE_INPUT_4: &str = "
         89010123
         78121874
@@ -99,6 +99,38 @@ mod tests {
         32019012
         01329801
         10456732
+    ";
+
+    #[example_input(part1 = 3)]
+    static EXAMPLE_INPUT_5: &str = "
+        .....0.
+        ..4321.
+        ..5..2.
+        ..6543.
+        ..7..4.
+        ..8765.
+        ..9....
+    ";
+
+    #[example_input(part1 = 13)]
+    static EXAMPLE_INPUT_6: &str = "
+        ..90..9
+        ...1.98
+        ...2..7
+        6543456
+        765.987
+        876....
+        987....
+    ";
+
+    #[example_input(part1 = 227)]
+    static EXAMPLE_INPUT_7: &str = "
+        012345
+        123456
+        234567
+        345678
+        4.6789
+        56789.
     ";
 
     #[test]
