@@ -1,10 +1,12 @@
-use aoc::utils::{parse, point::Point2};
+use aoc::utils::{matrix::Matrix, parse, point::Point2};
+
+type Point = Point2<usize>;
 
 #[derive(Debug, PartialEq, Eq)]
 struct Game {
-    button_a: Point2,
-    button_b: Point2,
-    prize: Point2,
+    button_a: Point,
+    button_b: Point,
+    prize: Point,
 }
 
 fn parse_input(input: &str) -> Vec<Game> {
@@ -16,31 +18,56 @@ fn parse_input(input: &str) -> Vec<Game> {
                 "Prize: X=" [xp as usize] ", Y=" [yp as usize]
             } => {
                 Game {
-                    button_a: Point2::new(xa, ya),
-                    button_b: Point2::new(xb, yb),
-                    prize: Point2::new(xp, yp),
+                    button_a: Point::new(xa, ya),
+                    button_b: Point::new(xb, yb),
+                    prize: Point::new(xp, yp),
                 }
             }
         ]
     } => games)
 }
 
+fn find_wincondition(game: &Game) -> Option<usize> {
+    let mut matrix = Matrix::new([
+        [
+            game.button_a.x as f64,
+            game.button_b.x as f64,
+            game.prize.x as f64,
+        ],
+        [
+            game.button_a.y as f64,
+            game.button_b.y as f64,
+            game.prize.y as f64,
+        ],
+    ]);
+    matrix.gauss_jordan_elimination();
+    let a = matrix[0][2].round() as usize;
+    let b = matrix[1][2].round() as usize;
+    if game.button_a.x * a + game.button_b.x * b == game.prize.x
+        && game.button_a.y * a + game.button_b.y * b == game.prize.y
+    {
+        Some(a * 3 + b)
+    } else {
+        None
+    }
+}
+
 pub fn part1(input: &str) -> usize {
     let games = parse_input(input);
     games
         .into_iter()
-        .filter_map(|game| {
-            (1..usize::min(100, game.prize.x / game.button_a.x + 1))
-                .filter_map(|a| {
-                    let b = (game.prize.x - (game.button_a.x * a)) / game.button_b.x;
-                    if game.button_a.x * a + game.button_b.x * b != game.prize.x
-                        || game.button_a.y * a + game.button_b.y * b != game.prize.y
-                    {
-                        return None;
-                    }
-                    Some(a * 3 + b)
-                })
-                .min()
+        .filter_map(|game| find_wincondition(&game))
+        .sum()
+}
+
+pub fn part2(input: &str) -> usize {
+    let games = parse_input(input);
+    games
+        .into_iter()
+        .filter_map(|mut game| {
+            game.prize.x += 10_000_000_000_000;
+            game.prize.y += 10_000_000_000_000;
+            find_wincondition(&game)
         })
         .sum()
 }
@@ -54,7 +81,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 480)]
+    #[example_input(part1 = 480, part2 = 875_318_608_908)]
     static EXAMPLE_INPUT: &str = "
         Button A: X+94, Y+34
         Button B: X+22, Y+67
@@ -78,24 +105,24 @@ mod tests {
         let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             Game {
-                button_a: Point2::new(94, 34),
-                button_b: Point2::new(22, 67),
-                prize: Point2::new(8400, 5400),
+                button_a: Point::new(94, 34),
+                button_b: Point::new(22, 67),
+                prize: Point::new(8400, 5400),
             },
             Game {
-                button_a: Point2::new(26, 66),
-                button_b: Point2::new(67, 21),
-                prize: Point2::new(12748, 12176),
+                button_a: Point::new(26, 66),
+                button_b: Point::new(67, 21),
+                prize: Point::new(12748, 12176),
             },
             Game {
-                button_a: Point2::new(17, 86),
-                button_b: Point2::new(84, 37),
-                prize: Point2::new(7870, 6450),
+                button_a: Point::new(17, 86),
+                button_b: Point::new(84, 37),
+                prize: Point::new(7870, 6450),
             },
             Game {
-                button_a: Point2::new(69, 23),
-                button_b: Point2::new(27, 71),
-                prize: Point2::new(18641, 10279),
+                button_a: Point::new(69, 23),
+                button_b: Point::new(27, 71),
+                prize: Point::new(18641, 10279),
             },
         ];
         assert_eq!(actual, expected);
