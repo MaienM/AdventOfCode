@@ -157,61 +157,64 @@ macro_rules! __parse {
     };
     // into $collection
     (split; $input:expr => [ sel::$selargs:tt ]; into iterator $($rest:tt)*) => {
-        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[iter] (Iterator) ]; $($rest)*)
+        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[Iterator] ]; $($rest)*)
     };
     (split; $input:expr => [ sel::$selargs:tt ]; into ($collection:ty) $($rest:tt)*) => {
-        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[] ($collection) ]; $($rest)*)
+        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[$collection] ]; $($rest)*)
     };
     (split; $input:expr => [ sel::$selargs:tt ]; $($rest:tt)*) => {
-        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[] (Vec<_>) ]; $($rest)*)
+        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[Vec<_>] ]; $($rest)*)
     };
     // (try)? as $type
-    (split; $input:expr => [ sel::$selargs:tt into::[$($iterargs:tt)*] ($collection:ty) ]; as $type:tt) => {
-        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[$($iterargs)*] ($collection) with::[] (
+    (split; $input:expr => [ sel::$selargs:tt into::$iterargs:tt ]; as $type:tt) => {
+        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::$iterargs with::[
             |item| $crate::utils::parser::__parse_type__!(item => str => $type)
-        ) ];)
+        ] ];)
     };
-    (split; $input:expr => [ sel::$selargs:tt into::[$($iterargs:tt)*] ($collection:ty) ]; try as $type:tt) => {
-        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[$($iterargs)*] ($collection) with::[try] (
+    (split; $input:expr => [ sel::$selargs:tt into::$iterargs:tt ]; try as $type:tt) => {
+        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::$iterargs with::[try
             |item| $crate::utils::parser::__parse_type__!(item => str => try $type)
-        ) ];)
+        ] ];)
     };
     // with [nested-bracketed]
-    (split; $input:expr => [ sel::$selargs:tt into::[$($iterargs:tt)*] ($collection:ty) ]; with [ $($nested:tt)+ ]) => {
-        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[$($iterargs)*] ($collection) with::[] (
+    (split; $input:expr => [ sel::$selargs:tt into::$iterargs:tt ]; with [ $($nested:tt)+ ]) => {
+        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::$iterargs with::[
             |item| {
                 $crate::utils::parser::parse!([[ tmpvar ]] item => [ result $($nested)+ ]);
                 result
             }
-        ) ];)
+        ] ];)
     };
     // with { nested } => result
-    (split; $input:expr => [ sel::$selargs:tt into::[$($iterargs:tt)*] ($collection:ty) ]; with { $($nested:tt)+ } => $result:expr) => {
-        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[$($iterargs)*] ($collection) with::[]
+    (split; $input:expr => [ sel::$selargs:tt into::$iterargs:tt ]; with { $($nested:tt)+ } => $result:expr) => {
+        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::$iterargs with::[
             |item| $crate::utils::parser::parse!(item => { $($nested)+ } => $result)
-        ];)
+        ] ];)
     };
     // (try)? with $transformer
-    (split; $input:expr => [ sel::$selargs:tt into::[$($iterargs:tt)*] ($collection:ty) ]; with $transformer:expr) => {
-        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[$($iterargs)*] ($collection) with::[] ($transformer) ];)
+    (split; $input:expr => [ sel::$selargs:tt into::$iterargs:tt ]; with $transformer:expr) => {
+        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::$iterargs with::[$transformer] ];)
     };
-    (split; $input:expr => [ sel::$selargs:tt into::[$($iterargs:tt)*] ($collection:ty) ]; try with $transformer:expr) => {
-        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::[$($iterargs)*] ($collection) with::[try] ($transformer) ];)
+    (split; $input:expr => [ sel::$selargs:tt into::$iterargs:tt ]; try with $transformer:expr) => {
+        $crate::utils::parser::parse!(split; $input => [ sel::$selargs into::$iterargs with::[try $transformer] ];)
     };
     // done
-    (split; $input:expr => [ sel::$selargs:tt into::[iter] ($_:ty) $($rest:tt)* ];) => {
-        $crate::utils::parser::parse!(split; $input => [[ sel::$selargs $($rest)* ]];)
+    (split; $input:expr => [ $($args:tt)* ];) => {
+        $crate::utils::parser::parse!(split; $input => [[ $($args)* ]])
     };
-    (split; $input:expr => [ sel::$selargs:tt into::[] ($collection:ty) $($rest:tt)* ];) => {
-        $crate::utils::parser::parse!(split; $input => [[ sel::$selargs $($rest)* ]];).collect::<$collection>()
+    (split; $input:expr => [[ sel::$selargs:tt into::[Iterator] $($rest:tt)* ]]) => {
+        $crate::utils::parser::parse!(split; $input => [[ sel::$selargs $($rest)* ]])
     };
-    (split; $input:expr => [[ sel::$selargs:tt with::[try] $transformer:expr ]];) => {
-        $crate::utils::parser::parse!(split; $input => [[ sel::$selargs with::[] $transformer ]];).filter_map(Result::ok)
+    (split; $input:expr => [[ sel::$selargs:tt into::[$collection:ty] $($rest:tt)* ]]) => {
+        $crate::utils::parser::parse!(split; $input => [[ sel::$selargs $($rest)* ]]).collect::<$collection>()
     };
-    (split; $input:expr => [[ sel::$selargs:tt with::[] $transformer:expr ]];) => {
-        $crate::utils::parser::parse!(split; $input => [[ sel::$selargs ]];).map($transformer)
+    (split; $input:expr => [[ sel::$selargs:tt with::[try $transformer:expr] ]]) => {
+        $crate::utils::parser::parse!(split; $input => [[ sel::$selargs with::[$transformer] ]]).filter_map(Result::ok)
     };
-    (split; $input:expr => [[ sel::[on $sepkind:ident $sep:literal] ]];) => {
+    (split; $input:expr => [[ sel::$selargs:tt with::[$transformer:expr] ]]) => {
+        $crate::utils::parser::parse!(split; $input => [[ sel::$selargs ]]).map($transformer)
+    };
+    (split; $input:expr => [[ sel::[on $sepkind:ident $sep:literal] ]]) => {
         $crate::utils::parser::__parse_literal__!(
             $sepkind;
             split;
@@ -219,10 +222,10 @@ macro_rules! __parse {
             $crate::utils::parser::__parse_literal__!($sepkind; create; $sep)
         )
     };
-    (split; $input:expr => [[ sel::[find $pattern:literal] ]];) => {
+    (split; $input:expr => [[ sel::[find $pattern:literal] ]]) => {
         ::regex::Regex::new($pattern).unwrap().find_iter($input).map(|m| m.as_str())
     };
-    (split; $input:expr => [[ sel::[capture $pattern:literal] ]];) => {
+    (split; $input:expr => [[ sel::[capture $pattern:literal] ]]) => {
         ::regex::Regex::new($pattern).unwrap().captures_iter($input)
     };
 
@@ -248,46 +251,46 @@ macro_rules! __parse {
     };
     // into $collection
     (chars; $input:expr => [ ]; into iterator $($rest:tt)*) => {
-        $crate::utils::parser::parse!(chars; $input => [ into::[iter] (Iterator) ]; $($rest)*)
+        $crate::utils::parser::parse!(chars; $input => [ into::[Iterator] ]; $($rest)*)
     };
     (chars; $input:expr => [ ]; into ($collection:ty) $($rest:tt)*) => {
-        $crate::utils::parser::parse!(chars; $input => [ into::[] ($collection) ]; $($rest)*)
+        $crate::utils::parser::parse!(chars; $input => [ into::[$collection] ]; $($rest)*)
     };
     (chars; $input:expr => [ ]; $($rest:tt)*) => {
-        $crate::utils::parser::parse!(chars; $input => [ into::[] (Vec<_>) ]; $($rest)*)
+        $crate::utils::parser::parse!(chars; $input => [ into::[Vec<_>] ]; $($rest)*)
     };
     // (try)? as $type
-    (chars; $input:expr => [ into::[$($iterargs:tt)*] ($collection:ty) ]; as $type:tt) => {
-        $crate::utils::parser::parse!(chars; $input => [ into::[$($iterargs)*] ($collection) with::[] (
+    (chars; $input:expr => [ into::$iterargs:tt ]; as $type:tt) => {
+        $crate::utils::parser::parse!(chars; $input => [ into::$iterargs with::[
             |item| $crate::utils::parser::__parse_type__!(item => char => $type)
-        ) ];)
+        ] ];)
     };
-    (chars; $input:expr => [ into::[$($iterargs:tt)*] ($collection:ty) ]; try as $type:tt) => {
-        $crate::utils::parser::parse!(chars; $input => [ into::[$($iterargs)*] ($collection) with::[try] (
+    (chars; $input:expr => [ into::$iterargs:tt ]; try as $type:tt) => {
+        $crate::utils::parser::parse!(chars; $input => [ into::$iterargs with::[try
             |item| $crate::utils::parser::__parse_type__!(item => char => try $type)
-        ) ];)
+        ] ];)
     };
     // (try)? with $transformer
-    (chars; $input:expr => [ into::[$($iterargs:tt)*] ($collection:ty) ]; with $transformer:expr) => {
-        $crate::utils::parser::parse!(chars; $input => [ into::[$($iterargs)*] ($collection) with::[] ($transformer) ];)
+    (chars; $input:expr => [ into::$iterargs:tt ]; with $transformer:expr) => {
+        $crate::utils::parser::parse!(chars; $input => [ into::$iterargs with::[$transformer] ];)
     };
-    (chars; $input:expr => [ into::[$($iterargs:tt)*] ($collection:ty) ]; try with $transformer:expr) => {
-        $crate::utils::parser::parse!(chars; $input => [ into::[$($iterargs)*] ($collection) with::[try] ($transformer) ];)
+    (chars; $input:expr => [ into::$iterargs:tt ]; try with $transformer:expr) => {
+        $crate::utils::parser::parse!(chars; $input => [ into::$iterargs with::[try $transformer] ];)
     };
     // done
-    (chars; $input:expr => [ into::[iter] ($_:ty) $($rest:tt)* ];) => {
-        $crate::utils::parser::parse!(chars; $input => [[ $($rest)* ]];)
+    (chars; $input:expr => [ into::[Iterator] $($rest:tt)* ];) => {
+        $crate::utils::parser::parse!(chars; $input => [[ $($rest)* ]])
     };
-    (chars; $input:expr => [ into::[] ($collection:ty) $($rest:tt)* ];) => {
-        $crate::utils::parser::parse!(chars; $input => [[ $($rest)* ]];).collect::<$collection>()
+    (chars; $input:expr => [ into::[$collection:ty] $($rest:tt)* ];) => {
+        $crate::utils::parser::parse!(chars; $input => [[ $($rest)* ]]).collect::<$collection>()
     };
-    (chars; $input:expr => [[ with::[try] $transformer:expr ]];) => {
-        $crate::utils::parser::parse!(chars; $input => [[ with::[] $transformer ]];).filter_map(Result::ok)
+    (chars; $input:expr => [[ with::[try $transformer:expr] ]]) => {
+        $crate::utils::parser::parse!(chars; $input => [[ with::[$transformer] ]]).filter_map(Result::ok)
     };
-    (chars; $input:expr => [[ with::[] $transformer:expr ]];) => {
-        $crate::utils::parser::parse!(chars; $input => [[ ]];).map($transformer)
+    (chars; $input:expr => [[ with::[$transformer:expr] ]]) => {
+        $crate::utils::parser::parse!(chars; $input => [[ ]]).map($transformer)
     };
-    (chars; $input:expr => [[ ]];) => {
+    (chars; $input:expr => [[ ]]) => {
         $input.chars()
     };
 
