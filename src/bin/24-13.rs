@@ -1,6 +1,6 @@
 use aoc::utils::{matrix::Matrix, parse, point::Point2};
 
-type Point = Point2<usize>;
+type Point = Point2<u64>;
 
 #[derive(Debug, PartialEq, Eq)]
 struct Game {
@@ -13,9 +13,9 @@ fn parse_input(input: &str) -> Vec<Game> {
     parse!(input => {
         [games split on "\n\n" with
             {
-                "Button A: X+" [xa as usize] ", Y+" [ya as usize] '\n'
-                "Button B: X+" [xb as usize] ", Y+" [yb as usize] '\n'
-                "Prize: X=" [xp as usize] ", Y=" [yp as usize]
+                "Button A: X+" [xa as u64] ", Y+" [ya as u64] '\n'
+                "Button B: X+" [xb as u64] ", Y+" [yb as u64] '\n'
+                "Prize: X=" [xp as u64] ", Y=" [yp as u64]
             } => {
                 Game {
                     button_a: Point::new(xa, ya),
@@ -27,7 +27,7 @@ fn parse_input(input: &str) -> Vec<Game> {
     } => games)
 }
 
-fn find_wincondition(game: &Game) -> Option<usize> {
+fn find_wincondition(game: &Game) -> Option<u64> {
     let mut matrix = Matrix::new([
         [
             game.button_a.x as f64,
@@ -41,8 +41,8 @@ fn find_wincondition(game: &Game) -> Option<usize> {
         ],
     ]);
     matrix.gauss_jordan_elimination();
-    let a = matrix[0][2].round() as usize;
-    let b = matrix[1][2].round() as usize;
+    let a = matrix[0][2].round() as u64;
+    let b = matrix[1][2].round() as u64;
     if game.button_a.x * a + game.button_b.x * b == game.prize.x
         && game.button_a.y * a + game.button_b.y * b == game.prize.y
     {
@@ -52,7 +52,7 @@ fn find_wincondition(game: &Game) -> Option<usize> {
     }
 }
 
-pub fn part1(input: &str) -> usize {
+pub fn part1(input: &str) -> u64 {
     let games = parse_input(input);
     games
         .into_iter()
@@ -60,7 +60,7 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+pub fn part2(input: &str) -> u64 {
     let games = parse_input(input);
     games
         .into_iter()
