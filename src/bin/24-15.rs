@@ -1,4 +1,4 @@
-use std::mem;
+#![allow(clippy::match_on_vec_items)]
 
 use aoc::utils::{
     parse,
@@ -6,21 +6,21 @@ use aoc::utils::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
-enum Tile {
+enum TileSingle {
     Wall,
-    Obstacle,
+    Box,
     Empty,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 enum TileDouble {
     Wall,
-    ObstacleLeft,
-    ObstacleRight,
+    BoxLeft,
+    BoxRight,
     Empty,
 }
 
-type Map = Vec<Vec<Tile>>;
+type MapSingle = Vec<Vec<TileSingle>>;
 type MapDouble = Vec<Vec<TileDouble>>;
 type Moves = Vec<Direction2>;
 
@@ -34,7 +34,7 @@ fn parse_move(chr: char) -> Option<Direction2> {
     }
 }
 
-fn parse_input(input: &str) -> (Map, Moves, Point2) {
+fn parse_input(input: &str) -> (MapSingle, Moves, Point2) {
     parse!(input =>
         map
         "\n\n"
@@ -48,12 +48,12 @@ fn parse_input(input: &str) -> (Map, Moves, Point2) {
         .map(|(y, line)| {
             line.char_indices()
                 .map(|(x, c)| match c {
-                    '#' => Tile::Wall,
-                    'O' => Tile::Obstacle,
-                    '.' => Tile::Empty,
+                    '#' => TileSingle::Wall,
+                    'O' => TileSingle::Box,
+                    '.' => TileSingle::Empty,
                     '@' => {
                         start = Some(Point2::new(x, y));
-                        Tile::Empty
+                        TileSingle::Empty
                     }
                     _ => panic!(),
                 })
@@ -71,25 +71,25 @@ pub fn part1(input: &str) -> usize {
     for mov in moves {
         let next = current + mov;
         match map[next.y][next.x] {
-            Tile::Wall => continue,
-            Tile::Obstacle => {
+            TileSingle::Wall => continue,
+            TileSingle::Box => {
                 let mut check = next + mov;
                 loop {
                     match map[check.y][check.x] {
-                        Tile::Wall => break,
-                        Tile::Obstacle => {
+                        TileSingle::Wall => break,
+                        TileSingle::Box => {
                             check += mov;
                         }
-                        Tile::Empty => {
-                            map[check.y][check.x] = Tile::Obstacle;
-                            map[next.y][next.x] = Tile::Empty;
+                        TileSingle::Empty => {
+                            map[check.y][check.x] = TileSingle::Box;
+                            map[next.y][next.x] = TileSingle::Empty;
                             current = next;
                             break;
                         }
                     }
                 }
             }
-            Tile::Empty => {
+            TileSingle::Empty => {
                 current = next;
             }
         }
@@ -100,7 +100,7 @@ pub fn part1(input: &str) -> usize {
             row.into_iter()
                 .enumerate()
                 .map(|(x, tile)| {
-                    if tile == Tile::Obstacle {
+                    if tile == TileSingle::Box {
                         y * 100 + x
                     } else {
                         0
@@ -119,8 +119,8 @@ fn print(map: &MapDouble, current: &Point2) {
                 "{}",
                 match tile {
                     TileDouble::Wall => '#',
-                    TileDouble::ObstacleLeft => '[',
-                    TileDouble::ObstacleRight => ']',
+                    TileDouble::BoxLeft => '[',
+                    TileDouble::BoxRight => ']',
                     TileDouble::Empty => {
                         if x == current.x && y == current.y {
                             '@'
@@ -143,9 +143,9 @@ pub fn part2(input: &str) -> usize {
         .map(|line| {
             line.into_iter()
                 .flat_map(|tile| match tile {
-                    Tile::Wall => [TileDouble::Wall, TileDouble::Wall],
-                    Tile::Obstacle => [TileDouble::ObstacleLeft, TileDouble::ObstacleRight],
-                    Tile::Empty => [TileDouble::Empty, TileDouble::Empty],
+                    TileSingle::Wall => [TileDouble::Wall, TileDouble::Wall],
+                    TileSingle::Box => [TileDouble::BoxLeft, TileDouble::BoxRight],
+                    TileSingle::Empty => [TileDouble::Empty, TileDouble::Empty],
                 })
                 .collect::<Vec<_>>()
         })
@@ -155,9 +155,9 @@ pub fn part2(input: &str) -> usize {
         let next = current + mov;
         match map[next.y][next.x] {
             TileDouble::Wall => continue,
-            TileDouble::ObstacleLeft | TileDouble::ObstacleRight => match mov {
+            TileDouble::BoxLeft | TileDouble::BoxRight => match mov {
                 Direction2::North | Direction2::South => {
-                    let mut checks = vec![if map[next.y][next.x] == TileDouble::ObstacleLeft {
+                    let mut checks = vec![if map[next.y][next.x] == TileDouble::BoxLeft {
                         next
                     } else {
                         next + Direction2::West
@@ -171,8 +171,8 @@ pub fn part2(input: &str) -> usize {
                                 let next = point + mov;
                                 map[point.y][point.x] = TileDouble::Empty;
                                 map[point.y][point.x + 1] = TileDouble::Empty;
-                                map[next.y][next.x] = TileDouble::ObstacleLeft;
-                                map[next.y][next.x + 1] = TileDouble::ObstacleRight;
+                                map[next.y][next.x] = TileDouble::BoxLeft;
+                                map[next.y][next.x + 1] = TileDouble::BoxRight;
                             }
                             current = next;
                             continue 'main;
@@ -183,11 +183,11 @@ pub fn part2(input: &str) -> usize {
                             let next = check + mov;
                             match map[next.y][next.x] {
                                 TileDouble::Empty => {}
-                                TileDouble::ObstacleLeft => {
+                                TileDouble::BoxLeft => {
                                     nextchecks.push(next);
                                     continue 'checks;
                                 }
-                                TileDouble::ObstacleRight => {
+                                TileDouble::BoxRight => {
                                     nextchecks.push(next + Direction2::West);
                                 }
                                 TileDouble::Wall => {
@@ -195,14 +195,13 @@ pub fn part2(input: &str) -> usize {
                                 }
                             }
                             match map[next.y][next.x + 1] {
-                                TileDouble::Empty => {}
-                                TileDouble::ObstacleLeft => {
+                                TileDouble::BoxLeft => {
                                     nextchecks.push(next + Direction2::East);
                                 }
-                                TileDouble::ObstacleRight => {}
                                 TileDouble::Wall => {
                                     continue 'main;
                                 }
+                                _ => {}
                             }
                         }
                         boxes.extend(nextchecks.clone());
@@ -214,7 +213,7 @@ pub fn part2(input: &str) -> usize {
                     loop {
                         match map[check.y][check.x] {
                             TileDouble::Wall => break,
-                            TileDouble::ObstacleLeft | TileDouble::ObstacleRight => {
+                            TileDouble::BoxLeft | TileDouble::BoxRight => {
                                 check += mov;
                             }
                             TileDouble::Empty => {
@@ -243,7 +242,7 @@ pub fn part2(input: &str) -> usize {
             row.into_iter()
                 .enumerate()
                 .map(|(x, tile)| {
-                    if tile == TileDouble::ObstacleLeft {
+                    if tile == TileDouble::BoxLeft {
                         y * 100 + x
                     } else {
                         0
@@ -302,13 +301,112 @@ mod tests {
         <^^>>>vv<v>>v<<
     ";
 
-    // #[test]
-    // fn example_parse() {
-    //     let actual = parse_input(&EXAMPLE_INPUT);
-    //     let expected = (
-    //         hash_set![
-    //         ],
-    //     );
-    //     assert_eq!(actual, expected);
-    // }
+    #[allow(clippy::too_many_lines)]
+    #[test]
+    fn example_parse() {
+        let actual = parse_input(&EXAMPLE_INPUT_2);
+        let expected = (
+            vec![
+                vec![
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                ],
+                vec![
+                    TileSingle::Wall,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Box,
+                    TileSingle::Empty,
+                    TileSingle::Box,
+                    TileSingle::Empty,
+                    TileSingle::Wall,
+                ],
+                vec![
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Box,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Wall,
+                ],
+                vec![
+                    TileSingle::Wall,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Box,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Wall,
+                ],
+                vec![
+                    TileSingle::Wall,
+                    TileSingle::Empty,
+                    TileSingle::Wall,
+                    TileSingle::Empty,
+                    TileSingle::Box,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Wall,
+                ],
+                vec![
+                    TileSingle::Wall,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Box,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Wall,
+                ],
+                vec![
+                    TileSingle::Wall,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Empty,
+                    TileSingle::Wall,
+                ],
+                vec![
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                    TileSingle::Wall,
+                ],
+            ],
+            vec![
+                Direction2::West,
+                Direction2::North,
+                Direction2::North,
+                Direction2::East,
+                Direction2::East,
+                Direction2::East,
+                Direction2::South,
+                Direction2::South,
+                Direction2::West,
+                Direction2::South,
+                Direction2::East,
+                Direction2::East,
+                Direction2::South,
+                Direction2::West,
+                Direction2::West,
+            ],
+            Point2::new(2, 2),
+        );
+        assert_eq!(actual, expected);
+    }
 }
