@@ -68,6 +68,23 @@ pub fn part2(input: &str) -> usize {
         simulate(&mut robots, &bounds, 1);
         elapsed += 1;
     }
+
+    /*
+    for y in 0..bounds.y {
+        for x in 0..bounds.x {
+            if robots
+                .iter()
+                .any(|r| r.position.x == x && r.position.y == y)
+            {
+                print!("#");
+            } else {
+                print!(" ");
+            }
+        }
+        println!();
+    }
+    */
+
     elapsed
 }
 
