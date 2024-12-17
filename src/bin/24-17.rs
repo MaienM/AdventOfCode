@@ -48,8 +48,7 @@ fn combo(registers: &Registers, operand: u8) -> usize {
     }
 }
 
-pub fn part1(input: &str) -> String {
-    let (mut registers, operations) = parse_input(input);
+fn run(mut registers: Registers, operations: &[u8]) -> Vec<u8> {
     let mut idx = 0;
     let mut output = Vec::new();
     while idx < operations.len() {
@@ -79,7 +78,7 @@ pub fn part1(input: &str) -> String {
             }
             Instruction::Out => {
                 let operand = combo(&registers, operand);
-                output.push((operand % 8).to_string());
+                output.push((operand % 8) as u8);
             }
             Instruction::Bdv => {
                 let operand = combo(&registers, operand);
@@ -91,7 +90,35 @@ pub fn part1(input: &str) -> String {
             }
         }
     }
-    output.join(",")
+    output
+}
+
+pub fn part1(input: &str) -> String {
+    let (registers, operations) = parse_input(input);
+    let output = run(registers, &operations);
+    output
+        .into_iter()
+        .map(|v| v.to_string())
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+pub fn part2(input: &str) -> usize {
+    let (mut registers, operations) = parse_input(input);
+
+    // Each loop in the program register A will be shift by 3 (modulo 8). As a result of this each output number depends on exactly 3 bits of the input number. This means we can simply increment until the last number matches what we want, and then shift by 3 and start working on the next 3 bits for the second-to-last number, and so on.
+    registers[0] = 1;
+    loop {
+        let output = run(registers, &operations);
+        if output == operations[(operations.len() - output.len())..] {
+            if output.len() == operations.len() {
+                return registers[0];
+            }
+            registers[0] *= 8;
+        } else {
+            registers[0] += 1;
+        }
+    }
 }
 
 aoc::cli::single::generate_main!();
@@ -104,7 +131,7 @@ mod tests {
     use super::*;
 
     #[example_input(part1 = "4,6,3,5,6,3,5,2,1,0")]
-    static EXAMPLE_INPUT: &str = "
+    static EXAMPLE_INPUT_1: &str = "
         Register A: 729
         Register B: 0
         Register C: 0
@@ -112,9 +139,18 @@ mod tests {
         Program: 0,1,5,4,3,0
     ";
 
+    #[example_input(part2 = 117_440)]
+    static EXAMPLE_INPUT_2: &str = "
+        Register A: 2024
+        Register B: 0
+        Register C: 0
+
+        Program: 0,3,5,4,3,0
+    ";
+
     #[test]
     fn example_parse() {
-        let actual = parse_input(&EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT_1);
         let expected = ([729, 0, 0], vec![0, 1, 5, 4, 3, 0]);
         assert_eq!(actual, expected);
     }
