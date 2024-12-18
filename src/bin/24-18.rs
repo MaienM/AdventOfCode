@@ -1,6 +1,6 @@
 use std::collections::{BinaryHeap, HashSet};
 
-use aoc::utils::{parse, point::Point2};
+use aoc::utils::{ext::range::RangeExt, parse, point::Point2};
 
 fn parse_input(input: &str) -> Vec<Point2> {
     parse!(input => {
@@ -11,15 +11,15 @@ fn parse_input(input: &str) -> Vec<Point2> {
     } => coordinates)
 }
 
-fn run(walls: &[Point2], end: Point2) -> usize {
+fn run(walls: &[Point2], end: Point2) -> Option<usize> {
     let mut paths = BinaryHeap::new();
     let mut done = HashSet::new();
     paths.push((0, Point2::new(0, 0)));
     loop {
-        let (score, point) = paths.pop().unwrap();
+        let (score, point) = paths.pop()?;
 
         if point == end {
-            return -score as usize;
+            return Some(-score as usize);
         }
 
         if walls.contains(&point) || point.x > end.x || point.y > end.y {
@@ -33,9 +33,24 @@ fn run(walls: &[Point2], end: Point2) -> usize {
     }
 }
 
-pub fn part1(input: &str) -> usize {
+fn part1impl(input: &str, count: usize, end: Point2) -> usize {
     let coordinates = parse_input(input);
-    run(&coordinates[..1024], Point2::new(70, 70))
+    run(&coordinates[..count], end).unwrap()
+}
+
+pub fn part1(input: &str) -> usize {
+    part1impl(input, 1024, Point2::new(70, 70))
+}
+
+fn part2impl(input: &str, end: Point2) -> String {
+    let coordinates = parse_input(input);
+    let idx = (0..coordinates.len()).binary_search(|v| run(&coordinates[..v], end).is_none());
+    let point = coordinates[idx.unwrap() - 1];
+    format!("{},{}", point.x, point.y)
+}
+
+pub fn part2(input: &str) -> String {
+    part2impl(input, Point2::new(70, 70))
 }
 
 aoc::cli::single::generate_main!();
@@ -47,7 +62,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 22, notest)]
+    #[example_input(part1 = 22, part2 = "6,1", notest)]
     static EXAMPLE_INPUT: &str = "
         5,4
         4,2
@@ -78,8 +93,13 @@ mod tests {
 
     #[test]
     fn example_test_1() {
-        let coordinates = parse_input(&EXAMPLE_INPUT);
-        let actual = run(&coordinates[..12], Point2::new(6, 6)).to_string();
+        let actual = part1impl(&EXAMPLE_INPUT, 12, Point2::new(6, 6)).to_string();
         assert_eq!(actual, EXAMPLE_INPUT.part1.unwrap());
+    }
+
+    #[test]
+    fn example_test_2() {
+        let actual = part2impl(&EXAMPLE_INPUT, Point2::new(6, 6));
+        assert_eq!(actual, EXAMPLE_INPUT.part2.unwrap());
     }
 }
