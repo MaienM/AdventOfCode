@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use aoc::utils::parse;
 
 enum Color {
@@ -49,6 +51,33 @@ pub fn part1(input: &str) -> usize {
         .count()
 }
 
+fn count_designs(cache: &mut HashMap<String, usize>, design: &str, patterns: &[&str]) -> usize {
+    if design.is_empty() {
+        return 1;
+    }
+    let dkey = design.to_owned();
+    if cache.contains_key(&dkey) {
+        return *cache.get(&dkey).unwrap();
+    }
+    let mut count = 0;
+    for pattern in patterns {
+        if pattern.len() <= design.len() && *pattern == &design[..pattern.len()] {
+            count += count_designs(cache, &design[pattern.len()..], patterns);
+        }
+    }
+    cache.insert(dkey, count);
+    count
+}
+
+pub fn part2(input: &str) -> usize {
+    let (patterns, designs) = parse_input(input);
+    let mut cache = HashMap::new();
+    designs
+        .into_iter()
+        .map(|d| count_designs(&mut cache, d, &patterns))
+        .sum()
+}
+
 aoc::cli::single::generate_main!();
 
 #[cfg(test)]
@@ -58,7 +87,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 6)]
+    #[example_input(part1 = 6, part2 = 16)]
     static EXAMPLE_INPUT: &str = "
         r, wr, b, g, bwu, rb, gb, br
 
