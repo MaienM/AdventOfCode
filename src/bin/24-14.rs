@@ -43,7 +43,6 @@ fn safety_score(robots: &[Robot], bounds: &Point) -> usize {
             },
         )
         .count_occurences();
-    println!("{quadrants:?}");
     quadrants.get(&0).unwrap_or(&0)
         * quadrants.get(&1).unwrap_or(&0)
         * quadrants.get(&2).unwrap_or(&0)

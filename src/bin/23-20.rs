@@ -225,7 +225,6 @@ mod tests {
     #[test]
     fn example_parse_1() {
         let actual = parse_input(&EXAMPLE_INPUT_1);
-        println!("{actual:#?}");
         let expected = Input {
             broadcaster: vec!["a".to_owned(), "b".to_owned(), "c".to_owned()],
             modules: hash_map![
