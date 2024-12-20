@@ -43,6 +43,8 @@ rayon = "1.8.0"
 tap = "1.0.1"
 num = "0.4.1"
 regex = "1.11.1"
+memoize = { git = "https://github.com/MaienM/memoize", version = "0.4.2" }
+itertools = "0.13.0"
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"
