@@ -33,25 +33,26 @@ fn parse_input(input: &str) -> (Map, Point2, Point2) {
     (map, start.unwrap(), end.unwrap())
 }
 
-fn find_path(map: &Map, start: &Point2, end: &Point2) -> usize {
+fn make_step_map(map: &Map, start: &Point2) -> Vec<Vec<usize>> {
     let mut paths = BinaryHeap::new();
     let mut visited = HashSet::new();
     paths.push((0, *start));
-    loop {
-        let (steps, point) = paths.pop().unwrap();
-
-        if point == *end {
-            return -steps as usize;
-        }
-
-        if !visited.insert(point) || !map[point.y][point.x] {
+    let mut result: Vec<Vec<usize>> = map
+        .iter()
+        .map(|row| row.iter().map(|_| 0).collect())
+        .collect();
+    while let Some((steps, point)) = paths.pop() {
+        if !map[point.y][point.x] || !visited.insert(point) {
             continue;
         }
+
+        result[point.y][point.x] = -steps as usize;
 
         for neigh in point.neighbours_ortho() {
             paths.push((steps - 1, neigh));
         }
     }
+    result
 }
 
 fn find_cheat_paths(
@@ -62,7 +63,6 @@ fn find_cheat_paths(
     min_save: usize,
 ) -> usize {
     let bounds = Point2::new(map[0].len(), map.len());
-    let threshold = find_path(map, start, end) - min_save;
     let non_wall_points: Vec<_> = (1..(bounds.x - 1))
         .flat_map(|x| {
             (1..(bounds.y - 1))
@@ -71,22 +71,19 @@ fn find_cheat_paths(
                 .collect::<Vec<_>>()
         })
         .collect();
-    let from_start: Vec<_> = non_wall_points
+    let from_start = make_step_map(map, start);
+    let from_end = make_step_map(map, end);
+    let threshold = from_start[end.y][end.x] - min_save;
+    non_wall_points
         .par_iter()
-        .map(|to| (to, find_path(map, start, to)))
-        .collect();
-    let from_end: Vec<_> = non_wall_points
-        .par_iter()
-        .map(|to| (to, find_path(map, end, to)))
-        .collect();
-    from_start
-        .par_iter()
-        .map(|(point1, steps1)| {
-            from_end
+        .map(|point1| {
+            non_wall_points
                 .iter()
-                .filter(|(point2, steps2)| {
+                .filter(|point2| {
                     let distance = point1.abs_diff(point2).sum();
-                    distance <= cheat && steps1 + distance + steps2 <= threshold
+                    distance <= cheat
+                        && from_start[point1.y][point1.x] + distance + from_end[point2.y][point2.x]
+                            <= threshold
                 })
                 .count()
         })
@@ -138,6 +135,79 @@ mod tests {
         #...#...#...###
         ###############
     ";
+
+    #[test]
+    fn example_parse() {
+        let actual = parse_input(&EXAMPLE_INPUT);
+        let expected = (
+            vec![
+                vec![
+                    false, false, false, false, false, false, false, false, false, false, false,
+                    false, false, false, false,
+                ],
+                vec![
+                    false, true, true, true, false, true, true, true, false, true, true, true,
+                    true, true, false,
+                ],
+                vec![
+                    false, true, false, true, false, true, false, true, false, true, false, false,
+                    false, true, false,
+                ],
+                vec![
+                    false, true, false, true, true, true, false, true, false, true, false, true,
+                    true, true, false,
+                ],
+                vec![
+                    false, false, false, false, false, false, false, true, false, true, false,
+                    true, false, false, false,
+                ],
+                vec![
+                    false, false, false, false, false, false, false, true, false, true, false,
+                    true, true, true, false,
+                ],
+                vec![
+                    false, false, false, false, false, false, false, true, false, true, false,
+                    false, false, true, false,
+                ],
+                vec![
+                    false, false, false, true, true, true, false, true, true, true, false, true,
+                    true, true, false,
+                ],
+                vec![
+                    false, false, false, true, false, false, false, false, false, false, false,
+                    true, false, false, false,
+                ],
+                vec![
+                    false, true, true, true, false, false, false, true, true, true, false, true,
+                    true, true, false,
+                ],
+                vec![
+                    false, true, false, false, false, false, false, true, false, true, false,
+                    false, false, true, false,
+                ],
+                vec![
+                    false, true, false, true, true, true, false, true, false, true, false, true,
+                    true, true, false,
+                ],
+                vec![
+                    false, true, false, true, false, true, false, true, false, true, false, true,
+                    false, false, false,
+                ],
+                vec![
+                    false, true, true, true, false, true, true, true, false, true, true, true,
+                    false, false, false,
+                ],
+                vec![
+                    false, false, false, false, false, false, false, false, false, false, false,
+                    false, false, false, false,
+                ],
+            ],
+            Point2::new(1, 3),
+            Point2::new(5, 7),
+        );
+        vec![1, 2];
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     fn example_test_1() {
