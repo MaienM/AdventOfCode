@@ -1,6 +1,7 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashSet};
 
 use aoc::utils::{ext::iter::IterExt, parse, point::Point2};
+use rayon::prelude::*;
 
 type Point = Point2<isize>;
 
@@ -49,42 +50,39 @@ fn safety_score(robots: &[Robot], bounds: &Point) -> usize {
         * quadrants.get(&3).unwrap_or(&0)
 }
 
-pub fn solve(input: &str, bounds: Point, seconds: isize) -> usize {
+fn is_drawing(robots: &[Robot], bounds: &Point, seconds: isize) -> bool {
+    let mut seen = HashSet::with_capacity(robots.len());
+    for robot in robots {
+        if !seen.insert(Point::new(
+            (robot.position.x + robot.velocity.x * seconds + bounds.x * seconds) % bounds.x,
+            (robot.position.y + robot.velocity.y * seconds + bounds.y * seconds) % bounds.y,
+        )) {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn part1impl(input: &str, bounds: Point, seconds: isize) -> usize {
     let mut robots = parse_input(input);
     simulate(&mut robots, &bounds, seconds);
     safety_score(&robots, &bounds)
 }
 
 pub fn part1(input: &str) -> usize {
-    solve(input, Point::new(101, 103), 100)
+    part1impl(input, Point::new(101, 103), 100)
 }
 
 pub fn part2(input: &str) -> usize {
-    let mut robots = parse_input(input);
+    let robots = parse_input(input);
     let bounds = Point::new(101, 103);
-    let mut elapsed = 0;
-    while robots.iter().map(|r| r.position).count_occurences().len() != robots.len() {
-        simulate(&mut robots, &bounds, 1);
-        elapsed += 1;
-    }
-
-    /*
-    for y in 0..bounds.y {
-        for x in 0..bounds.x {
-            if robots
-                .iter()
-                .any(|r| r.position.x == x && r.position.y == y)
-            {
-                print!("#");
-            } else {
-                print!(" ");
-            }
-        }
-        println!();
-    }
-    */
-
-    elapsed
+    (0..isize::MAX)
+        .find_map(|i| {
+            ((i * 1024)..((i + 1) * 1024))
+                .into_par_iter()
+                .find_first(|seconds| is_drawing(&robots, &bounds, *seconds))
+        })
+        .unwrap() as usize
 }
 
 aoc::cli::single::generate_main!();
@@ -148,7 +146,7 @@ mod tests {
 
     #[test]
     fn example_part1() {
-        let actual = solve(&EXAMPLE_INPUT, Point::new(11, 7), 100);
+        let actual = part1impl(&EXAMPLE_INPUT, Point::new(11, 7), 100);
         let expected = 12;
         assert_eq!(actual, expected);
     }
