@@ -1,6 +1,7 @@
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use aoc::utils::point::{Direction2, Point2};
+use rayon::prelude::*;
 
 type Map = Vec<Vec<bool>>;
 
@@ -34,7 +35,7 @@ fn parse_input(input: &str) -> (Map, Point2, Point2) {
 
 fn find_path(map: &Map, start: &Point2, end: &Point2) -> usize {
     let mut paths = BinaryHeap::new();
-    let mut done = HashSet::new();
+    let mut done = HashSet::with_capacity(map[0].len() * map.len() * 4);
     paths.push((0, *start, Direction2::East));
     loop {
         let (score, point, facing) = paths.pop().unwrap();
@@ -65,54 +66,72 @@ fn find_path(map: &Map, start: &Point2, end: &Point2) -> usize {
     }
 }
 
-fn find_best_path_tiles(map: &Map, start: &Point2, end: &Point2) -> usize {
+fn make_score_map(
+    map: &Map,
+    start: &Point2,
+    directions: &[Direction2],
+) -> HashMap<(Point2, Direction2), usize> {
     let mut paths = BinaryHeap::new();
-    let mut done = HashMap::new();
-    paths.push((0, *start, Direction2::East, vec![*start]));
-    let mut best_score = None;
-    let mut tiles: HashSet<Point2> = HashSet::new();
-    loop {
-        let Some((score, point, facing, mut path)) = paths.pop() else {
-            break;
-        };
-
-        if let Some(best_score) = best_score {
-            if score == best_score && point == *end {
-                tiles.extend(path);
-                continue;
-            } else if score < best_score {
-                break;
-            }
-        } else if point == *end {
-            best_score = Some(score);
-            tiles.extend(path);
+    for direction in directions {
+        paths.push((0, *start, *direction));
+    }
+    let mut result = HashMap::with_capacity(map[0].len() * map.len() * 4);
+    while let Some((score, point, facing)) = paths.pop() {
+        if result.contains_key(&(point, facing)) {
             continue;
         }
-
-        if done.get(&(point, facing)).is_some_and(|v| *v > score) {
-            continue;
-        }
-        done.insert((point, facing), score);
+        result.insert((point, facing), -score as usize);
 
         match facing {
             Direction2::North | Direction2::South => {
-                paths.push((score - 1000, point, Direction2::East, path.clone()));
-                paths.push((score - 1000, point, Direction2::West, path.clone()));
+                paths.push((score - 1000, point, Direction2::East));
+                paths.push((score - 1000, point, Direction2::West));
             }
             Direction2::East | Direction2::West => {
-                paths.push((score - 1000, point, Direction2::North, path.clone()));
-                paths.push((score - 1000, point, Direction2::South, path.clone()));
+                paths.push((score - 1000, point, Direction2::North));
+                paths.push((score - 1000, point, Direction2::South));
             }
         }
 
         let next = point + facing;
         if map[next.y][next.x] {
-            path.push(next);
-            paths.push((score - 1, next, facing, path));
+            paths.push((score - 1, next, facing));
         }
     }
+    result
+}
 
-    tiles.len()
+fn count_tiles_on_best_paths(map: &Map, start: &Point2, end: &Point2) -> usize {
+    let bounds = Point2::new(map[0].len(), map.len());
+    let non_wall_points: Vec<_> = (1..(bounds.x - 1))
+        .flat_map(|x| {
+            (1..(bounds.y - 1))
+                .filter(|y| map[*y][x])
+                .map(|y| Point2::new(x, y))
+                .collect::<Vec<_>>()
+        })
+        .collect();
+    let from_start = make_score_map(map, start, &[Direction2::East]);
+    let from_end = make_score_map(
+        map,
+        end,
+        &[
+            Direction2::North,
+            Direction2::East,
+            Direction2::South,
+            Direction2::West,
+        ],
+    );
+    let best = from_end[&(*start, Direction2::West)];
+    non_wall_points
+        .into_par_iter()
+        .filter(|p| {
+            from_start[&(*p, Direction2::North)] + from_end[&(*p, Direction2::South)] == best
+                || from_start[&(*p, Direction2::East)] + from_end[&(*p, Direction2::West)] == best
+                || from_start[&(*p, Direction2::South)] + from_end[&(*p, Direction2::North)] == best
+                || from_start[&(*p, Direction2::West)] + from_end[&(*p, Direction2::East)] == best
+        })
+        .count()
 }
 
 pub fn part1(input: &str) -> usize {
@@ -122,7 +141,7 @@ pub fn part1(input: &str) -> usize {
 
 pub fn part2(input: &str) -> usize {
     let (map, start, end) = parse_input(input);
-    find_best_path_tiles(&map, &start, &end)
+    count_tiles_on_best_paths(&map, &start, &end)
 }
 
 aoc::cli::single::generate_main!();
