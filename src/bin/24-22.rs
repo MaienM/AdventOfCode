@@ -12,15 +12,9 @@ fn parse_input(input: &str) -> Vec<usize> {
 }
 
 fn next_num(mut num: usize) -> usize {
-    let n2 = num * 64;
-    num ^= n2;
-    num %= PRUNE;
-    let n2 = num / 32;
-    num ^= n2;
-    num %= PRUNE;
-    let n2 = num * 2048;
-    num ^= n2;
-    num %= PRUNE;
+    num = (num ^ (num << 6)) % PRUNE;
+    num = (num ^ (num >> 5)) % PRUNE;
+    num = (num ^ (num << 11)) % PRUNE;
     num
 }
 
@@ -38,30 +32,28 @@ pub fn part1(input: &str) -> usize {
 
 pub fn part2(input: &str) -> usize {
     let nums = parse_input(input);
-    let prices: Vec<_> = nums
+    let price_by_deltas: Vec<_> = nums
         .into_par_iter()
         .map(|mut num| {
             let mut prices = Vec::with_capacity(2001);
-            prices.push((num % 10) as isize);
+            let mut deltas = Vec::with_capacity(2000);
+            let mut price = (num % 10) as i32;
+            prices.push(price);
             for _ in 0..2000 {
                 num = next_num(num);
-                prices.push((num % 10) as isize);
+                let next_price = (num % 10) as i32;
+                deltas.push(next_price - price);
+                prices.push(next_price);
+                price = next_price;
             }
-            prices
-        })
-        .collect();
-    let price_by_deltas: Vec<_> = prices
-        .into_par_iter()
-        .map(|prices| {
-            let deltas: Vec<_> = prices
-                .iter()
-                .zip(prices.iter().skip(1))
-                .map(|(n1, n2)| n2 - n1)
-                .collect();
+
             let mut price_by_delta = HashMap::new();
             for i in 0..(deltas.len() - 3) {
-                let delta = Vec::from(&deltas[i..i + 4]);
-                price_by_delta.entry(delta).or_insert(prices[i + 4]);
+                let delta =
+                    deltas[i] + (deltas[i + 1] << 4) + (deltas[i + 2] << 8) + (deltas[i + 3] << 12);
+                price_by_delta
+                    .entry(delta)
+                    .or_insert(prices[i + 4] as usize);
             }
             price_by_delta
         })
@@ -75,7 +67,7 @@ pub fn part2(input: &str) -> usize {
                 .or_insert(price);
         }
     }
-    sum_by_delta.into_values().max().unwrap() as usize
+    sum_by_delta.into_values().max().unwrap()
 }
 
 aoc::cli::single::generate_main!();
@@ -104,7 +96,7 @@ mod tests {
     ";
 
     #[test]
-    fn example_nest() {
+    fn example_next_num() {
         let pairs = [
             (123, 15_887_950),
             (15_887_950, 16_495_136),
