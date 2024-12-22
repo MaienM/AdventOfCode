@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use aoc::utils::parse;
 use rayon::prelude::*;
 
@@ -34,6 +36,48 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
+pub fn part2(input: &str) -> usize {
+    let nums = parse_input(input);
+    let prices: Vec<_> = nums
+        .into_par_iter()
+        .map(|mut num| {
+            let mut prices = Vec::with_capacity(2001);
+            prices.push((num % 10) as isize);
+            for _ in 0..2000 {
+                num = next_num(num);
+                prices.push((num % 10) as isize);
+            }
+            prices
+        })
+        .collect();
+    let price_by_deltas: Vec<_> = prices
+        .into_par_iter()
+        .map(|prices| {
+            let deltas: Vec<_> = prices
+                .iter()
+                .zip(prices.iter().skip(1))
+                .map(|(n1, n2)| n2 - n1)
+                .collect();
+            let mut price_by_delta = HashMap::new();
+            for i in 0..(deltas.len() - 3) {
+                let delta = Vec::from(&deltas[i..i + 4]);
+                price_by_delta.entry(delta).or_insert(prices[i + 4]);
+            }
+            price_by_delta
+        })
+        .collect();
+    let mut sum_by_delta = HashMap::new();
+    for price_by_delta in price_by_deltas {
+        for (delta, price) in price_by_delta {
+            sum_by_delta
+                .entry(delta)
+                .and_modify(|v| *v += price)
+                .or_insert(price);
+        }
+    }
+    sum_by_delta.into_values().max().unwrap() as usize
+}
+
 aoc::cli::single::generate_main!();
 
 #[cfg(test)]
@@ -44,10 +88,18 @@ mod tests {
     use super::*;
 
     #[example_input(part1 = 37_327_623)]
-    static EXAMPLE_INPUT: &str = "
+    static EXAMPLE_INPUT_1: &str = "
         1
         10
         100
+        2024
+    ";
+
+    #[example_input(part2 = 23)]
+    static EXAMPLE_INPUT_2: &str = "
+        1
+        2
+        3
         2024
     ";
 
