@@ -22,16 +22,18 @@ pub fn part1(input: &str) -> usize {
     }
     graph
         .keys()
-        .combinations(3)
         .par_bridge()
-        .filter(|keys| {
-            let e0 = graph.get(keys[0]).unwrap();
-            let e1 = graph.get(keys[1]).unwrap();
-            keys.iter().any(|k| k.starts_with('t'))
-                && e0.contains(keys[1])
-                && e0.contains(keys[2])
-                && e1.contains(keys[2])
+        .filter(|k| k.starts_with('t'))
+        .flat_map(|k| {
+            graph
+                .get(k)
+                .unwrap()
+                .iter()
+                .filter(|k2| !k2.starts_with('t') || *k2 < k)
+                .combinations(2)
+                .collect::<Vec<_>>()
         })
+        .filter(|keys| graph.get(keys[0]).unwrap().contains(keys[1]))
         .count()
 }
 
@@ -46,8 +48,8 @@ pub fn part2(input: &str) -> String {
         edges.insert(key);
     }
     let group = graph
-        .iter()
-        .par_bridge()
+        .par_iter()
+        .filter(|(key, edges)| edges.iter().all(|k| k <= key))
         .flat_map(|(_, edges)| {
             edges.iter().powerset().par_bridge().filter(|keys| {
                 let keys: HashSet<_> = keys.iter().copied().copied().collect();
