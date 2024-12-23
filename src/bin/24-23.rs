@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use aoc::utils::parse;
 use itertools::Itertools;
@@ -35,6 +35,31 @@ pub fn part1(input: &str) -> usize {
         .count()
 }
 
+pub fn part2(input: &str) -> String {
+    let pairs = parse_input(input);
+    let mut graph: HashMap<&str, HashSet<&str>> = HashMap::new();
+    for (lhs, rhs) in pairs {
+        graph.entry(lhs).or_default().insert(rhs);
+        graph.entry(rhs).or_default().insert(lhs);
+    }
+    for (key, edges) in &mut graph {
+        edges.insert(key);
+    }
+    let group = graph
+        .iter()
+        .par_bridge()
+        .flat_map(|(_, edges)| {
+            edges.iter().powerset().par_bridge().filter(|keys| {
+                let keys: HashSet<_> = keys.iter().copied().copied().collect();
+                keys.iter()
+                    .all(|key| graph.get(*key).unwrap().intersection(&keys).count() == keys.len())
+            })
+        })
+        .max_by_key(Vec::len)
+        .unwrap();
+    group.into_iter().sorted_unstable().join(",")
+}
+
 aoc::cli::single::generate_main!();
 
 #[cfg(test)]
@@ -44,7 +69,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 7)]
+    #[example_input(part1 = 7, part2 = "co,de,ka,ta")]
     static EXAMPLE_INPUT: &str = "
         kh-tc
         qp-kh
