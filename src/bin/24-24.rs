@@ -1,8 +1,9 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::File, io::Write as _};
 
 use aoc::utils::parse;
 use itertools::Itertools;
 
+#[derive(Eq, PartialEq, Debug)]
 enum Operand {
     And,
     Or,
@@ -28,7 +29,10 @@ impl Operand {
     }
 }
 
-fn parse_input(input: &str) -> (HashMap<&str, bool>, HashMap<&str, (&str, Operand, &str)>) {
+type Wires<'a> = HashMap<&'a str, bool>;
+type Gates<'a> = HashMap<&'a str, (&'a str, Operand, &'a str)>;
+
+fn parse_input(input: &str) -> (Wires, Gates) {
     parse!(input => {
         [wires split on '\n' into (HashMap<_, _>) with
             { name ": " [value as u8] }
@@ -42,13 +46,30 @@ fn parse_input(input: &str) -> (HashMap<&str, bool>, HashMap<&str, (&str, Operan
     } => (wires, gates))
 }
 
-pub fn part1(input: &str) -> usize {
-    let (mut wires, gates) = parse_input(input);
+fn to_decimal(wires: &Wires, prefix: char) -> usize {
+    let mut result = 0;
+    let nums = wires
+        .iter()
+        .filter(|(k, _)| k.starts_with(prefix))
+        .sorted_unstable_by_key(|(k, _)| *k)
+        .rev();
+    for (_, num) in nums {
+        result = (result << 1) + usize::from(*num);
+    }
+    result
+}
+
+fn solve<'a>(wires: &mut Wires<'a>, gates: &Gates<'a>, swaps: Vec<Vec<&'a str>>) {
+    let swaps: HashMap<_, _> = swaps
+        .into_iter()
+        .flat_map(|swap| [(swap[0], swap[1]), (swap[1], swap[0])])
+        .collect();
 
     let mut done = false;
     while !done {
         done = true;
-        for (key, (lhs, op, rhs)) in &gates {
+        for (mut key, (lhs, op, rhs)) in gates {
+            key = swaps.get(key).unwrap_or(key);
             if wires.contains_key(key) {
                 continue;
             }
@@ -58,17 +79,68 @@ pub fn part1(input: &str) -> usize {
             }
         }
     }
+}
 
-    let mut result = 0;
-    let nums = wires
+#[allow(dead_code)]
+fn dot(gates: &Gates, swaps: Vec<Vec<&str>>) {
+    let swaps: HashMap<_, _> = swaps
         .into_iter()
-        .filter(|(k, _)| k.starts_with('z'))
-        .sorted_unstable_by_key(|(k, _)| *k)
-        .rev();
-    for (_, num) in nums {
-        result = (result << 1) + usize::from(num);
+        .flat_map(|swap| [(swap[0], swap[1]), (swap[1], swap[0])])
+        .collect();
+    let mut file = File::create("dot").unwrap();
+    file.write_all(b"digraph {\n").unwrap();
+    for (mut key, (lhs, op, rhs)) in gates {
+        key = swaps.get(key).unwrap_or(key);
+        let color = match op {
+            Operand::And => "red",
+            Operand::Or => "blue",
+            Operand::Xor => "yellow",
+        };
+        file.write_fmt(format_args!("  {lhs} -> {key} [color={color}]\n"))
+            .unwrap();
+        file.write_fmt(format_args!("  {rhs} -> {key} [color={color}]\n"))
+            .unwrap();
     }
-    result
+    file.write_all(b"}").unwrap();
+}
+
+pub fn part1(input: &str) -> usize {
+    let (mut wires, gates) = parse_input(input);
+    solve(&mut wires, &gates, Vec::new());
+    to_decimal(&wires, 'z')
+}
+
+pub fn part2(input: &str) -> String {
+    let (mut wires, gates) = parse_input(input);
+    let swaps = vec![
+        vec!["z15", "qnw"],
+        vec!["z20", "cqr"],
+        vec!["z37", "vkg"],
+        vec!["ncd", "nfj"],
+    ];
+    solve(&mut wires, &gates, swaps.clone());
+
+    dot(&gates, swaps.clone());
+
+    let x = to_decimal(&wires, 'x');
+    let y = to_decimal(&wires, 'y');
+    let z = to_decimal(&wires, 'z');
+
+    println!("         4         3         2         1          ");
+    println!("    5432109876543210987654321098765432109876543210");
+    println!("x =  {x:b}");
+    println!("y =  {y:b}");
+    println!("z = {z:b}");
+    println!("w = {:b}", x + y);
+
+    for i in 0..=45 {
+        let modulo = 1 << i;
+        let expected = (x + y) % modulo;
+        let actual = z % modulo;
+        assert_eq!(actual, expected, "Error at z{i}");
+    }
+
+    swaps.into_iter().flatten().sorted_unstable().join(",")
 }
 
 aoc::cli::single::generate_main!();
@@ -143,6 +215,29 @@ mod tests {
         hwm AND bqk -> z03
         tgd XOR rvg -> z12
         tnw OR pbm -> gnj
+    ";
+
+    #[example_input(part2 = "z00,z01,z02,z05", notest)]
+    static EXAMPLE_INPUT_3: &str = "
+        x00: 0
+        x01: 1
+        x02: 0
+        x03: 1
+        x04: 0
+        x05: 1
+        y00: 0
+        y01: 0
+        y02: 1
+        y03: 1
+        y04: 0
+        y05: 1
+
+        x00 AND y00 -> z05
+        x01 AND y01 -> z02
+        x02 AND y02 -> z01
+        x03 AND y03 -> z03
+        x04 AND y04 -> z04
+        x05 AND y05 -> z00
     ";
 
     // #[test]
