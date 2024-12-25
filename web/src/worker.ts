@@ -7,6 +7,7 @@ export type Example = Omit<aoc.Example, 'free'>;
 export interface Result {
 	success: boolean;
 	message: string;
+	expected?: string;
 	duration: number;
 }
 
@@ -38,6 +39,8 @@ class Worker {
 			examples: bin.examples.map((example) => ({
 				name: example.name,
 				input: example.input,
+				part1: example.part1,
+				part2: example.part2,
 			})),
 		} as aoc.Bin));
 	}

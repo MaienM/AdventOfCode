@@ -1,4 +1,4 @@
-import { Timer } from '@mui/icons-material';
+import { Check, Close, Timer } from '@mui/icons-material';
 import { Alert, AlertTitle, Chip, ChipProps, Tooltip, Typography } from '@mui/material';
 import * as React from 'react';
 import { useElapsedTime } from 'use-elapsed-time';
@@ -29,6 +29,12 @@ const formatDuration = (duration: number): string => {
 		return `${formatFixed(remainder, 0)}${unit}`;
 	}
 };
+
+const Pre = ({ children }: { children: string }) => (
+	<Typography component="pre" sx={{ fontFamily: 'Roboto Mono' }}>
+		{children}
+	</Typography>
+);
 
 const TimerChip = React.forwardRef<HTMLDivElement, ChipProps>((props: ChipProps, ref) => (
 	<Chip
@@ -78,6 +84,27 @@ const ResultComponent = ({ label, result = undefined, running }: Props) => {
 		const resolution = formatDuration(context.minTimerResolution);
 		const resolutionIsSignificant = result.duration <= context.minTimerResolution * 100;
 
+		const correct = (result.expected ?? result.message) === result.message;
+		const CorrectIcon = correct ? Check : Close;
+		let correctTooltip;
+		if (correct) {
+			correctTooltip = 'This is the expected result for this example.';
+		} else {
+			correctTooltip = 'This is not the expected result for this example, expected';
+			if (result.expected?.indexOf('\n') === -1) {
+				correctTooltip += ` ${result.expected}.`;
+			} else {
+				correctTooltip = (
+					<>
+						{correctTooltip}
+						<Pre>
+							{result.expected}
+						</Pre>
+					</>
+				);
+			}
+		}
+
 		return (
 			<Alert severity="success">
 				<AlertTitle>
@@ -89,19 +116,41 @@ const ResultComponent = ({ label, result = undefined, running }: Props) => {
 					>
 						<TimerChip label={`${resolutionIsSignificant ? '~' : ''}${durationMid}`} />
 					</Tooltip>
+					{result.expected === undefined ? null : (
+						<Tooltip
+							title={correctTooltip}
+							disableHoverListener={result.expected === undefined}
+							disableTouchListener={result.expected === undefined}
+							slotProps={{
+								tooltip: {
+									sx: {
+										maxWidth: 'none',
+									},
+								},
+							}}
+						>
+							<CorrectIcon
+								fontSize="small"
+								sx={{
+									marginLeft: '0.5em',
+									marginBottom: '-4px',
+								}}
+							/>
+						</Tooltip>
+					)}
 				</AlertTitle>
-				<Typography component="pre" sx={{ fontFamily: 'Roboto Mono' }}>
+				<Pre>
 					{result.message}
-				</Typography>
+				</Pre>
 			</Alert>
 		);
 	} else {
 		return (
 			<Alert severity="error">
 				<AlertTitle>{label}</AlertTitle>
-				<Typography component="pre" sx={{ fontFamily: 'Roboto Mono' }}>
+				<Pre>
 					{result.message}
-				</Typography>
+				</Pre>
 			</Alert>
 		);
 	}

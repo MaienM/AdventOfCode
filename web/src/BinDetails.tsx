@@ -5,7 +5,7 @@ import * as React from 'react';
 import { Link, useParams } from 'react-router';
 import Context from './context';
 import ResultComponent from './Result';
-import type { Result } from './worker';
+import type { Example, Result } from './worker';
 
 /**
  * Component to display and run a single binary.
@@ -15,7 +15,8 @@ export default () => {
 	const params = useParams();
 	const bin = React.useMemo(() => context.bins.find((bin) => bin.name === params.bin), [context.bins, params.bin]);
 
-	const [input, setInput] = React.useState<string>(bin.examples[0]?.input || '');
+	const [input, setInput] = React.useState<string>(bin.examples[0]?.input ?? '');
+	const [example, setExample] = React.useState<Example | undefined>(bin.examples[0]);
 	const [running, setRunning] = React.useState(false);
 	const [part1, setPart1] = React.useState<Result | undefined>(undefined);
 	const [part2, setPart2] = React.useState<Result | undefined>(undefined);
@@ -31,10 +32,12 @@ export default () => {
 		setPart2(undefined);
 		{
 			const result = await context.worker.run(bin.name, 1, input.trimEnd());
+			result.expected = example?.part1;
 			setPart1(result);
 		}
 		{
 			const result = await context.worker.run(bin.name, 2, input.trimEnd());
+			result.expected = example?.part2;
 			setPart2(result);
 		}
 		setRunning(false);
@@ -66,9 +69,11 @@ export default () => {
 					value={input}
 					onChange={(event) => {
 						setInput(event.target.value);
+						setExample(undefined);
 					}}
 					onBlur={(_) => {
 						setInput(input.trimEnd());
+						setExample(undefined);
 					}}
 					onPaste={(event) => {
 						const input = event.target as HTMLTextAreaElement;
@@ -76,6 +81,7 @@ export default () => {
 							event.preventDefault();
 							const text = event.clipboardData.getData('text/plain').trimEnd();
 							setInput(text);
+							setExample(undefined);
 						}
 					}}
 					fullWidth
@@ -117,6 +123,7 @@ export default () => {
 									<MenuItem
 										onClick={() => {
 											setInput(example.input);
+											setExample(example);
 											setExampleMenuAnchor(null);
 										}}
 									>

@@ -125,6 +125,18 @@ impl Example {
     pub fn input(&self) -> String {
         self.0.input.to_owned()
     }
+    
+    /// The expected result of part 1, cast to a string.
+    #[wasm_bindgen(getter)]
+    pub fn part1(&self) -> Option<String> {
+        self.0.part1.map(str::to_owned)
+    }
+
+    /// The expected result of part 2, cast to a string.
+    #[wasm_bindgen(getter)]
+    pub fn part2(&self) -> Option<String> {
+        self.0.part2.map(str::to_owned)
+    }
 }
 
 /// WASM wrapper for [`aoc::cli::runner::SolverRunResult::Success`].
