@@ -88,7 +88,7 @@ export default () => {
 					slotProps={{
 						htmlInput: {
 							sx: {
-								fontFamily: 'Roboto Mono',
+								fontFamily: 'Mononoki',
 							},
 						},
 					}}

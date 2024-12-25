@@ -31,7 +31,15 @@ const formatDuration = (duration: number): string => {
 };
 
 const Pre = ({ children }: { children: string }) => (
-	<Typography component="pre" sx={{ fontFamily: 'Roboto Mono' }}>
+	<Typography
+		component="pre"
+		sx={{
+			fontFamily: 'Mononoki',
+			lineHeight: '1',
+			marginTop: '0.5rem',
+			marginBottom: '0.5rem',
+		}}
+	>
 		{children}
 	</Typography>
 );
