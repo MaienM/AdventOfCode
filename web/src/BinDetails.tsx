@@ -98,30 +98,34 @@ export default () => {
 					>
 						Solve
 					</LoadingButton>
-					<Button
-						variant="outlined"
-						startIcon={<Publish />}
-						endIcon={<KeyboardArrowDown />}
-						onClick={(e) => setExampleMenuAnchor(e.currentTarget)}
-					>
-						Load examples
-					</Button>
-					<Menu
-						open={!!exampleMenuAnchor}
-						anchorEl={exampleMenuAnchor}
-						onClose={() => setExampleMenuAnchor(null)}
-					>
-						{bin.examples.map((example) => (
-							<MenuItem
-								onClick={() => {
-									setInput(example.input);
-									setExampleMenuAnchor(null);
-								}}
+					{bin.examples.length === 0 ? null : (
+						<>
+							<Button
+								variant="outlined"
+								startIcon={<Publish />}
+								endIcon={<KeyboardArrowDown />}
+								onClick={(e) => setExampleMenuAnchor(e.currentTarget)}
 							>
-								{example.name}
-							</MenuItem>
-						))}
-					</Menu>
+								Load examples
+							</Button>
+							<Menu
+								open={!!exampleMenuAnchor}
+								anchorEl={exampleMenuAnchor}
+								onClose={() => setExampleMenuAnchor(null)}
+							>
+								{bin.examples.map((example) => (
+									<MenuItem
+										onClick={() => {
+											setInput(example.input);
+											setExampleMenuAnchor(null);
+										}}
+									>
+										{example.name}
+									</MenuItem>
+								))}
+							</Menu>
+						</>
+					)}
 					<Button
 						variant="outlined"
 						startIcon={<Source />}
