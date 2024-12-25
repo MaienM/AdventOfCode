@@ -99,15 +99,8 @@ mod tests {
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
         let expected = (
-            vec![
-                [1,6,4,5,4],
-                [2,3,1,6,4],
-            ],
-            vec![
-                [6,1,3,2,4],
-                [5,4,5,1,3],
-                [4,1,3,1,2],
-            ],
+            vec![[1, 6, 4, 5, 4], [2, 3, 1, 6, 4]],
+            vec![[6, 1, 3, 2, 4], [5, 4, 5, 1, 3], [4, 1, 3, 1, 2]],
         );
         assert_eq!(actual, expected);
     }
