@@ -39,6 +39,10 @@ pub fn part1(input: &str) -> usize {
     result
 }
 
+pub fn part2(_input: &str) -> &'static str {
+    "I did it!"
+}
+
 aoc::cli::single::generate_main!();
 
 #[cfg(test)]
