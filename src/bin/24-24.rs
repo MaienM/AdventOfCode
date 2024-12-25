@@ -120,18 +120,18 @@ pub fn part2(input: &str) -> String {
     ];
     solve(&mut wires, &gates, swaps.clone());
 
-    dot(&gates, swaps.clone());
+    // dot(&gates, swaps.clone());
 
     let x = to_decimal(&wires, 'x');
     let y = to_decimal(&wires, 'y');
     let z = to_decimal(&wires, 'z');
 
-    println!("         4         3         2         1          ");
-    println!("    5432109876543210987654321098765432109876543210");
-    println!("x =  {x:b}");
-    println!("y =  {y:b}");
-    println!("z = {z:b}");
-    println!("w = {:b}", x + y);
+    // println!("         4         3         2         1          ");
+    // println!("    5432109876543210987654321098765432109876543210");
+    // println!("x =  {x:b}");
+    // println!("y =  {y:b}");
+    // println!("z = {z:b}");
+    // println!("w = {:b}", x + y);
 
     for i in 0..=45 {
         let modulo = 1 << i;
