@@ -206,6 +206,12 @@ macro_rules! __parse {
         ] ];)
     };
     // (try)? with $transformer
+    (split; $ty:tt; $input:expr => [ sel::$selargs:tt into::[indexed; $($iterargs:tt)+] ]; with $transformer:expr) => {
+        $crate::utils::parser::parse!(split; $ty; $input => [ sel::$selargs into::[; $($iterargs)+] with::[indexed $transformer] ];)
+    };
+    (split; $ty:tt; $input:expr => [ sel::$selargs:tt into::[indexed; $($iterargs:tt)+] ]; try with $transformer:expr) => {
+        $crate::utils::parser::parse!(split; $ty; $input => [ sel::$selargs into::[; $($iterargs)+] with::[try indexed $transformer] ];)
+    };
     (split; $ty:tt; $input:expr => [ sel::$selargs:tt into::$iterargs:tt ]; with $transformer:expr) => {
         $crate::utils::parser::parse!(split; $ty; $input => [ sel::$selargs into::$iterargs with::[$transformer] ];)
     };
@@ -228,8 +234,11 @@ macro_rules! __parse {
     (split; $ty:tt; $input:expr => [[ sel::$selargs:tt into::[$($flags:ident)*; $collection:ty] $($rest:tt)* ]]) => {
         $crate::utils::parser::parse!(split; $ty; $input => [[ sel::$selargs into::[$($flags)*] $($rest)* ]]).collect::<$collection>()
     };
-    (split; $ty:tt; $input:expr => [[ sel::$selargs:tt with::[try $transformer:expr] ]]) => {
-        $crate::utils::parser::parse!(split; $ty; $input => [[ sel::$selargs with::[$transformer] ]]).filter_map(Result::ok)
+    (split; $ty:tt; $input:expr => [[ sel::$selargs:tt with::[try $($flags:ident)* $transformer:expr] ]]) => {
+        $crate::utils::parser::parse!(split; $ty; $input => [[ sel::$selargs with::[$($flags)* $transformer] ]]).filter_map(Result::ok)
+    };
+    (split; $ty:tt; $input:expr => [[ sel::$selargs:tt with::[indexed $transformer:expr] ]]) => {
+        $crate::utils::parser::parse!(split; $ty; $input => [[ sel::$selargs ]]).enumerate().map($transformer)
     };
     (split; $ty:tt; $input:expr => [[ sel::$selargs:tt with::[$transformer:expr] ]]) => {
         $crate::utils::parser::parse!(split; $ty; $input => [[ sel::$selargs ]]).map($transformer)
@@ -496,6 +505,13 @@ mod tests {
     }
 
     #[test]
+    fn parse_list_indexed_to_map() {
+        let sub: for<'a> fn((usize, &'a str)) -> (&'a str, u8) = |(idx, name)| (name, idx as u8);
+        parse!("a b" => [items split on " " indexed into (HashMap<_, _>) with sub]);
+        assert_eq!(items, HashMap::from([("a", 0), ("b", 1)]));
+    }
+
+    #[test]
     fn parse_list_try_as() {
         parse!("12 angry men" => [items split try as u8]);
         assert_eq!(items, vec![12]);
@@ -511,6 +527,12 @@ mod tests {
     fn parse_list_nested_list() {
         parse!("1,2 3,4" => [items split with [split on ',']]);
         assert_eq!(items, vec![vec!["1", "2"], vec!["3", "4"]]);
+    }
+
+    #[test]
+    fn parse_list_indexed_nested_list() {
+        parse!("a,b c,d" => [items split indexed with [split on ',']]);
+        assert_eq!(items, vec![(0, vec!["a", "b"]), (1, vec!["c", "d"])]);
     }
 
     #[test]
