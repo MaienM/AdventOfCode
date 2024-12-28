@@ -3,7 +3,7 @@ RUST_BACKTRACE ?= 0
 setaf6 = $(shell tput setaf 6)
 sgr0 = $(shell tput sgr0)
 
-.PHONY: run-all test-libs benchmark-all test-and-run-% benchmark-% web-dev
+.PHONY: run-all test-libs benchmark-all test-and-run-% benchmark-% web-dev docs
 .SECONDARY:
 
 #
@@ -57,6 +57,7 @@ run-%:
 
 test-libs:
 	@cargo nextest run --lib --no-fail-fast --cargo-quiet
+	@cargo test --doc
 
 test-and-run-%: bin = $(subst test-and-run-,,$@)
 test-and-run-%: inputs/%.txt
@@ -66,6 +67,13 @@ test-and-run-%: inputs/%.txt
 	@echo "$(setaf6)>>>>> Running ${bin} <<<<<$(sgr0)"
 	@cargo build --bin ${bin} --release --quiet
 	@cargo run --bin ${bin} --release --quiet
+
+#
+# Documentation.
+#
+
+docs: test-libs
+	@cargo tree --depth 1 -e normal --prefix none | cut -d' ' -f1 | xargs printf -- '-p %q\n' | xargs cargo doc --lib --no-deps
 
 #
 # Benchmarking.
