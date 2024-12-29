@@ -117,9 +117,11 @@ where
     }
 }
 
-// TODO: Implement on num instead, create a copy using f64 internally and return that.
-impl<const R: usize, const C: usize> Matrix<f64, R, C> {
-    /// Perform Gauss-Jordan elimination.
+impl<T, const R: usize, const C: usize> Matrix<T, R, C>
+where
+    T: ToPrimitive + Copy,
+{
+    /// Perform Gauss-Jordan elimination, and return the last column.
     ///
     /// This is a method to solve a system of linear equations. Generally speaking you will need as
     /// many equations as you have unknowns, though there might be cases where you need more (e.g
@@ -145,31 +147,25 @@ impl<const R: usize, const C: usize> Matrix<f64, R, C> {
     ///
     /// ```
     /// # use aoc::utils::matrix::Matrix;
-    /// let mut matrix = Matrix::new([
-    ///     [2.0, 1.0, -1.0, 8.0],
-    ///     [-3.0, -1.0, 2.0, -11.0],
-    ///     [-2.0, 1.0, 2.0, -3.0],
+    /// let matrix = Matrix::new([
+    ///     [2, 1, -1, 8],
+    ///     [-3, -1, 2, -11],
+    ///     [-2, 1, 2, -3],
     /// ]);
-    /// matrix.gauss_jordan_elimination();
-    /// // matrix is now (approximately)
-    /// // [1, 0, 0, 2]
-    /// // [0, 1, 0, 3]
-    /// // [0, 0, 1, -1]
+    /// let result = matrix.gauss_jordan_elimination();
+    /// assert_eq!(result[0].round(), 2.0);
+    /// assert_eq!(result[1].round(), 3.0);
+    /// assert_eq!(result[2].round(), -1.0);
     /// ```
-    ///
-    /// Which translates to the following equations/solutions:
-    ///
-    /// ```math
-    /// x = 2
-    /// y = 3
-    /// z = -1
-    /// ```
-    pub fn gauss_jordan_elimination(&mut self) {
+    #[must_use]
+    pub fn gauss_jordan_elimination(&self) -> [f64; R] {
+        let mut matrix = self.cast::<f64>().unwrap();
+
         let mut pivot_row = 0;
         let mut pivot_col = 0;
 
         while pivot_row < R && pivot_col < C {
-            let (max_idx, max) = self
+            let (max_idx, max) = matrix
                 .iter()
                 .enumerate()
                 .skip(pivot_row)
@@ -183,14 +179,14 @@ impl<const R: usize, const C: usize> Matrix<f64, R, C> {
             }
 
             if max_idx != pivot_row {
-                self.swap(max_idx, pivot_row);
+                matrix.swap(max_idx, pivot_row);
             }
 
             for r in (pivot_row + 1)..R {
-                let f = self[r][pivot_col] / self[pivot_row][pivot_col];
-                self[r][pivot_col] = 0.0;
+                let f = matrix[r][pivot_col] / matrix[pivot_row][pivot_col];
+                matrix[r][pivot_col] = 0.0;
                 for c in (pivot_col + 1)..C {
-                    self[r][c] -= self[pivot_row][c] * f;
+                    matrix[r][c] -= matrix[pivot_row][c] * f;
                 }
             }
             pivot_row += 1;
@@ -198,7 +194,7 @@ impl<const R: usize, const C: usize> Matrix<f64, R, C> {
         }
 
         for pivot_row in (0..R).rev() {
-            let Some((pivot_col, _)) = self[pivot_row]
+            let Some((pivot_col, _)) = matrix[pivot_row]
                 .iter()
                 .enumerate()
                 .find(|(_, v)| v.abs() > f64::EPSILON)
@@ -206,18 +202,25 @@ impl<const R: usize, const C: usize> Matrix<f64, R, C> {
                 continue;
             };
 
-            let f = self[pivot_row][pivot_col].recip();
+            let f = matrix[pivot_row][pivot_col].recip();
             for c in pivot_col..C {
-                self[pivot_row][c] *= f;
+                matrix[pivot_row][c] *= f;
             }
 
             for r in 0..pivot_row {
-                let f = self[r][pivot_col];
+                let f = matrix[r][pivot_col];
                 for c in pivot_col..C {
-                    self[r][c] -= self[pivot_row][c] * f;
+                    matrix[r][c] -= matrix[pivot_row][c] * f;
                 }
             }
         }
+
+        matrix
+            .into_iter()
+            .map(|row| row[C - 1])
+            .collect_vec()
+            .try_into()
+            .unwrap()
     }
 }
 
@@ -240,24 +243,15 @@ mod tests {
 
     #[test]
     fn gauss_jordan_elimination() {
-        let mut matrix = super::Matrix([
+        let matrix = super::Matrix([
             [2.0, 1.0, -1.0, 8.0],
             [-3.0, -1.0, 2.0, -11.0],
             [-2.0, 1.0, 2.0, -3.0],
         ]);
-        matrix.gauss_jordan_elimination();
-        assert_eq_approx!(matrix[0][0], 1.0);
-        assert_eq_approx!(matrix[0][1], 0.0);
-        assert_eq_approx!(matrix[0][2], 0.0);
-        assert_eq_approx!(matrix[0][3], 2.0);
-        assert_eq_approx!(matrix[1][0], 0.0);
-        assert_eq_approx!(matrix[1][1], 1.0);
-        assert_eq_approx!(matrix[1][2], 0.0);
-        assert_eq_approx!(matrix[1][3], 3.0);
-        assert_eq_approx!(matrix[2][0], 0.0);
-        assert_eq_approx!(matrix[2][1], 0.0);
-        assert_eq_approx!(matrix[2][2], 1.0);
-        assert_eq_approx!(matrix[2][3], -1.0);
+        let result = matrix.gauss_jordan_elimination();
+        assert_eq_approx!(result[0], 2.0);
+        assert_eq_approx!(result[1], 3.0);
+        assert_eq_approx!(result[2], -1.0);
     }
 
     #[test]

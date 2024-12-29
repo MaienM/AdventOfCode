@@ -28,21 +28,13 @@ fn parse_input(input: &str) -> Vec<Game> {
 }
 
 fn find_wincondition(game: &Game) -> Option<u64> {
-    let mut matrix = Matrix::new([
-        [
-            game.button_a.x as f64,
-            game.button_b.x as f64,
-            game.prize.x as f64,
-        ],
-        [
-            game.button_a.y as f64,
-            game.button_b.y as f64,
-            game.prize.y as f64,
-        ],
+    let matrix = Matrix::new([
+        [game.button_a.x, game.button_b.x, game.prize.x],
+        [game.button_a.y, game.button_b.y, game.prize.y],
     ]);
-    matrix.gauss_jordan_elimination();
-    let a = matrix[0][2].round() as u64;
-    let b = matrix[1][2].round() as u64;
+    let result = matrix.gauss_jordan_elimination();
+    let a = result[0].round() as u64;
+    let b = result[1].round() as u64;
     if game.button_a.x * a + game.button_b.x * b == game.prize.x
         && game.button_a.y * a + game.button_b.y * b == game.prize.y
     {

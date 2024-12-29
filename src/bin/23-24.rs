@@ -121,7 +121,7 @@ pub fn part2(input: &str) -> usize {
     //
     // This gives us 4 unknowns (X0, Y0, XV0, YV0) with known factors, using (X, Y) of hailstones (1, 2). We can do the same for (X, Z) and (Y, Z) for the same hailstones, and then also for hailstones (1, 3). This gives us 6 linear equations for the 6 unknowns (X0, Y0, Z0, XV0, YV0, ZV0), which should be sufficient. We'll put these equations into an augmented matrix [X0, Y0, Z0, XV0, YV0, ZV0, C] and use Gauss-Jordan elimination to solve them.
 
-    let mut matrix = Matrix::new([
+    let matrix = Matrix::new([
         // (X, Y) for (1, 2).
         [
             hailstones[0].velocity.y - hailstones[1].velocity.y,
@@ -201,10 +201,10 @@ pub fn part2(input: &str) -> usize {
                 + hailstones[2].position.z * hailstones[2].velocity.y,
         ],
     ]);
-    matrix.gauss_jordan_elimination();
+    let result = matrix.gauss_jordan_elimination();
     let stone = Hailstone {
-        position: Point::new(matrix[0][6], matrix[1][6], matrix[2][6]),
-        velocity: Point::new(matrix[3][6], matrix[4][6], matrix[5][6]),
+        position: Point::new(result[0], result[1], result[2]),
+        velocity: Point::new(result[3], result[4], result[5]),
     };
 
     stone.position.x.round() as usize
