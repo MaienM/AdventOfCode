@@ -1,5 +1,8 @@
+//! Extension methods for [`std::ops::RangeBounds`].
+
 use std::ops::{Add, Bound, Div, RangeBounds, Sub};
 
+/// Extension methods for [`std::ops::RangeBounds`].
 pub trait RangeExt<T> {
     /// Perform a binary search.
     fn binary_search<F>(&self, f: F) -> Option<T>

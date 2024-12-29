@@ -1,5 +1,8 @@
+//! Extension methods for [`std::iter::Iterator`].
+
 use std::{cmp::Ordering, collections::HashMap, hash::Hash};
 
+/// Extension methods for [`std::iter::Iterator`].
 pub trait IterExt<T> {
     /// Count how often each item occurs.
     fn count_occurences(self) -> HashMap<T, usize>

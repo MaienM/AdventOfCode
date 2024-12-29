@@ -1,3 +1,5 @@
+//! Helpers for the CLI entrypoints.
+
 pub mod bench;
 pub mod multi;
 pub mod runner;

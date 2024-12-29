@@ -1,3 +1,5 @@
+//! Helpers to manage inputs for solutions from various sources.
+
 use std::{fs::read_to_string, io::ErrorKind};
 
 use clap::{

@@ -1,3 +1,5 @@
+//! Helpers for parsing text into structures
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __parse {
@@ -11,6 +13,7 @@ macro_rules! __parse {
         $crate::utils::parser::__parse__!([[ tmpvar ]] $input => $($sections)*);
     };
 }
+
 /// Macro to quickly perform common parsing operations on a string.
 ///
 /// This macro will take the given input, attempt to parse all the provided sections from it,

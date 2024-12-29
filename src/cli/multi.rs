@@ -1,3 +1,5 @@
+//! Helpers for the multi-day CLI entrypoint (`aoc`).
+
 use std::{collections::HashSet, time::Duration};
 
 use ansi_term::Colour::{Cyan, Purple};
@@ -221,6 +223,7 @@ struct MainArgs {
     show_results: bool,
 }
 
+/// The entrypoint for the multi-day CLI.
 pub fn main() {
     assert!(
         !cfg!(feature = "visual"),

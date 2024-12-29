@@ -1,3 +1,5 @@
+//! Helpers to run solutions & collect the results & runtimes.
+
 use std::time::{Duration, Instant};
 
 use ansi_term::{

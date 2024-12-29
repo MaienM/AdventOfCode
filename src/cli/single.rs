@@ -1,3 +1,5 @@
+//! Helpers for the single-day CLI entrypoints (e.g. `22-01`).
+
 use std::time::Duration;
 
 use ansi_term::Colour::{Cyan, Red};
@@ -61,6 +63,7 @@ macro_rules! arg_default_value_fill_tokens {
     }
 }
 
+#[doc(hidden)]
 pub fn main(bin: &Bin) {
     // Replace the placeholders in the default values.
     let mut cmd = SingleArgs::command_for_update();
@@ -139,6 +142,8 @@ pub fn main(bin: &Bin) {
     }
 }
 
+/// Generate the main entrypoint for a single binary containing the solutions of one day.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __generate_bin_main {
     () => {
@@ -150,4 +155,5 @@ macro_rules! __generate_bin_main {
         }
     };
 }
+#[doc(inline)]
 pub use __generate_bin_main as generate_main;

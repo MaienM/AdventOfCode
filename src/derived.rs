@@ -10,7 +10,7 @@ pub struct Bin {
     /// The name of the binary.
     pub name: &'static str,
 
-    /// The year that the binary is for.
+    /// The year that the binary is for (last 2 digits only).
     pub year: u8,
 
     /// The day that the binary is for.

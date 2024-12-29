@@ -84,7 +84,7 @@ impl Bin {
         self.0.name.to_owned()
     }
 
-    /// The year that the binary is for.
+    /// The year that the binary is for (last 2 digits only).
     #[wasm_bindgen(getter)]
     pub fn year(&self) -> u8 {
         self.0.year

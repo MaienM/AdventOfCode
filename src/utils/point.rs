@@ -1,3 +1,5 @@
+//! Helpers for points in n-dimensional space & related concepts.
+
 use std::{
     collections::HashSet,
     fmt::Debug,
@@ -140,10 +142,23 @@ macro_rules! call_chain {
 
 // Generate a point class with the given name and variables.
 macro_rules! create_point {
-    ($name:ident, $($var:ident),+) => {
+    (
+        $(#[$structmeta:meta])*
+        struct $name:ident {
+            $(
+                $(#[$varmeta:meta])*
+                $var:ident
+            ),+
+            $(,)?
+        }
+    ) => {
+        $(#[$structmeta])*
         #[derive(Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd, new)]
         pub struct $name<T = usize> {
-            $(pub $var: T),+
+            $(
+                $(#[$varmeta])*
+                pub $var: T
+            ),+
         }
 
         impl_point_operator!($name, add, $($var),+);
@@ -222,8 +237,27 @@ macro_rules! create_point {
     };
 }
 
-create_point!(Point2, x, y);
-create_point!(Point3, x, y, z);
+create_point!(
+    /// A point in 2-dimensional space.
+    struct Point2 {
+        /// The coordinate in the first dimension.
+        x,
+        /// The coordinate in the second dimension.
+        y,
+    }
+);
+
+create_point!(
+    /// A point in 3-dimensional space.
+    struct Point3 {
+        /// The coordinate in the first dimension.
+        x,
+        /// The coordinate in the second dimension.
+        y,
+        /// The coordinate in the third dimension.
+        z,
+    }
+);
 
 impl<T> Debug for Point2<T>
 where
@@ -246,6 +280,9 @@ where
 // Direction
 //
 
+/// A helper struct combining a direction with a magnitude
+///
+/// This is used when taking multiple steps in a direction at one time.
 pub struct DirectionWithMagnitude<D, T>(D, T);
 
 // Implements an operator (add/sub) for a point type combined with a direction (optionally multiplied by some amount), including the assign, checked, saturating, and wrapping variants.
@@ -406,10 +443,23 @@ macro_rules! impl_direction_operator {
 }
 
 macro_rules! create_direction {
-    ($name:ident for $point:ident, $($member:ident = $var:ident $method:ident),+ $(,)?) => {
+    (
+        $(#[$enummeta:meta])*
+        enum $name:ident for $point:ident {
+            $(
+                $(#[$membermeta:meta])*
+                $member:ident = $var:ident $method:ident
+            ),+
+            $(,)?
+        }
+    ) => {
+        $(#[$enummeta])*
         #[derive(Debug, Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd)]
         pub enum $name {
-            $($member),+
+            $(
+                $(#[$membermeta])*
+                $member
+            ),+
         }
 
         impl<T> Mul<T> for $name {
@@ -427,20 +477,34 @@ macro_rules! create_direction {
 }
 
 create_direction! {
-    Direction2 for Point2,
-    North = y sub,
-    South = y add,
-    West = x sub,
-    East = x add,
+    /// A direction in 2-dimensional space.
+    enum Direction2 for Point2 {
+        /// Movement in the X dimension towards positive infinity.
+        East = x add,
+        /// Movement in the X dimension towards negative infinity.
+        West = x sub,
+        /// Movement in the Y dimension towards positive infinity.
+        South = y add,
+        /// Movement in the Y dimension towards negative infinity.
+        North = y sub,
+    }
 }
 create_direction! {
-    Direction3 for Point3,
-    Back = y add,
-    Front = y sub,
-    Left = x sub,
-    Right = x add,
-    Up = z add,
-    Down = z sub,
+    /// A direction in 3-dimensional space.
+    enum Direction3 for Point3 {
+        /// Movement in the X dimension towards positive infinity.
+        Right = x add,
+        /// Movement in the X dimension towards negative infinity.
+        Left = x sub,
+        /// Movement in the Y dimension towards positive infinity.
+        Back = y add,
+        /// Movement in the Y dimension towards negative infinity.
+        Front = y sub,
+        /// Movement in the Z dimension towards positive infinity.
+        Up = z add,
+        /// Movement in the Z dimension towards negative infinity.
+        Down = z sub,
+    }
 }
 
 #[cfg(test)]

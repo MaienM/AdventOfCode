@@ -1,3 +1,5 @@
+//! A collection of utilities & helpers for common problems & concepts.
+
 pub mod ext;
 pub mod matrix;
 pub mod parser;
