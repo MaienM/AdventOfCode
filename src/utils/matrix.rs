@@ -1,7 +1,7 @@
 //! Helpers for mathematical matrices.
 
 use std::{
-    fmt::Display,
+    fmt::{self, Debug},
     ops::{Deref, DerefMut},
 };
 
@@ -39,51 +39,39 @@ impl<T, const R: usize, const C: usize> DerefMut for Matrix<T, R, C> {
     }
 }
 
-// TODO: change to impl Display instead.
-impl<T, const R: usize, const C: usize> Matrix<T, R, C>
+impl<T: Debug, const R: usize, const C: usize> Debug for Matrix<T, R, C>
 where
-    T: Display,
+    [[T; C]; R]: Debug,
+    T: Debug,
 {
-    /// Print the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use aoc::utils::matrix::Matrix;
-    /// let matrix = Matrix::new([
-    ///     [1, 0, 0],
-    ///     [0, 1, 0],
-    ///     [0, 0, 1],
-    /// ]);
-    /// matrix.print();
-    /// // Output:
-    /// // ⎡      1       0       0  ⎤
-    /// // ⎢      0       1       0  ⎥
-    /// // ⎣      0       0       1  ⎦
-    /// ```
-    pub fn print(&self) {
-        for (idx, row) in self.iter().enumerate() {
-            if idx == 0 {
-                print!("⎡ ");
-            } else if idx == R - 1 {
-                print!("⎣ ");
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if !f.alternate() {
+            return (self.0).fmt(f);
+        }
+
+        for (y, row) in self.iter().enumerate() {
+            if y == 0 {
+                write!(f, "⎡ ")?;
+            } else if y == R - 1 {
+                write!(f, "⎣ ")?;
             } else {
-                print!("⎢ ");
+                write!(f, "⎢ ")?;
             }
 
-            // TODO: adjust width based on the maximum needed width/parameters specified to this object?
-            for col in row {
-                print!("{col:>6.2}  ");
+            for item in row {
+                item.fmt(f)?;
+                write!(f, " ")?;
             }
 
-            if idx == 0 {
-                println!("⎤");
-            } else if idx == R - 1 {
-                println!("⎦");
+            if y == 0 {
+                writeln!(f, "⎤")?;
+            } else if y == R - 1 {
+                writeln!(f, "⎦")?;
             } else {
-                println!("⎥");
+                writeln!(f, "⎥")?;
             }
         }
+        Ok(())
     }
 }
 
@@ -193,6 +181,8 @@ impl<const R: usize, const C: usize> Matrix<f64, R, C> {
 
 #[cfg(test)]
 mod tests {
+    use core::f64;
+
     macro_rules! assert_eq_approx {
         ($actual:expr, $expected:expr $(,)?) => {{
             let actual = $actual;
@@ -226,5 +216,30 @@ mod tests {
         assert_eq_approx!(matrix[2][1], 0.0);
         assert_eq_approx!(matrix[2][2], 1.0);
         assert_eq_approx!(matrix[2][3], -1.0);
+    }
+
+    #[test]
+    fn format() {
+        let matrix = super::Matrix([
+            [1.0, 2.0, 3.0],
+            [-1.0, f64::consts::PI, 1.0 / 7.0],
+            [1_000.0, 0.0, 2.5],
+        ]);
+        assert_eq!(
+            format!("{matrix:.1?}"),
+            "[[1.0, 2.0, 3.0], [-1.0, 3.1, 0.1], [1000.0, 0.0, 2.5]]"
+        );
+        assert_eq!(
+            format!("{matrix:#.2?}"),
+            "⎡ 1.00 2.00 3.00 ⎤\n⎢ -1.00 3.14 0.14 ⎥\n⎣ 1000.00 0.00 2.50 ⎦\n",
+        );
+        assert_eq!(
+            format!("{matrix:#6.1?}"),
+            "⎡    1.0    2.0    3.0 ⎤\n⎢   -1.0    3.1    0.1 ⎥\n⎣ 1000.0    0.0    2.5 ⎦\n",
+        );
+        assert_eq!(
+            format!("{matrix:<#6.1?}"),
+            "⎡ 1.0    2.0    3.0    ⎤\n⎢ -1.0   3.1    0.1    ⎥\n⎣ 1000.0 0.0    2.5    ⎦\n",
+        );
     }
 }
