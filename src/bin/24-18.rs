@@ -44,7 +44,7 @@ pub fn part1(input: &str) -> usize {
 
 fn part2impl(input: &str, end: Point2) -> String {
     let coordinates = parse_input(input);
-    let idx = (0..coordinates.len()).binary_search(|v| run(&coordinates[..v], end).is_none());
+    let idx = (0..coordinates.len()).partition_point(|v| run(&coordinates[..v], end).is_none());
     let point = coordinates[idx.unwrap() - 1];
     format!("{},{}", point.x, point.y)
 }

@@ -17,7 +17,7 @@ fn parse_input(input: &str) -> Vec<Race> {
 
 fn find_win_options(race: &Race) -> usize {
     let first = (1..race.duration)
-        .binary_search(|charge| charge * (race.duration - charge) > race.record)
+        .partition_point(|charge| charge * (race.duration - charge) > race.record)
         .unwrap();
     race.duration + 1 - 2 * first
 }

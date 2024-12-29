@@ -4,8 +4,8 @@ use std::ops::{Add, Bound, Div, RangeBounds, Sub};
 
 /// Extension methods for [`std::ops::RangeBounds`].
 pub trait RangeExt<T> {
-    /// Perform a binary search.
-    fn binary_search<F>(&self, f: F) -> Option<T>
+    /// Returns the index of the partition point according to the given predicate (the index of the first element of the second partition).
+    fn partition_point<F>(&self, f: F) -> Option<T>
     where
         F: Fn(T) -> bool;
 }
@@ -20,7 +20,7 @@ where
         + Copy
         + PartialEq,
 {
-    fn binary_search<F>(&self, f: F) -> Option<T>
+    fn partition_point<F>(&self, f: F) -> Option<T>
     where
         F: Fn(T) -> bool,
     {
@@ -57,23 +57,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn binary_search() {
-        assert_eq!((1..10).binary_search(|v| v > 6), Some(7));
+    fn partition_point() {
+        assert_eq!((1..10).partition_point(|v| v > 6), Some(7));
         assert_eq!(
-            (1..1_000_000_000).binary_search(|v| v > 628_162_832),
+            (1..1_000_000_000).partition_point(|v| v > 628_162_832),
             Some(628_162_833)
         );
-        assert_eq!((1..10).binary_search(|v| v > 0), Some(1));
-        assert_eq!((1..10).binary_search(|v| v > 8), Some(9));
-        assert_eq!((1..10).binary_search(|v| v > 9), None);
+        assert_eq!((1..10).partition_point(|v| v > 0), Some(1));
+        assert_eq!((1..10).partition_point(|v| v > 8), Some(9));
+        assert_eq!((1..10).partition_point(|v| v > 9), None);
 
-        assert_eq!((1..=10).binary_search(|v| v > 6), Some(7));
+        assert_eq!((1..=10).partition_point(|v| v > 6), Some(7));
         assert_eq!(
-            (1..1_000_000_000).binary_search(|v| v > 628_162_832),
+            (1..1_000_000_000).partition_point(|v| v > 628_162_832),
             Some(628_162_833)
         );
-        assert_eq!((1..=10).binary_search(|v| v > 0), Some(1));
-        assert_eq!((1..=10).binary_search(|v| v > 9), Some(10));
-        assert_eq!((1..=10).binary_search(|v| v > 10), None);
+        assert_eq!((1..=10).partition_point(|v| v > 0), Some(1));
+        assert_eq!((1..=10).partition_point(|v| v > 9), Some(10));
+        assert_eq!((1..=10).partition_point(|v| v > 10), None);
     }
 }
