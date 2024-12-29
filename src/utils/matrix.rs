@@ -5,7 +5,11 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use itertools::Itertools;
+use num::{NumCast, ToPrimitive};
+
 /// A mathemathical matrix.
+#[derive(Eq, PartialEq, Clone, Copy)]
 pub struct Matrix<T, const R: usize, const C: usize>([[T; C]; R]);
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
@@ -23,6 +27,44 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     /// ```
     pub fn new(data: [[T; C]; R]) -> Self {
         Self(data)
+    }
+}
+
+impl<T, const R: usize, const C: usize> Matrix<T, R, C>
+where
+    T: ToPrimitive,
+{
+    /// Try to convert all items in the matrix to another type.
+    ///
+    /// # Examples.
+    ///
+    /// ```
+    /// # use aoc::utils::matrix::Matrix;
+    /// let matrix = Matrix::new([
+    ///     [1, 0, 0],
+    ///     [0, 1, 0],
+    ///     [0, 0, 1000],
+    /// ]);
+    /// assert_eq!(matrix.cast::<f64>(), Some(Matrix::new([
+    ///     [1.0, 0.0, 0.0],
+    ///     [0.0, 1.0, 0.0],
+    ///     [0.0, 0.0, 1000.0],
+    /// ])));
+    /// assert_eq!(matrix.cast::<u8>(), None);
+    /// ```
+    pub fn cast<TT>(self) -> Option<Matrix<TT, R, C>>
+    where
+        TT: NumCast + Debug,
+    {
+        let mut new_rows = Vec::new();
+        for row in self.0 {
+            let mut new_row = Vec::new();
+            for cell in row {
+                new_row.push(<TT as NumCast>::from(cell)?);
+            }
+            new_rows.push(new_row.try_into().unwrap());
+        }
+        Some(Matrix::new(new_rows.try_into().unwrap()))
     }
 }
 
