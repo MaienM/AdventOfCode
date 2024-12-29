@@ -72,8 +72,37 @@ test-and-run-%: inputs/%.txt
 # Documentation.
 #
 
-docs: test-libs
-	@cargo tree --depth 1 -e normal --prefix none | cut -d' ' -f1 | xargs printf -- '-p %q\n' | xargs cargo doc --lib --no-deps
+STDLIB = $(shell rustc --print sysroot)/lib/rustlib/src/rust/library
+target/stdlib: ${STDLIB}
+	@echo "Copying standard library source from ${STDLIB}..."
+	@mkdir -p target/stdlib
+	@rsync --recursive --copy-links --no-owner --no-group --no-perms --chmod=+w "${STDLIB}/" "$@/"
+
+STDLIB_TARGETS = $(foreach dep,std core,target/doc-parts/stdlib/${dep})
+target/doc-parts/stdlib/%: name = $(notdir $@)
+target/doc-parts/stdlib/%: target/stdlib
+	@echo "Building docs for ${name}..."
+	@rm -rf target/stdlib/target/doc
+	@RUSTDOCFLAGS="-Z unstable-options --merge none --parts-out-dir $$PWD/$@" \
+	 cargo -Z unstable-options -C target/stdlib/${name} doc
+	@rsync -r target/stdlib/target/doc/ "$@/"
+
+DEP_TARGETS = $(foreach dep,$(shell cargo tree --depth 1 -e normal --prefix none | cut -d' ' -f1-2 | sed 's/ v/@/'),target/doc-parts/dep/$(dep))
+target/doc-parts/dep/%: name = $(notdir $@)
+target/doc-parts/dep/%: Cargo.toml Cargo.lock
+	@echo "Building docs for ${name}..."
+	@rm -rf target/doc
+	@RUSTDOCFLAGS="-Z unstable-options --merge none --parts-out-dir $$PWD/$@" \
+	 cargo -Z unstable-options doc --lib --no-deps -p "${name}"
+	@rsync -r target/doc/ "$@/"
+target/doc-parts/dep/aoc: src
+target/doc-parts/dep/aoc_derive: aoc_derive
+
+docs: ${STDLIB_TARGETS} ${DEP_TARGETS}
+	@echo "Building combined docs..."
+	@rsync -r $(foreach dep,${STDLIB_TARGETS} ${DEP_TARGETS},${dep}/) target/doc/
+	@RUSTDOCFLAGS="-Z unstable-options --merge finalize $$(printf -- "--include-parts-dir $$PWD/%s " ${STDLIB_TARGETS} ${DEP_TARGETS})" \
+	  cargo doc --lib --no-deps
 
 #
 # Benchmarking.
