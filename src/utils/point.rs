@@ -246,7 +246,6 @@ create_point!(
         y,
     }
 );
-
 create_point!(
     /// A point in 3-dimensional space.
     struct Point3 {
@@ -256,6 +255,19 @@ create_point!(
         y,
         /// The coordinate in the third dimension.
         z,
+    }
+);
+create_point!(
+    /// A point in 4-dimensional space.
+    struct Point4 {
+        /// The coordinate in the first dimension.
+        x,
+        /// The coordinate in the second dimension.
+        y,
+        /// The coordinate in the third dimension.
+        z,
+        /// The coordinate in the fourth dimension.
+        w,
     }
 );
 
@@ -273,6 +285,14 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!("Point({:?}, {:?}, {:?})", self.x, self.y, self.z))
+    }
+}
+impl<T> Debug for Point4<T>
+where
+    T: Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("Point({:?}, {:?}, {:?}, {:?})", self.x, self.y, self.z, self.w))
     }
 }
 
@@ -504,6 +524,27 @@ create_direction! {
         Up = z add,
         /// Movement in the Z dimension towards negative infinity.
         Down = z sub,
+    }
+}
+create_direction! {
+    /// A direction in 4-dimensional space.
+    enum Direction4 for Point4 {
+        /// Movement in the X dimension towards positive infinity.
+        Right = x add,
+        /// Movement in the X dimension towards negative infinity.
+        Left = x sub,
+        /// Movement in the Y dimension towards positive infinity.
+        Back = y add,
+        /// Movement in the Y dimension towards negative infinity.
+        Front = y sub,
+        /// Movement in the Z dimension towards positive infinity.
+        Up = z add,
+        /// Movement in the Z dimension towards negative infinity.
+        Down = z sub,
+        /// Movement in the W dimension towards positive infinity.
+        Ana = w add,
+        /// Movement in the W dimension towards negative infinity.
+        Kata = w sub,
     }
 }
 
