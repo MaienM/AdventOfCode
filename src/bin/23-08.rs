@@ -1,9 +1,7 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use aoc::utils::parse;
+use num::integer;
 use rayon::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -66,35 +64,6 @@ fn run_until(
     panic!("Should never happen");
 }
 
-fn prime_factors(num: usize) -> HashSet<usize> {
-    let mut current = num;
-    let mut factors = HashSet::new();
-    for i in 2.. {
-        while current % i == 0 {
-            current /= i;
-            factors.insert(i);
-        }
-        if current == 1 {
-            break;
-        }
-    }
-    factors
-}
-
-fn least_common_multiple(mut numbers: Vec<usize>) -> usize {
-    match (numbers.pop(), numbers.pop()) {
-        (Some(a), Some(b)) => {
-            let factors_a = prime_factors(a);
-            let factors_b = prime_factors(b);
-            let gcf = factors_a.intersection(&factors_b).max().unwrap_or(&1);
-            numbers.push(a * b / gcf);
-            least_common_multiple(numbers)
-        }
-        (Some(a), None) => a,
-        _ => panic!("Should never happen"),
-    }
-}
-
 pub fn part1(input: &str) -> usize {
     let instructions = parse_input(input);
     run_until(&instructions, 0, "AAA", |c| c == "ZZZ").0
@@ -102,7 +71,7 @@ pub fn part1(input: &str) -> usize {
 
 pub fn part2(input: &str) -> usize {
     let instructions = Arc::new(parse_input(input));
-    let cycles: Vec<_> = instructions
+    instructions
         .maps
         .keys()
         .par_bridge()
@@ -117,8 +86,7 @@ pub fn part2(input: &str) -> usize {
             }
             first
         })
-        .collect();
-    least_common_multiple(cycles)
+        .reduce(|| 1, integer::lcm)
 }
 
 aoc::cli::single::generate_main!();

@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use aoc::utils::parse;
+use num::integer;
 
 #[derive(Debug, PartialEq)]
 struct Input {
@@ -128,18 +129,6 @@ fn parse_input(input: &str) -> Input {
     }
 }
 
-pub fn part1(input: &str) -> usize {
-    let mut input = parse_input(input);
-    let mut low_total = 0;
-    let mut high_total = 0;
-    for _ in 0..1000 {
-        let (low, high) = input.run_cycle();
-        low_total += low;
-        high_total += high;
-    }
-    low_total * high_total
-}
-
 fn calculate_counter_period(input: &Input, start: &String) -> usize {
     let module = input.modules.get(start).unwrap();
     let mut sum = 0;
@@ -152,33 +141,16 @@ fn calculate_counter_period(input: &Input, start: &String) -> usize {
     sum
 }
 
-fn prime_factors(num: usize) -> HashSet<usize> {
-    let mut current = num;
-    let mut factors = HashSet::new();
-    for i in 2.. {
-        while current % i == 0 {
-            current /= i;
-            factors.insert(i);
-        }
-        if current == 1 {
-            break;
-        }
+pub fn part1(input: &str) -> usize {
+    let mut input = parse_input(input);
+    let mut low_total = 0;
+    let mut high_total = 0;
+    for _ in 0..1000 {
+        let (low, high) = input.run_cycle();
+        low_total += low;
+        high_total += high;
     }
-    factors
-}
-
-fn least_common_multiple(mut numbers: Vec<usize>) -> usize {
-    match (numbers.pop(), numbers.pop()) {
-        (Some(a), Some(b)) => {
-            let factors_a = prime_factors(a);
-            let factors_b = prime_factors(b);
-            let gcf = factors_a.intersection(&factors_b).max().unwrap_or(&1);
-            numbers.push(a * b / gcf);
-            least_common_multiple(numbers)
-        }
-        (Some(a), None) => a,
-        _ => panic!("Should never happen"),
-    }
+    low_total * high_total
 }
 
 // Each of the targets of the broadcaster is a separate subgraph. Each of these subgraphs contains a long chain of flip-flops and a single central conjunction, which some (but not all) the flip-flops connect to. Together these elements function as a counter, with each consecutive flip-flop represening another bit of the number. Once all the bits that connect back to the conjunction are set to true the conjunction will send out a pulse and then reset the counter.
@@ -186,12 +158,12 @@ fn least_common_multiple(mut numbers: Vec<usize>) -> usize {
 // The conjunctions of these subgraphs combine in another conjunction that leads to the target, which will receive a pulse when all counters reset at the same time.
 pub fn part2(input: &str) -> usize {
     let input = parse_input(input);
-    let nums: Vec<_> = input
+    input
         .broadcaster
         .iter()
         .map(|start| calculate_counter_period(&input, start))
-        .collect();
-    least_common_multiple(nums)
+        .reduce(integer::lcm)
+        .unwrap()
 }
 
 aoc::cli::single::generate_main!();
