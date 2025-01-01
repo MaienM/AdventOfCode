@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [features]
-default = []
+default = ["bench"]
 visual = [
 	"dep:raqote",
 	"dep:font-kit",
@@ -68,5 +68,10 @@ required-features = ["leaderboard"]
 
 [[bench]]
 name = "main"
+harness = false
+required-features = ["bench"]
+
+[[bench]]
+name = "libs"
 harness = false
 required-features = ["bench"]
