@@ -1,23 +1,29 @@
-use aoc::utils::ext::num::Factorize;
+use aoc::utils::ext::num::{Factorize, PrimeGen};
 use criterion::{criterion_group, criterion_main, Criterion};
 use num::BigUint;
 
 macro_rules! test_bench_num {
     ($c:ident, $num:expr, $expected:expr $(,)?) => {
-        let num = $num;
-        let name = {
-            let as_str = num.to_string();
-            let as_exp = format!("~{}e{}", &as_str[0..4], as_str.len() - 4);
-            if as_exp.len() < as_str.len() {
-                as_exp
-            } else {
-                as_str
-            }
-        };
-        assert_eq!(num.factorize(), $expected, "{name}.factorize()");
-        $c.bench_function(&format!("{name}.factorize()"), move |b| {
-            b.iter(|| num.factorize());
-        });
+        test_bench_num!($c, $num, $expected, factorize());
+    };
+    ($c:ident, $num:expr, $expected:expr, $func:ident( $($args:expr),* $(,)? ) $(,)?) => {
+        {
+            let num = $num;
+            let name = {
+                let as_str = num.to_string();
+                let as_exp = format!("~{}e{}", &as_str[0..4], as_str.len() - 4);
+                if as_exp.len() < as_str.len() {
+                    as_exp
+                } else {
+                    as_str
+                }
+            };
+            let name = format!("{name}.{}()", stringify!($func));
+            assert_eq!(num.$func($($args),*), $expected, "{name}");
+            $c.bench_function(&name, move |b| {
+                b.iter(|| num.$func($($args),*));
+            });
+        }
     };
 }
 
@@ -43,7 +49,20 @@ fn bench_factorize(c: &mut Criterion) {
     );
 
     // A much smaller number made up of two large factors. Doesn't look like much compared to the previous cases, but is actually the slowest of the bunch.
-    test_bench_num!(c, 11_111_111_111_111_111u64, vec![2_071_723, 5_363_222_357]);
+    let num = 11_111_111_111_111_111u64;
+    test_bench_num!(c, num, vec![2_071_723, 5_363_222_357]);
+
+    // The same thing, but with more precomputed primes.
+    let primes: Vec<_> = usize::primes(num.isqrt() as usize)
+        .into_iter()
+        .map(|n| n as u64)
+        .collect();
+    test_bench_num!(
+        c,
+        num,
+        vec![2_071_723, 5_363_222_357],
+        factorize_with_primes(primes.iter()),
+    );
 }
 
 criterion_group!(benches, bench_factorize);

@@ -2,7 +2,7 @@
 
 mod primes;
 
-use std::{iter::successors, ops::DivAssign};
+use std::ops::DivAssign;
 
 use num::Integer;
 use primes::PRIMES;
@@ -54,8 +54,6 @@ impl PrimeGen for usize {
     }
 }
 
-const LAST_PRIME: u32 = PRIMES[PRIMES.len() - 1];
-
 /// Trait for numeric types that can be factorized.
 pub trait Factorize {
     /// Get the [prime factorision](https://en.wikipedia.org/wiki/Integer_factorization) of this number.
@@ -66,8 +64,9 @@ pub trait Factorize {
     ///
     /// This is optimized somewhat by using a list of known primes before falling back to all odd
     /// nubmers after the last known prime. The length of this precomputed list has been chosen to
-    /// be optimal for up to 32-bit unsigned integers; for larger numbers a larger table can be
-    /// used at the cost of this list having a larger footprint in the binary & in memory.
+    /// be optimal for up to 32-bit unsigned integers; for numbers with larger factors a list of
+    /// primes can be created using [`PrimeGen::primes`] and passed to
+    /// [`Factorize::factorize_with_primes`].
     ///
     /// # Examples
     ///
@@ -81,28 +80,38 @@ pub trait Factorize {
     fn factorize(&self) -> Vec<Self>
     where
         Self: Sized;
-}
 
-impl<I> IntegerExt for I
+    /// As [`Factorize::factorize`], but using the given list of known-primes instead of the
+    /// default. This list can be as long or short as you want, but it _must_ start at `2` and not
+    /// have any gaps (e.g. if it contains `7` it _must_ also contain `3` and `5`).
+    fn factorize_with_primes<'a, P, Iter>(&self, primes: Iter) -> Vec<Self>
+    where
+        Self: TryFrom<P>,
+        P: Copy + 'a,
+        Iter: Iterator<Item = &'a P>;
+}
+impl<I> Factorize for I
 where
     I: Integer + TryFrom<u32> + DivAssign<I> + Clone,
 {
     fn factorize(&self) -> Vec<I> {
-        // Create infinite iterator that first goes through the list of known primes, and once that
-        // runs out just steps through all odd numbers after the last known prime.
-        let two = I::one() + I::one();
-        let primes = PRIMES
-            .iter()
-            .copied()
-            .map(I::try_from)
-            .filter_map(Result::ok)
-            .chain(successors(I::try_from(LAST_PRIME).ok(), |p| {
-                Some(p.clone() + two.clone())
-            }));
+        self.factorize_with_primes(PRIMES.iter())
+    }
 
+    fn factorize_with_primes<'a, P, Iter>(&self, primes: Iter) -> Vec<Self>
+    where
+        I: TryFrom<P>,
+        P: Copy + 'a,
+        Iter: Iterator<Item = &'a P>,
+    {
+        let mut primes = primes.map(|p| I::try_from(*p)).filter_map(Result::ok);
+
+        let two = I::one() + I::one();
         let mut factors = Vec::new();
         let mut remaining = self.clone();
-        for prime in primes {
+        let mut prime = I::zero();
+        loop {
+            prime = primes.next().unwrap_or_else(|| prime + two.clone());
             loop {
                 let (div, rem) = remaining.div_rem(&prime);
                 if !rem.is_zero() {
