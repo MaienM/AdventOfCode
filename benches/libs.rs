@@ -1,4 +1,4 @@
-use aoc::utils::ext::num::IntegerExt;
+use aoc::utils::ext::num::Factorize;
 use criterion::{criterion_group, criterion_main, Criterion};
 use num::BigUint;
 
