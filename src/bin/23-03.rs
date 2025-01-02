@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::collections::HashMap;
 
-use aoc::utils::{abs_diff, point::Point2};
+use aoc::{abs_diff, point::Point2};
 
 type Point = Point2<usize>;
 
@@ -106,8 +108,6 @@ pub fn part2(input: &str) -> u32 {
         })
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

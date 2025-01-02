@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::collections::HashSet;
 
-use aoc::utils::point::Point2;
+use aoc::point::Point2;
 
 type Point = Point2<usize>;
 type Map = Vec<Point>;
@@ -67,8 +69,6 @@ pub fn part1(input: &str) -> usize {
 pub fn part2(input: &str) -> usize {
     solve(input, 999_999)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

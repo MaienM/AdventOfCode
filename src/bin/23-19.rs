@@ -1,6 +1,6 @@
-use std::{collections::HashMap, ops::RangeInclusive};
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 #[derive(Debug, PartialEq)]
 enum Outcome<'a> {
@@ -231,8 +231,6 @@ pub fn part2(input: &str) -> usize {
     let input = parse_input(input);
     count_accepted(&input, "in", 1..=4000, 1..=4000, 1..=4000, 1..=4000)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

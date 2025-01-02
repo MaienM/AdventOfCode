@@ -1,6 +1,6 @@
-use std::collections::{BinaryHeap, HashMap, HashSet};
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 #[derive(Debug, Eq, PartialEq)]
 struct Valve<'a> {
@@ -252,8 +252,6 @@ pub fn part2(input: &str) -> u16 {
     let valves = parse_input(input);
     run_cycles::<2>(&valves, 26)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

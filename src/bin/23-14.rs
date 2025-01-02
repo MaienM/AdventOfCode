@@ -1,9 +1,9 @@
+aoc::setup!();
+
 use std::{
     collections::HashMap,
     hash::{BuildHasher, RandomState},
 };
-
-use aoc::utils::parse;
 
 type Map = Vec<Vec<Cell>>;
 
@@ -202,8 +202,6 @@ pub fn part2(input: &str) -> usize {
     }
     panic!("Should never happen.");
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

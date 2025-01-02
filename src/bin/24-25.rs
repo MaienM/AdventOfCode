@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 type HMap = [u8; 5];
 
@@ -42,8 +42,6 @@ pub fn part1(input: &str) -> usize {
 pub fn part2(_input: &str) -> &'static str {
     "I did it!"
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

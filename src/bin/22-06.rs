@@ -1,3 +1,5 @@
+aoc::setup!();
+
 use std::collections::HashSet;
 
 fn find_marker(sequence: &str, length: usize) -> usize {
@@ -21,8 +23,6 @@ pub fn part1(input: &str) -> usize {
 pub fn part2(input: &str) -> usize {
     find_marker(input, 14)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

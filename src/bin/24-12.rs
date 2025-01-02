@@ -1,9 +1,8 @@
+aoc::setup!();
+
 use std::collections::HashSet;
 
-use aoc::utils::{
-    parse,
-    point::{Direction2, Point2},
-};
+use aoc::point::{Direction2, Point2};
 
 type Region = HashSet<Point2>;
 
@@ -110,8 +109,6 @@ pub fn part2(input: &str) -> usize {
     let regions = find_regions(&tiles);
     regions.iter().map(price_bulk).sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

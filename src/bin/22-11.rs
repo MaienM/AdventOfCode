@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 #[derive(Debug, PartialEq, Eq)]
 enum Operation {
@@ -91,8 +91,6 @@ pub fn part2(input: &str) -> u64 {
     let modulo = monkeys.iter().map(|m| m.test).reduce(|l, r| l * r).unwrap();
     monkey_business(&mut monkeys, 10_000, |worry| worry % modulo)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,7 @@
+aoc::setup!();
+
 use std::{collections::HashMap, sync::Arc};
 
-use aoc::utils::parse;
 use num::integer;
 use rayon::prelude::*;
 
@@ -88,8 +89,6 @@ pub fn part2(input: &str) -> usize {
         })
         .reduce(|| 1, integer::lcm)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,4 @@
-#![allow(unused_variables)]
-
-use aoc::utils::parse;
+aoc::setup!();
 
 fn parse_input(input: &str) -> Vec<usize> {
     parse!(input => {
@@ -9,12 +7,8 @@ fn parse_input(input: &str) -> Vec<usize> {
 }
 
 pub fn part1(input: &str) -> usize {
-    let input = parse_input(input);
+    let _ = parse_input(input);
     1
-}
-
-// aoc_runner::single::generate_main!();
-fn main() {
 }
 
 #[cfg(test)]

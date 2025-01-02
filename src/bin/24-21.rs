@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::{cmp::Ordering, collections::HashMap, vec::Vec};
 
-use aoc::utils::{ext::iter::IterExt, parse, point::Point2};
+use aoc::point::Point2;
 use common_macros::hash_map;
 use itertools::repeat_n;
 use memoize::memoize;
@@ -135,8 +137,6 @@ pub fn part2(input: &str) -> usize {
     let codes = parse_input(input);
     calc(&codes, 26)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

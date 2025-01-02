@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 fn parse_input(input: &str) -> Vec<u32> {
     parse!(input => {
@@ -36,8 +36,6 @@ pub fn part2(input: &str) -> u32 {
     let input = parse_input_with_words(input);
     input.iter().sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -72,8 +72,11 @@ impl BinScanner {
     pub(crate) fn to_expr(&self) -> Expr {
         let BinScanner { name, examples, .. } = self;
 
-        let year: u8 = name[0..2].parse().unwrap();
-        let day: u8 = name[3..5].parse().unwrap();
+        let (year, day): (u8, u8) = if name == "template" {
+            (0, 0)
+        } else {
+            (name[0..2].parse().unwrap(), name[3..5].parse().unwrap())
+        };
         let part1 = optional_expr(&self.part1);
         let part2 = optional_expr(&self.part2);
         let visual1 = optional_expr(&self.visual1);
@@ -202,7 +205,7 @@ fn get_source_path() -> SourcePath {
     };
     if file.is_real() {
         let path = file.path();
-        if file.path().to_str() == Some("") {
+        if path.to_str() == Some("") {
             // This is likely a tool such as rust_analyzer, which provides an call site with an empty path.
             SourcePath::Empty
         } else {

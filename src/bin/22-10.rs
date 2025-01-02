@@ -1,6 +1,6 @@
-use std::convert::TryInto;
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::convert::TryInto;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Instruction {
@@ -70,8 +70,6 @@ pub fn part2(input: &str) -> String {
     });
     output.trim_end_matches('\n').to_string()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

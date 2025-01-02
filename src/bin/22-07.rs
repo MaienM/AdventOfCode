@@ -1,3 +1,5 @@
+aoc::setup!();
+
 use std::{collections::HashMap, iter::Peekable, vec::IntoIter};
 
 type Listing<'a> = HashMap<&'a str, Entry<'a>>;
@@ -101,8 +103,6 @@ pub fn part2(input: &str) -> usize {
         .min()
         .unwrap()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

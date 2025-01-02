@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::collections::HashMap;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Operation {
@@ -174,8 +174,6 @@ pub fn part2(input: &str) -> u64 {
         };
     }
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

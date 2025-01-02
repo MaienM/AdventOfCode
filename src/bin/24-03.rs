@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 #[derive(Debug, Eq, PartialEq)]
 enum Instruction {
@@ -61,8 +61,6 @@ pub fn part2(input: &str) -> usize {
     }
     result
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

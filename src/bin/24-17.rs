@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 type Registers = [usize; 3];
 
@@ -120,8 +120,6 @@ pub fn part2(input: &str) -> usize {
         }
     }
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

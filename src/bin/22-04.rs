@@ -1,6 +1,6 @@
-use std::ops::RangeInclusive;
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::ops::RangeInclusive;
 
 type Range = RangeInclusive<u16>;
 
@@ -47,8 +47,6 @@ pub fn part2(input: &str) -> usize {
         .filter(|(left, right)| ranges_overlap(left, right))
         .count()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

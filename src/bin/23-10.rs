@@ -1,9 +1,8 @@
+aoc::setup!();
+
 use std::collections::HashSet;
 
-use aoc::utils::{
-    parse,
-    point::{Direction2, Point2},
-};
+use aoc::point::{Direction2, Point2};
 
 type Point = Point2<usize>;
 type Direction = Direction2;
@@ -191,8 +190,6 @@ pub fn part2(input: &str) -> usize {
         })
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::{cmp::Ordering, collections::HashSet};
 
-use aoc::utils::{ext::iter::IterExt, parse, point::Point2};
+use aoc::point::Point2;
 use rayon::prelude::*;
 
 type Point = Point2<isize>;
@@ -84,8 +86,6 @@ pub fn part2(input: &str) -> usize {
         })
         .unwrap() as usize
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

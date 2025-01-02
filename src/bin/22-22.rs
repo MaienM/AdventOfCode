@@ -1,9 +1,11 @@
+aoc::setup!();
+
 use std::{
     collections::HashSet,
     ops::{Add, Sub},
 };
 
-use aoc::utils::{parse, point::Point2};
+use aoc::point::Point2;
 
 type Point = Point2;
 type BlockPoint = Point2<isize>;
@@ -447,8 +449,6 @@ pub fn part2(input: &str) -> usize {
     let directions = map_faces_cube(&grid);
     process(grid, actions, directions)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -13,7 +13,7 @@ use num::traits::{
     SaturatingSub, WrappingAdd, WrappingMul, WrappingSub,
 };
 
-use crate::utils::abs_diff;
+use crate::abs_diff;
 
 // These traits don't exist (and they shouldn't, there's no point to them), but it makes the generation easier if they do, so we'll define them here and then never expose them.
 #[allow(dead_code)]
@@ -292,7 +292,10 @@ where
     T: Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("Point({:?}, {:?}, {:?}, {:?})", self.x, self.y, self.z, self.w))
+        f.write_str(&format!(
+            "Point({:?}, {:?}, {:?}, {:?})",
+            self.x, self.y, self.z, self.w
+        ))
     }
 }
 

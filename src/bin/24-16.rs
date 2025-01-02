@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
-use aoc::utils::point::{Direction2, Point2};
+use aoc::point::{Direction2, Point2};
 use rayon::prelude::*;
 
 type Map = Vec<Vec<bool>>;
@@ -143,8 +145,6 @@ pub fn part2(input: &str) -> usize {
     let (map, start, end) = parse_input(input);
     count_tiles_on_best_paths(&map, &start, &end)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

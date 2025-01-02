@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::{collections::HashSet, ops::Range};
 
-use aoc::utils::point::Point2;
+use aoc::point::Point2;
 
 type Point = Point2<u8>;
 
@@ -175,8 +177,6 @@ pub fn part2(input: &str) -> usize {
     let end = map.end;
     navigate(&mut map, start, end) + navigate(&mut map, end, start) + navigate(&mut map, start, end)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

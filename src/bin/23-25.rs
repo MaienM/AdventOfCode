@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::collections::{HashMap, HashSet};
 
 type Graph<'a> = HashMap<&'a str, HashSet<&'a str>>;
 
@@ -63,8 +63,6 @@ pub fn part1(input: &str) -> usize {
 pub fn part2(_input: &str) -> &'static str {
     "I did it!"
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

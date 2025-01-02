@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::collections::HashSet;
 
-use aoc::utils::point::Point2;
+use aoc::point::Point2;
 
 type PointUnbound = Point2<isize>;
 type PointBound = Point2<usize>;
@@ -136,8 +138,6 @@ pub fn part2(input: &str) -> usize {
     let input = parse_input(input);
     solve(&input, 26_501_365)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

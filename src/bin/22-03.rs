@@ -1,6 +1,6 @@
-use std::collections::HashSet;
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::collections::HashSet;
 
 #[derive(Debug, Eq, PartialEq)]
 struct Rucksack(HashSet<char>, HashSet<char>);
@@ -53,8 +53,6 @@ pub fn part2(input: &str) -> u16 {
         };
     }
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

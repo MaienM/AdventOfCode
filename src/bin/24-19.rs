@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::collections::HashMap;
 
 enum Color {
     White,
@@ -77,8 +77,6 @@ pub fn part2(input: &str) -> usize {
         .map(|d| count_designs(&mut cache, d, &patterns))
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

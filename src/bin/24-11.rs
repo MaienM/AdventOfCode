@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+aoc::setup!();
 
-use aoc::utils::{ext::iter::IterExt as _, parse};
+use std::collections::HashMap;
 
 fn parse_input(input: &str) -> Vec<usize> {
     parse!(input => { [num split as usize] } => num)
@@ -44,8 +44,6 @@ pub fn part2(input: &str) -> usize {
     let stones = parse_input(input);
     solve(stones, 75)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

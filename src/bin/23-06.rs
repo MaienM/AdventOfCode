@@ -1,4 +1,4 @@
-use aoc::utils::{ext::range::RangeExt as _, parse};
+aoc::setup!();
 
 #[derive(Debug, PartialEq)]
 struct Race {
@@ -35,8 +35,6 @@ pub fn part2(input: &str) -> usize {
     let races = parse_input(&input.replace(' ', "").replace(':', ": "));
     find_win_options(races.first().unwrap())
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,6 @@
-use std::collections::VecDeque;
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::collections::VecDeque;
 
 fn parse_input(input: &str) -> Vec<i64> {
     parse!(input => { [numbers split on '\n' as i64] } => numbers)
@@ -55,8 +55,6 @@ pub fn part2(input: &str) -> i64 {
     let numbers = mix(numbers, 10);
     get_coordinates(&numbers)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

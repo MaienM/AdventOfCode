@@ -1,6 +1,7 @@
+aoc::setup!();
+
 use std::{collections::HashMap, fs::File, io::Write as _};
 
-use aoc::utils::parse;
 use itertools::Itertools;
 
 #[derive(Eq, PartialEq, Debug)]
@@ -142,8 +143,6 @@ pub fn part2(input: &str) -> String {
 
     swaps.into_iter().flatten().sorted_unstable().join(",")
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,6 @@
-use std::vec::Vec;
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::vec::Vec;
 
 const EMPTY_VEC: Vec<Lens> = Vec::new();
 
@@ -91,8 +91,6 @@ pub fn part2(input: &str) -> usize {
         })
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

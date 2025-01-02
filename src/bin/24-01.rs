@@ -1,4 +1,4 @@
-use aoc::utils::{ext::iter::IterExt, parse};
+aoc::setup!();
 
 fn parse_input(input: &str) -> (Vec<usize>, Vec<usize>) {
     let mut leftlist = Vec::new();
@@ -33,8 +33,6 @@ pub fn part2(input: &str) -> usize {
     }
     score
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

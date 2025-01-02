@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::collections::HashSet;
 
-use aoc::utils::{parse, point::Point2};
+use aoc::point::Point2;
 
 type Point = Point2;
 
@@ -271,8 +273,6 @@ pub fn part1(input: &str) -> usize {
 pub fn part2(input: &str) -> usize {
     simulate(input, 1_000_000_000_000).0
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, PartialEq)]
 struct Card {
@@ -46,8 +46,6 @@ pub fn part2(input: &str) -> u64 {
     }
     sum
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

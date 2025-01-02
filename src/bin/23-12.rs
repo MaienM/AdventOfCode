@@ -1,6 +1,7 @@
+aoc::setup!();
+
 use std::collections::HashMap;
 
-use aoc::utils::parse;
 use rayon::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -142,8 +143,6 @@ pub fn part2(input: &str) -> usize {
         })
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

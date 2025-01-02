@@ -1,6 +1,7 @@
+aoc::setup!();
+
 use std::ops::{AddAssign, SubAssign};
 
-use aoc::utils::parse;
 use rayon::prelude::*;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -267,8 +268,6 @@ pub fn part2(input: &str) -> u16 {
         .map(|blueprint| calculate_geode_production(blueprint, 32))
         .product()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,7 @@
+aoc::setup!();
+
 use std::collections::HashMap;
 
-use aoc::utils::parse;
 use rayon::prelude::*;
 
 const PRUNE: usize = 16_777_216;
@@ -69,8 +70,6 @@ pub fn part2(input: &str) -> usize {
     }
     sum_by_delta.into_values().max().unwrap()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

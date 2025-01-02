@@ -1,4 +1,6 @@
-use aoc::utils::{matrix::Matrix, parse, point::Point2};
+aoc::setup!();
+
+use aoc::{matrix::Matrix, point::Point2};
 
 type Point = Point2<u64>;
 
@@ -63,8 +65,6 @@ pub fn part2(input: &str) -> u64 {
         })
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

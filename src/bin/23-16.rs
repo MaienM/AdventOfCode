@@ -1,9 +1,8 @@
+aoc::setup!();
+
 use std::{collections::HashSet, sync::Arc};
 
-use aoc::utils::{
-    parse,
-    point::{Direction2, Point2},
-};
+use aoc::point::{Direction2, Point2};
 use rayon::prelude::*;
 
 type Point = Point2;
@@ -154,8 +153,6 @@ pub fn part2(input: &str) -> usize {
         .max()
         .unwrap()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::cmp::Ordering;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum Item {
@@ -104,8 +104,6 @@ pub fn part2(input: &str) -> usize {
     }
     panic!();
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

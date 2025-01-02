@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::collections::HashSet;
 
-use aoc::utils::point::{Direction2, Point2};
+use aoc::point::{Direction2, Point2};
 use rayon::prelude::*;
 
 type Point = Point2<usize>;
@@ -144,8 +146,6 @@ pub fn part2(input: &str) -> usize {
         .filter(|point| check_loop(guard, &obstacles, point))
         .count()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,9 +1,8 @@
+aoc::setup!();
+
 use std::collections::HashSet;
 
-use aoc::utils::{
-    parse,
-    point::{Direction2, Point2},
-};
+use aoc::point::{Direction2, Point2};
 use derive_new::new;
 
 type Point = Point2<isize>;
@@ -74,8 +73,6 @@ pub fn part2(input: &str) -> usize {
     }
     visited.len()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

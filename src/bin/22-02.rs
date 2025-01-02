@@ -1,4 +1,5 @@
-use aoc::utils::parse;
+aoc::setup!();
+
 use derive_new::new;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -84,8 +85,6 @@ pub fn part2(input: &str) -> u16 {
     let rounds = parse_input_part2(input);
     rounds.iter().map(Round::score).sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

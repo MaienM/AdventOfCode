@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::collections::{BinaryHeap, HashSet};
 
-use aoc::utils::point::Point2;
+use aoc::point::Point2;
 use rayon::prelude::*;
 
 type Map = Vec<Vec<bool>>;
@@ -107,8 +109,6 @@ fn part2impl(input: &str, min_save: usize) -> usize {
 pub fn part2(input: &str) -> usize {
     part2impl(input, 100)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

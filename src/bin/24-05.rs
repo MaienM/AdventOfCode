@@ -1,6 +1,7 @@
+aoc::setup!();
+
 use std::cmp::Ordering;
 
-use aoc::utils::parse;
 use rayon::prelude::*;
 
 fn parse_input(input: &str) -> (Vec<(u16, u16)>, Vec<Vec<u16>>) {
@@ -58,8 +59,6 @@ pub fn part2(input: &str) -> u16 {
         })
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

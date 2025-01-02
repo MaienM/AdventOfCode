@@ -1,6 +1,7 @@
+aoc::setup!();
+
 use std::collections::VecDeque;
 
-use aoc::utils::parse;
 use derive_new::new;
 
 #[derive(Debug, Eq, PartialEq, new)]
@@ -82,8 +83,6 @@ pub fn part2(input: &str) -> String {
     }
     get_stack_tops(&stacks)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

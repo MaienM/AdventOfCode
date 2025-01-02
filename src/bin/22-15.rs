@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::{iter, ops::Range};
 
-use aoc::utils::{parse, point::Point2};
+use aoc::point::Point2;
 
 type Point = Point2<isize>;
 
@@ -106,8 +108,6 @@ pub fn part2(input: &str) -> isize {
     let point = get_beacon(&sensors, 4_000_000);
     point.x * 4_000_000 + point.y
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

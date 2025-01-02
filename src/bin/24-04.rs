@@ -1,4 +1,6 @@
-use aoc::utils::{parse, point::Point2};
+aoc::setup!();
+
+use aoc::point::Point2;
 
 type Point = Point2<isize>;
 
@@ -74,8 +76,6 @@ pub fn part2(input: &str) -> usize {
     }
     result
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

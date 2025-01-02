@@ -18,7 +18,7 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     /// # Examples
     ///
     /// ```
-    /// # use aoc::utils::matrix::Matrix;
+    /// # use aoc::matrix::Matrix;
     /// let matrix = Matrix::new([
     ///     [1, 0, 0],
     ///     [0, 1, 0],
@@ -39,7 +39,7 @@ where
     /// # Examples.
     ///
     /// ```
-    /// # use aoc::utils::matrix::Matrix;
+    /// # use aoc::matrix::Matrix;
     /// let matrix = Matrix::new([
     ///     [1, 0, 0],
     ///     [0, 1, 0],
@@ -146,7 +146,7 @@ where
     /// We can express this as a matrix and solve it:
     ///
     /// ```
-    /// # use aoc::utils::matrix::Matrix;
+    /// # use aoc::matrix::Matrix;
     /// let matrix = Matrix::new([
     ///     [2, 1, -1, 8],
     ///     [-3, -1, 2, -11],

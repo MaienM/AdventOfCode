@@ -1,6 +1,6 @@
-use std::mem;
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::mem;
 
 fn parse_input(input: &str) -> Vec<Vec<usize>> {
     parse!(input => {
@@ -60,8 +60,6 @@ pub fn part2(input: &str) -> usize {
         })
         .count()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

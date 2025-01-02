@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 fn parse_input(input: &str) -> Vec<u32> {
     parse!(input => {
@@ -19,8 +19,6 @@ pub fn part2(input: &str) -> u32 {
     data.sort_unstable_by(|a, b| b.cmp(a));
     data[0] + data[1] + data[2]
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

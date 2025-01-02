@@ -1,4 +1,4 @@
-use aoc::utils::{ext::iter::IterExt as _, parse};
+aoc::setup!();
 
 type Card = char;
 
@@ -139,8 +139,6 @@ pub fn part2(input: &str) -> usize {
         (typ, cards)
     })
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

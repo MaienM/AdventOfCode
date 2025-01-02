@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 fn to_snafu(mut num: u64) -> String {
     let mut chars = Vec::new();
@@ -41,8 +41,6 @@ pub fn part1(input: &str) -> String {
 pub fn part2(_input: &str) -> &'static str {
     "I did it!"
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -4,7 +4,7 @@ use std::{
 };
 
 use ansi_term::{Colour, Style};
-use aoc::utils::ext::iter::IterExt;
+use aoc::prelude::*;
 use chrono::{DateTime, NaiveDate};
 use once_cell::sync::Lazy;
 use serde::Deserialize;

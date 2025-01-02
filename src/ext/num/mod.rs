@@ -19,7 +19,7 @@ pub trait PrimeGen {
     /// # Examples
     ///
     /// ```
-    /// # use aoc::utils::ext::num::*;
+    /// # use aoc::prelude::*;
     /// assert_eq!(usize::primes(16), vec![2, 3, 5, 7, 11, 13]);
     /// ```
     fn primes(limit: Self) -> Vec<Self>
@@ -71,7 +71,7 @@ pub trait Factorize {
     /// # Examples
     ///
     /// ```
-    /// # use aoc::utils::ext::num::*;
+    /// # use aoc::prelude::*;
     /// assert_eq!(7u8.factorize(), vec![7]);
     /// assert_eq!(8u8.factorize(), vec![2, 2, 2]);
     /// assert_eq!(9u8.factorize(), vec![3, 3]);

@@ -1,6 +1,7 @@
+aoc::setup!();
+
 use std::collections::{HashMap, HashSet};
 
-use aoc::utils::parse;
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -61,8 +62,6 @@ pub fn part2(input: &str) -> String {
         .unwrap();
     group.into_iter().sorted_unstable().join(",")
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

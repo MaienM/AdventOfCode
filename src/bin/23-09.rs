@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 fn parse_input(input: &str) -> Vec<Vec<isize>> {
     parse!(input => {
@@ -32,8 +32,6 @@ pub fn part2(input: &str) -> isize {
     let lists = parse_input(input);
     lists.into_iter().map(|list| predict(&list).0).sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

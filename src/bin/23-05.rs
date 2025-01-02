@@ -1,6 +1,6 @@
-use std::{collections::HashMap, mem, ops::Range};
+aoc::setup!();
 
-use aoc::utils::parse;
+use std::{collections::HashMap, mem, ops::Range};
 
 #[derive(Debug, PartialEq)]
 struct Input<'a> {
@@ -141,8 +141,6 @@ pub fn part2(input: &str) -> usize {
         &input.maps,
     )
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

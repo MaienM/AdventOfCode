@@ -1,10 +1,8 @@
+aoc::setup!();
+
 use std::{collections::HashSet, ops::RangeInclusive};
 
-use aoc::utils::{
-    ext::iter::IterExt,
-    parse,
-    point::{Direction2, Point2},
-};
+use aoc::point::{Direction2, Point2};
 
 type Point = Point2<isize>;
 type Direction = Direction2;
@@ -203,8 +201,6 @@ pub fn part2(input: &str) -> usize {
     let instructions = swap_instructions(instructions);
     solve(&instructions)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

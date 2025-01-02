@@ -1,4 +1,5 @@
-use aoc::utils::parse;
+aoc::setup!();
+
 use rayon::prelude::*;
 
 type Equation = (usize, Vec<usize>);
@@ -57,8 +58,6 @@ pub fn part2(input: &str) -> usize {
         .map(|e| e.0)
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

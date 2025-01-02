@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 #[derive(Debug, PartialEq)]
 struct Game {
@@ -66,8 +66,6 @@ pub fn part2(input: &str) -> usize {
         })
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

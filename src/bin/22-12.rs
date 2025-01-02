@@ -1,9 +1,11 @@
+aoc::setup!();
+
 use std::{
     cmp::Ordering,
     collections::{BinaryHeap, HashSet},
 };
 
-use aoc::utils::{parse, point::Point2};
+use aoc::point::Point2;
 use derive_new::new;
 
 type Grid = Vec<Vec<u8>>;
@@ -108,8 +110,6 @@ pub fn part2(input: &str) -> u16 {
         |_, height| height == 0,
     )
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,9 +1,8 @@
 #![allow(clippy::match_on_vec_items)]
 
-use aoc::utils::{
-    parse,
-    point::{Direction2, Point2},
-};
+aoc::setup!();
+
+use aoc::point::{Direction2, Point2};
 
 #[derive(Debug, PartialEq, Eq)]
 enum TileSingle {
@@ -252,8 +251,6 @@ pub fn part2(input: &str) -> usize {
         })
         .sum()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

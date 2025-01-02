@@ -1,7 +1,9 @@
+aoc::setup!();
+
 use std::{collections::HashSet, ops::RangeInclusive};
 
-use aoc::utils::{
-    abs_diff, parse,
+use aoc::{
+    abs_diff,
     point::{Point2, Point3},
 };
 
@@ -146,8 +148,6 @@ pub fn part2(input: &str) -> usize {
     }
     sum
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

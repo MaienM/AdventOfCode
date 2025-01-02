@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::collections::{BinaryHeap, HashSet};
 
-use aoc::utils::{ext::range::RangeExt, parse, point::Point2};
+use aoc::point::Point2;
 
 fn parse_input(input: &str) -> Vec<Point2> {
     parse!(input => {
@@ -52,8 +54,6 @@ fn part2impl(input: &str, end: Point2) -> String {
 pub fn part2(input: &str) -> String {
     part2impl(input, Point2::new(70, 70))
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

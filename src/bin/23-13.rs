@@ -1,4 +1,4 @@
-use aoc::utils::parse;
+aoc::setup!();
 
 type Map = Vec<Vec<bool>>;
 
@@ -62,8 +62,6 @@ pub fn part1(input: &str) -> usize {
 pub fn part2(input: &str) -> usize {
     solve(input, true)
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

@@ -1,9 +1,9 @@
+aoc::setup!();
+
 use std::{
     cmp::Ordering,
     collections::{BinaryHeap, HashMap, HashSet},
 };
-
-use aoc::utils::parse;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct Point(i8, i8, i8);
@@ -107,8 +107,6 @@ pub fn part2(input: &str) -> u16 {
     }
     cooling
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

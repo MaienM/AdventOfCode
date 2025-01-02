@@ -1,6 +1,8 @@
+aoc::setup!();
+
 use std::ops::Range;
 
-use aoc::utils::{matrix::Matrix, parse, point::Point3};
+use aoc::{matrix::Matrix, point::Point3};
 
 type Point = Point3<f64>;
 
@@ -211,8 +213,6 @@ pub fn part2(input: &str) -> usize {
         + stone.position.y.round() as usize
         + stone.position.z.round() as usize
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

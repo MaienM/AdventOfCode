@@ -1,6 +1,7 @@
+aoc::setup!();
+
 use std::collections::{HashMap, HashSet, VecDeque};
 
-use aoc::utils::parse;
 use num::integer;
 
 #[derive(Debug, PartialEq)]
@@ -165,8 +166,6 @@ pub fn part2(input: &str) -> usize {
         .reduce(integer::lcm)
         .unwrap()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {

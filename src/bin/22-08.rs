@@ -1,9 +1,8 @@
+aoc::setup!();
+
 use std::collections::HashSet;
 
-use aoc::utils::{
-    parse,
-    point::{Direction2, Point2},
-};
+use aoc::point::{Direction2, Point2};
 
 type Grid = Vec<Vec<u8>>;
 type Point = Point2<u8>;
@@ -124,8 +123,6 @@ pub fn part2(input: &str) -> usize {
         .max()
         .unwrap()
 }
-
-aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
