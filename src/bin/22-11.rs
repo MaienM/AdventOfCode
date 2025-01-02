@@ -173,79 +173,79 @@ mod tests {
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![20, 23, 27, 26]);
         assert_eq!(monkeys[1].items, vec![2080, 25, 167, 207, 401, 1046]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
         assert_eq!(counter, vec![2, 4, 3, 5]);
 
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![695, 10, 71, 135, 350]);
         assert_eq!(monkeys[1].items, vec![43, 49, 58, 55, 362]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![16, 18, 21, 20, 122]);
         assert_eq!(monkeys[1].items, vec![1468, 22, 150, 286, 739]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![491, 9, 52, 97, 248, 34]);
         assert_eq!(monkeys[1].items, vec![39, 45, 43, 258]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![15, 17, 16, 88, 1037]);
         assert_eq!(monkeys[1].items, vec![20, 110, 205, 524, 72]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![8, 70, 176, 26, 34]);
         assert_eq!(monkeys[1].items, vec![481, 32, 36, 186, 2190]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![162, 12, 14, 64, 732, 17]);
         assert_eq!(monkeys[1].items, vec![148, 372, 55, 72]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![51, 126, 20, 26, 136]);
         assert_eq!(monkeys[1].items, vec![343, 26, 30, 1546, 36]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![116, 10, 12, 517, 14]);
         assert_eq!(monkeys[1].items, vec![108, 267, 43, 55, 288]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         do_round(&mut monkeys, &mut counter, &therapy);
         assert_eq!(monkeys[0].items, vec![91, 16, 20, 98]);
         assert_eq!(monkeys[1].items, vec![481, 245, 22, 26, 1092, 30]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         for _ in 0..5 {
             do_round(&mut monkeys, &mut counter, &therapy);
         }
         assert_eq!(monkeys[0].items, vec![83, 44, 8, 184, 9, 20, 26, 102]);
         assert_eq!(monkeys[1].items, vec![110, 36]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
 
         for _ in 0..5 {
             do_round(&mut monkeys, &mut counter, &therapy);
         }
         assert_eq!(monkeys[0].items, vec![10, 12, 14, 26, 34]);
         assert_eq!(monkeys[1].items, vec![245, 93, 53, 199, 115]);
-        assert_eq!(monkeys[2].items, vec![]);
-        assert_eq!(monkeys[3].items, vec![]);
+        assert_eq!(monkeys[2].items, Vec::<u64>::new());
+        assert_eq!(monkeys[3].items, Vec::<u64>::new());
         assert_eq!(counter, vec![101, 95, 7, 105]);
     }
 }
