@@ -7,11 +7,9 @@ use clap::{CommandFactory, FromArgMatches, Parser, ValueHint};
 use rayon::ThreadPoolBuilder;
 
 use crate::{
-    cli::{
-        runner::{DurationThresholds, Solver, SolverRunResult},
-        source::{source_path_fill_tokens, Source, SourceValueParser},
-    },
     derived::Bin,
+    runner::{DurationThresholds, Solver, SolverRunResult},
+    source::{source_path_fill_tokens, Source, SourceValueParser},
 };
 
 #[derive(Parser, Debug)]
@@ -147,11 +145,11 @@ pub fn main(bin: &Bin) {
 #[macro_export]
 macro_rules! __generate_bin_main {
     () => {
-        #[::aoc_derive::inject_binary]
+        #[aoc_runner::inject_binary]
         static BIN: Bin;
 
         pub fn main() {
-            ::aoc::cli::single::main(&*BIN);
+            ::aoc_runner::single::main(&*BIN);
         }
     };
 }

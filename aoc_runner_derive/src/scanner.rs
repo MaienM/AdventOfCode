@@ -80,7 +80,7 @@ impl BinScanner {
         let visual2 = optional_expr(&self.visual2);
 
         parse_quote! {
-            ::aoc::derived::Bin {
+            ::aoc_runner::derived::Bin {
                 name: #name,
                 year: #year,
                 day: #day,
@@ -101,7 +101,7 @@ impl<'ast> Visit<'ast> for BinScanner {
 
         if node.attrs.iter().any(|a| {
             a.meta == Meta::Path(parse_quote!(visual))
-                || a.meta == Meta::Path(parse_quote!(aoc_derive::visual))
+                || a.meta == Meta::Path(parse_quote!(aoc_runner::visual))
         }) {
             self.mod_visual_path = self.current_path.clone();
         }
@@ -154,7 +154,7 @@ impl<'ast> Visit<'ast> for BinScanner {
         }
 
         // Check if this item is an expanded example.
-        if node.ty == parse_quote!(::aoc::derived::Example) {
+        if node.ty == parse_quote!(::aoc_runner::derived::Example) {
             self.examples.push(*node.expr.clone());
         }
 
@@ -290,7 +290,7 @@ pub fn inject_binaries(input: TokenStream, annotated_item: TokenStream) -> Token
 
     let itemdef = fill_static(
         itemdef,
-        parse_quote!(once_cell::sync::Lazy<Vec<::aoc::derived::Bin>>),
+        parse_quote!(once_cell::sync::Lazy<Vec<::aoc_runner::derived::Bin>>),
         parse_quote!(once_cell::sync::Lazy::new(|| vec![ #(#binexprs),* ])),
     );
 
@@ -330,7 +330,7 @@ pub fn inject_binary(_input: TokenStream, annotated_item: TokenStream) -> TokenS
 
     fill_static(
         itemdef,
-        parse_quote!(once_cell::sync::Lazy<::aoc::derived::Bin>),
+        parse_quote!(once_cell::sync::Lazy<::aoc_runner::derived::Bin>),
         parse_quote!(once_cell::sync::Lazy::new(|| #expr )),
     )
     .into_token_stream()

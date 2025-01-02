@@ -7,26 +7,26 @@ use clap::{
     builder::{PossibleValue, PossibleValuesParser, TypedValueParser},
     Parser,
 };
+use once_cell::race::OnceBox;
 use rayon::ThreadPoolBuilder;
 
 use super::source::source_path_fill_tokens;
 use crate::{
-    cli::{
-        runner::{DurationThresholds, Solver, SolverRunResult},
-        source::{Source, SourceValueParser},
-    },
     derived::Bin,
-    BINS,
+    runner::{DurationThresholds, Solver, SolverRunResult},
+    source::{Source, SourceValueParser},
 };
 
+pub static BINS: OnceBox<Vec<Bin>> = OnceBox::new();
+
 /// Create parser for --only/--skip.
-fn create_target_value_parser(bins: &[Bin]) -> impl TypedValueParser {
+fn create_target_value_parser() -> impl TypedValueParser {
     fn create_value(name: &str, suffix: &str) -> PossibleValue {
         PossibleValue::new(format!("{name}{suffix}"))
     }
 
     let mut options = Vec::new();
-    for bin in bins {
+    for bin in BINS.get().unwrap() {
         options.push(PossibleValue::new(bin.year.to_string()));
         options.push(create_value(bin.name, ""));
         if bin.part1.is_some() {
@@ -64,7 +64,7 @@ pub(super) struct TargetArgs {
         long,
         value_delimiter = ',',
         value_name = "21,22-01,22-08-1",
-        value_parser = create_target_value_parser(&BINS),
+        value_parser = create_target_value_parser(),
         group = "targets",
     )]
     only: Option<Vec<Vec<(u8, u8, u8)>>>,
@@ -76,7 +76,7 @@ pub(super) struct TargetArgs {
         long,
         value_delimiter = ',',
         value_name = "21,22-01,22-08-1",
-        value_parser = create_target_value_parser(&BINS),
+        value_parser = create_target_value_parser(),
         group = "targets",
     )]
     skip: Option<Vec<Vec<(u8, u8, u8)>>>,
@@ -120,7 +120,7 @@ pub(super) struct TargetArgs {
 }
 impl TargetArgs {
     pub(super) fn filtered_binaries(&self) -> Vec<Bin> {
-        let mut bins = BINS.to_owned();
+        let mut bins = BINS.get().unwrap().clone();
         if let Some(only) = &self.only {
             let only: HashSet<_> = only.iter().flatten().collect();
             for bin in &mut bins {

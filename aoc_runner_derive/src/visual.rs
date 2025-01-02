@@ -96,10 +96,10 @@ pub fn derive_renderable(item: TokenStream) -> TokenStream {
     let ident = &item.ident;
 
     quote! {
-        impl ::aoc::visual::ToRenderable for #ident {}
-        impl From<#ident> for ::std::boxed::Box<dyn ::aoc::visual::Renderable> {
+        impl ::aoc_runner::visual::ToRenderable for #ident {}
+        impl From<#ident> for ::std::boxed::Box<dyn ::aoc_runner::visual::Renderable> {
             fn from(visual: #ident) -> Self {
-                std::boxed::Box::new(::aoc::visual::CompleteVisual::new(
+                std::boxed::Box::new(::aoc_runner::visual::CompleteVisual::new(
                     visual,
                     super::VISUAL_CHANNEL_FULL.1.lock().unwrap(),
                 ))

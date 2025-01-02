@@ -53,11 +53,11 @@ pub fn part2(input: &str) -> String {
     part2impl(input, Point2::new(70, 70))
 }
 
-aoc::cli::single::generate_main!();
+aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
-    use aoc_derive::example_input;
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;

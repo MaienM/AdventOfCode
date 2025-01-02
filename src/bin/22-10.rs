@@ -71,11 +71,11 @@ pub fn part2(input: &str) -> String {
     output.trim_end_matches('\n').to_string()
 }
 
-aoc::cli::single::generate_main!();
+aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
-    use aoc_derive::example_input;
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;

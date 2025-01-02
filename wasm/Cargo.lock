@@ -84,8 +84,7 @@ name = "aoc"
 version = "0.0.0"
 dependencies = [
  "ansi_term",
- "aoc_derive",
- "clap",
+ "aoc_runner",
  "common_macros",
  "derive-new",
  "itertools",
@@ -103,6 +102,7 @@ name = "aoc-wasm"
 version = "0.0.0"
 dependencies = [
  "aoc",
+ "aoc_runner",
  "console_error_panic_hook",
  "wasm-bindgen",
  "wasm-bindgen-rayon",
@@ -110,7 +110,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "aoc_derive"
+name = "aoc_runner"
+version = "0.0.0"
+dependencies = [
+ "ansi_term",
+ "aoc_runner_derive",
+ "clap",
+ "once_cell",
+ "rayon",
+]
+
+[[package]]
+name = "aoc_runner_derive"
 version = "0.0.0"
 dependencies = [
  "proc-macro2",

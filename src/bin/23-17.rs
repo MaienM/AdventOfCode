@@ -130,11 +130,11 @@ pub fn part2(input: &str) -> usize {
     find_path(&map, 4, 10)
 }
 
-aoc::cli::single::generate_main!();
+aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
-    use aoc_derive::example_input;
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -178,10 +178,9 @@ mod tests {
     }
 }
 
-#[aoc_derive::visual]
+#[aoc_runner::visual]
 pub mod visual {
-    use aoc::visual::{ToRenderable, Visual};
-    use aoc_derive::ToRenderable;
+    use aoc_runner::visual::{ToRenderable, Visual};
     use raqote::{DrawOptions, Point, SolidSource, Source};
 
     pub(super) enum Info {

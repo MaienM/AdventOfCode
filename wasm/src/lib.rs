@@ -1,9 +1,7 @@
 use std::time::Duration;
 
-use aoc::{
-    cli::runner::{Solver, Timer},
-    BINS,
-};
+use aoc::bins::BINS;
+use aoc_runner::runner::{Solver, Timer};
 use wasm_bindgen::prelude::*;
 pub use wasm_bindgen_rayon::init_thread_pool;
 use web_sys::Performance;
@@ -73,9 +71,9 @@ pub fn get_timer_resolution() -> Number {
     time::duration_to_js(&duration)
 }
 
-/// WASM wrapper for [`aoc::derived::Bin`].
+/// WASM wrapper for [`aoc_runner::derived::Bin`].
 #[wasm_bindgen]
-pub struct Bin(&'static aoc::derived::Bin);
+pub struct Bin(&'static aoc_runner::derived::Bin);
 #[wasm_bindgen]
 impl Bin {
     /// The name of the binary.
@@ -109,9 +107,9 @@ impl Bin {
     }
 }
 
-/// WASM wrapper for [`aoc::derived::Example`].
+/// WASM wrapper for [`aoc_runner::derived::Example`].
 #[wasm_bindgen]
-pub struct Example(&'static aoc::derived::Example);
+pub struct Example(&'static aoc_runner::derived::Example);
 #[wasm_bindgen]
 impl Example {
     /// The name of the example.
@@ -125,7 +123,7 @@ impl Example {
     pub fn input(&self) -> String {
         self.0.input.to_owned()
     }
-    
+
     /// The expected result of part 1, cast to a string.
     #[wasm_bindgen(getter)]
     pub fn part1(&self) -> Option<String> {
@@ -139,7 +137,7 @@ impl Example {
     }
 }
 
-/// WASM wrapper for [`aoc::cli::runner::SolverRunResult::Success`].
+/// WASM wrapper for [`aoc_runner::SolverRunResult::Success`].
 #[wasm_bindgen]
 pub struct SolverRunResult {
     result: String,
@@ -159,15 +157,15 @@ impl SolverRunResult {
         time::duration_to_js(&self.duration)
     }
 }
-impl TryFrom<aoc::cli::runner::SolverRunResult> for SolverRunResult {
+impl TryFrom<aoc_runner::runner::SolverRunResult> for SolverRunResult {
     type Error = String;
 
-    fn try_from(value: aoc::cli::runner::SolverRunResult) -> Result<Self, Self::Error> {
+    fn try_from(value: aoc_runner::runner::SolverRunResult) -> Result<Self, Self::Error> {
         match value {
-            aoc::cli::runner::SolverRunResult::Success {
+            aoc_runner::runner::SolverRunResult::Success {
                 result, duration, ..
             } => Ok(SolverRunResult { result, duration }),
-            aoc::cli::runner::SolverRunResult::Error(err) => Err(err),
+            aoc_runner::runner::SolverRunResult::Error(err) => Err(err),
         }
     }
 }

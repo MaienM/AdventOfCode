@@ -146,14 +146,14 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
         let part1: Expr = parse_part_arg!(&args.part1, &result_indent);
         let part2: Expr = parse_part_arg!(&args.part2, &result_indent);
         *example.expr = parse_quote! {
-            ::aoc::derived::Example {
+            ::aoc_runner::derived::Example {
                 name: #name,
                 input: #input,
                 part1: #part1,
                 part2: #part2,
             }
         };
-        *example.ty = parse_quote!(::aoc::derived::Example);
+        *example.ty = parse_quote!(::aoc_runner::derived::Example);
     };
 
     let mut result = quote!(#example);

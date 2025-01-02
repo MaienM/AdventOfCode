@@ -203,11 +203,11 @@ pub fn part2(input: &str) -> usize {
     panic!("Should never happen.");
 }
 
-aoc::cli::single::generate_main!();
+aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
-    use aoc_derive::example_input;
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;

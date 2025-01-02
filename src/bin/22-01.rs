@@ -20,11 +20,11 @@ pub fn part2(input: &str) -> u32 {
     data[0] + data[1] + data[2]
 }
 
-aoc::cli::single::generate_main!();
+aoc_runner::single::generate_main!();
 
 #[cfg(test)]
 mod tests {
-    use aoc_derive::example_input;
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;

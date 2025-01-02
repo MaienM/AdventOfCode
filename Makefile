@@ -87,16 +87,17 @@ target/doc-parts/stdlib/%: target/stdlib
 	 cargo -Z unstable-options -C target/stdlib/${name} doc
 	@rsync -r target/stdlib/target/doc/ "$@/"
 
-DEP_TARGETS = $(foreach dep,$(shell cargo tree --depth 1 -e normal --prefix none | cut -d' ' -f1-2 | sed 's/ v/@/'),target/doc-parts/dep/$(dep))
+DEP_TARGETS = $(foreach dep,$(shell cargo tree --depth 1 -e normal --prefix none | cut -d' ' -f1),target/doc-parts/dep/$(dep))
 target/doc-parts/dep/%: name = $(notdir $@)
+target/doc-parts/dep/%: version = $(shell cargo tree --depth 1 -e normal --prefix none | grep -E "^${name} " | cut -d' ' -f2 | sed 's/^v//')
 target/doc-parts/dep/%: Cargo.toml Cargo.lock
 	@echo "Building docs for ${name}..."
 	@rm -rf target/doc
 	@RUSTDOCFLAGS="-Z unstable-options --merge none --parts-out-dir $$PWD/$@" \
-	 cargo -Z unstable-options doc --lib --no-deps -p "${name}"
+	 cargo -Z unstable-options doc --lib --no-deps -p "${name}@${version}"
 	@rsync -r target/doc/ "$@/"
-target/doc-parts/dep/aoc: src
-target/doc-parts/dep/aoc_derive: aoc_derive
+target/doc-parts/dep/aoc: $(shell find src -type f -print)
+target/doc-parts/dep/aoc_runner: $(shell find aoc_runner aoc_runner_derive -type f -print)
 
 docs: ${STDLIB_TARGETS} ${DEP_TARGETS}
 	@echo "Building combined docs..."
