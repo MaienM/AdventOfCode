@@ -2,7 +2,7 @@ aoc::setup!();
 
 use std::collections::HashMap;
 
-use aoc::{abs_diff, point::Point2};
+use aoc::point::Point2;
 
 type Point = Point2<usize>;
 
@@ -71,8 +71,8 @@ pub fn part1(input: &str) -> u32 {
         .filter_map(|n| {
             for npoint in &n.points {
                 for symbol in &symbols {
-                    if abs_diff(npoint.x, symbol.point.x) <= 1
-                        && abs_diff(npoint.y, symbol.point.y) <= 1
+                    if usize::abs_diff(npoint.x, symbol.point.x) <= 1
+                        && usize::abs_diff(npoint.y, symbol.point.y) <= 1
                     {
                         return Some(n.number);
                     }
@@ -90,8 +90,8 @@ pub fn part2(input: &str) -> u32 {
     'number: for number in numbers {
         for npoint in &number.points {
             for symbol in &symbols {
-                if abs_diff(npoint.x, symbol.point.x) <= 1
-                    && abs_diff(npoint.y, symbol.point.y) <= 1
+                if usize::abs_diff(npoint.x, symbol.point.x) <= 1
+                    && usize::abs_diff(npoint.y, symbol.point.y) <= 1
                 {
                     gears.get_mut(&symbol.point).unwrap().push(number.number);
                     continue 'number;

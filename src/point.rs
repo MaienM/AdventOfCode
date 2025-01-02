@@ -7,13 +7,12 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
+use aoc::prelude::AbsDiff;
 use derive_new::new;
 use num::traits::{
     CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, SaturatingAdd, SaturatingMul,
     SaturatingSub, WrappingAdd, WrappingMul, WrappingSub,
 };
-
-use crate::abs_diff;
 
 // These traits don't exist (and they shouldn't, there's no point to them), but it makes the generation easier if they do, so we'll define them here and then never expose them.
 #[allow(dead_code)]
@@ -166,20 +165,41 @@ macro_rules! create_point {
         impl_point_operator!($name, mul, $($var),+);
         impl_point_operator!($name, div, $($var),+);
 
+        impl<'a, T> AbsDiff<&'a $name<T>> for &'a $name<T>
+        where
+            T: Copy + AbsDiff<T>,
+        {
+            type Output = $name<<T as AbsDiff<T>>::Output>;
+
+            /// Get a point that represents the absolute differences of all coordinates of the two points.
+            #[must_use]
+            fn abs_diff(self, other: Self) -> Self::Output {
+                Self::Output {
+                    $($var: T::abs_diff(self.$var, other.$var)),+
+                }
+            }
+        }
+
         impl<T> $name<T>
-            where T: Copy + Add<T, Output = T> + Sub<T, Output = T> + PartialOrd<T> + Ord + One,
+        where
+            T: Copy + Add<T, Output = T>
         {
             /// Calculate the sum of all coordinates of the point.
             #[must_use]
             pub fn sum(&self) -> T {
                 call_chain!(add, $(self.$var),+)
             }
-
+        }
+        impl<'a, T> $name<T>
+        where
+            T: Copy + AbsDiff<T> + PartialEq + 'a,
+            <T as AbsDiff<T>>::Output: Copy + Add<<T as AbsDiff<T>>::Output, Output = <T as AbsDiff<T>>::Output> + Ord + One,
+        {
             /// Calculate the distance between this point and another point.
             ///
             /// Diagonals are counted as a distance of two.
             #[must_use]
-            pub fn distance_ortho(&self, other: &Self) -> T {
+            pub fn distance_ortho(&'a self, other: &'a Self) -> <T as AbsDiff<T>>::Output {
                 self.abs_diff(other).sum()
             }
 
@@ -187,31 +207,24 @@ macro_rules! create_point {
             ///
             /// Diagonals are counted as a distance of one.
             #[must_use]
-            pub fn distance_diag(&self, other: &Self) -> T {
+            pub fn distance_diag(&'a self, other: &'a Self) -> <T as AbsDiff<T>>::Output {
                 let diff = self.abs_diff(other);
                 call_chain!(max, $(diff.$var),+)
             }
 
-            /// Get a point that represents the absolute differences of all coordinates of the two points.
-            #[must_use]
-            pub fn abs_diff(&self, other: &Self) -> Self {
-                Self {
-                    $($var: abs_diff(self.$var, other.$var)),+
-                }
-            }
-
             /// Check whether the given point is orthogontally adjacent to this one.
-            pub fn adjacent_to_ortho(&self, other: &Self) -> bool {
-                self.abs_diff(other).sum() == T::one()
+            pub fn adjacent_to_ortho(&'a self, other: &'a Self) -> bool {
+                self.abs_diff(other).sum() == <T as AbsDiff<T>>::Output::one()
             }
 
             /// Check whether the given point is orthogontally or diagonally adjacent to this one.
-            pub fn adjacent_to_diag(&self, other: &Self) -> bool {
-                self != other && self.distance_diag(other) == T::one()
+            pub fn adjacent_to_diag(&'a self, other: &'a Self) -> bool {
+                self != other && self.distance_diag(other) == <T as AbsDiff<T>>::Output::one()
             }
         }
         impl<T> $name<T>
-            where T: Copy + Add<T, Output = T> + Sub<T, Output = T> + PartialOrd<T> + Ord + One + CheckedAdd + CheckedSub + Hash,
+        where
+            T: Copy + Add<T, Output = T> + Sub<T, Output = T> + PartialOrd<T> + Ord + One + CheckedAdd + CheckedSub + Hash,
         {
             /// Get the orthogontal neighbours of this point.
             pub fn neighbours_ortho(&self) -> HashSet<Self> {
@@ -649,29 +662,29 @@ mod tests {
     #[test]
     fn abs_diff() {
         assert_eq!(
-            Point2::new(10, 5).abs_diff(&Point2::new(2, 20)),
+            Point2::new(10i8, 5).abs_diff(&Point2::new(2, 20)),
             Point2::new(8, 15)
         );
         assert_eq!(
-            Point3::new(10, 5, 3).abs_diff(&Point3::new(2, 20, -3)),
+            Point3::new(10i8, 5, 3).abs_diff(&Point3::new(2, 20, -3)),
             Point3::new(8, 15, 6)
         );
     }
 
     #[test]
     fn distance_ortho() {
-        assert_eq!(Point2::new(10, 5).distance_ortho(&Point2::new(2, 20)), 23);
+        assert_eq!(Point2::new(10i8, 5).distance_ortho(&Point2::new(2, 20)), 23);
         assert_eq!(
-            Point3::new(10, 5, 3).distance_ortho(&Point3::new(2, 20, -3)),
+            Point3::new(10i8, 5, 3).distance_ortho(&Point3::new(2, 20, -3)),
             29
         );
     }
 
     #[test]
     fn distance_diag() {
-        assert_eq!(Point2::new(10, 5).distance_diag(&Point2::new(2, 20)), 15);
+        assert_eq!(Point2::new(10i8, 5).distance_diag(&Point2::new(2, 20)), 15);
         assert_eq!(
-            Point3::new(10, 5, 3).distance_diag(&Point3::new(2, 20, -3)),
+            Point3::new(10i8, 5, 3).distance_diag(&Point3::new(2, 20, -3)),
             15
         );
     }
@@ -689,11 +702,11 @@ mod tests {
         assert_eq!(point.adjacent_to_ortho(&Point2::new(10, 3)), false);
 
         let point: Point3<u8> = Point3::new(10, 5, 8);
-
+        //
         assert_eq!(point.adjacent_to_ortho(&Point3::new(10, 5, 7)), true);
         assert_eq!(point.adjacent_to_ortho(&Point3::new(10, 6, 8)), true);
         assert_eq!(point.adjacent_to_ortho(&Point3::new(9, 5, 8)), true);
-
+        //
         assert_eq!(point.adjacent_to_ortho(&point), false);
         assert_eq!(point.adjacent_to_ortho(&Point3::new(11, 6, 8)), false);
         assert_eq!(point.adjacent_to_ortho(&Point3::new(12, 5, 8)), false);
@@ -712,12 +725,12 @@ mod tests {
         assert_eq!(point.adjacent_to_diag(&Point2::new(10, 3)), false);
 
         let point: Point3<u8> = Point3::new(10, 5, 8);
-
+        //
         assert_eq!(point.adjacent_to_diag(&Point3::new(10, 5, 7)), true);
         assert_eq!(point.adjacent_to_diag(&Point3::new(10, 6, 8)), true);
         assert_eq!(point.adjacent_to_diag(&Point3::new(9, 5, 8)), true);
         assert_eq!(point.adjacent_to_diag(&Point3::new(11, 6, 8)), true);
-
+        //
         assert_eq!(point.adjacent_to_diag(&point), false);
         assert_eq!(point.adjacent_to_diag(&Point3::new(12, 5, 8)), false);
     }

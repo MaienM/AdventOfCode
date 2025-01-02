@@ -2,10 +2,7 @@ aoc::setup!();
 
 use std::{collections::HashSet, ops::RangeInclusive};
 
-use aoc::{
-    abs_diff,
-    point::{Point2, Point3},
-};
+use aoc::point::{Point2, Point3};
 
 type Point = Point3<usize>;
 
@@ -58,7 +55,7 @@ pub fn part1(input: &str) -> usize {
                 resting_z = usize::max(resting_z, map[y][x].0);
             }
         }
-        let top_z = resting_z + abs_diff(p1.z, p2.z) + 1;
+        let top_z = resting_z + usize::abs_diff(p1.z, p2.z) + 1;
 
         // Update map & find out what brick(s) we're resting on.
         let mut resting_on = HashSet::new();
@@ -117,7 +114,7 @@ pub fn part2(input: &str) -> usize {
                 resting_z = usize::max(resting_z, map[y][x].0);
             }
         }
-        let top_z = resting_z + abs_diff(p1.z, p2.z) + 1;
+        let top_z = resting_z + usize::abs_diff(p1.z, p2.z) + 1;
 
         // Update map & find out what brick(s) we're resting on.
         let mut resting_on = HashSet::new();
