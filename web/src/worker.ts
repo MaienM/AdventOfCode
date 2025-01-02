@@ -1,4 +1,4 @@
-import initWASM, * as aoc from 'aoc-wasm';
+import initWASM, * as aoc from 'aoc_wasm';
 import * as Comlink from 'comlink';
 
 export type Bin = Omit<aoc.Bin, 'free'>;

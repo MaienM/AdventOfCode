@@ -34,7 +34,7 @@
     "@mui/material": "^6.1.9",
     "@mui/x-date-pickers": "^7.23.0",
     "@types/date-fns": "^2.5.3",
-    "aoc-wasm": "file:../wasm/pkg",
+    "aoc_wasm": "file:../aoc_wasm/pkg",
     "comlink": "^4.4.2",
     "date-fns": "^4.1.0",
     "hosted-git-info": "^8.0.2",
