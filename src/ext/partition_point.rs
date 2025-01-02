@@ -1,15 +1,15 @@
-//! Extension methods for [`std::ops::RangeBounds`].
-
 use std::ops::{Add, Bound, Div, RangeBounds, Sub};
 
-/// Extension methods for [`std::ops::RangeBounds`].
-pub trait RangeExt<T> {
+/// Find the partition point of a collection, as [`slice::partition_point`].
+pub trait PartitionPoint<T> {
     /// Returns the index of the partition point according to the given predicate (the index of the first element of the second partition).
+    ///
+    /// See [`slice::partition_point`].
     fn partition_point<F>(&self, f: F) -> Option<T>
     where
         F: Fn(T) -> bool;
 }
-impl<R, T> RangeExt<T> for R
+impl<R, T> PartitionPoint<T> for R
 where
     R: RangeBounds<T>,
     T: Add<usize, Output = T>

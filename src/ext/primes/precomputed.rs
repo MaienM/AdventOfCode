@@ -1,8 +1,5 @@
-/// All primes that fit in a `u16`, which is sufficient to efficiently factorize any `u32`.
-///
-/// Stored as `u32` because (1) that seems to be more performant and (2) this makes it easy to swap in a larger list for larger numbers.
 #[rustfmt::skip]
-pub static PRIMES: [u32; 6542] = [
+pub(super) static PRECOMPUTED: [usize; 6542] = [
     2,
     3,
     5,

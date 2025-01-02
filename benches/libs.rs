@@ -53,10 +53,7 @@ fn bench_factorize(c: &mut Criterion) {
     test_bench_num!(c, num, vec![2_071_723, 5_363_222_357]);
 
     // The same thing, but with more precomputed primes.
-    let primes: Vec<_> = usize::primes(num.isqrt() as usize)
-        .into_iter()
-        .map(|n| n as u64)
-        .collect();
+    let primes: Vec<_> = usize::primes(num.isqrt() as usize);
     test_bench_num!(
         c,
         num,
