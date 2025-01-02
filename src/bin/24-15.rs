@@ -1,5 +1,3 @@
-#![allow(clippy::match_on_vec_items)]
-
 aoc::setup!();
 
 use aoc::point::{Direction2, Point2};

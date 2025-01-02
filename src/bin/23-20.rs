@@ -134,7 +134,7 @@ fn calculate_counter_period(input: &Input, start: &String) -> usize {
     let module = input.modules.get(start).unwrap();
     let mut sum = 0;
     for name in &module.outputs {
-        match input.modules.get(name).unwrap().ty {
+        match input.modules[name].ty {
             ModuleType::FlipFlop(_) => sum += calculate_counter_period(input, name) * 2,
             ModuleType::Conjunction(_) => sum += 1,
         }
