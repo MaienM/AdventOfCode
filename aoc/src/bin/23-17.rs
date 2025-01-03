@@ -177,7 +177,7 @@ mod tests {
 
 #[aoc_runner::visual]
 pub mod visual {
-    use aoc_runner::visual::{ToRenderable, Visual};
+    use aoc_runner::visual::{Config, ToRenderable, Visual};
     use raqote::{DrawOptions, Point, SolidSource, Source};
 
     pub(super) enum Info {
@@ -240,7 +240,7 @@ pub mod visual {
             }
         }
 
-        fn draw(&self, dt: &mut raqote::DrawTarget, _config: &aoc::visual::Config) {
+        fn draw(&self, dt: &mut raqote::DrawTarget, _config: &Config) {
             let cs = 8.0;
 
             for (y, row) in self.map.iter().enumerate() {

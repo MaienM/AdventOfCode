@@ -50,7 +50,7 @@ pub fn part2(input: &str) -> String {
     }
     let group = graph
         .par_iter()
-        .filter(|(key, edges)| edges.iter().all(|k| k <= key))
+        .filter(|(key, edges)| edges.iter().all(|k| k <= *key))
         .flat_map(|(_, edges)| {
             edges.iter().powerset().par_bridge().filter(|keys| {
                 let keys: HashSet<_> = keys.iter().copied().copied().collect();
