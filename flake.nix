@@ -6,9 +6,20 @@
     # fenix.inputs.nixpkgs.follows = "nixpkgs";
 
     flake-utils.url = "github:numtide/flake-utils";
+
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
   };
-  outputs = { nixpkgs, fenix, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      nixpkgs,
+      fenix,
+      flake-utils,
+      pre-commit-hooks,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         fenixPkgs = fenix.packages."${system}";
@@ -30,26 +41,71 @@
               type = "app";
               program = "${aoc}/bin/${name}";
             };
-            binaries = builtins.concatMap
-              (name:
-                let match = builtins.match "([[:digit:]]{2}-[[:digit:]]{2})\\.rs" name;
-                in if match == null then [ ] else match
-              )
-              (builtins.attrNames (builtins.readDir ./src/bin));
+            binaries = builtins.concatMap (
+              name:
+              let
+                match = builtins.match "([[:digit:]]{2}-[[:digit:]]{2})\\.rs" name;
+              in
+              if match == null then [ ] else match
+            ) (builtins.attrNames (builtins.readDir ./src/bin));
             apps = builtins.listToAttrs (
-              builtins.map
-              (
-                name: {
-                  inherit name;
-                  value = mkApp name;
-                }
-              )
-              (binaries ++ [ "aoc" ])
+              builtins.map (name: {
+                inherit name;
+                value = mkApp name;
+              }) (binaries ++ [ "aoc" ])
             );
           in
-          apps // {
+          apps
+          // {
             default = apps.aoc;
           };
+
+        checks = {
+          pre-commit-check =
+            let
+              check-jsonschema = pkgs.check-jsonschema.overrideAttrs (old: {
+                propagatedBuildInputs = old.propagatedBuildInputs ++ [
+                  pkgs.python3.pkgs.json5
+                ];
+              });
+            in
+            pre-commit-hooks.lib.${system}.run rec {
+              src = ./.;
+              hooks = {
+                # Github workflows.
+                github-workflows = {
+                  enable = true;
+                  name = "github-workflows";
+                  files = "^\\.github/workflows/.*\\.yaml$";
+                  entry = "${check-jsonschema}/bin/check-jsonschema --builtin-schema vendor.github-workflows";
+                  pass_filenames = true;
+                };
+
+                # Nix.
+                nixfmt-rfc-style.enable = true;
+
+                # Rust.
+                cargo-check.enable = true;
+                clippy.enable = true;
+                rustfmt.enable = true;
+
+                # Typescript.
+                eslint = {
+                  enable = true;
+                  settings = {
+                    binPath = "${pkgs.nodePackages.eslint_d}/bin/eslint_d";
+                    extensions = hooks.dprint.files;
+                  };
+                };
+                dprint = {
+                  enable = true;
+                  name = "dprint";
+                  entry = "dprint check";
+                  files = "\\.(tsx?|jsx?|mjs|cjs)$";
+                };
+              };
+            };
+        };
 
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
@@ -90,5 +146,6 @@
           ];
           NODE_OPTIONS = "--openssl-legacy-provider";
         };
-      });
+      }
+    );
 }
