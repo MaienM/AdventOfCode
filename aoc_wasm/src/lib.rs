@@ -3,6 +3,7 @@ use std::time::Duration;
 use aoc::bins::BINS;
 use aoc_runner::runner::{Solver, Timer};
 use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;
 use web_sys::Performance;
 
