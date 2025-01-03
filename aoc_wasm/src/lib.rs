@@ -5,17 +5,9 @@ use aoc_runner::runner::{Solver, Timer};
 use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;
-use web_sys::Performance;
 
-#[wasm_bindgen]
-extern "C" {
-    #[allow(non_upper_case_globals)]
-    #[no_mangle]
-    static performance: Performance;
-
-    #[wasm_bindgen(typescript_type = number)]
-    pub type Number;
-}
+mod r#extern;
+use r#extern::{performance, Number};
 
 mod time {
     use std::time::Duration;

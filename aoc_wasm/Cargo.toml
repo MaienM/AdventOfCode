@@ -3,6 +3,9 @@ name = "aoc_wasm"
 version = "0.0.0"
 edition = "2021"
 
+[features]
+debug = []
+
 [dependencies]
 aoc = { path = "../aoc", default-features = false }
 aoc_runner = { path = "../aoc_runner" }
