@@ -141,21 +141,25 @@ leaderboard: .leaderboard.json
 # Web version.
 #
 
-aoc_wasm/pkg: $(shell find aoc aoc_wasm/Cargo.toml aoc_wasm/src web/src -type f -print)
-	@rm -rf aoc_wasm/pkg
-	@wasm-pack build ./aoc_wasm --target web
+target/debug/wasm-pkg: flags = --dev
+target/release/wasm-pkg: flags = --release
+target/%/wasm-pkg: $(shell find aoc aoc_wasm/Cargo.toml aoc_wasm/src web/src -type f -print)
+	@rm -rf $@
+	@wasm-pack build ./aoc_wasm --target web --out-dir "$$PWD/$@" ${flags} 
 
-web-dev: aoc_wasm/pkg
+web-dev: target/debug/wasm-pkg
+	@ln -sfT "$$PWD/$<" web/aoc_wasm
 	@( true \
 		&& cd web \
 		&& npm install \
 		&& npm run start \
 	)
 
-web/dist: aoc_wasm/pkg
+target/release/web: target/release/wasm-pkg
+	@rm -rf $@
+	@ln -sfT "$$PWD/$<" web/aoc_wasm
 	@( true \
-		cd web \
+		&& cd web \
 		&& npm install \
-		&& rm -rf dist/ \
 		&& npm run build \
 	)

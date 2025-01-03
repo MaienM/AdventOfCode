@@ -57,9 +57,9 @@ jobs:
         uses: jetli/wasm-pack-action@v0.4.0
 
       - name: Build WASM package
-        run: wasm-pack build ./wasm --target web
+        run: make target/release/wasm-pkg
 
-      - name: Use Node.js
+      - name: Setup NodeJS
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -67,10 +67,7 @@ jobs:
           cache-dependency-path: web/package-lock.json
 
       - name: Build webapp
-        run: |
-          cd web
-          npm install
-          npm run build
+        run: make target/release/web
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -78,7 +75,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: ./web/dist
+          path: ./target/release/web
 
   deploy:
     environment:
