@@ -8,12 +8,16 @@ use ansi_term::{
 };
 use once_cell::sync::Lazy;
 
-/// Trait for timing framework, as we cannot use [`std::time::Instant`] on WASM.
+/// Trait to track elapsed time.
 pub trait Timer {
+    /// Start a new timer.
     fn start() -> Self;
+    /// Get the time elapsed since the timer was [`start`](Timer::start)ed.
     fn elapsed(&self) -> Duration;
 }
-struct InstantTimer(Instant);
+
+/// Timer based on [`std::time::Instant`].
+pub struct InstantTimer(Instant);
 impl Timer for InstantTimer {
     #[inline]
     fn start() -> Self {

@@ -91,7 +91,7 @@ pub fn visual(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     .into()
 }
 
-pub fn derive_renderable(item: TokenStream) -> TokenStream {
+pub fn derive_to_renderable(item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as ItemStruct);
     let ident = &item.ident;
 

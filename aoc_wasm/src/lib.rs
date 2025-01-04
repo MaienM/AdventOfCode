@@ -25,7 +25,7 @@ mod time {
         duration
     }
 
-    /// Convert a [`std::time::Duration`] to a [`wasm_bindgen::JsValue`] as nanoseconds.
+    /// Convert a [`Duration`] to a [`JsValue`] as nanoseconds.
     ///
     /// bindgen doesn't support u128, so we convert it to a string and and then tell TS that it's a number. JS will end up coercing it into a number when it is used as one in most cases anyway, so this'll work out fine. Probably.
     pub(super) fn duration_to_js(duration: &Duration) -> Number {
@@ -34,7 +34,7 @@ mod time {
 }
 
 /// Timer based on [`web_sys::Performance`].
-struct PerformanceTimer(f64);
+pub struct PerformanceTimer(f64);
 impl Timer for PerformanceTimer {
     #[inline]
     fn start() -> Self {
@@ -49,7 +49,7 @@ impl Timer for PerformanceTimer {
     }
 }
 
-/// Test the minimum resolution of [`web_sys::Performance`].
+/// Test the minimum resolution of timers in the current environment.
 ///
 /// This will block for the length of one resolution, the worst I've seen is `16.66ms` (1/60th of a second).
 #[wasm_bindgen]
@@ -130,7 +130,7 @@ impl Example {
     }
 }
 
-/// WASM wrapper for [`aoc_runner::SolverRunResult::Success`].
+/// WASM wrapper for [`aoc_runner::runner::SolverRunResult::Success`].
 #[wasm_bindgen]
 pub struct SolverRunResult {
     result: String,
@@ -163,13 +163,13 @@ impl TryFrom<aoc_runner::runner::SolverRunResult> for SolverRunResult {
     }
 }
 
-/// Get list of all binaries.
+/// Get a list of all implemented [`Bin`]s.
 #[wasm_bindgen]
 pub fn list() -> Vec<Bin> {
     BINS.iter().map(Bin).collect()
 }
 
-/// Run a single solution.
+/// Run a single part of a single [`Bin`].
 #[wasm_bindgen]
 pub fn run(name: &str, part: u8, input: &str) -> Result<SolverRunResult, String> {
     let bin = BINS
@@ -191,6 +191,7 @@ pub fn run(name: &str, part: u8, input: &str) -> Result<SolverRunResult, String>
     .map_err(|_| "solution panicked".to_string())?
 }
 
+#[doc(hidden)]
 pub fn main() {
     #[allow(unexpected_cfgs)]
     #[cfg(feature = "debug")]

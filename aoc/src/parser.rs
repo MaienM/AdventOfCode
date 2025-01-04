@@ -1,4 +1,5 @@
 //! Helpers for parsing text into structures
+#![doc(hidden)]
 
 #[doc(hidden)]
 #[macro_export]
@@ -79,13 +80,13 @@ macro_rules! __parse {
 ///   - `find /"pattern"/`. This will look for all matches of the given regular expression and keep
 ///     the entire matched string, ignoring any capture groups.
 ///   - `capture /"pattern"/`. This will look for all matches of the given regular expression and
-///     keep the [`regex::Captures`] objects.
-/// - `indexed` (optional). This will chain [`std::iter::Iterator::enumerate`] on the iterator.
+///     keep the [`Captures`](regex::Captures).
+/// - `indexed` (optional). This will chain [`enumerate`](Iterator::enumerate) on the iterator.
 /// - The collection to transform the iterator into (optional, default `into (Vec<_>)`):
-///   - `into iterator`. This will keep the result as an [`std::iter::Iterator`] (the exact type of
-///     which depends on the other options).
-///   - `into (type)`. This will transform the iterator into the given collection (i.e.
-///     `.collect::<type>()`).
+///   - `into iterator`. This will keep the result as an [`Iterator`] (the exact type of which
+///     depends on the other options).
+///   - `into (type)`. This will call [`collect`](Iterator::collect) on the iterator to transform
+///     it into the given type.
 /// - A transformation (optional):
 ///   - Any of the base [transformations](#transformations).
 ///   - `try transformation`. A base [transformation](#transformations) that's allowed to fail,

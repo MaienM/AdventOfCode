@@ -1,3 +1,4 @@
+//! Helpers for visualizations.
 #![cfg(feature = "visual")]
 
 use std::{
@@ -63,6 +64,7 @@ where
 
 /// Marker for derive macro that allows converting [`Visual`] into [`Renderable`].
 pub trait ToRenderable: Into<Box<dyn Renderable>> {}
+/// Derive macro for [`ToRenderable`].
 pub use aoc_runner_derive::ToRenderable;
 
 pub fn spawn_window<F>(creator: F) -> JoinHandle<()>

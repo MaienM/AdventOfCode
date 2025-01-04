@@ -16,7 +16,7 @@ pub trait Factorize {
     /// nubmers after the last known prime. The length of this precomputed list has been chosen to
     /// be optimal for up to 32-bit unsigned integers; for numbers with larger factors a list of
     /// primes can be created using [`Primes::primes`] and passed to
-    /// [`Factorize::factorize_with_primes`].
+    /// [`factorize_with_primes`](Factorize::factorize_with_primes).
     ///
     /// # Examples
     ///
@@ -31,9 +31,10 @@ pub trait Factorize {
     where
         Self: Sized;
 
-    /// As [`Factorize::factorize`], but using the given list of known-primes instead of the
-    /// default. This list can be as long or short as you want, but it _must_ start at `2` and not
-    /// have any gaps (e.g. if it contains `7` it _must_ also contain `3` and `5`).
+    /// As [`factorize`](Factorize::factorize), but using the given list of known-primes instead of
+    /// the default ([`Primes::PRECOMPUTED`]). This list can be as long or short as you want, but
+    /// it _must_ start at `2` and not have any gaps (e.g. if it contains `7` it _must_ also
+    /// contain `3` and `5`).
     fn factorize_with_primes<'a, P, Iter>(&self, primes: Iter) -> Vec<Self>
     where
         Self: TryFrom<P>,
