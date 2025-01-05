@@ -8,7 +8,7 @@ use rayon::ThreadPoolBuilder;
 
 use crate::{
     derived::Bin,
-    runner::{DurationThresholds, SolverResult},
+    runner::{DurationThresholds, InstantTimer, SolverResult},
     source::{source_path_fill_tokens, Source, SourceValueParser},
 };
 
@@ -125,7 +125,7 @@ pub fn main(bin: &Bin) {
                     crate::visual::spawn_window(move || f(&input))
                 });
 
-                let result = part.run(&input, solution);
+                let result = part.run::<InstantTimer>(&input, solution);
 
                 #[cfg(feature = "visual")]
                 vis_handle.map(::std::thread::JoinHandle::join);

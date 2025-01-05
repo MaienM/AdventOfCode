@@ -182,12 +182,8 @@ pub fn run(name: &str, part: u8, input: &str) -> Result<SolverResult, String> {
         _ => return Err(format!("Invalid part {part}.")),
     };
 
-    std::panic::catch_unwind(move || {
-        solver
-            .run_with_timer::<PerformanceTimer>(input, None)
-            .try_into()
-    })
-    .map_err(|_| "solution panicked".to_string())?
+    std::panic::catch_unwind(move || solver.run::<PerformanceTimer>(input, None).try_into())
+        .map_err(|_| "solution panicked".to_string())?
 }
 
 #[doc(hidden)]

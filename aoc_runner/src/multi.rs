@@ -13,7 +13,7 @@ use rayon::ThreadPoolBuilder;
 use super::source::source_path_fill_tokens;
 use crate::{
     derived::{Bin, Solver},
-    runner::{DurationThresholds, SolverResult},
+    runner::{DurationThresholds, InstantTimer, SolverResult},
     source::{Source, SourceValueParser},
 };
 
@@ -267,8 +267,8 @@ pub fn main() {
             (
                 name,
                 match target.solution.read_maybe() {
-                    Ok(solution) => target.solver.run(&input, solution),
-                    Err(err) => SolverRunResult::Error(err),
+                    Ok(solution) => target.solver.run::<InstantTimer>(&input, solution),
+                    Err(err) => SolverResult::Error(err),
                 },
             )
         })

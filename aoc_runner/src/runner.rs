@@ -127,11 +127,8 @@ impl<T> Solver<T>
 where
     T: ToString,
 {
-    pub fn run(&self, input: &str, solution: Option<String>) -> SolverResult {
-        self.run_with_timer::<InstantTimer>(input, solution)
-    }
-
-    pub fn run_with_timer<Ti>(&self, input: &str, solution: Option<String>) -> SolverResult
+    /// Run and time solution.
+    pub fn run<Ti>(&self, input: &str, solution: Option<String>) -> SolverResult
     where
         Ti: Timer,
     {
