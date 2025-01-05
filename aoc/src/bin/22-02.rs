@@ -6,14 +6,14 @@ use derive_new::new;
 enum Shape {
     Rock = 1,
     Paper = 2,
-    Scisors = 3,
+    Scissors = 3,
 }
 impl From<&str> for Shape {
     fn from(value: &str) -> Self {
         match value {
             "A" => Shape::Rock,
             "B" => Shape::Paper,
-            "C" => Shape::Scisors,
+            "C" => Shape::Scissors,
             _ => panic!("Unknown shape {value:?}."),
         }
     }
@@ -28,16 +28,16 @@ impl Round {
     pub fn score(&self) -> u16 {
         match (self.player, self.opponent) {
             (Shape::Rock, Shape::Paper) => 1,
-            (Shape::Paper, Shape::Scisors) => 2,
-            (Shape::Scisors, Shape::Rock) => 3,
+            (Shape::Paper, Shape::Scissors) => 2,
+            (Shape::Scissors, Shape::Rock) => 3,
 
             (Shape::Rock, Shape::Rock) => 4,
             (Shape::Paper, Shape::Paper) => 5,
-            (Shape::Scisors, Shape::Scisors) => 6,
+            (Shape::Scissors, Shape::Scissors) => 6,
 
-            (Shape::Rock, Shape::Scisors) => 7,
+            (Shape::Rock, Shape::Scissors) => 7,
             (Shape::Paper, Shape::Rock) => 8,
-            (Shape::Scisors, Shape::Paper) => 9,
+            (Shape::Scissors, Shape::Paper) => 9,
         }
     }
 }
@@ -50,7 +50,7 @@ fn parse_input_part1(input: &str) -> Vec<Round> {
                 let player = match p {
                     "X" => Shape::Rock,
                     "Y" => Shape::Paper,
-                    "Z" => Shape::Scisors,
+                    "Z" => Shape::Scissors,
                     v => panic!("Invalid player choice {v:?}."),
                 };
                 Round { player, opponent }
@@ -65,9 +65,9 @@ fn parse_input_part2(input: &str) -> Vec<Round> {
             { [opponent as Shape] " " p }
             => {
                 let player = match p {
-                    "X" => [Shape::Scisors, Shape::Rock, Shape::Paper][opponent as usize - 1], // lose
-                    "Y" => [Shape::Rock, Shape::Paper, Shape::Scisors][opponent as usize - 1], // draw
-                    "Z" => [Shape::Paper, Shape::Scisors, Shape::Rock][opponent as usize - 1], // win
+                    "X" => [Shape::Scissors, Shape::Rock, Shape::Paper][opponent as usize - 1], // lose
+                    "Y" => [Shape::Rock, Shape::Paper, Shape::Scissors][opponent as usize - 1], // draw
+                    "Z" => [Shape::Paper, Shape::Scissors, Shape::Rock][opponent as usize - 1], // win
                     v => panic!("Invalid round outcome {v:?}."),
                 };
                 Round { player, opponent }
@@ -104,13 +104,13 @@ mod tests {
     fn shape_score() {
         assert_eq!(Round::new(Shape::Rock, Shape::Rock).score(), 4);
         assert_eq!(Round::new(Shape::Rock, Shape::Paper).score(), 1);
-        assert_eq!(Round::new(Shape::Rock, Shape::Scisors).score(), 7);
+        assert_eq!(Round::new(Shape::Rock, Shape::Scissors).score(), 7);
         assert_eq!(Round::new(Shape::Paper, Shape::Rock).score(), 8);
         assert_eq!(Round::new(Shape::Paper, Shape::Paper).score(), 5);
-        assert_eq!(Round::new(Shape::Paper, Shape::Scisors).score(), 2);
-        assert_eq!(Round::new(Shape::Scisors, Shape::Rock).score(), 3);
-        assert_eq!(Round::new(Shape::Scisors, Shape::Paper).score(), 9);
-        assert_eq!(Round::new(Shape::Scisors, Shape::Scisors).score(), 6);
+        assert_eq!(Round::new(Shape::Paper, Shape::Scissors).score(), 2);
+        assert_eq!(Round::new(Shape::Scissors, Shape::Rock).score(), 3);
+        assert_eq!(Round::new(Shape::Scissors, Shape::Paper).score(), 9);
+        assert_eq!(Round::new(Shape::Scissors, Shape::Scissors).score(), 6);
     }
 
     #[test]
@@ -119,7 +119,7 @@ mod tests {
         let expected = vec![
             Round::new(Shape::Paper, Shape::Rock),
             Round::new(Shape::Rock, Shape::Paper),
-            Round::new(Shape::Scisors, Shape::Scisors),
+            Round::new(Shape::Scissors, Shape::Scissors),
         ];
         assert_eq!(actual, expected);
     }
@@ -130,7 +130,7 @@ mod tests {
         let expected = vec![
             Round::new(Shape::Rock, Shape::Rock),
             Round::new(Shape::Rock, Shape::Paper),
-            Round::new(Shape::Rock, Shape::Scisors),
+            Round::new(Shape::Rock, Shape::Scissors),
         ];
         assert_eq!(actual, expected);
     }
