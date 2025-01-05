@@ -8,6 +8,8 @@ use ansi_term::{
 };
 use once_cell::sync::Lazy;
 
+use crate::derived::Solver;
+
 /// Trait to track elapsed time.
 pub trait Timer {
     /// Start a new timer.
@@ -30,48 +32,6 @@ impl Timer for InstantTimer {
     }
 }
 
-/// A function that takes the input file as a string and returns the solution to one of the assignments.
-#[derive(Clone)]
-pub enum Solver<T> {
-    Implemented(fn(&str) -> T),
-    NotImplemented,
-}
-impl<T> From<Option<fn(&str) -> T>> for Solver<T> {
-    fn from(value: Option<fn(&str) -> T>) -> Self {
-        match value {
-            Some(f) => Solver::Implemented(f),
-            None => Solver::NotImplemented,
-        }
-    }
-}
-impl<T> Solver<T>
-where
-    T: ToString,
-{
-    pub fn run(&self, input: &str, solution: Option<String>) -> SolverRunResult {
-        self.run_with_timer::<InstantTimer>(input, solution)
-    }
-
-    pub fn run_with_timer<Ti>(&self, input: &str, solution: Option<String>) -> SolverRunResult
-    where
-        Ti: Timer,
-    {
-        let Solver::Implemented(runnable) = self else {
-            return SolverRunResult::Error("Not implemented.".to_string());
-        };
-
-        let start = Ti::start();
-        let result = runnable(input);
-        let duration = start.elapsed();
-
-        SolverRunResult::Success {
-            result: result.to_string(),
-            solution,
-            duration,
-        }
-    }
-}
-
 static SYMBOL_UNKNOWN: Lazy<String> = Lazy::new(|| "?".to_owned());
 static SYMBOL_OK: Lazy<String> = Lazy::new(|| Green.paint("✔").to_string());
 static SYMBOL_INCORRECT: Lazy<String> = Lazy::new(|| Red.paint("✘").to_string());
@@ -79,7 +39,7 @@ static SYMBOL_ERROR: Lazy<String> = Lazy::new(|| Red.paint("⚠").to_string());
 
 /// The result of running a [`Solver`].
 #[derive(Clone)]
-pub enum SolverRunResult {
+pub enum SolverResult {
     /// A successful run.
     Success {
         /// The result of the solver, converted to a string.
@@ -92,11 +52,11 @@ pub enum SolverRunResult {
     /// An attempted run that was aborted for some reason.
     Error(String),
 }
-impl SolverRunResult {
+impl SolverResult {
     pub fn print(&self, name: &str, thresholds: &DurationThresholds, show_result: bool) {
         let name = Purple.paint(name);
         match self {
-            SolverRunResult::Success {
+            SolverResult::Success {
                 result,
                 solution,
                 duration,
@@ -156,10 +116,37 @@ impl SolverRunResult {
                     println!("{symbol} {name}: {result} [{duration_formatted}]");
                 }
             }
-            SolverRunResult::Error(err) => {
+            SolverResult::Error(err) => {
                 let symbol = SYMBOL_ERROR.clone().clone();
                 println!("{symbol} {}: {}", name, Red.paint(err));
             }
+        }
+    }
+}
+impl<T> Solver<T>
+where
+    T: ToString,
+{
+    pub fn run(&self, input: &str, solution: Option<String>) -> SolverResult {
+        self.run_with_timer::<InstantTimer>(input, solution)
+    }
+
+    pub fn run_with_timer<Ti>(&self, input: &str, solution: Option<String>) -> SolverResult
+    where
+        Ti: Timer,
+    {
+        let Solver::Implemented(runnable) = self else {
+            return SolverResult::Error("Not implemented.".to_string());
+        };
+
+        let start = Ti::start();
+        let result = runnable(input);
+        let duration = start.elapsed();
+
+        SolverResult::Success {
+            result: result.to_string(),
+            solution,
+            duration,
         }
     }
 }

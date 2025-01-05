@@ -12,8 +12,8 @@ use rayon::ThreadPoolBuilder;
 
 use super::source::source_path_fill_tokens;
 use crate::{
-    derived::Bin,
-    runner::{DurationThresholds, Solver, SolverRunResult},
+    derived::{Bin, Solver},
+    runner::{DurationThresholds, SolverResult},
     source::{Source, SourceValueParser},
 };
 
@@ -29,10 +29,10 @@ fn create_target_value_parser() -> impl TypedValueParser {
     for bin in BINS.get().unwrap() {
         options.push(PossibleValue::new(bin.year.to_string()));
         options.push(create_value(bin.name, ""));
-        if bin.part1.is_some() {
+        if bin.part1.is_implemented() {
             options.push(create_value(bin.name, "-1"));
         }
-        if bin.part2.is_some() {
+        if bin.part2.is_implemented() {
             options.push(create_value(bin.name, "-2"));
         }
     }
@@ -125,25 +125,25 @@ impl TargetArgs {
             let only: HashSet<_> = only.iter().flatten().collect();
             for bin in &mut bins {
                 if !only.contains(&(bin.year, bin.day, 1)) {
-                    bin.part1 = None;
+                    bin.part1 = Solver::NotImplemented;
                 }
                 if !only.contains(&(bin.year, bin.day, 2)) {
-                    bin.part2 = None;
+                    bin.part2 = Solver::NotImplemented;
                 }
             }
         } else if let Some(skip) = &self.skip {
             let skip: HashSet<_> = skip.iter().flatten().collect();
             for bin in &mut bins {
                 if skip.contains(&(bin.year, bin.day, 1)) {
-                    bin.part1 = None;
+                    bin.part1 = Solver::NotImplemented;
                 }
                 if skip.contains(&(bin.year, bin.day, 2)) {
-                    bin.part2 = None;
+                    bin.part2 = Solver::NotImplemented;
                 }
             }
         }
         bins.into_iter()
-            .filter(|bin| bin.part1.is_some() || bin.part2.is_some())
+            .filter(|bin| bin.part1.is_implemented() || bin.part2.is_implemented())
             .collect()
     }
 
@@ -156,7 +156,7 @@ impl TargetArgs {
                         (1, &bin.part1, example.part1),
                         (2, &bin.part2, example.part2),
                     ] {
-                        if !solver.is_some() {
+                        if !solver.is_implemented() {
                             continue;
                         }
                         let Some(solution) = solution else {
@@ -166,7 +166,7 @@ impl TargetArgs {
                             bin: bin.name.to_owned(),
                             part: i,
                             source_name: Some(example.name.to_owned()),
-                            solver: (*solver).into(),
+                            solver: solver.to_owned(),
                             input: Source::Inline {
                                 source: example.name.to_owned(),
                                 contents: example.input.to_owned(),
@@ -183,7 +183,7 @@ impl TargetArgs {
             for bin in bins {
                 let input = source_path_fill_tokens!(self.input_pattern, bin = bin);
                 for (i, solver) in [(1, &bin.part1), (2, &bin.part2)] {
-                    if solver.is_none() {
+                    if !solver.is_implemented() {
                         continue;
                     }
                     let solution =
@@ -192,7 +192,7 @@ impl TargetArgs {
                         bin: bin.name.to_owned(),
                         part: i,
                         source_name: None,
-                        solver: (*solver).into(),
+                        solver: solver.to_owned(),
                         input: input.clone(),
                         solution,
                     });
@@ -239,7 +239,7 @@ pub fn main() {
         Cyan.paint(targets.len().to_string()),
         Cyan.paint(
             bins.iter()
-                .map(|d| u8::from(d.part1.is_some()) + u8::from(d.part2.is_some()))
+                .map(|d| u8::from(d.part1.is_implemented()) + u8::from(d.part2.is_implemented()))
                 .sum::<u8>()
                 .to_string()
         ),
@@ -249,7 +249,7 @@ pub fn main() {
     // Initialize the thread pool now. This will happen automatically when it's first needed, but if this is inside a solution this will add to the runtime of that solution, unfairly penalizing it for being the first to use rayon while the other solutions that also do so get a free pass.
     ThreadPoolBuilder::new().build_global().unwrap();
 
-    let runs: Vec<(String, SolverRunResult)> = targets
+    let runs: Vec<(String, SolverResult)> = targets
         .into_iter()
         .map(|target| {
             let mut name = format!("{} part {}", target.bin, target.part);
@@ -260,7 +260,7 @@ pub fn main() {
             let input = match target.input.read() {
                 Ok(input) => input,
                 Err(err) => {
-                    return (name, SolverRunResult::Error(err));
+                    return (name, SolverResult::Error(err));
                 }
             };
 
@@ -277,8 +277,8 @@ pub fn main() {
     let durations = runs
         .iter()
         .filter_map(|(_, r)| match r {
-            SolverRunResult::Success { duration, .. } => Some(*duration),
-            SolverRunResult::Error(_) => None,
+            SolverResult::Success { duration, .. } => Some(*duration),
+            SolverResult::Error(_) => None,
         })
         .collect::<Vec<_>>();
     let duration_total = durations.iter().sum::<Duration>();

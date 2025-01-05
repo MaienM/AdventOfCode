@@ -2,8 +2,6 @@
 
 use std::ops::Deref;
 
-type Processor<T> = Option<fn(&str) -> T>;
-
 /// The main components of the implementation of a single day.
 #[derive(Clone)]
 pub struct Bin {
@@ -17,21 +15,36 @@ pub struct Bin {
     pub day: u8,
 
     /// The runnable for part 1, with the result cast to a string.
-    pub part1: Processor<String>,
+    pub part1: Solver<String>,
 
     /// The runnable for part 2, with the result cast to a string.
-    pub part2: Processor<String>,
+    pub part2: Solver<String>,
 
     /// The visualizer for part 1.
     #[cfg(feature = "visual")]
-    pub visual1: Processor<Box<dyn crate::visual::Renderable>>,
+    pub visual1: Solver<Box<dyn crate::visual::Renderable>>,
 
     /// The visualizer for part 2.
     #[cfg(feature = "visual")]
-    pub visual2: Processor<Box<dyn crate::visual::Renderable>>,
+    pub visual2: Solver<Box<dyn crate::visual::Renderable>>,
 
     /// The examples.
     pub examples: Vec<Example>,
+}
+
+/// The implementation (or lack thereof) for a single puzzle within a [`Bin`].
+#[derive(Clone)]
+pub enum Solver<T> {
+    Implemented(fn(&str) -> T),
+    NotImplemented,
+}
+impl<T> Solver<T> {
+    pub fn is_implemented(&self) -> bool {
+        match self {
+            Solver::Implemented(_) => true,
+            Solver::NotImplemented => false,
+        }
+    }
 }
 
 /// An example input.

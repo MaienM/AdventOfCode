@@ -26,21 +26,16 @@ macro_rules! return_err {
     };
 }
 
-fn optional_expr(expr: &Option<Expr>) -> Expr {
-    expr.as_ref()
-        .map_or(parse_quote!(None), |f| parse_quote!(Some(#f)))
-}
-
 struct BinScanner {
     mod_root_path: Punctuated<PathSegment, Token![::]>,
     mod_visual_path: Punctuated<PathSegment, Token![::]>,
     current_path: Punctuated<PathSegment, Token![::]>,
     pub(crate) path: String,
     pub(crate) name: String,
-    pub(crate) part1: Option<Expr>,
-    pub(crate) part2: Option<Expr>,
-    pub(crate) visual1: Option<Expr>,
-    pub(crate) visual2: Option<Expr>,
+    pub(crate) part1: Expr,
+    pub(crate) part2: Expr,
+    pub(crate) visual1: Expr,
+    pub(crate) visual2: Expr,
     pub(crate) examples: Vec<Expr>,
 }
 impl BinScanner {
@@ -55,10 +50,10 @@ impl BinScanner {
                 p
             },
             current_path: modpath.path.segments,
-            part1: None,
-            part2: None,
-            visual1: None,
-            visual2: None,
+            part1: parse_quote!(::aoc_runner::derived::Solver::NotImplemented),
+            part2: parse_quote!(::aoc_runner::derived::Solver::NotImplemented),
+            visual1: parse_quote!(::aoc_runner::derived::Solver::NotImplemented),
+            visual2: parse_quote!(::aoc_runner::derived::Solver::NotImplemented),
             examples: Vec::new(),
         };
 
@@ -70,17 +65,21 @@ impl BinScanner {
     }
 
     pub(crate) fn to_expr(&self) -> Expr {
-        let BinScanner { name, examples, .. } = self;
+        let BinScanner {
+            name,
+            part1,
+            part2,
+            visual1,
+            visual2,
+            examples,
+            ..
+        } = self;
 
         let (year, day): (u8, u8) = if name == "template" {
             (0, 0)
         } else {
             (name[0..2].parse().unwrap(), name[3..5].parse().unwrap())
         };
-        let part1 = optional_expr(&self.part1);
-        let part2 = optional_expr(&self.part2);
-        let visual1 = optional_expr(&self.visual1);
-        let visual2 = optional_expr(&self.visual2);
 
         parse_quote! {
             ::aoc_runner::derived::Bin {
@@ -117,14 +116,22 @@ impl<'ast> Visit<'ast> for BinScanner {
         let cp = &self.current_path;
         if cp == &self.mod_root_path {
             match node.sig.ident.to_string().as_str() {
-                "part1" => self.part1 = Some(parse_quote!(|i| #cp::part1(i).to_string())),
-                "part2" => self.part2 = Some(parse_quote!(|i| #cp::part2(i).to_string())),
+                "part1" => {
+                    self.part1 = parse_quote!(::aoc_runner::derived::Solver::Implemented(|i| #cp::part1(i).to_string()))
+                }
+                "part2" => {
+                    self.part2 = parse_quote!(::aoc_runner::derived::Solver::Implemented(|i| #cp::part2(i).to_string()))
+                }
                 _ => {}
             }
         } else if cp == &self.mod_visual_path {
             match node.sig.ident.to_string().as_str() {
-                "part1" => self.visual1 = Some(parse_quote!(|i| #cp::part1(i).into())),
-                "part2" => self.visual2 = Some(parse_quote!(|i| #cp::part2(i).into())),
+                "part1" => {
+                    self.visual1 = parse_quote!(::aoc_runner::derived::Solver::Implemented(|i| #cp::part1(i).into()))
+                }
+                "part2" => {
+                    self.visual2 = parse_quote!(::aoc_runner::derived::Solver::Implemented(|i| #cp::part2(i).into()))
+                }
                 _ => {}
             }
         }

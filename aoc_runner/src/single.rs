@@ -8,7 +8,7 @@ use rayon::ThreadPoolBuilder;
 
 use crate::{
     derived::Bin,
-    runner::{DurationThresholds, Solver, SolverRunResult},
+    runner::{DurationThresholds, SolverResult},
     source::{source_path_fill_tokens, Source, SourceValueParser},
 };
 
@@ -125,8 +125,7 @@ pub fn main(bin: &Bin) {
                     crate::visual::spawn_window(move || f(&input))
                 });
 
-                let solver: Solver<_> = (*part).into();
-                let result = solver.run(&input, solution);
+                let result = part.run(&input, solution);
 
                 #[cfg(feature = "visual")]
                 vis_handle.map(::std::thread::JoinHandle::join);
@@ -134,7 +133,7 @@ pub fn main(bin: &Bin) {
                 #[cfg_attr(not(feature = "visual"), allow(clippy::let_and_return))]
                 result
             }
-            Err(err) => SolverRunResult::Error(err),
+            Err(err) => SolverResult::Error(err),
         };
         result.print(&format!("Part {i}"), &THRESHOLDS, true);
     }

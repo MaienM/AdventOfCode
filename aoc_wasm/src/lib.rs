@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use aoc::bins::BINS;
-use aoc_runner::runner::{Solver, Timer};
+use aoc_runner::{derived::Solver, runner::Timer};
 use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;
@@ -90,7 +90,7 @@ impl Bin {
     // How many parts are implemented in this binary.
     #[wasm_bindgen(getter)]
     pub fn parts(&self) -> u8 {
-        u8::from(self.0.part1.is_some()) + u8::from(self.0.part2.is_some())
+        u8::from(self.0.part1.is_implemented()) + u8::from(self.0.part2.is_implemented())
     }
 
     /// The examples
@@ -130,14 +130,14 @@ impl Example {
     }
 }
 
-/// WASM wrapper for [`aoc_runner::runner::SolverRunResult::Success`].
+/// WASM wrapper for [`aoc_runner::runner::SolverResult::Success`].
 #[wasm_bindgen]
-pub struct SolverRunResult {
+pub struct SolverResult {
     result: String,
     duration: Duration,
 }
 #[wasm_bindgen]
-impl SolverRunResult {
+impl SolverResult {
     /// The result of the solver, converted to a string.
     #[wasm_bindgen(getter)]
     pub fn result(&self) -> String {
@@ -150,15 +150,15 @@ impl SolverRunResult {
         time::duration_to_js(&self.duration)
     }
 }
-impl TryFrom<aoc_runner::runner::SolverRunResult> for SolverRunResult {
+impl TryFrom<aoc_runner::runner::SolverResult> for SolverResult {
     type Error = String;
 
-    fn try_from(value: aoc_runner::runner::SolverRunResult) -> Result<Self, Self::Error> {
+    fn try_from(value: aoc_runner::runner::SolverResult) -> Result<Self, Self::Error> {
         match value {
-            aoc_runner::runner::SolverRunResult::Success {
+            aoc_runner::runner::SolverResult::Success {
                 result, duration, ..
-            } => Ok(SolverRunResult { result, duration }),
-            aoc_runner::runner::SolverRunResult::Error(err) => Err(err),
+            } => Ok(SolverResult { result, duration }),
+            aoc_runner::runner::SolverResult::Error(err) => Err(err),
         }
     }
 }
@@ -171,17 +171,16 @@ pub fn list() -> Vec<Bin> {
 
 /// Run a single part of a single [`Bin`].
 #[wasm_bindgen]
-pub fn run(name: &str, part: u8, input: &str) -> Result<SolverRunResult, String> {
+pub fn run(name: &str, part: u8, input: &str) -> Result<SolverResult, String> {
     let bin = BINS
         .iter()
         .find(|d| d.name == name)
         .ok_or(format!("Cannot find implementation for {name}."))?;
     let solver: Solver<String> = match part {
-        1 => bin.part1,
-        2 => bin.part2,
+        1 => bin.part1.clone(),
+        2 => bin.part2.clone(),
         _ => return Err(format!("Invalid part {part}.")),
-    }
-    .into();
+    };
 
     std::panic::catch_unwind(move || {
         solver
