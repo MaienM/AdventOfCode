@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Linen Layout");
 
 use std::collections::HashMap;
 

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Bridge Repair");
 
 use rayon::prelude::*;
 

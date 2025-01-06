@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Hot Springs");
 
 use std::collections::HashMap;
 

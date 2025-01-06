@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Monkey in the Middle");
 
 #[derive(Debug, PartialEq, Eq)]
 enum Operation {

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Ceres Search");
 
 use aoc::point::Point2;
 

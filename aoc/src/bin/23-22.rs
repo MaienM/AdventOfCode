@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Sand Slabs");
 
 use std::{collections::HashSet, ops::RangeInclusive};
 

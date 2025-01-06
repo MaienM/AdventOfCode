@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Blizzard Basin");
 
 use std::{collections::HashSet, ops::Range};
 

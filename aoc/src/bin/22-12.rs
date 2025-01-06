@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Hill Climbing Algorithm");
 
 use std::{
     cmp::Ordering,

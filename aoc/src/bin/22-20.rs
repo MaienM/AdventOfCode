@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Grove Positioning System");
 
 use std::collections::VecDeque;
 

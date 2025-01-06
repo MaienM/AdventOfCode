@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Rucksack Reorganization");
 
 use std::collections::HashSet;
 

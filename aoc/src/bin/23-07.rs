@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Camel Cards");
 
 type Card = char;
 

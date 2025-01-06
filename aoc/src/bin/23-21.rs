@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Step Counter");
 
 use std::collections::HashSet;
 

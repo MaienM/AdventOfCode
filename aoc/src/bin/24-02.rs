@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Red-Nosed Reports");
 
 use std::mem;
 

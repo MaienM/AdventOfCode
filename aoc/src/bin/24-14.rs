@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Restroom Redoubt");
 
 use std::{cmp::Ordering, collections::HashSet};
 

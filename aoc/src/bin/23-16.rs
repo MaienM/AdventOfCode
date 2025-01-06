@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "The Floor Will Be Lava");
 
 use std::{collections::HashSet, sync::Arc};
 

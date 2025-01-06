@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Beacon Exclusion Zone");
 
 use std::{iter, ops::Range};
 

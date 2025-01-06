@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Monkey Math");
 
 use std::collections::HashMap;
 

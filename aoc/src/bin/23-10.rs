@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Pipe Maze");
 
 use std::collections::HashSet;
 

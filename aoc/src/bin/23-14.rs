@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Parabolic Reflector Dish");
 
 use std::{
     collections::HashMap,

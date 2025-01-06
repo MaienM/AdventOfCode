@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Rope Bridge");
 
 use std::collections::HashSet;
 

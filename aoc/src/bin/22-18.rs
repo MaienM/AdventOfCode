@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Boiling Boulders");
 
 use std::{
     cmp::Ordering,

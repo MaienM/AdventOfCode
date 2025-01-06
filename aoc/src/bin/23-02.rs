@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Cube Conundrum");
 
 #[derive(Debug, PartialEq)]
 struct Game {

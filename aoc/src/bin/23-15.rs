@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Lens Library");
 
 use std::vec::Vec;
 

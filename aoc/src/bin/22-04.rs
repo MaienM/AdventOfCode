@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Camp Cleanup");
 
 use std::ops::RangeInclusive;
 

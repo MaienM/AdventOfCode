@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Cathode-Ray Tube");
 
 use std::convert::TryInto;
 

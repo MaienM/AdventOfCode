@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Crossed Wires");
 
 use std::{collections::HashMap, fs::File, io::Write as _};
 

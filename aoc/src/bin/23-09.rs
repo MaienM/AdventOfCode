@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Mirage Maintenance");
 
 fn parse_input(input: &str) -> Vec<Vec<isize>> {
     parse!(input => {

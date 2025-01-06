@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Disk Fragmenter");
 
 use std::cmp::Ordering;
 

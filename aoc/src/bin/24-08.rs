@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Resonant Collinearity");
 
 use std::collections::{HashMap, HashSet};
 

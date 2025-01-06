@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Mull It Over");
 
 #[derive(Debug, Eq, PartialEq)]
 enum Instruction {

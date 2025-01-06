@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Snowverload");
 
 use std::collections::{HashMap, HashSet};
 

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Lavaduct Lagoon");
 
 use std::{collections::HashSet, ops::RangeInclusive};
 

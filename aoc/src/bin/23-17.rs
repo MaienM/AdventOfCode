@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Clumsy Crucible");
 
 use std::{
     cmp::Ordering,

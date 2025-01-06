@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "A Long Walk");
 
 use std::{collections::HashMap, mem};
 

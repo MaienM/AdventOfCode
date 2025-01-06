@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Cosmic Expansion");
 
 use std::collections::HashSet;
 

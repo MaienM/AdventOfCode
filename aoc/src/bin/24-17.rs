@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Chronospatial Computer");
 
 type Registers = [usize; 3];
 

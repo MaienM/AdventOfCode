@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Point of Incidence");
 
 type Map = Vec<Vec<bool>>;
 

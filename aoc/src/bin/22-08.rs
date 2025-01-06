@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Treetop Tree House");
 
 use std::collections::HashSet;
 

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Guard Gallivant");
 
 use std::collections::HashSet;
 

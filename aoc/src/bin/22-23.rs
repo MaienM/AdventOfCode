@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Unstable Diffusion");
 
 use std::collections::HashSet;
 

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Garden Groups");
 
 use std::collections::HashSet;
 

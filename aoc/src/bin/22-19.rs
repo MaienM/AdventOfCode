@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Not Enough Minerals");
 
 use std::ops::{AddAssign, SubAssign};
 

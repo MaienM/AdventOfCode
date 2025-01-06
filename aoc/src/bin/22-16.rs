@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Proboscidea Volcanium");
 
 use std::collections::{BinaryHeap, HashMap, HashSet};
 

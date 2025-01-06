@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Haunted Wasteland");
 
 use std::{collections::HashMap, sync::Arc};
 

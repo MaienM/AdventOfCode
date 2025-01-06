@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Reindeer Maze");
 
 use std::collections::{BinaryHeap, HashMap, HashSet};
 

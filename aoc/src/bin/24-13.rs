@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Claw Contraption");
 
 use aoc::{matrix::Matrix, point::Point2};
 

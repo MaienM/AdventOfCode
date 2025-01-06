@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Aplenty");
 
 use std::{collections::HashMap, ops::RangeInclusive};
 

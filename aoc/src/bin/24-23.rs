@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "LAN Party");
 
 use std::collections::{HashMap, HashSet};
 

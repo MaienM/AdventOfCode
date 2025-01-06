@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Pyroclastic Flow");
 
 use std::collections::HashSet;
 

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Never Tell Me The Odds");
 
 use std::ops::Range;
 

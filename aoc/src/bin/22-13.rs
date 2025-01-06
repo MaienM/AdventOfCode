@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Distress Signal");
 
 use std::cmp::Ordering;
 

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Race Condition");
 
 use std::collections::{BinaryHeap, HashSet};
 

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Scratchcards");
 
 use std::collections::{HashMap, HashSet};
 

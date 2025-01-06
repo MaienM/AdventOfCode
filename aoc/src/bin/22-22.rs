@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Monkey Map");
 
 use std::{
     collections::HashSet,

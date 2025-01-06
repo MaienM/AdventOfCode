@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "If You Give A Seed A Fertilizer");
 
 use std::{collections::HashMap, mem, ops::Range};
 

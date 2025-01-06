@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Tuning Trouble");
 
 use std::collections::HashSet;
 

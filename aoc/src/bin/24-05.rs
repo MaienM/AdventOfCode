@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Print Queue");
 
 use std::cmp::Ordering;
 

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Warehouse Woes");
 
 use aoc::point::{Direction2, Point2};
 

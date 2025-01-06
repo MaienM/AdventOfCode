@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Keypad Conundrum");
 
 use std::{cmp::Ordering, collections::HashMap, vec::Vec};
 

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Regolith Reservoir");
 
 use std::collections::HashSet;
 

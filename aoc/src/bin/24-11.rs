@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Plutonian Pebbles");
 
 use std::collections::HashMap;
 

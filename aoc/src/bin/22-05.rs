@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Supply Stacks");
 
 use std::collections::VecDeque;
 

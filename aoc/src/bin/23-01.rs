@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Trebuchet?!");
 
 fn parse_input(input: &str) -> Vec<u32> {
     parse!(input => {

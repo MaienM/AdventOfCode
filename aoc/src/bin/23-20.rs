@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Pulse Propagation");
 
 use std::collections::{HashMap, HashSet, VecDeque};
 

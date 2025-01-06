@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Wait For It");
 
 #[derive(Debug, PartialEq)]
 struct Race {

@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Gear Ratios");
 
 use std::collections::HashMap;
 

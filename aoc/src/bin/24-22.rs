@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Monkey Market");
 
 use std::collections::HashMap;
 

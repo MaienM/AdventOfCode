@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "RAM Run");
 
 use std::collections::{BinaryHeap, HashSet};
 

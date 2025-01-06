@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "Rock Paper Scissors");
 
 use derive_new::new;
 
