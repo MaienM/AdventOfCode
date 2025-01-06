@@ -309,7 +309,25 @@ pub fn inject_binaries(input: TokenStream, annotated_item: TokenStream) -> Token
     let itemdef = fill_static(
         itemdef,
         parse_quote!(once_cell::sync::Lazy<Vec<::aoc_runner::derived::Bin>>),
-        parse_quote!(once_cell::sync::Lazy::new(|| vec![ #(#binexprs),* ])),
+        parse_quote!(once_cell::sync::Lazy::new(|| {
+            let bins = vec![ #(#binexprs),* ];
+
+            let mut seen = ::std::collections::HashMap::new();
+            for bin in &bins {
+                let Some(title) = bin.title else { continue };
+
+                if title.is_empty() {
+                    panic!("Binary {} has empty title, this is not valid. (Not having a title _is_ valid.)", bin.name);
+                } else if let Some(other_bin) = seen.insert(title, bin.name) {
+                    panic!(
+                        "Binary {} and {} both have title '{title}', this is not valid.",
+                        other_bin, bin.name
+                    );
+                }
+            }
+
+            bins
+        })),
     );
 
     quote! {
