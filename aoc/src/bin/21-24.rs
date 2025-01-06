@@ -1,8 +1,8 @@
+aoc::setup!(title = "");
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::{collections::VecDeque, fmt::Debug, ops::RangeInclusive};
 
-use aoc::{range::range, runner::*};
 
 type Registers = [i64; 4];
 
@@ -93,7 +93,7 @@ fn parse_value(value: Option<&str>) -> Result<Value, String> {
         .map_err(|e| e.to_string());
 }
 
-fn parse_input(input: String) -> Vec<Instruction> {
+fn parse_input(input: &str) -> Vec<Instruction> {
     return input
         .trim()
         .split("\n")
@@ -387,7 +387,7 @@ fn apply_instructions(
     }
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let instructions = parse_input(input);
     let instructions = optimize_instructions(instructions);
 
@@ -427,17 +427,15 @@ pub fn part1(input: String) -> usize {
     return result.parse().unwrap();
 }
 
-fn main() {
-    run(part1, missing::<i64>);
-}
-
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 0, part2 = 0)]
+    static EXAMPLE_INPUT: &str = "
         inp w
         add z w
         mod z 2
@@ -453,7 +451,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             Instruction::Inp(Variable::W),
             Instruction::Add(Variable::Z, Value::Variable(Variable::W)),

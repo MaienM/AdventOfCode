@@ -1,4 +1,4 @@
-use aoc::runner::*;
+aoc::setup!(title = "Dive!");
 
 #[derive(Debug, PartialEq)]
 enum Direction {
@@ -6,34 +6,29 @@ enum Direction {
     Down,
     Up,
 }
+impl From<&str> for Direction {
+    fn from(value: &str) -> Self {
+        match value {
+            "forward" => Direction::Forward,
+            "down" => Direction::Down,
+            "up" => Direction::Up,
+            _ => panic!("Invalid direction {value}"),
+        }
+    }
+}
 
 type Instruction = (Direction, u32);
 
-fn parse_input(input: String) -> Vec<Instruction> {
-    let lines = input.trim().split("\n").map(str::trim);
-    return lines
-        .map(|line| {
-            let mut parts = line.splitn(2, " ");
-            let direction = parts
-                .next()
-                .unwrap_or_else(|| panic!("Unable to get direction from line {}.", line));
-            let direction = match direction {
-                "forward" => Direction::Forward,
-                "down" => Direction::Down,
-                "up" => Direction::Up,
-                _ => panic!("Invalid line {}.", line),
-            };
-            let distance = parts
-                .next()
-                .unwrap_or_else(|| panic!("Unable to get distance from line {}.", line))
-                .parse::<u32>()
-                .unwrap_or_else(|_| panic!("Unable to parse distance from line {}.", line));
-            return (direction, distance);
-        })
-        .collect();
+fn parse_input(input: &str) -> Vec<Instruction> {
+    parse!(input => {
+        [instructions split on '\n' with
+            { [direction as Direction] ' ' [distance as u32] }
+            => (direction, distance)
+        ]
+    } => instructions)
 }
 
-pub fn part1(input: String) -> i64 {
+pub fn part1(input: &str) -> i64 {
     let instructions = parse_input(input);
     let mut hpos = 0;
     let mut vpos = 0;
@@ -45,10 +40,10 @@ pub fn part1(input: String) -> i64 {
             Direction::Up => vpos -= distance,
         }
     }
-    return (hpos * vpos).into();
+    (hpos * vpos).into()
 }
 
-pub fn part2(input: String) -> i64 {
+pub fn part2(input: &str) -> i64 {
     let instructions = parse_input(input);
     let mut aim = 0;
     let mut hpos = 0;
@@ -64,20 +59,18 @@ pub fn part2(input: String) -> i64 {
             Direction::Up => aim -= distance,
         }
     }
-    return (hpos * vpos).into();
-}
-
-fn main() {
-    run(part1, part2);
+    (hpos * vpos).into()
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 150, part2 = 900)]
+    static EXAMPLE_INPUT: &str = "
         forward 5
         down 5
         forward 8
@@ -88,7 +81,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             (Direction::Forward, 5),
             (Direction::Down, 5),
@@ -98,15 +91,5 @@ mod tests {
             (Direction::Forward, 2),
         ];
         assert_eq!(&actual, &expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 150);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 900);
     }
 }

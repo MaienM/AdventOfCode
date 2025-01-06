@@ -1,4 +1,4 @@
-use aoc::runner::*;
+aoc::setup!(title = "Seven Segment Search");
 
 /*
  * Overview:
@@ -62,7 +62,7 @@ use aoc::runner::*;
  * - X: The wire that appears in digit 7 that doesn't correspond to segments C or E is segment A.
  * - XI: The remaining wire is segment G.
  *
- * Case IV, while easy to detect, are not actually used in figuring out which wire is which segment.
+ * Case IV, while easy to detect, is not actually used in figuring out which wire is which segment.
  */
 
 type Signals<'a> = [&'a str; 10];
@@ -72,71 +72,51 @@ type Line<'a> = (Signals<'a>, Digits<'a>);
 
 const CHAR_OFFSET: usize = 'a' as usize;
 
-fn parse_line<'a>(line: &'a str) -> Line<'a> {
-    let parts: [&str; 2] = line
-        .splitn(2, "|")
-        .collect::<Vec<&str>>()
-        .try_into()
-        .unwrap();
-    let patterns: [&str; 10] = parts[0]
-        .trim()
-        .split(" ")
-        .map(str::trim)
-        .collect::<Vec<&str>>()
-        .try_into()
-        .unwrap();
-    let digits: [&str; 4] = parts[1]
-        .trim()
-        .split(" ")
-        .map(str::trim)
-        .collect::<Vec<&str>>()
-        .try_into()
-        .unwrap();
-
-    return (patterns, digits);
-}
-
-fn parse_input<'a>(input: &'a str) -> Vec<Line<'a>> {
-    return input.trim().split("\n").map(parse_line).collect();
+fn parse_input(input: &str) -> Vec<Line> {
+    parse!(input => {
+        [lines split on '\n' with
+            { [signals split] " | " [digits split] }
+            => (signals.try_into().unwrap(), digits.try_into().unwrap())
+        ]
+    } => lines)
 }
 
 fn chr_to_idx(chr: char) -> usize {
-    return (chr as usize) - CHAR_OFFSET;
+    (chr as usize) - CHAR_OFFSET
 }
 
 fn idx_to_chr(idx: usize) -> char {
-    return (idx + CHAR_OFFSET) as u8 as char;
+    (idx + CHAR_OFFSET) as u8 as char
 }
 
 // The strings we get are not sorted (e.g. we could get 7 as any of [acf, afc, cfa, caf, fac, fca]).
 // This method converts a string into a number that is based only on the contained characters, not their order.
 fn str_to_id(string: &str) -> u32 {
-    return string.chars().map(|c| 2u32.pow(chr_to_idx(c) as u32)).sum();
+    string.chars().map(|c| 2u32.pow(chr_to_idx(c) as u32)).sum()
 }
 
 fn get_signal_char_used_x_times(signal_chars_uses: [u32; 7], count: u32) -> char {
-    return signal_chars_uses
+    signal_chars_uses
         .into_iter()
         .enumerate()
         .find(|p| p.1 == count)
         .map(|p| idx_to_chr(p.0))
-        .unwrap();
+        .unwrap()
 }
 
 fn get_signal_char_not_yet_used(string: &str, used: &[char]) -> char {
-    return string
+    string
         .chars()
-        .into_iter()
         .find(|chr| !used.contains(chr))
         .unwrap()
-        .to_owned();
+        .to_owned()
 }
 
 fn get_signal_char_not_using<'a>(signals: &Vec<&'a str>, chr: char) -> &'a str {
-    return signals.iter().find(|signal| !signal.contains(chr)).unwrap();
+    signals.iter().find(|signal| !signal.contains(chr)).unwrap()
 }
 
-fn find_signal_mapping<'a>(signals: Signals) -> OrderedSignals {
+fn find_signal_mapping(signals: Signals) -> OrderedSignals {
     let mut signal_chars_uses = [0; 7];
     for chr in signals.into_iter().flat_map(str::chars) {
         signal_chars_uses[chr_to_idx(chr)] += 1;
@@ -175,7 +155,7 @@ fn find_signal_mapping<'a>(signals: Signals) -> OrderedSignals {
         .find(|s| s.contains(seg_c) && s.contains(seg_e))
         .unwrap();
 
-    return [
+    [
         signal_for_0,
         signal_for_1,
         signal_for_2,
@@ -186,7 +166,7 @@ fn find_signal_mapping<'a>(signals: Signals) -> OrderedSignals {
         signal_for_7,
         signal_for_8,
         signal_for_9,
-    ];
+    ]
 }
 
 fn calculate_line_number(line: &Line) -> u32 {
@@ -203,7 +183,7 @@ fn calculate_line_number(line: &Line) -> u32 {
         .collect::<Vec<u32>>()
         .try_into()
         .unwrap();
-    return [
+    [
         1000 * mapping_as_ids
             .into_iter()
             .position(|d| d == digits_as_ids[0])
@@ -222,35 +202,33 @@ fn calculate_line_number(line: &Line) -> u32 {
             .unwrap(),
     ]
     .iter()
-    .sum::<usize>() as u32;
+    .sum::<usize>() as u32
 }
 
-pub fn part1(input: String) -> u32 {
-    let lines = parse_input(&input);
-    return lines
+pub fn part1(input: &str) -> u32 {
+    let lines = parse_input(input);
+    lines
         .iter()
         .flat_map(|line| line.1)
         .map(str::len)
         .filter(|len| [2, 3, 4, 7].contains(len))
-        .count() as u32;
+        .count() as u32
 }
 
-pub fn part2(input: String) -> u32 {
-    let lines = parse_input(&input);
-    return lines.iter().map(calculate_line_number).sum::<u32>() as u32;
-}
-
-fn main() {
-    run(part1, part2);
+pub fn part2(input: &str) -> u32 {
+    let lines = parse_input(input);
+    lines.iter().map(calculate_line_number).sum::<u32>() as u32
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 26, part2 = 61_229)]
+    static EXAMPLE_INPUT: &str = "
         be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
         edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc
         fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg
@@ -265,7 +243,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT);
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             (
                 [
@@ -350,15 +328,5 @@ mod tests {
             "cagedb", "ab", "gcdfa", "fbcad", "eafb", "cdfbe", "cdfgeb", "dab", "acedgfb", "cefabd",
         ];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 26);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 61229);
     }
 }

@@ -1,13 +1,12 @@
-use std::fmt::Debug;
-use std::ops::RangeInclusive;
+aoc::setup!(title = "Reactor Reboot");
 
-use aoc::runner::*;
+use std::{fmt::Debug, ops::RangeInclusive};
 
 fn ranges_overlap(lhs: &RangeInclusive<i64>, rhs: &RangeInclusive<i64>) -> bool {
-    return lhs.contains(rhs.start())
+    lhs.contains(rhs.start())
         || lhs.contains(rhs.end())
         || rhs.contains(lhs.start())
-        || rhs.contains(lhs.end());
+        || rhs.contains(lhs.end())
 }
 
 #[derive(Eq, PartialEq)]
@@ -18,15 +17,15 @@ struct Region(
 );
 impl Region {
     fn size(&self) -> u64 {
-        return (self.0.end() - self.0.start() + 1) as u64
+        (self.0.end() - self.0.start() + 1) as u64
             * (self.1.end() - self.1.start() + 1) as u64
-            * (self.2.end() - self.2.start() + 1) as u64;
+            * (self.2.end() - self.2.start() + 1) as u64
     }
 
     fn overlaps(&self, other: &Region) -> bool {
-        return ranges_overlap(&self.0, &other.0)
+        ranges_overlap(&self.0, &other.0)
             && ranges_overlap(&self.1, &other.1)
-            && ranges_overlap(&self.2, &other.2);
+            && ranges_overlap(&self.2, &other.2)
     }
 
     fn without(&self, other: &Region) -> Option<Vec<Region>> {
@@ -89,7 +88,7 @@ impl Region {
             ));
         }
 
-        return Some(parts);
+        Some(parts)
     }
 }
 impl Debug for Region {
@@ -109,14 +108,9 @@ struct Step(Region, bool);
 struct RegionalManager(Vec<Region>);
 impl RegionalManager {
     fn turn_off(&mut self, region: &Region) {
-        loop {
-            match self.0.iter().position(|r| r.overlaps(region)) {
-                Some(pos) => {
-                    let overlapping = self.0.swap_remove(pos);
-                    self.0.append(&mut overlapping.without(region).unwrap());
-                }
-                None => break,
-            }
+        while let Some(pos) = self.0.iter().position(|r| r.overlaps(region)) {
+            let overlapping = self.0.swap_remove(pos);
+            self.0.append(&mut overlapping.without(region).unwrap());
         }
     }
 
@@ -126,39 +120,33 @@ impl RegionalManager {
     }
 
     fn count_enabled(&self) -> u64 {
-        return self.0.iter().map(Region::size).sum();
+        self.0.iter().map(Region::size).sum()
     }
 }
 
-fn parse_input(input: String) -> Vec<Step> {
-    return input
-        .trim()
-        .split("\n")
-        .map(str::trim)
-        .map(|line| {
-            let mut parts = line.splitn(2, " ");
-            let status = match parts.next() {
-                Some("on") => true,
-                Some("off") => false,
-                _ => panic!("Bad input, no cookie."),
-            };
-            let mut ranges = parts.next().unwrap().splitn(3, ",").map(|range| {
-                let mut parts = range[2..].splitn(2, "..").map(|p| p.parse().unwrap());
-                return (parts.next().unwrap())..=(parts.next().unwrap());
-            });
-            return Step(
-                Region(
-                    ranges.next().unwrap(),
-                    ranges.next().unwrap(),
-                    ranges.next().unwrap(),
-                ),
-                status,
-            );
-        })
-        .collect();
+fn parse_input(input: &str) -> Vec<Step> {
+    fn parse_on_off(value: &str) -> bool {
+        match value {
+            "on" => true,
+            "off" => false,
+            _ => panic!("Bad input ({value:?}), no cookie."),
+        }
+    }
+
+    parse!(input => {
+        [steps split on '\n' with
+            { 
+                [status with parse_on_off]
+                " x=" [x1 as i64] ".." [x2 as i64]
+                ",y=" [y1 as i64] ".." [y2 as i64]
+                ",z=" [z1 as i64] ".." [z2 as i64]
+            }
+            => Step(Region(x1..=x2, y1..=y2, z1..=z2), status)
+        ]
+    } => steps)
 }
 
-pub fn part1(input: String) -> u64 {
+pub fn part1(input: &str) -> u64 {
     let steps = parse_input(input);
     let mut manager = RegionalManager(Vec::new());
 
@@ -175,10 +163,10 @@ pub fn part1(input: String) -> u64 {
         }
     }
 
-    return manager.count_enabled();
+    manager.count_enabled()
 }
 
-pub fn part2(input: String) -> u64 {
+pub fn part2(input: &str) -> u64 {
     let steps = parse_input(input);
     let mut manager = RegionalManager(Vec::new());
 
@@ -190,20 +178,18 @@ pub fn part2(input: String) -> u64 {
         }
     }
 
-    return manager.count_enabled();
-}
-
-fn main() {
-    run(part1, part2);
+    manager.count_enabled()
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT_1: &'static str = "
+    #[example_input(part1 = 590_784)]
+    static EXAMPLE_INPUT_1: &str = "
         on x=-20..26,y=-36..17,z=-47..7
         on x=-20..33,y=-21..23,z=-26..28
         on x=-22..28,y=-29..23,z=-38..16
@@ -228,7 +214,8 @@ mod tests {
         on x=967..23432,y=45373..81175,z=27513..53682
     ";
 
-    const EXAMPLE_INPUT_2: &'static str = "
+    #[example_input(part2 = 2_758_514_936_282_235)]
+    static EXAMPLE_INPUT_2: &str = "
         on x=-5..47,y=-31..22,z=-19..33
         on x=-44..5,y=-27..21,z=-14..35
         on x=-49..-1,y=-11..42,z=-10..38
@@ -293,7 +280,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT_1.to_string());
+        let actual = parse_input(&EXAMPLE_INPUT_1);
         let expected = vec![
             Step(Region(-20..=26, -36..=17, -47..=7), true),
             Step(Region(-20..=33, -21..=23, -26..=28), true),
@@ -346,15 +333,5 @@ mod tests {
                 Region(5..=10, 2..=8, 6..=10),
             ],
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT_1.to_string()), 590784);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT_2.to_string()), 2758514936282235);
     }
 }

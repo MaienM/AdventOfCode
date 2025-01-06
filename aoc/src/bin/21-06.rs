@@ -1,17 +1,23 @@
-use aoc::{parse_number_list, runner::*};
+aoc::setup!(title = "Lanternfish");
 
 type State = [u64; 9];
 
-fn get_state(input: Vec<i32>) -> State {
+fn parse_input(input: &str) -> State {
+    parse!(input => {
+        [nums split on ',' as usize]
+    } => get_state(nums))
+}
+
+fn get_state(input: Vec<usize>) -> State {
     let mut state = [0; 9];
     for num in input {
-        state[num as usize] += 1;
+        state[num] += 1;
     }
-    return state;
+    state
 }
 
 fn pass_day(state: State) -> State {
-    return [
+    [
         state[1],
         state[2],
         state[3],
@@ -21,7 +27,7 @@ fn pass_day(state: State) -> State {
         state[7] + state[0],
         state[8],
         state[0],
-    ];
+    ]
 }
 
 fn pass_days(state: State, days: u64) -> State {
@@ -29,32 +35,30 @@ fn pass_days(state: State, days: u64) -> State {
     for _ in 0..days {
         state = pass_day(state);
     }
-    return state;
+    state
 }
 
-pub fn part1(input: String) -> u64 {
-    let mut state = get_state(parse_number_list(input, ","));
+pub fn part1(input: &str) -> u64 {
+    let mut state = parse_input(input);
     state = pass_days(state, 80);
-    return state.iter().sum();
+    state.iter().sum()
 }
 
-pub fn part2(input: String) -> u64 {
-    let mut state = get_state(parse_number_list(input, ","));
+pub fn part2(input: &str) -> u64 {
+    let mut state = parse_input(input);
     state = pass_days(state, 256);
-    return state.iter().sum();
-}
-
-fn main() {
-    run(part1, part2);
+    state.iter().sum()
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "3,4,3,1,2";
+    #[example_input(part1 = 5934, part2 = 26_984_457_539)]
+    static EXAMPLE_INPUT: &str = "3,4,3,1,2";
 
     #[test]
     fn example_pass_days() {
@@ -70,15 +74,5 @@ mod tests {
             pass_days([0, 1, 2, 1, 0, 0, 0, 0, 0], 3),
             [1, 0, 0, 0, 0, 1, 2, 1, 2]
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 5934);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 26984457539);
     }
 }

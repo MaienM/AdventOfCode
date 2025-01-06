@@ -1,6 +1,6 @@
-use std::collections::LinkedList;
+aoc::setup!(title = "Snailfish");
 
-use aoc::runner::*;
+use std::collections::LinkedList;
 
 type Path = Vec<u8>;
 type Entry = (Path, u8);
@@ -28,16 +28,11 @@ fn parse_line(line: &str) -> Entries {
             }
         }
     }
-    return entries;
+    entries
 }
 
-fn parse_input(input: String) -> Vec<Entries> {
-    return input
-        .trim()
-        .split("\n")
-        .map(str::trim)
-        .map(parse_line)
-        .collect();
+fn parse_input(input: &str) -> Vec<Entries> {
+    parse!(input => { [lines split on '\n' with parse_line] } => lines)
 }
 
 fn do_explode(entries: &mut Entries) -> bool {
@@ -52,19 +47,13 @@ fn do_explode(entries: &mut Entries) -> bool {
     let pair_left = right.pop_front().unwrap();
     let pair_right = right.pop_front().unwrap();
 
-    match left.pop_back() {
-        Some(mut entry) => {
-            entry.1 += pair_left.1;
-            left.push_back(entry);
-        }
-        None => {}
+    if let Some(mut entry) = left.pop_back() {
+        entry.1 += pair_left.1;
+        left.push_back(entry);
     }
-    match right.pop_front() {
-        Some(mut entry) => {
-            entry.1 += pair_right.1;
-            right.push_front(entry);
-        }
-        None => {}
+    if let Some(mut entry) = right.pop_front() {
+        entry.1 += pair_right.1;
+        right.push_front(entry);
     }
 
     let mut path = pair_right.0;
@@ -73,7 +62,7 @@ fn do_explode(entries: &mut Entries) -> bool {
 
     left.append(&mut right);
 
-    return true;
+    true
 }
 
 fn do_split(entries: &mut Entries) -> bool {
@@ -95,7 +84,7 @@ fn do_split(entries: &mut Entries) -> bool {
 
     left.append(&mut right);
 
-    return true;
+    true
 }
 
 fn do_reduce(entries: &mut Entries) {
@@ -107,43 +96,43 @@ fn sum(left: &Entries, right: &Entries) -> Entries {
     for (i, input) in [(0, left), (1, right)] {
         entries.append(
             &mut input
-                .into_iter()
+                .iter()
                 .map(|(p, v)| {
                     let mut pnew = Path::new();
                     pnew.push(i);
                     for pelem in p {
                         pnew.push(*pelem);
                     }
-                    return (pnew, *v);
+                    (pnew, *v)
                 })
                 .collect(),
         );
     }
     do_reduce(&mut entries);
-    return entries;
+    entries
 }
 
 fn get_magnitude(entries: &Entries) -> u32 {
-    return entries
+    entries
         .iter()
         .map(|(p, v)| {
             // For each level this is nested on the left side (s=0) multiply by 3, for the right (s=1) by 2. This works out to 3-s.
-            let pathmul = p.iter().map(|s| (3 - s) as u32).product::<u32>();
-            return (*v as u32) * pathmul;
+            let pathmul = p.iter().map(|s| u32::from(3 - s)).product::<u32>();
+            u32::from(*v) * pathmul
         })
-        .sum();
+        .sum()
 }
 
-pub fn part1(input: String) -> u32 {
+pub fn part1(input: &str) -> u32 {
     let mut lines = parse_input(input);
     let mut result = lines.remove(0);
     for line in lines {
         result = sum(&result, &line);
     }
-    return get_magnitude(&result);
+    get_magnitude(&result)
 }
 
-pub fn part2(input: String) -> u32 {
+pub fn part2(input: &str) -> u32 {
     let lines = parse_input(input);
     let mut highest = 0;
     for line1 in &lines {
@@ -152,33 +141,44 @@ pub fn part2(input: String) -> u32 {
                 continue;
             }
 
-            let result = get_magnitude(&sum(&line1, &line2));
+            let result = get_magnitude(&sum(line1, line2));
             if result > highest {
                 highest = result;
             }
         }
     }
-    return highest;
-}
-
-fn main() {
-    run(part1, part2);
+    highest
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
+    #[example_input(part1 = 4140, part2 = 3993)]
+    static EXAMPLE_INPUT: &str = "
+        [[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
+        [[[5,[2,8]],4],[5,[[9,9],0]]]
+        [6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
+        [[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
+        [[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]
+        [[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]
+        [[[[5,4],[7,7]],8],[[8,3],8]]
+        [[9,3],[[9,9],[6,[4,9]]]]
+        [[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
+        [[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]
+    ";
+
     #[test]
     fn example_parse_input() {
         assert_eq!(
-            parse_input("[1,2]".to_string()),
+            parse_input("[1,2]"),
             vec![LinkedList::from([(vec![0], 1), (vec![1], 2)])]
         );
         assert_eq!(
-            parse_input("[[1,2],3]".to_string()),
+            parse_input("[[1,2],3]"),
             vec![LinkedList::from([
                 (vec![0, 0], 1),
                 (vec![0, 1], 2),
@@ -186,9 +186,7 @@ mod tests {
             ])]
         );
         assert_eq!(
-            parse_input(
-                "[[[[1,3],[5,3]],[[1,3],[8,7]]],[[[4,9],[6,9]],[[8,2],[7,3]]]]".to_string()
-            ),
+            parse_input("[[[[1,3],[5,3]],[[1,3],[8,7]]],[[[4,9],[6,9]],[[8,2],[7,3]]]]"),
             vec![LinkedList::from([
                 (vec![0, 0, 0, 0], 1),
                 (vec![0, 0, 0, 1], 3),
@@ -211,6 +209,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_do_explode() {
         let mut value = LinkedList::from([
             (vec![0, 0, 0, 0, 0], 9),
@@ -515,6 +514,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_sum() {
         let mut value = LinkedList::from([
             (vec![0, 0, 0], 0),
@@ -814,28 +814,5 @@ mod tests {
                 (vec![1, 1, 1], 7)
             ])
         );
-    }
-
-    const EXAMPLE_INPUT: &'static str = "
-        [[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
-        [[[5,[2,8]],4],[5,[[9,9],0]]]
-        [6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
-        [[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
-        [[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]
-        [[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]
-        [[[[5,4],[7,7]],8],[[8,3],8]]
-        [[9,3],[[9,9],[6,[4,9]]]]
-        [[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
-        [[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]
-    ";
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 4140);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 3993);
     }
 }

@@ -1,15 +1,10 @@
-use aoc::runner::*;
+aoc::setup!(title = "Dirac Dice");
 
-fn parse_input(input: String) -> [u64; 2] {
-    let mut nums = input
-        .trim()
-        .splitn(2, "\n")
-        .map(|line| line.chars().last().unwrap().to_digit(10).unwrap() as u64);
-    return [nums.next().unwrap(), nums.next().unwrap()];
-}
-
-trait DiceRoller {
-    fn roll(&self, times: usize) -> u64;
+fn parse_input(input: &str) -> [u64; 2] {
+    parse!(input => {
+        "Player 1 starting position: " [p1 as u64] '\n'
+        "Player 2 starting position: " [p2 as u64]
+    } => [p1, p2])
 }
 
 struct DeterministicDiceRoller<T: Iterator<Item = u64>> {
@@ -18,7 +13,7 @@ struct DeterministicDiceRoller<T: Iterator<Item = u64>> {
 impl<T: Iterator<Item = u64>> DeterministicDiceRoller<T> {
     fn roll(&mut self, times: usize) -> u64 {
         let iter = &mut self.iter;
-        return iter.take(times).sum();
+        iter.take(times).sum()
     }
 }
 
@@ -27,7 +22,7 @@ const DIRAC_DICE_WEIGHT: [(u64, u64); 7] = [(3, 1), (4, 3), (5, 6), (6, 7), (7, 
 // Tuple of wins / total.
 type DiracWinrateByRound = [(u64, u64); DIRAC_MAX_ROUNDS];
 
-fn _dirac_rounds_to_victory(
+fn dirac_rounds_to_victory_impl(
     pos: u64,
     score: u64,
     rounds: usize,
@@ -44,18 +39,18 @@ fn _dirac_rounds_to_victory(
         } else {
             let old = result[rounds];
             result[rounds] = (old.0, old.1 + universes);
-            _dirac_rounds_to_victory(pos, score, rounds + 1, universes, result);
+            dirac_rounds_to_victory_impl(pos, score, rounds + 1, universes, result);
         }
     }
 }
 
 fn dirac_rounds_to_victory(pos: u64) -> DiracWinrateByRound {
     let mut result = [(0, 0); DIRAC_MAX_ROUNDS];
-    _dirac_rounds_to_victory(pos, 0, 0, 1, &mut result);
-    return result;
+    dirac_rounds_to_victory_impl(pos, 0, 0, 1, &mut result);
+    result
 }
 
-pub fn part1(input: String) -> u64 {
+pub fn part1(input: &str) -> u64 {
     let mut pos = parse_input(input);
     let mut score = [0, 0];
     let mut rolls = 0;
@@ -76,7 +71,7 @@ pub fn part1(input: String) -> u64 {
     panic!("Should not happen");
 }
 
-pub fn part2(input: String) -> u64 {
+pub fn part2(input: &str) -> u64 {
     let pos = parse_input(input);
     let winrate_by_round: [DiracWinrateByRound; 2] = pos
         .into_iter()
@@ -99,38 +94,26 @@ pub fn part2(input: String) -> u64 {
         round += player;
         player = 1 - player;
     }
-    return wins_total.into_iter().max().unwrap();
-}
-
-fn main() {
-    run(part1, part2);
+    wins_total.into_iter().max().unwrap()
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 739_785, part2 = 444_356_092_776_315)]
+    static EXAMPLE_INPUT: &str = "
         Player 1 starting position: 4
         Player 2 starting position: 8
     ";
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = [4, 8];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 739785);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 444356092776315);
     }
 }

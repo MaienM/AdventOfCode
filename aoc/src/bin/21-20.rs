@@ -1,8 +1,7 @@
-use std::fmt::Debug;
-use std::ops::RangeInclusive;
+aoc::setup!(title = "Trench Map");
 
-use aoc::grid::Grid;
-use aoc::runner::*;
+use std::{fmt::Debug, ops::RangeInclusive};
+
 use derive_new::new;
 
 type Algorithm = [bool; 512];
@@ -11,18 +10,18 @@ type Algorithm = [bool; 512];
 struct LitPoints<const SIZE: usize>([[bool; SIZE]; SIZE]);
 impl<const SIZE: usize> LitPoints<SIZE> {
     fn new() -> Self {
-        return Self([[false; SIZE]; SIZE]);
+        Self([[false; SIZE]; SIZE])
     }
 
     fn get(&self, x: usize, y: usize) -> bool {
-        return self.0[y][x];
+        self.0[y][x]
     }
     fn set(&mut self, x: usize, y: usize, value: bool) {
         self.0[y][x] = value;
     }
 
     fn get_block(&self, x: usize, y: usize) -> [bool; 9] {
-        return [
+        [
             self.get(x - 1, y - 1),
             self.get(x, y - 1),
             self.get(x + 1, y - 1),
@@ -32,7 +31,7 @@ impl<const SIZE: usize> LitPoints<SIZE> {
             self.get(x - 1, y + 1),
             self.get(x, y + 1),
             self.get(x + 1, y + 1),
-        ];
+        ]
     }
 
     fn count_lit(&self) -> usize {
@@ -44,12 +43,9 @@ impl<const SIZE: usize> LitPoints<SIZE> {
                 }
             }
         }
-        return count;
+        count
     }
 }
-
-#[derive(Debug, Eq, PartialEq)]
-struct Point(usize, usize);
 
 #[derive(Debug, Eq, PartialEq, new)]
 struct Bounds {
@@ -58,18 +54,18 @@ struct Bounds {
 }
 impl Bounds {
     fn grow(&self, amount: usize) -> Self {
-        return Self {
+        Self {
             x: (self.x.0 - amount, self.x.1 + amount),
             y: (self.y.0 - amount, self.y.1 + amount),
-        };
+        }
     }
 
     fn xrange(&self) -> RangeInclusive<usize> {
-        return (self.x.0)..=(self.x.1);
+        (self.x.0)..=(self.x.1)
     }
 
     fn yrange(&self) -> RangeInclusive<usize> {
-        return (self.y.0)..=(self.y.1);
+        (self.y.0)..=(self.y.1)
     }
 }
 
@@ -92,47 +88,42 @@ impl<const SIZE: usize> Debug for State<SIZE> {
                     write!(f, " ")?;
                 }
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
-        return write!(f, "\n");
+        writeln!(f)
     }
 }
 
-fn parse_input<const SIZE: usize>(input: String) -> (Algorithm, State<SIZE>) {
-    let mut parts = input.trim().splitn(2, "\n\n");
-    let algorithm: Algorithm = parts
-        .next()
-        .unwrap()
-        .trim()
-        .chars()
-        .map(|c| c == '#')
-        .collect::<Vec<bool>>()
-        .try_into()
-        .unwrap();
-    let grid: Grid<bool> = parts
-        .next()
-        .unwrap()
-        .trim()
-        .split("\n")
-        .map(str::trim)
-        .map(|line| line.chars().map(|c| c == '#').collect::<Vec<bool>>())
-        .collect();
+#[inline]
+fn parse_pixel(chr: char) -> bool {
+    chr == '#'
+}
 
-    let xoffset_point = (SIZE - grid.width) / 2;
-    let yoffset_point = (SIZE - grid.height) / 2;
+fn parse_input<const SIZE: usize>(input: &str) -> (Algorithm, State<SIZE>) {
+    parse!(input =>
+        [algorithm chars with parse_pixel]
+        "\n\n"
+        [grid split on '\n' with [chars with parse_pixel]]
+    );
+
+    let grid_bounds = (grid[0].len(), grid.len());
+    let xoffset_point = (SIZE - grid_bounds.0) / 2;
+    let yoffset_point = (SIZE - grid_bounds.1) / 2;
     let bounds = Bounds::new(
-        (xoffset_point, xoffset_point + grid.width as usize - 1),
-        (yoffset_point, yoffset_point + grid.height as usize - 1),
+        (xoffset_point, xoffset_point + grid_bounds.0 - 1),
+        (yoffset_point, yoffset_point + grid_bounds.1 - 1),
     );
     let mut lit_points: LitPoints<SIZE> = LitPoints::new();
-    for (point, value) in grid.into_by_cell() {
-        lit_points.set(
-            xoffset_point + point.x as usize,
-            yoffset_point + point.y as usize,
-            value,
-        );
+    for (y, row) in grid.into_iter().enumerate() {
+        for (x, value) in row.into_iter().enumerate() {
+            lit_points.set(xoffset_point + x, yoffset_point + y, value);
+        }
     }
-    return (algorithm, State::new(lit_points, bounds, false));
+
+    (
+        algorithm.try_into().unwrap(),
+        State::new(lit_points, bounds, false),
+    )
 }
 
 fn do_step<const SIZE: usize>(algorithm: &Algorithm, mut state: State<SIZE>) -> State<SIZE> {
@@ -184,37 +175,34 @@ fn do_step<const SIZE: usize>(algorithm: &Algorithm, mut state: State<SIZE>) -> 
         algorithm[0]
     };
 
-    return State::new(new_lit_points, new_bounds, new_outside_bounds);
+    State::new(new_lit_points, new_bounds, new_outside_bounds)
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let (algorithm, mut state) = parse_input::<108>(input);
     for _ in 0..2 {
         state = do_step(&algorithm, state);
     }
-    return state.points.count_lit();
+    state.points.count_lit()
 }
 
-pub fn part2(input: String) -> usize {
+pub fn part2(input: &str) -> usize {
     let (algorithm, mut state) = parse_input::<300>(input);
     for _ in 0..50 {
         state = do_step(&algorithm, state);
     }
-    return state.points.count_lit();
-}
-
-fn main() {
-    run(part1, part2);
+    state.points.count_lit()
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    // This example is garbage since its avoids the core challenge, but its what we were given. Bah.
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 35, part2 = 3351)]
+    static EXAMPLE_INPUT: &str = "
         ..#.#..#####.#.#.#.###.##.....###.##.#..###.####..#####..#....#..#..##..###..######.###...####..#..#####..##..#.#####...##.#.#..#.##..#.#......#.###.######.###.####...#.##.##..#..#..#####.....#.#....###..#.##......#.....#..#..#..##..#...##.######.####.####.#.#...#.......#..#.#.#...####.##.#......#..#...##.#.##..#...##.#.##..###.#......#.#.......#.#.#.####.###.##...#.....####.#..#..#.##.#....##..#.####....##...##..#...#......#.#.......#.......##..####..#...#.#.#...##..#.#..###..#####........#..####......#..#
 
         #..#.
@@ -226,7 +214,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let (actual_algorithm, actual_state) = parse_input::<5>(EXAMPLE_INPUT.to_string());
+        let (actual_algorithm, actual_state) = parse_input::<5>(&EXAMPLE_INPUT);
         let expected_algorithm = [
             false, false, true, false, true, false, false, true, true, true, true, true, false,
             true, false, true, false, true, false, true, true, true, false, true, true, false,
@@ -503,15 +491,5 @@ mod tests {
             ])
         );
         assert!(!state.outside_bounds);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 35);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 3351);
     }
 }

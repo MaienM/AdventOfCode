@@ -1,33 +1,28 @@
-use aoc::runner::*;
+aoc::setup!(title = "Syntax Scoring");
 
-fn parse_input(input: String) -> Vec<String> {
-    return input
-        .trim()
-        .split("\n")
-        .map(|line| line.trim().to_string())
-        .collect();
+fn parse_input(input: &str) -> Vec<&str> {
+    parse!(input => { [lines split on '\n'] } => lines)
 }
 
 #[inline]
 fn get_matching_closing(chr: char) -> Option<char> {
-    return match chr {
+    match chr {
         '(' => Some(')'),
         '[' => Some(']'),
         '{' => Some('}'),
         '<' => Some('>'),
         _ => None,
-    };
+    }
 }
 
-pub fn part1(input: String) -> u64 {
+pub fn part1(input: &str) -> u64 {
     let lines = parse_input(input);
     let mut score = 0u64;
     for line in lines {
         let mut stack: Vec<char> = Vec::new();
         for chr in line.chars() {
-            let closing = get_matching_closing(chr);
-            if closing.is_some() {
-                stack.push(closing.unwrap());
+            if let Some(closing) = get_matching_closing(chr) {
+                stack.push(closing);
             } else {
                 let expected = stack.pop().unwrap_or('!');
                 if chr != expected {
@@ -37,7 +32,7 @@ pub fn part1(input: String) -> u64 {
                         '}' => 1197,
                         '>' => 25137,
                         _ => {
-                            panic!("Invalid character {}.", chr);
+                            panic!("Invalid character {chr}.");
                         }
                     };
                     break;
@@ -45,18 +40,17 @@ pub fn part1(input: String) -> u64 {
             }
         }
     }
-    return score;
+    score
 }
 
-pub fn part2(input: String) -> u64 {
+pub fn part2(input: &str) -> u64 {
     let lines = parse_input(input);
     let mut scores: Vec<u64> = Vec::new();
     'lines: for line in lines {
         let mut stack: Vec<char> = Vec::new();
         for chr in line.chars() {
-            let closing = get_matching_closing(chr);
-            if closing.is_some() {
-                stack.push(closing.unwrap());
+            if let Some(closing) = get_matching_closing(chr) {
+                stack.push(closing);
             } else {
                 let expected = stack.pop().unwrap_or('!');
                 if chr != expected {
@@ -74,27 +68,25 @@ pub fn part2(input: String) -> u64 {
                 '}' => 3,
                 '>' => 4,
                 _ => {
-                    panic!("Invalid character {}.", chr);
+                    panic!("Invalid character {chr}.");
                 }
             };
         }
         scores.push(score);
     }
-    scores.sort();
-    return scores[scores.len() / 2];
-}
-
-fn main() {
-    run(part1, part2);
+    scores.sort_unstable();
+    scores[scores.len() / 2]
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 26397, part2 = 288957)]
+    static EXAMPLE_INPUT: &str = "
         [({(<(())[]>[[{[]{<()<>>
         [(()[<>])]({[<{<<[]>>(
         {([(<{}[<>[]}>{[]{[(<()>
@@ -110,7 +102,7 @@ mod tests {
     #[test]
     fn example_parse() {
         assert_eq!(
-            parse_input(EXAMPLE_INPUT.to_string()),
+            parse_input(&EXAMPLE_INPUT),
             vec![
                 "[({(<(())[]>[[{[]{<()<>>",
                 "[(()[<>])]({[<{<<[]>>(",
@@ -124,15 +116,5 @@ mod tests {
                 "<{([{{}}[<[[[<>{}]]]>[]]",
             ]
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 26397);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 288957);
     }
 }

@@ -1,4 +1,5 @@
-use aoc::runner::*;
+aoc::setup!(title = "Trick Shot");
+
 use derive_new::new;
 
 #[derive(Debug, PartialEq, new)]
@@ -8,18 +9,18 @@ struct TargetArea {
 }
 impl TargetArea {
     fn contains_x(&self, x: i16) -> bool {
-        return self.x.0 <= x && x <= self.x.1;
+        self.x.0 <= x && x <= self.x.1
     }
 
     fn contains_y(&self, y: i16) -> bool {
-        return self.y.0 <= y && y <= self.y.1;
+        self.y.0 <= y && y <= self.y.1
     }
 }
 
-fn parse_input(input: String) -> TargetArea {
+fn parse_input(input: &str) -> TargetArea {
     // Safety? Trim? Split? Parse? Bah, who needs that nonsense. This is faster and therefore _clearly_ superior.
     unsafe {
-        let mut bytes = input.bytes();
+        let mut bytes = input.bytes().chain([b' ']);
         let mut nums = [0i16; 4];
 
         for i in 0..2 {
@@ -37,11 +38,11 @@ fn parse_input(input: String) -> TargetArea {
                     b = bytes.next().unwrap_unchecked();
                 }
                 bytes.next();
-                nums[i * 2 + j] = if neg { -(num as i16) } else { num as i16 };
+                nums[i * 2 + j] = if neg { -i16::from(num) } else { i16::from(num) };
             }
         }
 
-        return TargetArea::new((nums[0], nums[1]), (nums[2], nums[3]));
+        TargetArea::new((nums[0], nums[1]), (nums[2], nums[3]))
     }
 }
 
@@ -58,10 +59,10 @@ fn ends_up_at_target(mut xvel: i16, mut yvel: i16, target: &TargetArea) -> bool 
             return true;
         }
     }
-    return false;
+    false
 }
 
-pub fn part1(input: String) -> i16 {
+pub fn part1(input: &str) -> i16 {
     let target = parse_input(input);
     /*
      * X and Y are completely independent, so we can just ignore X for this part.
@@ -76,10 +77,10 @@ pub fn part1(input: String) -> i16 {
         y += yvel;
         yvel -= 1;
     }
-    return y;
+    y
 }
 
-pub fn part2(input: String) -> i16 {
+pub fn part2(input: &str) -> i16 {
     let target = parse_input(input);
     /*
      * Despite having instructions on how to handle negative X velocities these will never get us to our goal, so we need not consider them. The highest x velocity that could be suitable is one that would get us to the right edge in one step, which is target.x.1.
@@ -94,36 +95,26 @@ pub fn part2(input: String) -> i16 {
             }
         }
     }
-    return count;
-}
-
-fn main() {
-    run(part1, part2);
+    count
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "target area: x=20..30, y=-10..-5";
+    #[example_input(part1 = 45, part2 = 112)]
+    static EXAMPLE_INPUT: &str = "
+        target area: x=20..30, y=-10..-5
+    ";
 
     #[test]
     fn example_parse() {
         assert_eq!(
-            parse_input(EXAMPLE_INPUT.to_string()),
+            parse_input(&EXAMPLE_INPUT),
             TargetArea::new((20, 30), (-10, -5))
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 45);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 112);
     }
 }

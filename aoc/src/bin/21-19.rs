@@ -1,11 +1,13 @@
+aoc::setup!(title = "Beacon Scanner");
+
 use std::{
     collections::{BTreeSet, HashSet},
     ops::{Add, Mul, Sub},
 };
 
-use aoc::runner::*;
-
 const MATCH_THRESHOLD: usize = 12;
+
+// TODO: Move all this matrix math to matrix lib.
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct Matrix((i16, i16, i16), (i16, i16, i16), (i16, i16, i16));
@@ -13,7 +15,7 @@ impl Mul<&Matrix> for &Matrix {
     type Output = Matrix;
 
     fn mul(self, rhs: &Matrix) -> Self::Output {
-        return Matrix(
+        Matrix(
             (
                 self.0 .0 * rhs.0 .0 + self.0 .1 * rhs.1 .0 + self.0 .2 * rhs.2 .0,
                 self.0 .0 * rhs.0 .1 + self.0 .1 * rhs.1 .1 + self.0 .2 * rhs.2 .1,
@@ -29,7 +31,7 @@ impl Mul<&Matrix> for &Matrix {
                 self.2 .0 * rhs.0 .1 + self.2 .1 * rhs.1 .1 + self.2 .2 * rhs.2 .1,
                 self.2 .0 * rhs.0 .2 + self.2 .1 * rhs.1 .2 + self.2 .2 * rhs.2 .2,
             ),
-        );
+        )
     }
 }
 
@@ -65,21 +67,21 @@ const ROTATION_MATRICES: [Matrix; 24] = [
 struct PointDelta(i16, i16, i16);
 impl PointDelta {
     fn size(&self) -> i16 {
-        return self.0.abs() + self.1.abs() + self.2.abs();
+        self.0.abs() + self.1.abs() + self.2.abs()
     }
 
-    fn matches(&self, rhs: &PointDelta, matrix: &Matrix) -> bool {
+    fn matches(&self, rhs: &Self, matrix: &Matrix) -> bool {
         if self.size() != rhs.size() {
             return false;
         }
-        return *self * matrix == *rhs;
+        *self * matrix == *rhs
     }
 }
 impl Add<PointDelta> for PointDelta {
     type Output = PointDelta;
 
     fn add(self, rhs: PointDelta) -> Self::Output {
-        return PointDelta(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2);
+        Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2)
     }
 }
 impl Mul<&Matrix> for PointDelta {
@@ -89,33 +91,33 @@ impl Mul<&Matrix> for PointDelta {
         let c0 = self.0 * rhs.0 .0 + self.1 * rhs.1 .0 + self.2 * rhs.2 .0;
         let c1 = self.0 * rhs.0 .1 + self.1 * rhs.1 .1 + self.2 * rhs.2 .1;
         let c2 = self.0 * rhs.0 .2 + self.1 * rhs.1 .2 + self.2 * rhs.2 .2;
-        return Self(c0, c1, c2);
+        Self(c0, c1, c2)
     }
 }
 impl PartialOrd for PointDelta {
     fn lt(&self, other: &Self) -> bool {
-        return self.size().lt(&other.size());
+        self.size().lt(&other.size())
     }
 
     fn le(&self, other: &Self) -> bool {
-        return self.size().le(&other.size());
+        self.size().le(&other.size())
     }
 
     fn gt(&self, other: &Self) -> bool {
-        return self.size().gt(&other.size());
+        self.size().gt(&other.size())
     }
 
     fn ge(&self, other: &Self) -> bool {
-        return self.size().ge(&other.size());
+        self.size().ge(&other.size())
     }
 
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        return self.size().partial_cmp(&other.size());
+        Some(self.cmp(other))
     }
 }
 impl Ord for PointDelta {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        return self.size().cmp(&other.size());
+        self.size().cmp(&other.size())
     }
 }
 
@@ -123,21 +125,21 @@ impl Ord for PointDelta {
 struct Point(i16, i16, i16);
 impl Point {
     fn apply(&self, matrix: &Matrix, offset: &PointDelta) -> Self {
-        return &(self * matrix) + offset;
+        &(self * matrix) + offset
     }
 }
 impl Sub<&Point> for &Point {
     type Output = PointDelta;
 
     fn sub(self, rhs: &Point) -> Self::Output {
-        return PointDelta(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2);
+        PointDelta(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2)
     }
 }
 impl Add<&PointDelta> for &Point {
     type Output = Point;
 
     fn add(self, rhs: &PointDelta) -> Self::Output {
-        return Point(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2);
+        Point(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2)
     }
 }
 impl Mul<&Matrix> for &Point {
@@ -145,7 +147,7 @@ impl Mul<&Matrix> for &Point {
 
     fn mul(self, rhs: &Matrix) -> Self::Output {
         let PointDelta(c0, c1, c2) = PointDelta(self.0, self.1, self.2) * rhs;
-        return Point(c0, c1, c2);
+        Point(c0, c1, c2)
     }
 }
 
@@ -165,7 +167,7 @@ impl ScannerIncomplete {
         // Get the smallest delta for each point. For another scanner to have overlap it must have a bunch of our points that will be close together, which means it must also have this smallest delta. It is possible that the other scanner has additional points that are closer to some of ours, but it is quite unlikely this is true for all of our points.
         let deltas = beacons
             .iter()
-            .flat_map(|l| {
+            .filter_map(|l| {
                 beacons
                     .iter()
                     .filter(|r| r != &l)
@@ -173,11 +175,11 @@ impl ScannerIncomplete {
                     .min_by_key(|(d, ..)| d.size())
             })
             .collect::<Vec<(PointDelta, Point)>>();
-        return Self {
+        Self {
             num: scanner.0,
             deltas,
             beacons,
-        };
+        }
     }
 }
 
@@ -202,48 +204,31 @@ impl Scanner {
             .iter()
             .map(|(d, l)| {
                 let l = l.apply(&matrix, &offset);
-                return (*d * &matrix, l);
+                (*d * &matrix, l)
             })
             .collect();
-        return Self {
+        Self {
             num: scanner.num,
             offset,
             beacons,
             deltas,
-        };
+        }
     }
 }
 
-fn parse_input(input: String) -> Vec<ScannerInput> {
-    return input
-        .trim()
-        .split("\n\n")
-        .map(|block| {
-            let mut lines = block.trim().split("\n");
-
-            let header = lines.next().unwrap();
-            assert!(header.starts_with("--- scanner ") && header.ends_with(" ---"));
-            let num = header[12..(header.len() - 4)].parse::<u8>().unwrap();
-
-            let points = lines
-                .into_iter()
-                .map(|line| {
-                    let mut coords = line
-                        .trim()
-                        .splitn(3, ",")
-                        .map(str::parse)
-                        .map(Result::unwrap);
-                    return Point(
-                        coords.next().unwrap(),
-                        coords.next().unwrap(),
-                        coords.next().unwrap(),
-                    );
-                })
-                .collect();
-
-            return ScannerInput(num, points);
-        })
-        .collect();
+fn parse_input(input: &str) -> Vec<ScannerInput> {
+    parse!(input => {
+        [scanners split on "\n\n" with
+            {
+                "--- scanner " [num as u8] " ---\n"
+                [points split on '\n' with
+                    { [x as i16] ',' [y as i16] ',' [z as i16] }
+                    => Point(x, y, z)
+                ]
+            }
+            => ScannerInput(num, points)
+        ]
+    } => scanners)
 }
 
 fn get_overlapping_deltas(
@@ -251,17 +236,17 @@ fn get_overlapping_deltas(
     candidate: &ScannerIncomplete,
     matrix: &Matrix,
 ) -> Vec<(PointDelta, Point, Point)> {
-    return candidate
+    candidate
         .deltas
         .iter()
-        .flat_map(|(cd, cp)| {
+        .filter_map(|(cd, cp)| {
             existing
                 .deltas
                 .iter()
                 .find(|(ed, _)| cd.matches(ed, matrix))
                 .map(|(_, ep)| (*cd, *cp, *ep))
         })
-        .collect();
+        .collect()
 }
 
 // Try to match a candidate incomplete scanner by comparing deltas. If any deltas match for a found matrix, go through the points and check if the overlap is large enough to fine a definitive match.
@@ -270,7 +255,7 @@ fn find_matrix_and_offset(
     candidate: &ScannerIncomplete,
 ) -> Option<(Matrix, PointDelta)> {
     for matrix in &ROTATION_MATRICES {
-        let overlapping_deltas = get_overlapping_deltas(&existing, &candidate, matrix);
+        let overlapping_deltas = get_overlapping_deltas(existing, candidate, matrix);
 
         if overlapping_deltas.len() < MATCH_THRESHOLD - 1 {
             continue;
@@ -294,7 +279,7 @@ fn find_matrix_and_offset(
             }
         }
     }
-    return None;
+    None
 }
 
 fn resolve(scanners: Vec<ScannerInput>) -> Vec<Scanner> {
@@ -318,7 +303,7 @@ fn resolve(scanners: Vec<ScannerInput>) -> Vec<Scanner> {
                 }
                 match find_matrix_and_offset(existing, candidate) {
                     Some((matrix, offset)) => {
-                        let new_scanner = Scanner::new(candidate.clone(), matrix, offset);
+                        let new_scanner = Scanner::new(candidate, matrix, offset);
                         solved.push(new_scanner);
                         remaining.swap_remove(ci);
                         continue 'try_match;
@@ -333,7 +318,7 @@ fn resolve(scanners: Vec<ScannerInput>) -> Vec<Scanner> {
         panic!("Unable to match remaining scanners to existing ones.");
     }
 
-    return solved;
+    solved
 }
 
 fn get_beacons(scanners: &Vec<Scanner>) -> HashSet<Point> {
@@ -343,17 +328,17 @@ fn get_beacons(scanners: &Vec<Scanner>) -> HashSet<Point> {
             beacons.insert(*beacon);
         }
     }
-    return beacons;
+    beacons
 }
 
-pub fn part1(input: String) -> usize {
+pub fn part1(input: &str) -> usize {
     let scanners = parse_input(input);
     let resolved = resolve(scanners);
     let beacons = get_beacons(&resolved);
-    return beacons.len();
+    beacons.len()
 }
 
-pub fn part2(input: String) -> i16 {
+pub fn part2(input: &str) -> i16 {
     let scanners = parse_input(input);
     let resolved = resolve(scanners);
     let start = Point(0, 0, 0);
@@ -368,20 +353,18 @@ pub fn part2(input: String) -> i16 {
             }
         }
     }
-    return max;
-}
-
-fn main() {
-    run(part1, part2);
+    max
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 79, part2 = 3621)]
+    static EXAMPLE_INPUT: &str = "
         --- scanner 0 ---
         404,-588,-901
         528,-643,409
@@ -521,8 +504,9 @@ mod tests {
     ";
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             ScannerInput(
                 0,
@@ -725,6 +709,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_resolve_get_beacons() {
         let input = vec![
             ScannerInput(
@@ -1043,15 +1028,5 @@ mod tests {
             Point(553, 889, -390).apply(&matrix, &offset),
             Point(-485, -357, 347)
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 79);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 3621);
     }
 }

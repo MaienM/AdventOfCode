@@ -1,69 +1,45 @@
-use std::collections::HashSet;
-use std::ops::RangeInclusive;
+aoc::setup!(title = "Hydrothermal Venture");
+use std::{collections::HashSet, ops::RangeInclusive};
 
-use aoc::grid::Point as BasePoint;
-use aoc::runner::*;
+use aoc::point::Point2;
 
-type Point = BasePoint<i16>;
+type Point = Point2<i16>;
 type LineDef = (Point, Point);
 
-fn parse_point(input: &str) -> Point {
-    let parts: [i16; 2] = input
-        .trim()
-        .splitn(2, ",")
-        .map(str::trim)
-        .map(str::parse)
-        .map(Result::unwrap)
-        .collect::<Vec<i16>>()
-        .try_into()
-        .unwrap();
-    return Point::new(parts[0], parts[1]);
-}
-
-fn parse_input(input: String) -> Vec<LineDef> {
-    return input
-        .trim()
-        .split("\n")
-        .map(|line| {
-            let points: [Point; 2] = line
-                .splitn(2, "->")
-                .map(parse_point)
-                .collect::<Vec<Point>>()
-                .try_into()
-                .unwrap();
-            return (points[0], points[1]);
-        })
-        .collect();
+fn parse_input(input: &str) -> Vec<LineDef> {
+    parse!(input => {
+        [linedefs split on '\n' with
+            { [x1 as i16] ',' [y1 as i16] " -> " [x2 as i16] ',' [y2 as i16] }
+            => (Point::new(x1, y1), Point::new(x2, y2))
+        ]
+    } => linedefs)
 }
 
 fn range(a: i16, b: i16) -> RangeInclusive<i16> {
     if a < b {
-        return a..=b;
+        a..=b
     } else {
-        return b..=a;
+        b..=a
     }
 }
 
 fn get_points(linedef: LineDef) -> Vec<Point> {
     if linedef.0.x == linedef.1.x {
-        return range(linedef.0.y, linedef.1.y)
+        range(linedef.0.y, linedef.1.y)
             .map(|y| Point::new(linedef.0.x, y))
-            .collect();
+            .collect()
     } else if linedef.0.y == linedef.1.y {
-        return range(linedef.0.x, linedef.1.x)
+        range(linedef.0.x, linedef.1.x)
             .map(|x| Point::new(x, linedef.0.y))
-            .collect();
+            .collect()
     } else if (linedef.0.x - linedef.1.x).abs() == (linedef.0.y - linedef.1.y).abs() {
         let xmul = (linedef.1.x - linedef.0.x) / (linedef.1.x - linedef.0.x).abs();
         let ymul = (linedef.1.y - linedef.0.y) / (linedef.1.y - linedef.0.y).abs();
-        return range(0, (linedef.0.x - linedef.1.x).abs())
+        range(0, (linedef.0.x - linedef.1.x).abs())
             .map(|i| Point::new(linedef.0.x + i * xmul, linedef.0.y + i * ymul))
-            .collect();
+            .collect()
     } else {
-        panic!(
-            "Cannot handle diagonal lines at a non-45 degree angle ({:?})",
-            linedef
-        );
+        panic!("Cannot handle diagonal lines at a non-45 degree angle ({linedef:?})",);
     }
 }
 
@@ -83,33 +59,31 @@ fn count_overlapping_points(linedefs: Vec<LineDef>) -> i16 {
             }
         }
     }
-    return count;
+    count
 }
 
-pub fn part1(input: String) -> i16 {
+pub fn part1(input: &str) -> i16 {
     let linedefs = parse_input(input)
         .into_iter()
         .filter(|linedef| linedef.0.x == linedef.1.x || linedef.0.y == linedef.1.y)
         .collect();
-    return count_overlapping_points(linedefs);
+    count_overlapping_points(linedefs)
 }
 
-pub fn part2(input: String) -> i16 {
+pub fn part2(input: &str) -> i16 {
     let linedefs = parse_input(input);
-    return count_overlapping_points(linedefs);
-}
-
-fn main() {
-    run(part1, part2);
+    count_overlapping_points(linedefs)
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 5, part2 = 12)]
+    static EXAMPLE_INPUT: &str = "
         0,9 -> 5,9
         8,0 -> 0,8
         9,4 -> 3,4
@@ -124,7 +98,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             (Point::new(0, 9), Point::new(5, 9)),
             (Point::new(8, 0), Point::new(0, 8)),
@@ -158,10 +132,5 @@ mod tests {
             get_points((Point::new(9, 7), Point::new(7, 9))),
             vec![Point::new(9, 7), Point::new(8, 8), Point::new(7, 9)]
         );
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 5);
     }
 }

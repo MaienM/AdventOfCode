@@ -1,109 +1,76 @@
-use aoc::grid::Grid;
-use aoc::runner::*;
+aoc::setup!(title = "Binary Diagnostic");
 
-fn parse_input(input: String) -> Grid {
-    let grid = input
-        .trim()
-        .split("\n")
-        .map(|line| {
-            line.trim()
-                .chars()
-                .map(|c| match c {
-                    '0' => 0,
-                    '1' => 1,
-                    _ => panic!("Invalid character {}.", c),
-                })
-                .collect()
-        })
-        .collect();
-    return Grid::new(grid).unwrap();
+fn parse_input(input: &str) -> Vec<Vec<u8>> {
+    parse!(input => {
+        [nums split on '\n' with [chars as u8]]
+    } => nums)
 }
 
-fn get_most_common_per_position(grid: &Grid) -> Vec<u32> {
-    let mut count_per_pos: Vec<[u32; 2]> = (0..grid.width).map(|_| [0, 0]).collect();
-    for (point, bit) in grid.by_cell() {
-        count_per_pos[point.x][bit.to_owned() as usize] += 1;
+fn get_most_common_per_position(nums: &[Vec<u8>]) -> Vec<u8> {
+    let mut count_per_pos: Vec<[u32; 2]> = (0..nums[0].len()).map(|_| [0, 0]).collect();
+    for num in nums {
+        for (idx, bit) in num.iter().enumerate() {
+            count_per_pos[idx][*bit as usize] += 1;
+        }
     }
-    return count_per_pos
+    // When there are an equal number of 0 and 1 in a position this position will be set to 1.
+    count_per_pos
         .iter()
-        .map(|counts| {
-            if counts[0] > counts[1] {
-                return 0;
-            } else {
-                return 1;
-            }
-        })
-        .collect();
+        .map(|counts| u8::from(counts[1] >= counts[0]))
+        .collect()
 }
 
-fn bit_list_to_decimal(bits: &Vec<u32>) -> u32 {
-    let mut result = 0;
-    for bit in bits {
-        result = result << 1;
-        result += bit;
+fn bits_to_decimal(bits: &[u8]) -> u32 {
+    bits.iter().fold(0, |acc, b| (acc << 1) + u32::from(*b))
+}
+
+fn calculate_generator_rating(mut nums: Vec<Vec<u8>>, use_most_common: bool) -> u32 {
+    for i in 0..nums[0].len() {
+        let most_common = get_most_common_per_position(&nums);
+        let target = if use_most_common {
+            most_common[i]
+        } else {
+            1 - most_common[i]
+        };
+        nums.retain(|bits| bits[i] == target);
+        if nums.len() == 1 {
+            break;
+        }
     }
-    return result;
+    bits_to_decimal(&nums[0])
 }
 
-pub fn part1(input: String) -> i64 {
-    let grid = parse_input(input);
-    let most_common_per_pos = get_most_common_per_position(&grid);
+pub fn part1(input: &str) -> u32 {
+    let nums = parse_input(input);
+    let most_common_per_pos = get_most_common_per_position(&nums);
 
-    let gamma = bit_list_to_decimal(&most_common_per_pos);
+    let gamma = bits_to_decimal(&most_common_per_pos);
+
     // Epsilon is really just gamma with all bits flipped, so just calculate it that way.
-    let mask = (2 as u32).pow(most_common_per_pos.len() as u32) - 1;
+    let mask = 2_u32.pow(most_common_per_pos.len() as u32) - 1;
     let epsilon = gamma ^ mask;
 
-    return (gamma * epsilon).into();
+    gamma * epsilon
 }
 
-pub fn part2(input: String) -> i64 {
-    let grid = parse_input(input);
+pub fn part2(input: &str) -> u32 {
+    let nums = parse_input(input);
 
-    let mut oxygen_candidates = grid.clone();
-    let mut scrubber_candidates = grid.clone();
+    let oxygen = calculate_generator_rating(nums.clone(), true);
+    let scrubber = calculate_generator_rating(nums, false);
 
-    for i in 0..grid.width {
-        let oxygen_most_common = get_most_common_per_position(&oxygen_candidates);
-        let oxygen_criteria = oxygen_most_common[i];
-        oxygen_candidates = oxygen_candidates
-            .into_iter()
-            .filter(|bits| bits[i] == oxygen_criteria)
-            .collect();
-        if oxygen_candidates.height == 1 {
-            break;
-        }
-    }
-
-    for i in 0..grid.width {
-        let scrubber_most_common = get_most_common_per_position(&scrubber_candidates);
-        let scrubber_criteria = 1 - scrubber_most_common[i];
-        scrubber_candidates = scrubber_candidates
-            .into_iter()
-            .filter(|bits| bits[i] == scrubber_criteria)
-            .collect();
-        if scrubber_candidates.height == 1 {
-            break;
-        }
-    }
-
-    let oxygen = bit_list_to_decimal(&oxygen_candidates.into_iter().next().unwrap());
-    let scrubber = bit_list_to_decimal(&scrubber_candidates.into_iter().next().unwrap());
-
-    return (oxygen * scrubber).into();
-}
-
-fn main() {
-    run(part1, part2);
+    oxygen * scrubber
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 198, part2 = 230)]
+    static EXAMPLE_INPUT: &str = "
         00100
         11110
         10110
@@ -120,7 +87,7 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let actual = parse_input(EXAMPLE_INPUT.to_string());
+        let actual = parse_input(&EXAMPLE_INPUT);
         let expected = vec![
             vec![0, 0, 1, 0, 0],
             vec![1, 1, 1, 1, 0],
@@ -135,16 +102,6 @@ mod tests {
             vec![0, 0, 0, 1, 0],
             vec![0, 1, 0, 1, 0],
         ];
-        assert_eq!(actual, expected.into());
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 198);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 230);
+        assert_eq!(actual, expected);
     }
 }

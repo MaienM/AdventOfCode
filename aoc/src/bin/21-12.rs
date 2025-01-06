@@ -1,10 +1,9 @@
+aoc::setup!(title = "Passage Pathing");
+
 use std::collections::HashMap;
 
-use aoc::counter::Counter;
-use aoc::runner::*;
-
-const NAME_START: &'static str = "start";
-const NAME_END: &'static str = "end";
+const NAME_START: &str = "start";
+const NAME_END: &str = "end";
 
 #[derive(Debug, Eq, PartialEq)]
 enum NodeType {
@@ -15,11 +14,11 @@ enum NodeType {
 impl NodeType {
     pub fn get(name: &str) -> NodeType {
         if name == NAME_START || name == NAME_END {
-            return NodeType::Special;
-        } else if name == &name.to_uppercase() {
-            return NodeType::Big;
+            NodeType::Special
+        } else if name == name.to_uppercase() {
+            NodeType::Big
         } else {
-            return NodeType::Small;
+            NodeType::Small
         }
     }
 }
@@ -30,25 +29,29 @@ struct Graph<'a> {
 }
 impl<'a> Graph<'a> {
     pub fn new() -> Self {
-        return Self {
+        Self {
             edges: HashMap::new(),
-        };
+        }
     }
 
     pub fn add_connection(&mut self, left: &'a str, right: &'a str) {
-        if NodeType::get(left) == NodeType::Big && NodeType::get(right) == NodeType::Big {
-            panic!("Big caves may not be directly connected as this would create infinite paths, but {} and {} are.", left, right);
-        }
+        assert!(
+            !(NodeType::get(left) == NodeType::Big && NodeType::get(right) == NodeType::Big),
+            "Big caves may not be directly connected as this would create infinite paths, but {left} and {right} are.",
+        );
 
-        if !self.edges.contains_key(left) {
-            self.edges.insert(left.clone(), HashMap::new());
-        }
-        self.edges.get_mut(left).unwrap().count(right.clone(), 1);
-
-        if !self.edges.contains_key(right) {
-            self.edges.insert(right.clone(), HashMap::new());
-        }
-        self.edges.get_mut(right).unwrap().count(left.clone(), 1);
+        *self
+            .edges
+            .entry(left)
+            .or_default()
+            .entry(right)
+            .or_default() += 1;
+        *self
+            .edges
+            .entry(right)
+            .or_default()
+            .entry(left)
+            .or_default() += 1;
     }
 
     pub fn flatten_big_nodes(&mut self) {
@@ -62,15 +65,25 @@ impl<'a> Graph<'a> {
             for left in edges.keys() {
                 self.edges.get_mut(left).unwrap().remove(node);
                 for right in edges.keys() {
-                    self.edges.get_mut(left).unwrap().count(right, 1);
+                    *self.edges.get_mut(left).unwrap().entry(right).or_default() += 1;
                 }
             }
         }
     }
 
     pub fn get_connections(&self, name: &'a str) -> &HashMap<&'a str, u32> {
-        return &self.edges.get(name).unwrap();
+        self.edges.get(name).unwrap()
     }
+}
+
+fn parse_input(input: &str) -> Graph {
+    parse!(input => [pairs split on '\n' with { left '-' right } => (left, right)]);
+
+    let mut graph = Graph::new();
+    for (left, right) in pairs {
+        graph.add_connection(left, right);
+    }
+    graph
 }
 
 fn count_paths_to_end<'a>(
@@ -83,7 +96,8 @@ fn count_paths_to_end<'a>(
     for (connected_node, weight) in graph.get_connections(node) {
         if *connected_node == NAME_START {
             continue;
-        } else if *connected_node == NAME_END {
+        }
+        if *connected_node == NAME_END {
             results += weight;
             continue;
         }
@@ -92,50 +106,38 @@ fn count_paths_to_end<'a>(
         if NodeType::get(connected_node) == NodeType::Small && path.contains(connected_node) {
             if did_small_double_visit {
                 continue;
-            } else {
-                did_small_double_visit = true;
             }
+            did_small_double_visit = true;
         }
 
-        path.push(connected_node.clone());
+        path.push(connected_node);
         results += weight * count_paths_to_end(graph, path, connected_node, did_small_double_visit);
         path.pop();
     }
-    return results;
+    results
 }
 
-fn parse_input<'a>(input: &'a String) -> Graph<'a> {
-    let mut graph = Graph::new();
-    for line in input.trim().split("\n").map(str::trim) {
-        let mut parts = line.splitn(2, "-");
-        graph.add_connection(&parts.next().unwrap(), &parts.next().unwrap());
-    }
-    return graph;
-}
-
-pub fn part1(input: String) -> u32 {
-    let mut graph = parse_input(&input);
+pub fn part1(input: &str) -> u32 {
+    let mut graph = parse_input(input);
     graph.flatten_big_nodes();
-    return count_paths_to_end(&graph, &mut Vec::new(), NAME_START, true);
+    count_paths_to_end(&graph, &mut Vec::new(), NAME_START, true)
 }
 
-pub fn part2(input: String) -> u32 {
-    let mut graph = parse_input(&input);
+pub fn part2(input: &str) -> u32 {
+    let mut graph = parse_input(input);
     graph.flatten_big_nodes();
-    return count_paths_to_end(&graph, &mut Vec::new(), NAME_START, false);
-}
-
-fn main() {
-    run(part1, part2);
+    count_paths_to_end(&graph, &mut Vec::new(), NAME_START, false)
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT_1: &'static str = "
+    #[example_input(part1 = 10, part2 = 36)]
+    static EXAMPLE_INPUT_1: &str = "
         start-A
         start-b
         A-c
@@ -144,7 +146,8 @@ mod tests {
         A-end
         b-end
     ";
-    const EXAMPLE_INPUT_2: &'static str = "
+    #[example_input(part1 = 19, part2 = 103)]
+    static EXAMPLE_INPUT_2: &str = "
         dc-end
         HN-start
         start-kj
@@ -156,7 +159,8 @@ mod tests {
         kj-HN
         kj-dc
     ";
-    const EXAMPLE_INPUT_3: &'static str = "
+    #[example_input(part1 = 226, part2 = 3509)]
+    static EXAMPLE_INPUT_3: &str = "
         fs-end
         he-DX
         fs-he
@@ -179,8 +183,7 @@ mod tests {
 
     #[test]
     fn example1_parse() {
-        let input = EXAMPLE_INPUT_1.to_string();
-        let graph = parse_input(&input);
+        let graph = parse_input(&EXAMPLE_INPUT_1);
         assert_eq!(graph.get_connections("start").len(), 2);
         assert_eq!(graph.get_connections("start").get("A"), Some(&1));
         assert_eq!(graph.get_connections("start").get("b"), Some(&1));
@@ -205,8 +208,7 @@ mod tests {
 
     #[test]
     fn example1_flatten() {
-        let input = EXAMPLE_INPUT_1.to_string();
-        let mut graph = parse_input(&input);
+        let mut graph = parse_input(&EXAMPLE_INPUT_1);
         graph.flatten_big_nodes();
         assert_eq!(graph.get_connections("start").len(), 4);
         assert_eq!(graph.get_connections("start").get("b"), Some(&2));
@@ -241,35 +243,5 @@ mod tests {
         assert_eq!(NodeType::get("b"), NodeType::Small);
         assert_eq!(NodeType::get("JK"), NodeType::Big);
         assert_eq!(NodeType::get("hl"), NodeType::Small);
-    }
-
-    #[test]
-    fn example1_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT_1.to_string()), 10);
-    }
-
-    #[test]
-    fn example2_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT_2.to_string()), 19);
-    }
-
-    #[test]
-    fn example3_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT_3.to_string()), 226);
-    }
-
-    #[test]
-    fn example1_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT_1.to_string()), 36);
-    }
-
-    #[test]
-    fn example2_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT_2.to_string()), 103);
-    }
-
-    #[test]
-    fn example3_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT_3.to_string()), 3509);
     }
 }

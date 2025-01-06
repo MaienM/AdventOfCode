@@ -1,49 +1,42 @@
+aoc::setup!(title = "Extended Polymerization");
+
 use std::collections::HashMap;
 
-use aoc::counter::Counter;
-use aoc::runner::*;
-use derive_new::new;
+use itertools::Itertools;
 
 type Pair = (char, char);
 type Rules = HashMap<Pair, char>;
 type PolymerPairCounts = HashMap<Pair, u64>;
-#[derive(Debug, PartialEq, new)]
+
+#[derive(Debug, PartialEq)]
 struct Polymer {
     pairs: PolymerPairCounts,
     start: char,
     end: char,
 }
+impl From<&str> for Polymer {
+    fn from(value: &str) -> Self {
+        let start = value.chars().next().unwrap();
+        let end = value.chars().last().unwrap();
 
-fn parse_input(input: String) -> (Polymer, Rules) {
-    let mut parts = input.trim().splitn(2, "\n");
-    let polymer_input = parts.next().unwrap();
-    let rules_input = parts.next().unwrap();
+        let mut pairs = PolymerPairCounts::new();
+        for pair in value.chars().tuple_windows() {
+            *pairs.entry(pair).or_default() += 1;
+        }
 
-    let mut pairs = PolymerPairCounts::new();
-    for (l, r) in polymer_input
-        .chars()
-        .into_iter()
-        .zip(polymer_input.chars().into_iter().skip(1))
-    {
-        let pair = (l, r);
-        pairs.count(pair, 1);
+        Self { pairs, start, end }
     }
+}
 
-    let mut rules = Rules::new();
-    for line in rules_input.trim().split("\n").map(str::trim) {
-        let pair = (line.chars().nth(0).unwrap(), line.chars().nth(1).unwrap());
-        let insertion = line.chars().nth(6).unwrap();
-        rules.insert(pair, insertion);
-    }
-
-    return (
-        Polymer::new(
-            pairs,
-            polymer_input.chars().next().unwrap(),
-            polymer_input.chars().last().unwrap(),
-        ),
-        rules,
-    );
+fn parse_input(input: &str) -> (Polymer, Rules) {
+    parse!(input => {
+        [polymer as Polymer]
+        "\n\n"
+        [rules split on '\n' into (Rules) with
+            { [pair chars] " -> " [insertion as char] }
+            => (<[char; 2]>::try_from(pair).unwrap().into(), insertion)
+        ]
+    } => (polymer, rules))
 }
 
 fn do_step(polymer: Polymer, rules: &Rules) -> Polymer {
@@ -53,55 +46,57 @@ fn do_step(polymer: Polymer, rules: &Rules) -> Polymer {
         let left = (pair.0, *insertion);
         let right = (*insertion, pair.1);
 
-        new_pairs.count(left, count);
-        new_pairs.count(right, count);
+        *new_pairs.entry(left).or_default() += count;
+        *new_pairs.entry(right).or_default() += count;
     }
-    return Polymer::new(new_pairs, polymer.start, polymer.end);
+    Polymer {
+        pairs: new_pairs,
+        ..polymer
+    }
 }
 
 fn get_polymer_char_counts(polymer: &Polymer) -> HashMap<char, u64> {
     let mut char_counts: HashMap<char, u64> = HashMap::new();
     for (pair, count) in &polymer.pairs {
-        char_counts.count(pair.0, *count);
-        char_counts.count(pair.1, *count);
+        *char_counts.entry(pair.0).or_default() += *count;
+        *char_counts.entry(pair.1).or_default() += *count;
     }
-    for (_, count) in char_counts.iter_mut() {
+    for count in char_counts.values_mut() {
         *count /= 2;
     }
-    char_counts.count(polymer.start, 1);
-    char_counts.count(polymer.end, 1);
-    return char_counts;
+    *char_counts.entry(polymer.start).or_default() += 1;
+    *char_counts.entry(polymer.end).or_default() += 1;
+    char_counts
 }
 
-pub fn part1(input: String) -> u64 {
+pub fn part1(input: &str) -> u64 {
     let (mut polymer, rules) = parse_input(input);
     for _ in 0..10 {
         polymer = do_step(polymer, &rules);
     }
     let counts = get_polymer_char_counts(&polymer);
-    return counts.values().max().unwrap() - counts.values().min().unwrap();
+    counts.values().max().unwrap() - counts.values().min().unwrap()
 }
 
-pub fn part2(input: String) -> u64 {
+pub fn part2(input: &str) -> u64 {
     let (mut polymer, rules) = parse_input(input);
     for _ in 0..40 {
         polymer = do_step(polymer, &rules);
     }
     let counts = get_polymer_char_counts(&polymer);
-    return counts.values().max().unwrap() - counts.values().min().unwrap();
-}
-
-fn main() {
-    run(part1, part2);
+    counts.values().max().unwrap() - counts.values().min().unwrap()
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
+    use common_macros::hash_map;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 1588, part2 = 2_188_189_693_529)]
+    static EXAMPLE_INPUT: &str = "
         NNCB
 
         CH -> B
@@ -124,49 +119,41 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let (actual_polymer, actual_rules) = parse_input(EXAMPLE_INPUT.to_string());
-        let mut expected_polymer_counts = PolymerPairCounts::new();
-        expected_polymer_counts.insert(('N', 'N'), 1);
-        expected_polymer_counts.insert(('N', 'C'), 1);
-        expected_polymer_counts.insert(('C', 'B'), 1);
+        let (actual_polymer, actual_rules) = parse_input(&EXAMPLE_INPUT);
+
+        let expected_polymer_counts = hash_map![
+            ('N', 'N') => 1,
+            ('N', 'C') => 1,
+            ('C', 'B') => 1,
+        ];
         assert_eq!(actual_polymer.pairs, expected_polymer_counts);
         assert_eq!(actual_polymer.start, 'N');
         assert_eq!(actual_polymer.end, 'B');
-        let mut expected_rules = Rules::new();
-        expected_rules.insert(('C', 'H'), 'B');
-        expected_rules.insert(('H', 'H'), 'N');
-        expected_rules.insert(('C', 'B'), 'H');
-        expected_rules.insert(('N', 'H'), 'C');
-        expected_rules.insert(('H', 'B'), 'C');
-        expected_rules.insert(('H', 'C'), 'B');
-        expected_rules.insert(('H', 'N'), 'C');
-        expected_rules.insert(('N', 'N'), 'C');
-        expected_rules.insert(('B', 'H'), 'H');
-        expected_rules.insert(('N', 'C'), 'B');
-        expected_rules.insert(('N', 'B'), 'B');
-        expected_rules.insert(('B', 'N'), 'B');
-        expected_rules.insert(('B', 'B'), 'N');
-        expected_rules.insert(('B', 'C'), 'B');
-        expected_rules.insert(('C', 'C'), 'N');
-        expected_rules.insert(('C', 'N'), 'C');
+
+        let expected_rules = hash_map![
+            ('C', 'H') => 'B',
+            ('H', 'H') => 'N',
+            ('C', 'B') => 'H',
+            ('N', 'H') => 'C',
+            ('H', 'B') => 'C',
+            ('H', 'C') => 'B',
+            ('H', 'N') => 'C',
+            ('N', 'N') => 'C',
+            ('B', 'H') => 'H',
+            ('N', 'C') => 'B',
+            ('N', 'B') => 'B',
+            ('B', 'N') => 'B',
+            ('B', 'B') => 'N',
+            ('B', 'C') => 'B',
+            ('C', 'C') => 'N',
+            ('C', 'N') => 'C',
+        ];
         assert_eq!(actual_rules, expected_rules);
     }
 
     #[test]
-    fn example_polymer_parse() {
-        let (actual_polymer, _) = parse_input("NNNCB\nAB -> C".to_string());
-        let mut expected_polymer = HashMap::new();
-        expected_polymer.insert(('N', 'N'), 2);
-        expected_polymer.insert(('N', 'C'), 1);
-        expected_polymer.insert(('C', 'B'), 1);
-        assert_eq!(actual_polymer.pairs, expected_polymer);
-        assert_eq!(actual_polymer.start, 'N');
-        assert_eq!(actual_polymer.end, 'B');
-    }
-
-    #[test]
     fn example_polymer_count() {
-        let (mut polymer, rules) = parse_input(EXAMPLE_INPUT.to_string());
+        let (mut polymer, rules) = parse_input(&EXAMPLE_INPUT);
         for _ in 0..10 {
             polymer = do_step(polymer, &rules);
         }
@@ -179,62 +166,39 @@ mod tests {
 
     #[test]
     fn example_step1() {
-        let (mut actual_polymer, actual_rules) = parse_input(EXAMPLE_INPUT.to_string());
+        let (mut actual_polymer, actual_rules) = parse_input(&EXAMPLE_INPUT);
         actual_polymer = do_step(actual_polymer, &actual_rules);
-        let (expected_polymer, _) = parse_input("NCNBCHB\nAB -> C".to_string());
+        let expected_polymer = "NCNBCHB".into();
         assert_eq!(actual_polymer, expected_polymer);
     }
 
     #[test]
     fn example_step2() {
-        let (mut actual_polymer, actual_rules) = parse_input(EXAMPLE_INPUT.to_string());
+        let (mut actual_polymer, actual_rules) = parse_input(&EXAMPLE_INPUT);
         actual_polymer = do_step(actual_polymer, &actual_rules);
         actual_polymer = do_step(actual_polymer, &actual_rules);
-        let (expected_polymer, _) = parse_input("NBCCNBBBCBHCB\nAB -> C".to_string());
+        let expected_polymer = "NBCCNBBBCBHCB".into();
         assert_eq!(actual_polymer, expected_polymer);
     }
 
     #[test]
     fn example_step3() {
-        let (mut actual_polymer, actual_rules) = parse_input(EXAMPLE_INPUT.to_string());
+        let (mut actual_polymer, actual_rules) = parse_input(&EXAMPLE_INPUT);
         actual_polymer = do_step(actual_polymer, &actual_rules);
         actual_polymer = do_step(actual_polymer, &actual_rules);
         actual_polymer = do_step(actual_polymer, &actual_rules);
-        let (expected_polymer, _) = parse_input("NBBBCNCCNBBNBNBBCHBHHBCHB\nAB -> C".to_string());
+        let expected_polymer = "NBBBCNCCNBBNBNBBCHBHHBCHB".into();
         assert_eq!(actual_polymer, expected_polymer);
     }
 
     #[test]
     fn example_step4() {
-        let (mut actual_polymer, actual_rules) = parse_input(EXAMPLE_INPUT.to_string());
+        let (mut actual_polymer, actual_rules) = parse_input(&EXAMPLE_INPUT);
         actual_polymer = do_step(actual_polymer, &actual_rules);
         actual_polymer = do_step(actual_polymer, &actual_rules);
         actual_polymer = do_step(actual_polymer, &actual_rules);
         actual_polymer = do_step(actual_polymer, &actual_rules);
-        let (expected_polymer, _) =
-            parse_input("NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB\nAB -> C".to_string());
+        let expected_polymer = "NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB".into();
         assert_eq!(actual_polymer, expected_polymer);
-    }
-
-    #[test]
-    fn example_step10() {
-        let (mut actual_polymer, actual_rules) = parse_input(EXAMPLE_INPUT.to_string());
-        actual_polymer = do_step(actual_polymer, &actual_rules);
-        actual_polymer = do_step(actual_polymer, &actual_rules);
-        actual_polymer = do_step(actual_polymer, &actual_rules);
-        actual_polymer = do_step(actual_polymer, &actual_rules);
-        let (expected_polymer, _) =
-            parse_input("NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB\nAB -> C".to_string());
-        assert_eq!(actual_polymer, expected_polymer);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 1588);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 2188189693529);
     }
 }

@@ -1,45 +1,45 @@
-use aoc::{parse_number_list, runner::*};
+aoc::setup!(title = "Sonar Sweep");
 
-pub fn part1(input: String) -> u16 {
-    let numbers = parse_number_list(input, "\n");
-    let mut count = 0;
-    let mut last_number = numbers[0];
-    for number in numbers {
-        if number > last_number {
-            count = count + 1;
-        }
-        last_number = number;
-    }
-    return count;
+use itertools::Itertools;
+
+fn parse_input(input: &str) -> Vec<u16> {
+    parse!(input => {
+        [nums split on '\n' as u16]
+    } => nums)
 }
 
-pub fn part2(input: String) -> u16 {
-    let numbers = parse_number_list(input, "\n");
-    let mut count = 0;
-    let mut last_numbers = [numbers[0], numbers[1], numbers[2]];
-    let mut last_sum: i32 = last_numbers.iter().sum();
-    for number in numbers {
-        last_numbers = [last_numbers[1], last_numbers[2], number];
-        let sum = last_numbers.iter().sum();
-        if sum > last_sum {
-            count = count + 1;
-        }
-        last_sum = sum;
-    }
-    return count;
+fn count_incrementing(nums: &[u16]) -> usize {
+    nums.iter()
+        .skip(1)
+        .zip(nums.iter())
+        .filter(|(depth, prev_depth)| depth > prev_depth)
+        .count()
 }
 
-fn main() {
-    run(part1, part2);
+pub fn part1(input: &str) -> usize {
+    let nums = parse_input(input);
+    count_incrementing(&nums)
+}
+
+pub fn part2(input: &str) -> usize {
+    let nums = parse_input(input);
+    let sums: Vec<_> = nums
+        .into_iter()
+        .tuple_windows()
+        .map(|(v1, v2, v3)| v1 + v2 + v3)
+        .collect();
+    count_incrementing(&sums)
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(part1 = 7, part2 = 5)]
+    static EXAMPLE_INPUT: &str = "
         199
         200
         208
@@ -51,14 +51,4 @@ mod tests {
         260
         263
     ";
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 7);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(part2(EXAMPLE_INPUT.to_string()), 5);
-    }
 }

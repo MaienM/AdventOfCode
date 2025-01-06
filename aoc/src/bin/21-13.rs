@@ -1,131 +1,129 @@
-use aoc::{
-    grid::{Grid as BaseGrid, Point},
-    runner::*,
-};
+aoc::setup!(title = "Transparent Origami");
 
-type Grid = BaseGrid<bool>;
-#[derive(Debug, PartialEq)]
-enum FoldAxis {
+use aoc::point::Point2;
+
+type Grid = Vec<Vec<bool>>;
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+enum Axis {
     X,
     Y,
 }
-type Instruction = FoldAxis;
+impl From<&str> for Axis {
+    fn from(value: &str) -> Self {
+        match value {
+            "x" => Axis::X,
+            "y" => Axis::Y,
+            _ => {
+                panic!("Invalid fold axis {value:?}.");
+            }
+        }
+    }
+}
 
-fn parse_input(input: String) -> (Grid, Vec<FoldAxis>) {
-    let lines = input
-        .trim()
-        .split("\n")
-        .map(str::trim)
-        .collect::<Vec<&str>>();
-    let mut split = lines.split(|line| line.is_empty());
-    let grid_lines = split.next().unwrap();
-    let instructions_lines = split.next().unwrap();
+fn parse_input(input: &str) -> (Grid, Vec<Axis>) {
+    // The numeric portion of the fold instruction doesn't actually matter since the instruction is
+    // always fold in half over axis, so we just ignore this and only store what axis to fold on.
 
-    let points = grid_lines
-        .into_iter()
-        .map(|line| {
-            let mut parts = line.splitn(2, ",").map(str::parse).map(Result::unwrap);
-            return Point::new(parts.next().unwrap(), parts.next().unwrap());
-        })
-        .collect::<Vec<Point>>();
+    parse!(input =>
+        [points split on '\n' with
+            { [x as usize] ',' [y as usize] }
+            => Point2::new(x, y)
+        ]
+        "\n\n"
+        [folds split on '\n' with
+            { "fold along " [axis as Axis] "=" _ }
+            => axis
+        ]
+    );
+
     let width = points.iter().max_by_key(|point| point.x).unwrap().x + 1;
     let height = points.iter().max_by_key(|point| point.y).unwrap().y + 1;
     let mut grid = (0..height)
         .map(|_| (0..width).map(|_| false).collect::<Vec<bool>>())
         .collect::<Grid>();
     for point in points {
-        grid.setp(point, true);
+        grid[point.y][point.x] = true;
     }
 
-    let instructions = instructions_lines
-        .into_iter()
-        .map(|line| {
-            assert!(line.starts_with("fold along "));
-            let axis = match line.chars().nth(11) {
-                Some('x') => FoldAxis::X,
-                Some('y') => FoldAxis::Y,
-                _ => {
-                    panic!("Invalid fold axis.");
-                }
-            };
-            // The numeric portion doesn't actually matter since the instruction is always fold in half over axis.
-            // let num = line[13..].parse().unwrap();
-            return axis;
-        })
-        .collect::<Vec<Instruction>>();
-
-    return (grid, instructions);
+    (grid, folds)
 }
 
-fn do_fold(grid: Grid, instruction: Instruction) -> Grid {
-    if instruction == FoldAxis::X {
-        let mid = grid.width / 2 + 1;
-        return grid
-            .into_iter()
+fn do_fold(grid: Grid, axis: Axis) -> Grid {
+    if axis == Axis::X {
+        let mid = grid[0].len() / 2 + 1;
+        grid.into_iter()
             .map(|row| {
                 let left = &row[..mid - 1];
                 let right = &row[mid..];
-                return left
-                    .into_iter()
-                    .zip(right.into_iter().rev())
+                left.iter()
+                    .zip(right.iter().rev())
                     .map(|(l, r)| *l || *r)
-                    .collect::<Vec<bool>>();
+                    .collect::<Vec<bool>>()
             })
-            .collect();
+            .collect()
     } else {
-        let chunk_height = grid.height / 2;
+        let chunk_height = grid.len() / 2;
         let top = grid.iter().take(chunk_height);
         let bottom = grid.iter().skip(chunk_height + 1).take(chunk_height);
-        // println!("{:?} -> {:?} | {:?}", grid, top, bottom);
-        return top
-            .zip(bottom.rev())
-            .map::<Vec<bool>, _>(|(trow, brow)| {
-                trow.into_iter()
-                    .zip(brow.into_iter())
+        top.zip(bottom.rev())
+            .map::<Vec<bool>, _>(|(t_row, b_row)| {
+                t_row
+                    .iter()
+                    .zip(b_row.iter())
                     .map(|(t, b)| *t || *b)
                     .collect()
             })
-            .collect();
+            .collect()
     }
 }
 
 fn format_grid(grid: &Grid) -> String {
     let mut result = String::new();
-    for line in grid.iter() {
+    for line in grid {
         for cell in line {
             result += if *cell { "█" } else { " " };
         }
         result += "\n";
     }
     result.pop();
-    return result;
+    result
 }
 
-pub fn part1(input: String) -> u16 {
+pub fn part1(input: &str) -> usize {
     let (mut grid, instructions) = parse_input(input);
     grid = do_fold(grid, instructions.into_iter().next().unwrap());
-    return grid.into_by_cell().filter(|(_, value)| *value).count() as u16;
+    grid.into_iter().flatten().filter(|v| *v).count()
 }
 
-pub fn part2(input: String) -> String {
+pub fn part2(input: &str) -> String {
     let (mut grid, instructions) = parse_input(input);
-    for instruction in instructions {
-        grid = do_fold(grid, instruction);
+    for axis in instructions {
+        grid = do_fold(grid, axis);
     }
-    return format_grid(&grid);
-}
-
-fn main() {
-    run(part1, part2);
+    format_grid(&grid)
 }
 
 #[cfg(test)]
 mod tests {
+    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    const EXAMPLE_INPUT: &'static str = "
+    #[example_input(
+        part1 = 17,
+        part2 = "
+            █████
+            █   █
+            █   █
+            █   █
+            █████
+                 
+                 
+        "
+    )]
+    static EXAMPLE_INPUT: &str = "
         6,10
         0,14
         9,10
@@ -197,24 +195,10 @@ mod tests {
             vec![
                 true, false, true, false, false, false, false, false, false, false, false,
             ],
-        ]
-        .into();
-        let expected_instructions = vec![FoldAxis::Y, FoldAxis::X];
-        let (actual_grid, actual_instructions) = parse_input(EXAMPLE_INPUT.to_string());
+        ];
+        let expected_instructions = vec![Axis::Y, Axis::X];
+        let (actual_grid, actual_instructions) = parse_input(&EXAMPLE_INPUT);
         assert_eq!(actual_grid, expected_grid);
         assert_eq!(actual_instructions, expected_instructions);
-    }
-
-    #[test]
-    fn example_part1() {
-        assert_eq!(part1(EXAMPLE_INPUT.to_string()), 17);
-    }
-
-    #[test]
-    fn example_part2() {
-        assert_eq!(
-            part2(EXAMPLE_INPUT.to_string()),
-            "█████\n█   █\n█   █\n█   █\n█████\n     \n     "
-        );
     }
 }
