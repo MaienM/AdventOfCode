@@ -34,6 +34,7 @@ class Worker {
 		return aoc.list().map((bin) => ({
 			name: bin.name,
 			title: bin.title,
+			source_path: bin.source_path,
 			year: 2000 + +(bin.year),
 			day: bin.day,
 			parts: bin.parts,

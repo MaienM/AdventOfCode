@@ -81,6 +81,12 @@ impl Bin {
         self.0.title.map(str::to_owned)
     }
 
+    /// The path of the source file, relative to the root of the repository.
+    #[wasm_bindgen(getter)]
+    pub fn source_path(&self) -> String {
+        self.0.source_path.to_owned()
+    }
+
     /// The year that the binary is for (last 2 digits only).
     #[wasm_bindgen(getter)]
     pub fn year(&self) -> u8 {

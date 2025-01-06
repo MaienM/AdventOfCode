@@ -88,10 +88,22 @@ impl BinScanner {
             None => parse_quote!(None),
         };
 
+        let root_path = env::current_dir()
+            .map_err(|err| format!("error determining working directory: {err}"))
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned();
+        let path = &self
+            .path
+            .strip_prefix(&format!("{}/", root_path))
+            .unwrap_or(&self.path);
+
         parse_quote! {
             ::aoc_runner::derived::Bin {
                 name: #name,
                 title: #title,
+                source_path: #path,
                 year: #year,
                 day: #day,
                 part1: #part1,

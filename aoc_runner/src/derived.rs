@@ -11,6 +11,9 @@ pub struct Bin {
     /// The title of the puzzle.
     pub title: Option<&'static str>,
 
+    /// The path of the source file, relative to the root of the repository.
+    pub source_path: &'static str,
+
     /// The year that the binary is for (last 2 digits only).
     pub year: u8,
 

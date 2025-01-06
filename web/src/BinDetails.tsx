@@ -137,7 +137,7 @@ export default () => {
 					<Button
 						variant="outlined"
 						startIcon={<Source />}
-						href={context.repository.browse(`src/bin/${bin.name}.rs`)}
+						href={context.repository.browse(bin.source_path)}
 						target="blank"
 						rel="noopener"
 					>
