@@ -23,6 +23,7 @@ const Day = (props: DayProps) => {
 		sx: {},
 		selected: false,
 		disabled: !bin,
+		title: bin?.title,
 	};
 
 	// Hide irrelevant days.

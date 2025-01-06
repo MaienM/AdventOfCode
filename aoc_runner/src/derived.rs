@@ -8,6 +8,9 @@ pub struct Bin {
     /// The name of the binary.
     pub name: &'static str,
 
+    /// The title of the puzzle.
+    pub title: Option<&'static str>,
+
     /// The year that the binary is for (last 2 digits only).
     pub year: u8,
 

@@ -57,8 +57,9 @@ export default () => {
 				</IconButton>
 				<Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
 					{bin.year}
-					&nbsp; day &nbsp;
+					{' day '}
 					{bin.day}
+					{bin.title ? `: ${bin.title}` : null}
 				</Typography>
 			</Toolbar>
 			<Stack padding={2} spacing={2}>

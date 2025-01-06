@@ -9,7 +9,7 @@ use syn::{
     punctuated::Punctuated,
     spanned::Spanned,
     visit::{self, Visit},
-    Error, Expr, ExprPath, ForeignItemStatic, ItemFn, ItemMod, ItemStatic, LitStr, Meta,
+    Error, Expr, ExprPath, ForeignItemStatic, ItemFn, ItemMod, ItemStatic, Lit, LitStr, Meta,
     PathSegment, Token, Type,
 };
 
@@ -32,6 +32,7 @@ struct BinScanner {
     current_path: Punctuated<PathSegment, Token![::]>,
     pub(crate) path: String,
     pub(crate) name: String,
+    pub(crate) title: Option<String>,
     pub(crate) part1: Expr,
     pub(crate) part2: Expr,
     pub(crate) visual1: Expr,
@@ -43,6 +44,7 @@ impl BinScanner {
         let mut scanner = Self {
             path: path.to_owned(),
             name: path.split('/').last().unwrap().replace(".rs", ""),
+            title: None,
             mod_root_path: modpath.path.segments.clone(),
             mod_visual_path: {
                 let mut p = modpath.path.segments.clone();
@@ -81,9 +83,15 @@ impl BinScanner {
             (name[0..2].parse().unwrap(), name[3..5].parse().unwrap())
         };
 
+        let title: Expr = match &self.title {
+            Some(title) => parse_quote!(Some(#title)),
+            None => parse_quote!(None),
+        };
+
         parse_quote! {
             ::aoc_runner::derived::Bin {
                 name: #name,
+                title: #title,
                 year: #year,
                 day: #day,
                 part1: #part1,
@@ -295,7 +303,7 @@ pub fn inject_binaries(input: TokenStream, annotated_item: TokenStream) -> Token
             #[path = #path]
             pub mod #modident;
         });
-        binexprs.push(scanner.to_expr().into_token_stream());
+        binexprs.push(quote!(bin::#modident::BIN.clone()));
     }
 
     let itemdef = fill_static(
@@ -317,7 +325,7 @@ pub fn inject_binaries(input: TokenStream, annotated_item: TokenStream) -> Token
     .into()
 }
 
-pub fn inject_binary(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+pub fn inject_binary(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let itemdef = parse_macro_input!(annotated_item as ForeignItemStatic);
     if itemdef.ty != parse_quote!(Bin) {
         return Error::new(itemdef.ty.span(), "must be of type Bin".to_owned())
@@ -327,7 +335,21 @@ pub fn inject_binary(_input: TokenStream, annotated_item: TokenStream) -> TokenS
 
     let expr = match get_source_path() {
         SourcePath::Ok(path) => {
-            let scanner = BinScanner::scan_file(path.to_str().unwrap(), parse_quote!(self));
+            let mut scanner = BinScanner::scan_file(path.to_str().unwrap(), parse_quote!(self));
+
+            let args_parser = syn::meta::parser(|meta| {
+                if meta.path.is_ident("title") {
+                    match meta.value()?.parse::<Lit>()? {
+                        Lit::Str(title) => scanner.title = Some(title.value()),
+                        _ => return Err(meta.error("unsupported value, must be a string")),
+                    }
+                } else {
+                    return Err(meta.error("unsupported property"));
+                }
+                Ok(())
+            });
+            parse_macro_input!(input with args_parser);
+
             scanner.to_expr()
         }
         SourcePath::Empty => {

@@ -13,11 +13,11 @@ pub mod prelude;
 /// Basic scaffold for a solution.
 #[macro_export]
 macro_rules! setup {
-    () => {
+    ($($name:ident = $value:literal),* $(,)?) => {
         // Include prelude.
         use aoc::prelude::*;
 
         // Generate entrypoint.
-        aoc_runner::single::generate_main!();
+        aoc_runner::single::generate_main!($($name = $value),*);
     };
 }

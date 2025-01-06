@@ -75,6 +75,12 @@ impl Bin {
         self.0.name.to_owned()
     }
 
+    /// The title of the puzzle.
+    #[wasm_bindgen(getter)]
+    pub fn title(&self) -> Option<String> {
+        self.0.title.map(str::to_owned)
+    }
+
     /// The year that the binary is for (last 2 digits only).
     #[wasm_bindgen(getter)]
     pub fn year(&self) -> u8 {

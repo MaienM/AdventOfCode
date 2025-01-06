@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use ansi_term::Colour::{Cyan, Red};
+use ansi_term::Colour::{Cyan, Purple, Red};
 use clap::{CommandFactory, FromArgMatches, Parser, ValueHint};
 use rayon::ThreadPoolBuilder;
 
@@ -77,8 +77,10 @@ pub fn main(bin: &Bin) {
     let part2_path = source_path_fill_tokens!(args.part2, bin = bin, part = 2);
 
     println!(
-        "Running {} using input {}...",
+        "Running {}{} using input {}...",
         Cyan.paint(bin.name),
+        bin.title
+            .map_or(String::new(), |t| format!(": {}", Purple.paint(t))),
         Cyan.paint(input_path.source().unwrap()),
     );
 
@@ -143,9 +145,9 @@ pub fn main(bin: &Bin) {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __generate_bin_main {
-    () => {
-        #[aoc_runner::inject_binary]
-        static BIN: Bin;
+    ($($name:ident = $value:literal),* $(,)?) => {
+        #[aoc_runner::inject_binary($($name = $value),*)]
+        pub(crate) static BIN: Bin;
 
         pub fn main() {
             ::aoc_runner::single::main(&*BIN);

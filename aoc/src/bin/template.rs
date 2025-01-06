@@ -1,4 +1,4 @@
-aoc::setup!();
+aoc::setup!(title = "");
 
 fn parse_input(input: &str) -> Vec<usize> {
     parse!(input => {

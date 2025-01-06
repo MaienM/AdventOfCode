@@ -33,6 +33,7 @@ class Worker {
 		await this.initWASMPromise;
 		return aoc.list().map((bin) => ({
 			name: bin.name,
+			title: bin.title,
 			year: 2000 + +(bin.year),
 			day: bin.day,
 			parts: bin.parts,
