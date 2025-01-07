@@ -1,7 +1,5 @@
 aoc::setup!(title = "Sonar Sweep");
 
-use itertools::Itertools;
-
 fn parse_input(input: &str) -> Vec<u16> {
     parse!(input => {
         [nums split on '\n' as u16]

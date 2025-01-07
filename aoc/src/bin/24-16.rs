@@ -3,7 +3,6 @@ aoc::setup!(title = "Reindeer Maze");
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use aoc::point::{Direction2, Point2};
-use rayon::prelude::*;
 
 type Map = Vec<Vec<bool>>;
 

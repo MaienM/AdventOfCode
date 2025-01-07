@@ -3,7 +3,6 @@ aoc::setup!(title = "A Long Walk");
 use std::{collections::HashMap, mem};
 
 use aoc::point::{Direction2, Point2};
-use rayon::prelude::*;
 
 type Point = Point2<usize>;
 type Direction = Direction2;

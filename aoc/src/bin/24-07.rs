@@ -1,7 +1,5 @@
 aoc::setup!(title = "Bridge Repair");
 
-use rayon::prelude::*;
-
 type Equation = (usize, Vec<usize>);
 
 fn parse_input(input: &str) -> Vec<Equation> {

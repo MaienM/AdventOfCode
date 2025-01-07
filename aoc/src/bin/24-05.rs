@@ -2,8 +2,6 @@ aoc::setup!(title = "Print Queue");
 
 use std::cmp::Ordering;
 
-use rayon::prelude::*;
-
 fn parse_input(input: &str) -> (Vec<(u16, u16)>, Vec<Vec<u16>>) {
     parse!(input => {
         [rules split on '\n' with

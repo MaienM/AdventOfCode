@@ -2,8 +2,6 @@ aoc::setup!(title = "Extended Polymerization");
 
 use std::collections::HashMap;
 
-use itertools::Itertools;
-
 type Pair = (char, char);
 type Rules = HashMap<Pair, char>;
 type PolymerPairCounts = HashMap<Pair, u64>;

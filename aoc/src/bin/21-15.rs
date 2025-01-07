@@ -89,7 +89,6 @@ pub fn part2(input: &str) -> i16 {
 #[cfg(test)]
 mod tests {
     use aoc_runner::example_input;
-    use itertools::Itertools;
     use pretty_assertions::assert_eq;
 
     use super::*;

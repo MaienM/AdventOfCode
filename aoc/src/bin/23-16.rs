@@ -3,7 +3,6 @@ aoc::setup!(title = "The Floor Will Be Lava");
 use std::{collections::HashSet, sync::Arc};
 
 use aoc::point::{Direction2, Point2};
-use rayon::prelude::*;
 
 type Point = Point2;
 type Direction = Direction2;

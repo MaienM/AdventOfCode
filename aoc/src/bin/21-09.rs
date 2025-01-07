@@ -3,7 +3,6 @@ aoc::setup!(title = "Smoke Basin");
 use std::collections::HashSet;
 
 use aoc::point::Point2;
-use itertools::Itertools;
 
 type Grid = Vec<Vec<u8>>;
 type Basin = HashSet<Point2>;

@@ -3,7 +3,6 @@ aoc::setup!(title = "Restroom Redoubt");
 use std::{cmp::Ordering, collections::HashSet};
 
 use aoc::point::Point2;
-use rayon::prelude::*;
 
 type Point = Point2<isize>;
 

@@ -2,8 +2,6 @@ aoc::setup!(title = "Crossed Wires");
 
 use std::{collections::HashMap, fs::File, io::Write as _};
 
-use itertools::Itertools;
-
 #[derive(Eq, PartialEq, Debug)]
 enum Operand {
     And,

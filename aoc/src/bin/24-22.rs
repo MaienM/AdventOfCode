@@ -2,8 +2,6 @@ aoc::setup!(title = "Monkey Market");
 
 use std::collections::HashMap;
 
-use rayon::prelude::*;
-
 const PRUNE: usize = 16_777_216;
 
 fn parse_input(input: &str) -> Vec<usize> {

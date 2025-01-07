@@ -3,7 +3,6 @@ aoc::setup!(title = "Guard Gallivant");
 use std::collections::HashSet;
 
 use aoc::point::{Direction2, Point2};
-use rayon::prelude::*;
 
 type Point = Point2<usize>;
 

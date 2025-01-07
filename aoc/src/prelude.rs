@@ -1,5 +1,9 @@
 //! The aoc utils prelude.
 
-pub use aoc::ext::*;
+pub use itertools::Itertools as _;
+pub use rayon::prelude::*;
+pub use tap::prelude::*;
+
+pub use crate::ext::*;
 #[doc(inline)]
-pub use aoc::parser::parse;
+pub use crate::parser::parse;

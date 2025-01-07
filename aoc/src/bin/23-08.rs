@@ -3,7 +3,6 @@ aoc::setup!(title = "Haunted Wasteland");
 use std::{collections::HashMap, sync::Arc};
 
 use num::integer;
-use rayon::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Direction {

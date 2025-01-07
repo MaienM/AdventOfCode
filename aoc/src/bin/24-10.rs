@@ -3,7 +3,6 @@ aoc::setup!(title = "Hoof It");
 use std::collections::HashSet;
 
 use aoc::point::Point2;
-use rayon::prelude::*;
 
 type Map = Vec<Vec<u8>>;
 

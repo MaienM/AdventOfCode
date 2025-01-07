@@ -2,8 +2,6 @@ aoc::setup!(title = "Not Enough Minerals");
 
 use std::ops::{AddAssign, SubAssign};
 
-use rayon::prelude::*;
-
 #[derive(Debug, Eq, PartialEq)]
 struct Cost {
     ore: u16,

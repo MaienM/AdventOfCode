@@ -2,9 +2,6 @@ aoc::setup!(title = "LAN Party");
 
 use std::collections::{HashMap, HashSet};
 
-use itertools::Itertools;
-use rayon::prelude::*;
-
 fn parse_input(input: &str) -> Vec<(&str, &str)> {
     parse!(input => {
         [pairs split on '\n' with

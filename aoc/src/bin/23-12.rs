@@ -2,8 +2,6 @@ aoc::setup!(title = "Hot Springs");
 
 use std::collections::HashMap;
 
-use rayon::prelude::*;
-
 #[derive(Clone, Debug, PartialEq)]
 enum Condition {
     Operational,

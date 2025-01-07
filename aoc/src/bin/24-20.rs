@@ -3,7 +3,6 @@ aoc::setup!(title = "Race Condition");
 use std::collections::{BinaryHeap, HashSet};
 
 use aoc::point::Point2;
-use rayon::prelude::*;
 
 type Map = Vec<Vec<bool>>;
 
