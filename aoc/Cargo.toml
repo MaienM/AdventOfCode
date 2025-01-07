@@ -60,6 +60,11 @@ cast_possible_wrap = "allow"
 cast_precision_loss = "allow"
 cast_sign_loss = "allow"
 
+# While this might be more _memory_ efficient it's often not more computationally efficient, and I care far more about
+# that in this project than I do about a bit more memory usage (especially since the memory usage of most solutions is
+# relatively minimal anyway).
+trivially_copy_pass_by_ref = "allow"
+
 [[bin]]
 name = "leaderboard"
 required-features = ["leaderboard"]
