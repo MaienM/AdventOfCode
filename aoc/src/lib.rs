@@ -1,9 +1,9 @@
 //! My solutions to the [Advent of Code](https://adventofcode.com) challenges.
+aoc_runner::register_crate!();
 
 #[doc(hidden)]
 extern crate self as aoc;
 
-pub mod bins;
 mod ext;
 pub mod matrix;
 pub mod parser;
@@ -15,9 +15,10 @@ pub mod prelude;
 macro_rules! setup {
     ($($name:ident = $value:literal),* $(,)?) => {
         // Include prelude.
+        #[allow(unused_imports)]
         use aoc::prelude::*;
 
-        // Generate entrypoint.
-        aoc_runner::single::generate_main!($($name = $value),*);
+        // Register binary.
+        aoc_runner::register!($($name = $value),*);
     };
 }

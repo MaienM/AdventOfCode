@@ -1,8 +1,8 @@
 //! Scaffolding to run/test/benchmark AoC solutions.
 //!
-//! Each day is solved in a separate source file (in `aoc/bin`). The [`inject_binary`] and
-//! [`inject_binaries`] macros find these and generate a [`Bin`](aoc_runner::derived::Bin) for each
-//! of these.
+//! Each day is solved in a separate source file (in `aoc/bin`). The [`register`] macro generates a
+//! [`Bin`](aoc_runner::derived::Bin) for each of these, and the [`register_crate`] macro generates
+//! a static & the entrypoints needed to run multiple at the same time.
 
 #[doc(hidden)]
 extern crate self as aoc_runner;
@@ -15,4 +15,4 @@ pub mod single;
 mod source;
 pub mod visual;
 
-pub use aoc_runner_derive::{example_input, inject_binaries, inject_binary, visual};
+pub use aoc_runner_derive::{example_input, register, register_crate, visual};

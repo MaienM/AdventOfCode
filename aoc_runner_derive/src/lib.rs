@@ -8,16 +8,16 @@ mod visual;
 
 use proc_macro::TokenStream;
 
-#[doc = include_str!("../docs/inject_binaries.md")]
-#[proc_macro_attribute]
-pub fn inject_binaries(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    scanner::inject_binaries(input, annotated_item)
+#[doc = include_str!("../docs/register_crate.md")]
+#[proc_macro]
+pub fn register_crate(input: TokenStream) -> TokenStream {
+    scanner::register_crate(input)
 }
 
-#[doc = include_str!("../docs/inject_binary.md")]
-#[proc_macro_attribute]
-pub fn inject_binary(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    scanner::inject_binary(input, annotated_item)
+#[doc = include_str!("../docs/register.md")]
+#[proc_macro]
+pub fn register(input: TokenStream) -> TokenStream {
+    scanner::register(input)
 }
 
 #[doc = include_str!("../docs/example_input.md")]

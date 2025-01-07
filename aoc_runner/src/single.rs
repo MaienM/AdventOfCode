@@ -140,19 +140,3 @@ pub fn main(bin: &Bin) {
         result.print(&format!("Part {i}"), &THRESHOLDS, true);
     }
 }
-
-/// Generate the main entrypoint for a single binary containing the solutions of one day.
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __generate_bin_main {
-    ($($name:ident = $value:literal),* $(,)?) => {
-        #[aoc_runner::inject_binary($($name = $value),*)]
-        pub(crate) static BIN: Bin;
-
-        pub fn main() {
-            ::aoc_runner::single::main(&*BIN);
-        }
-    };
-}
-#[doc(inline)]
-pub use __generate_bin_main as generate_main;

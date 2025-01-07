@@ -7,10 +7,8 @@ use regex::Regex;
 use syn::{
     parse_file, parse_macro_input, parse_quote,
     punctuated::Punctuated,
-    spanned::Spanned,
     visit::{self, Visit},
-    Error, Expr, ExprPath, ForeignItemStatic, ItemFn, ItemMod, ItemStatic, Lit, LitStr, Meta,
-    PathSegment, Token, Type,
+    Error, Expr, ExprPath, ItemFn, ItemMod, ItemStatic, Lit, Meta, PathSegment, Token,
 };
 
 use crate::examples;
@@ -40,7 +38,8 @@ struct BinScanner {
     pub(crate) examples: Vec<Expr>,
 }
 impl BinScanner {
-    pub(crate) fn scan_file(path: &str, modpath: ExprPath) -> Self {
+    pub(crate) fn scan_file(path: &str) -> Self {
+        let modpath: ExprPath = parse_quote!(self);
         let mut scanner = Self {
             path: path.to_owned(),
             name: path.split('/').last().unwrap().replace(".rs", ""),
@@ -192,21 +191,6 @@ impl<'ast> Visit<'ast> for BinScanner {
     }
 }
 
-fn fill_static(def: ForeignItemStatic, ty: Type, expr: Expr) -> ItemStatic {
-    ItemStatic {
-        attrs: def.attrs,
-        vis: def.vis,
-        static_token: def.static_token,
-        mutability: def.mutability,
-        ident: def.ident,
-        colon_token: def.colon_token,
-        semi_token: def.semi_token,
-        eq_token: parse_quote!(=),
-        ty: Box::new(ty),
-        expr: Box::new(expr),
-    }
-}
-
 enum SourcePath {
     Ok(PathBuf),
     Empty,
@@ -243,7 +227,8 @@ fn get_source_path() -> SourcePath {
     }
 }
 
-fn scan_binaries(path: String) -> Result<Vec<BinScanner>, String> {
+fn find_binaries() -> Result<Vec<String>, String> {
+    let path = "bin".to_owned();
     let filename_regex = Regex::new(r"^\d{2}-\d{2}\.rs$").unwrap();
     let source_path = get_source_path().unwrap()?;
     let abs_path = env::current_dir()
@@ -256,7 +241,7 @@ fn scan_binaries(path: String) -> Result<Vec<BinScanner>, String> {
         .join(path.clone())
         .canonicalize()
         .map_err(|err| format!("error resolving {path:?}: {err}"))?;
-    let mut scanners = Vec::new();
+    let mut files = Vec::new();
     let dir = abs_path.read_dir().map_err(|err| {
         format!("error listing files in {path:?} (resolved to {abs_path:?}): {err}")
     })?;
@@ -271,106 +256,96 @@ fn scan_binaries(path: String) -> Result<Vec<BinScanner>, String> {
         if !filename_regex.is_match(&fname) {
             continue;
         }
-
-        let modident = format_ident!("_{}", fname.replace(".rs", "").replace('-', "_"));
-        scanners.push(BinScanner::scan_file(
+        files.push(
             entry
                 .path()
                 .to_str()
-                .ok_or(format!("error getting path for {entry:?}"))?,
-            parse_quote!(bin::#modident),
-        ));
+                .ok_or(format!("error getting path for {entry:?}"))?
+                .to_owned(),
+        );
     }
-    scanners.sort_by_key(|s| s.name.clone());
-    Ok(scanners)
+    files.sort_unstable();
+    Ok(files)
 }
 
-pub fn inject_binaries(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    let mut path = ".".to_owned();
-    let args_parser = syn::meta::parser(|meta| {
-        if meta.path.is_ident("path") {
-            path = meta.value()?.parse::<LitStr>()?.value();
-        } else {
-            return Err(meta.error("unsupported property"));
-        }
-        Ok(())
-    });
+pub fn register_crate(input: TokenStream) -> TokenStream {
+    let args_parser = syn::meta::parser(|meta| Err(meta.error("unsupported property")));
     parse_macro_input!(input with args_parser);
 
-    let itemdef = parse_macro_input!(annotated_item as ForeignItemStatic);
-    if itemdef.ty != parse_quote!(Vec<Bin>) {
-        return Error::new(itemdef.ty.span(), "must be of type Vec<Bin>".to_owned())
-            .to_compile_error()
-            .into();
-    }
+    let mut mods: Vec<TokenStream2> = Vec::new();
+    let mut bins: Vec<TokenStream2> = Vec::new();
 
-    let mut binmods: Vec<TokenStream2> = Vec::new();
-    let mut binexprs: Vec<TokenStream2> = Vec::new();
-
-    let scanners = return_err!(scan_binaries(path.clone()), itemdef.ty.span());
-    for scanner in scanners {
-        let modident = format_ident!("_{}", scanner.name.replace('-', "_"));
-        let path = &scanner.path;
-        binmods.push(quote! {
-            #[path = #path]
+    let files = return_err!(find_binaries(), Span::call_site().into());
+    for file in files {
+        let modident = file
+            .split('/')
+            .last()
+            .unwrap()
+            .replace('-', "_")
+            .strip_suffix(".rs")
+            .unwrap()
+            .to_owned();
+        let modident = format_ident!("_{}", modident);
+        bins.push(quote!(#modident::BIN.clone()));
+        mods.push(quote! {
+            #[path = #file]
             pub mod #modident;
         });
-        binexprs.push(quote!(bin::#modident::BIN.clone()));
     }
 
-    let itemdef = fill_static(
-        itemdef,
-        parse_quote!(once_cell::sync::Lazy<Vec<::aoc_runner::derived::Bin>>),
-        parse_quote!(once_cell::sync::Lazy::new(|| {
-            let bins: Vec<::aoc_runner::derived::Bin> = vec![ #(#binexprs),* ];
+    quote! {
+        pub mod bins {
+            // Store list of binaries in a static. This is used in the main methods below, but it's
+            // also imported by the WASM create.
+            pub static BINS: ::once_cell::sync::Lazy<Vec<::aoc_runner::derived::Bin>> = ::once_cell::sync::Lazy::new(|| {
+                let bins: Vec<::aoc_runner::derived::Bin> = vec![ #(#bins),* ];
 
-            let mut seen = ::std::collections::HashMap::new();
-            for bin in &bins {
-                let Some(title) = bin.title else { continue };
+                let mut seen = ::std::collections::HashMap::new();
+                for bin in &bins {
+                    let Some(title) = bin.title else { continue };
 
-                if title.is_empty() {
-                    panic!("Binary {} has empty title, this is not valid. (Not having a title _is_ valid.)", bin.name);
-                } else if let Some(other_bin) = seen.insert(title, bin.name) {
-                    panic!(
-                        "Binary {} and {} both have title '{title}', this is not valid.",
-                        other_bin, bin.name
-                    );
+                    if let Some(other_bin) = seen.insert(title, bin.name) {
+                        panic!(
+                            "Binary {} and {} both have title '{title}', this is not valid.",
+                            other_bin, bin.name
+                        );
+                    }
                 }
+
+                bins
+            });
+
+            #(#mods)*
+
+            pub fn multi() {
+                aoc_runner::multi::BINS.get_or_init(|| Box::new(BINS.clone()));
+                aoc_runner::multi::main();
             }
 
-            bins
-        })),
-    );
-
-    quote! {
-        #itemdef
-
-        #[allow(dead_code)]
-        #[allow(unused_imports)]
-        #[allow(unused_variables)]
-        mod bin {
-            #(#binmods)*
+            #[cfg(feature = "bench")]
+            pub fn bench() {
+                aoc_runner::multi::BINS.get_or_init(|| Box::new(BINS.clone()));
+                aoc_runner::bench::main();
+            }
         }
     }
     .into()
 }
 
-pub fn inject_binary(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    let itemdef = parse_macro_input!(annotated_item as ForeignItemStatic);
-    if itemdef.ty != parse_quote!(Bin) {
-        return Error::new(itemdef.ty.span(), "must be of type Bin".to_owned())
-            .to_compile_error()
-            .into();
-    }
-
+pub fn register(input: TokenStream) -> TokenStream {
     let expr = match get_source_path() {
         SourcePath::Ok(path) => {
-            let mut scanner = BinScanner::scan_file(path.to_str().unwrap(), parse_quote!(self));
+            let mut scanner = BinScanner::scan_file(path.to_str().unwrap());
 
             let args_parser = syn::meta::parser(|meta| {
                 if meta.path.is_ident("title") {
                     match meta.value()?.parse::<Lit>()? {
-                        Lit::Str(title) => scanner.title = Some(title.value()),
+                        Lit::Str(title) => {
+                            if title.value().is_empty() {
+                                return Err(meta.error("cannot be empty"));
+                            }
+                            scanner.title = Some(title.value());
+                        }
                         _ => return Err(meta.error("unsupported value, must be a string")),
                     }
                 } else {
@@ -386,15 +361,22 @@ pub fn inject_binary(input: TokenStream, annotated_item: TokenStream) -> TokenSt
             parse_quote! { ::core::todo!() }
         }
         SourcePath::Error(err) => {
-            return Error::new(itemdef.ty.span(), err).to_compile_error().into();
+            return Error::new(Span::call_site().into(), err)
+                .to_compile_error()
+                .into();
         }
     };
 
-    fill_static(
-        itemdef,
-        parse_quote!(once_cell::sync::Lazy<::aoc_runner::derived::Bin>),
-        parse_quote!(once_cell::sync::Lazy::new(|| #expr )),
-    )
+    quote!{
+        // Store metadata in a static. This is used in the main method below, but it's also copied
+        // to the full list used by the multi entrypoint.
+        pub(crate) static BIN: ::once_cell::sync::Lazy<::aoc_runner::derived::Bin> = ::once_cell::sync::Lazy::new(|| #expr );
+
+        // Generate entrypoint that just runs this day.
+        pub fn main() {
+            ::aoc_runner::single::main(&*BIN);
+        }
+    }
     .into_token_stream()
     .into()
 }
