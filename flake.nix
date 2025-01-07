@@ -12,6 +12,7 @@
   };
   outputs =
     {
+      self,
       nixpkgs,
       fenix,
       flake-utils,
@@ -23,6 +24,21 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         fenixPkgs = fenix.packages."${system}";
+        rust = (
+          fenixPkgs.combine [
+            (fenixPkgs.latest.withComponents [
+              "cargo"
+              "clippy"
+              "rust-src"
+              "rustc"
+              "rustfmt"
+            ])
+            # WASM platform for web version.
+            (fenixPkgs.targets.wasm32-unknown-unknown.latest.withComponents [
+              "rust-std"
+            ])
+          ]
+        );
       in
       {
         apps =
@@ -85,65 +101,68 @@
                 nixfmt-rfc-style.enable = true;
 
                 # Rust.
-                cargo-check.enable = true;
-                clippy.enable = true;
-                rustfmt.enable = true;
+                cargo-check = {
+                  enable = true;
+                  package = rust;
+                };
+                clippy = {
+                  enable = true;
+                  packageOverrides.cargo = rust;
+                  packageOverrides.clippy = rust;
+                };
+                rustfmt = {
+                  enable = true;
+                  packageOverrides.cargo = rust;
+                  packageOverrides.rustfmt = rust;
+                };
 
                 # Typescript.
-                eslint = {
+                eslint-custom = {
                   enable = true;
-                  settings = {
-                    binPath = "${pkgs.nodePackages.eslint_d}/bin/eslint_d";
-                    extensions = hooks.dprint.files;
-                  };
+                  name = "eslint";
+                  entry = "sh -c 'cd web && ./node_modules/.bin/eslint --fix'";
+                  files = "web/.*\\.(tsx?|jsx?|mjs|cjs)$";
                 };
                 dprint = {
                   enable = true;
                   name = "dprint";
-                  entry = "dprint check";
-                  files = "\\.(tsx?|jsx?|mjs|cjs)$";
+                  entry = "sh -c 'cd web && dprint check'";
+                  inherit (hooks.eslint-custom) files;
                 };
               };
             };
         };
 
+        inherit rust;
+
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            # Core.
-            (fenixPkgs.combine [
-              (fenixPkgs.latest.withComponents [
-                "cargo"
-                "clippy"
-                "rust-src"
-                "rustc"
-                "rustfmt"
-              ])
-              # WASM platform for web version.
-              (fenixPkgs.targets.wasm32-unknown-unknown.latest.withComponents [
-                "rust-std"
-              ])
-            ])
-            fenixPkgs.rust-analyzer
-            gnumake
+          inherit (self.checks.${system}.pre-commit-check) shellHook;
+          buildInputs =
+            with pkgs;
+            [
+              rust
+              fenixPkgs.rust-analyzer
+              gnumake
 
-            # Tests.
-            cargo-nextest
+              # Tests.
+              cargo-nextest
 
-            # Benchmarks.
-            critcmp
-            gnuplot
+              # Benchmarks.
+              critcmp
+              gnuplot
 
-            # Web version.
-            wasm-pack
-            dprint
-            nodePackages.eslint_d
-            nodePackages.npm
-            nodePackages.typescript-language-server
+              # Web version.
+              wasm-pack
+              dprint
+              nodePackages.eslint_d
+              nodePackages.npm
+              nodePackages.typescript-language-server
 
-            cmake
-            pkg-config
-            fontconfig
-          ];
+              cmake
+              pkg-config
+              fontconfig
+            ]
+            ++ self.checks.${system}.pre-commit-check.enabledPackages;
           NODE_OPTIONS = "--openssl-legacy-provider";
         };
       }
