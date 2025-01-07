@@ -434,7 +434,7 @@ macro_rules! __parse_type__ {
     ($var:expr => str => try char) => ({
         let t = $var;
         if t.len() == 1 {
-            t.chars().next()
+            Ok(t.chars().next().unwrap())
         } else {
             Err(format!("cannot convert {t:?} to char as it's more than one character"))
         }
@@ -666,12 +666,11 @@ mod tests {
         assert_eq!(items, vec![1, 2]);
     }
 
-    // TODO: Fix this.
-    // #[test]
-    // fn parse_list_custom_type_char() {
-    //     parse!("a b c" => [items split as char]);
-    //     assert_eq!(items, vec!['a', 'b', 'c']);
-    // }
+    #[test]
+    fn parse_list_custom_type_char() {
+        parse!("a b c" => [items split as char]);
+        assert_eq!(items, vec!['a', 'b', 'c']);
+    }
 
     #[test]
     fn parse_list_custom_collection() {
