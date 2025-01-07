@@ -2,10 +2,12 @@
 
 #![cfg(feature = "bench")]
 
+use std::path::Path;
+
 use clap::{builder::ArgPredicate, value_parser, Parser};
 use criterion::Criterion;
 
-use super::{multi::TargetArgs, runner::Solver};
+use super::{derived::Solver, multi::TargetArgs};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -65,7 +67,13 @@ pub fn main() {
             name = format!("{name}/{source}");
         }
 
-        let input = target.input.read().unwrap();
+        // For some reason this entrypoint is run from inside the crate dir instead of from the
+        // root (like the others are), so we need to adjust for that.
+        let input = target
+            .input
+            .mutate_path(|p| Path::new("..").join(p).to_str().unwrap().to_owned())
+            .read()
+            .unwrap();
 
         criterion.bench_function(&name, |b| {
             b.iter(|| runnable(&input));
