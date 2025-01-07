@@ -459,7 +459,7 @@ macro_rules! __parse_type__ {
 
     ($var:expr => char to digit) => ({
         let t = $var;
-        t.to_digit(10).ok_or_else(|| format!("cannot convert character {t} to a number"))
+        t.to_digit(10).ok_or_else(|| format!("cannot convert character {t:?} to a number"))
     });
     ($var:expr => char => try usize) => ($crate::parser::__parse_type__!($var => char to digit).map(|v| v as usize));
     ($var:expr => char => try u128) => ($crate::parser::__parse_type__!($var => char to digit).map(|v| v as u128));
