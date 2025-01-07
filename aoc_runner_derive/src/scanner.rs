@@ -322,7 +322,7 @@ pub fn inject_binaries(input: TokenStream, annotated_item: TokenStream) -> Token
         itemdef,
         parse_quote!(once_cell::sync::Lazy<Vec<::aoc_runner::derived::Bin>>),
         parse_quote!(once_cell::sync::Lazy::new(|| {
-            let bins = vec![ #(#binexprs),* ];
+            let bins: Vec<::aoc_runner::derived::Bin> = vec![ #(#binexprs),* ];
 
             let mut seen = ::std::collections::HashMap::new();
             for bin in &bins {
