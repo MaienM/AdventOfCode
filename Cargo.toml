@@ -7,6 +7,9 @@ members = [
 	"puzzle_wasm",
 ]
 
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage,coverage_nightly)'] }
+
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 match_on_vec_items = "allow"

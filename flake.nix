@@ -24,21 +24,21 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         fenixPkgs = fenix.packages."${system}";
-        rust = (
-          fenixPkgs.combine [
-            (fenixPkgs.latest.withComponents [
-              "cargo"
-              "clippy"
-              "rust-src"
-              "rustc"
-              "rustfmt"
-            ])
-            # WASM platform for web version.
-            (fenixPkgs.targets.wasm32-unknown-unknown.latest.withComponents [
-              "rust-std"
-            ])
-          ]
-        );
+        rust = fenixPkgs.combine [
+          (fenixPkgs.latest.withComponents [
+            "cargo"
+            "clippy"
+            "rust-src"
+            "rustc"
+            "rustfmt"
+
+            "llvm-tools-preview" # needed by cargo-llv-cov
+          ])
+          # WASM platform for web version.
+          (fenixPkgs.targets.wasm32-unknown-unknown.latest.withComponents [
+            "rust-std"
+          ])
+        ];
       in
       {
         apps =
@@ -152,6 +152,7 @@
               rust
 
               # Tests.
+              cargo-llvm-cov
               cargo-nextest
 
               # Benchmarks.
