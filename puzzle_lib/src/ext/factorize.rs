@@ -26,6 +26,7 @@ pub trait Factorize {
     /// assert_eq!(8u8.factorize(), vec![2, 2, 2]);
     /// assert_eq!(9u8.factorize(), vec![3, 3]);
     /// assert_eq!(210u8.factorize(), vec![2, 3, 5, 7]);
+    /// assert_eq!(65537u32.factorize(), vec![65537]);
     /// ```
     fn factorize(&self) -> Vec<Self>
     where
