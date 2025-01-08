@@ -121,26 +121,25 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C>
 where
     T: ToPrimitive + Copy,
 {
-    /// Perform Gauss-Jordan elimination, and return the last column.
+    /// Perform [Gauss-Jordan elimination](https://en.wikipedia.org/wiki/Gaussian_elimination), and
+    /// return the last column.
     ///
     /// This is a method to solve a system of linear equations. Generally speaking you will need as
     /// many equations as you have unknowns, though there might be cases where you need more (e.g
-    /// if two equations are equivalent (can be transformed to one another), such as `x + y = 1`
-    /// and `2x + 2y = 2`).
+    /// if two equations are equivalent (can be transformed to one another), such as $`x + y = 1`$
+    /// and $`2x + 2y = 2`$).
     ///
     /// Beware of floating point math, if you're going to cast the result to an integer you will
     /// want to round it first.
-    ///
-    /// See <https://en.wikipedia.org/wiki/Gaussian_elimination> for more information.
     ///
     /// # Examples
     ///
     /// Given the following set of equations:
     ///
     /// ```math
-    /// 2x + y - z = 8
-    /// -3x - y + 2z = -11
-    /// -2x + y + 2z = -3
+    ///  2x + y -  z = 8 \\
+    /// -3x - y + 2z = -11 \\
+    /// -2x + y + 2z = -3 \\
     /// ```
     ///
     /// We can express this as a matrix and solve it:
@@ -153,9 +152,9 @@ where
     ///     [-2, 1, 2, -3],
     /// ]);
     /// let result = matrix.gauss_jordan_elimination();
-    /// assert_eq!(result[0].round(), 2.0);
-    /// assert_eq!(result[1].round(), 3.0);
-    /// assert_eq!(result[2].round(), -1.0);
+    /// assert_eq!(result[0].round(), 2.0);  // x
+    /// assert_eq!(result[1].round(), 3.0);  // y
+    /// assert_eq!(result[2].round(), -1.0); // z
     /// ```
     #[must_use]
     pub fn gauss_jordan_elimination(&self) -> [f64; R] {
