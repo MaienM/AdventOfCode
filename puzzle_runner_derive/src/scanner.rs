@@ -95,7 +95,7 @@ impl BinScanner {
             .to_owned();
         let path = &self
             .path
-            .strip_prefix(&format!("{}/", root_path))
+            .strip_prefix(&format!("{root_path}/"))
             .unwrap_or(&self.path);
 
         parse_quote! {
@@ -136,20 +136,20 @@ impl<'ast> Visit<'ast> for BinScanner {
         if cp == &self.mod_root_path {
             match node.sig.ident.to_string().as_str() {
                 "part1" => {
-                    self.part1 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part1(i).to_string()))
+                    self.part1 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part1(i).to_string()));
                 }
                 "part2" => {
-                    self.part2 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part2(i).to_string()))
+                    self.part2 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part2(i).to_string()));
                 }
                 _ => {}
             }
         } else if cp == &self.mod_visual_path {
             match node.sig.ident.to_string().as_str() {
                 "part1" => {
-                    self.visual1 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part1(i).into()))
+                    self.visual1 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part1(i).into()));
                 }
                 "part2" => {
-                    self.visual2 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part2(i).into()))
+                    self.visual2 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part2(i).into()));
                 }
                 _ => {}
             }

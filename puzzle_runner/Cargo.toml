@@ -26,3 +26,6 @@ puzzle_runner_derive = { path = "../puzzle_runner_derive" }
 clap = { version = "4.4.10", features = ["derive", "string"] }
 once_cell = "1.18.0"
 rayon = "1.8.0"
+
+[lints]
+workspace = true

@@ -182,6 +182,11 @@ pub fn list() -> Vec<Bin> {
 }
 
 /// Run a single part of a single [`Bin`].
+///
+/// # Errors
+///
+/// Will return `Err` if there is no `Bin` wih the requested name, if the requested part is not
+/// implemented, or if running the part causes a panic.
 #[wasm_bindgen]
 pub fn run(name: &str, part: u8, input: &str) -> Result<SolverResult, String> {
     let bin = BINS

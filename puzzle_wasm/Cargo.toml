@@ -19,11 +19,8 @@ wasm-bindgen-rayon = "1.1.3"
 [package.metadata.cargo-udeps.ignore]
 normal = ["console_error_panic_hook"]
 
-[lints.clippy]
-pedantic = "warn"
-missing_errors_doc = "allow"
-missing_panics_doc = "allow"
-must_use_candidate = "allow"
+[lints]
+workspace = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]

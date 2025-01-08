@@ -161,16 +161,16 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
     if args.test {
         for (part, expr) in [("part1", &args.part1), ("part2", &args.part2)] {
             if expr.is_some() {
-                let ident = &example.ident;
-                let lident = format_ident!("{}_{}", ident.to_string().to_lowercase(), part);
+                let var_ident = &example.ident;
+                let fn_ident = format_ident!("{}_{}", var_ident.to_string().to_lowercase(), part);
                 let part = format_ident!("{part}");
                 result.extend(quote! {
                     #[cfg(test)]
                     #[test]
-                    fn #lident() {
-                        assert_eq!(#part(#ident.input).to_string(), #ident.#part.unwrap());
+                    fn #fn_ident() {
+                        assert_eq!(#part(#var_ident.input).to_string(), #var_ident.#part.unwrap());
                     }
-                })
+                });
             }
         }
     }

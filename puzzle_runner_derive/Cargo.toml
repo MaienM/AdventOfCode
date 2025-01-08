@@ -11,3 +11,6 @@ proc-macro2 = "1.0"
 quote = "1.0"
 regex = "1.11.1"
 syn = { version = "2.0", features = ["full", "extra-traits", "visit"] }
+
+[lints]
+workspace = true
