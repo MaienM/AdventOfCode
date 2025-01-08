@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material';
 import { DateCalendar, PickersCalendarHeaderProps, PickersDay, PickersDayProps } from '@mui/x-date-pickers';
-import type { Bin } from 'aoc_wasm';
+import type { Bin } from 'puzzle_wasm';
 import * as React from 'react';
 import { Link } from 'react-router';
 import Context from './context';

@@ -26,7 +26,7 @@ pub fn part2(input: &str) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use aoc_runner::example_input;
+    use puzzle_runner::example_input;
 
     use super::*;
 

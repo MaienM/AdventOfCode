@@ -1,5 +1,5 @@
 //! My solutions to the [Advent of Code](https://adventofcode.com) challenges.
-aoc_runner::register_crate!();
+puzzle_runner::register_crate!();
 
 #[doc(hidden)]
 extern crate self as aoc;
@@ -19,6 +19,6 @@ macro_rules! setup {
         use aoc::prelude::*;
 
         // Register binary.
-        aoc_runner::register!($($name = $value),*);
+        puzzle_runner::register!($($name = $value),*);
     };
 }

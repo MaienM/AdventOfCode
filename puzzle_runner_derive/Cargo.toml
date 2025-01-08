@@ -1,5 +1,5 @@
 [package]
-name = "aoc_runner_derive"
+name = "puzzle_runner_derive"
 version = "0.0.0"
 edition = "2021"
 

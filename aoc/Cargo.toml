@@ -6,11 +6,11 @@ edition = "2021"
 [features]
 default = []
 visual = [
-	"aoc_runner/visual",
+	"puzzle_runner/visual",
 	"dep:raqote",
 ]
 bench = [
-	"aoc_runner/bench",
+	"puzzle_runner/bench",
 	"dep:criterion",
 ]
 leaderboard = [
@@ -33,7 +33,7 @@ serde_json = { version = "1.0.108", optional = true }
 
 # main
 ansi_term = "0.12.1"
-aoc_runner = { path = "../aoc_runner" }
+puzzle_runner = { path = "../puzzle_runner" }
 common_macros = "0.1.1"
 derive-new = "0.7"
 once_cell = "1.18.0"

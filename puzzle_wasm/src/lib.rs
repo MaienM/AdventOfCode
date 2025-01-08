@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use aoc::bins::BINS;
-use aoc_runner::{derived::Solver, runner::Timer};
+use puzzle_runner::{derived::Solver, runner::Timer};
 use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;
@@ -64,9 +64,9 @@ pub fn get_timer_resolution() -> Number {
     time::duration_to_js(&duration)
 }
 
-/// WASM wrapper for [`aoc_runner::derived::Bin`].
+/// WASM wrapper for [`puzzle_runner::derived::Bin`].
 #[wasm_bindgen]
-pub struct Bin(&'static aoc_runner::derived::Bin);
+pub struct Bin(&'static puzzle_runner::derived::Bin);
 #[wasm_bindgen]
 impl Bin {
     /// The name of the binary.
@@ -112,9 +112,9 @@ impl Bin {
     }
 }
 
-/// WASM wrapper for [`aoc_runner::derived::Example`].
+/// WASM wrapper for [`puzzle_runner::derived::Example`].
 #[wasm_bindgen]
-pub struct Example(&'static aoc_runner::derived::Example);
+pub struct Example(&'static puzzle_runner::derived::Example);
 #[wasm_bindgen]
 impl Example {
     /// The name of the example.
@@ -142,7 +142,7 @@ impl Example {
     }
 }
 
-/// WASM wrapper for [`aoc_runner::runner::SolverResult::Success`].
+/// WASM wrapper for [`puzzle_runner::runner::SolverResult::Success`].
 #[wasm_bindgen]
 pub struct SolverResult {
     result: String,
@@ -162,15 +162,15 @@ impl SolverResult {
         time::duration_to_js(&self.duration)
     }
 }
-impl TryFrom<aoc_runner::runner::SolverResult> for SolverResult {
+impl TryFrom<puzzle_runner::runner::SolverResult> for SolverResult {
     type Error = String;
 
-    fn try_from(value: aoc_runner::runner::SolverResult) -> Result<Self, Self::Error> {
+    fn try_from(value: puzzle_runner::runner::SolverResult) -> Result<Self, Self::Error> {
         match value {
-            aoc_runner::runner::SolverResult::Success {
+            puzzle_runner::runner::SolverResult::Success {
                 result, duration, ..
             } => Ok(SolverResult { result, duration }),
-            aoc_runner::runner::SolverResult::Error(err) => Err(err),
+            puzzle_runner::runner::SolverResult::Error(err) => Err(err),
         }
     }
 }

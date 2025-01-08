@@ -131,8 +131,8 @@ pub fn part2(input: &str) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
+    use puzzle_runner::example_input;
 
     use super::*;
 
@@ -175,9 +175,9 @@ mod tests {
     }
 }
 
-#[aoc_runner::visual]
+#[puzzle_runner::visual]
 pub mod visual {
-    use aoc_runner::visual::{Config, ToRenderable, Visual};
+    use puzzle_runner::visual::{Config, ToRenderable, Visual};
     use raqote::{DrawOptions, Point, SolidSource, Source};
 
     pub(super) enum Info {

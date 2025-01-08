@@ -1,4 +1,4 @@
-//! Structures used for the data that is injected by the macros in `aoc_runner_derive`.
+//! Structures used for the data that is injected by the macros in `puzzle_runner_derive`.
 
 use std::ops::Deref;
 

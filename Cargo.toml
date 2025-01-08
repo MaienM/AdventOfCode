@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
 	"aoc",
-	"aoc_runner",
-	"aoc_runner_derive",
-	"aoc_wasm",
+	"puzzle_runner",
+	"puzzle_runner_derive",
+	"puzzle_wasm",
 ]

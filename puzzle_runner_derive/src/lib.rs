@@ -1,5 +1,5 @@
 #![feature(proc_macro_span)]
-// The macro's & docs will be re-exported in `aoc_runner`, and the links will work there.
+// The macro's & docs will be re-exported in `puzzle_runner`, and the links will work there.
 #![allow(rustdoc::broken_intra_doc_links)]
 
 mod examples;

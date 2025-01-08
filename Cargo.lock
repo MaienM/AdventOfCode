@@ -112,7 +112,6 @@ name = "aoc"
 version = "0.0.0"
 dependencies = [
  "ansi_term",
- "aoc_runner",
  "chrono",
  "common_macros",
  "criterion",
@@ -123,49 +122,13 @@ dependencies = [
  "once_cell",
  "paste",
  "pretty_assertions",
+ "puzzle_runner",
  "raqote",
  "rayon",
  "regex",
  "serde",
  "serde_json",
  "tap",
-]
-
-[[package]]
-name = "aoc_runner"
-version = "0.0.0"
-dependencies = [
- "ansi_term",
- "aoc_runner_derive",
- "clap",
- "criterion",
- "font-kit",
- "minifb",
- "once_cell",
- "raqote",
- "rayon",
-]
-
-[[package]]
-name = "aoc_runner_derive"
-version = "0.0.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "regex",
- "syn 2.0.94",
-]
-
-[[package]]
-name = "aoc_wasm"
-version = "0.0.0"
-dependencies = [
- "aoc",
- "aoc_runner",
- "console_error_panic_hook",
- "wasm-bindgen",
- "wasm-bindgen-rayon",
- "web-sys",
 ]
 
 [[package]]
@@ -1225,6 +1188,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37d3544b3f2748c54e147655edb5025752e2303145b5aefb3c3ea2c78b973bb0"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "puzzle_runner"
+version = "0.0.0"
+dependencies = [
+ "ansi_term",
+ "clap",
+ "criterion",
+ "font-kit",
+ "minifb",
+ "once_cell",
+ "puzzle_runner_derive",
+ "raqote",
+ "rayon",
+]
+
+[[package]]
+name = "puzzle_runner_derive"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn 2.0.94",
+]
+
+[[package]]
+name = "puzzle_wasm"
+version = "0.0.0"
+dependencies = [
+ "aoc",
+ "console_error_panic_hook",
+ "puzzle_runner",
+ "wasm-bindgen",
+ "wasm-bindgen-rayon",
+ "web-sys",
 ]
 
 [[package]]

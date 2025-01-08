@@ -1,5 +1,5 @@
 [package]
-name = "aoc_wasm"
+name = "puzzle_wasm"
 version = "0.0.0"
 edition = "2021"
 
@@ -8,7 +8,7 @@ debug = []
 
 [dependencies]
 aoc = { path = "../aoc", default-features = false }
-aoc_runner = { path = "../aoc_runner" }
+puzzle_runner = { path = "../puzzle_runner" }
 console_error_panic_hook = "0.1.7"
 wasm-bindgen = "0.2.92"
 web-sys = { version = "0.3.66", features = ["Performance"] }

@@ -71,7 +71,7 @@ test-and-run-%: inputs/%.txt
 
 visualize-%: bin = $(subst visualize-,,$@)
 visualize-%: inputs/%.txt
-	@if ! grep -qxF '#[aoc_runner::visual]' "aoc/src/bin/${bin}.rs"; then \
+	@if ! grep -qxF '#[puzzle_runner::visual]' "aoc/src/bin/${bin}.rs"; then \
 		>&2 echo "$(setaf1)${bin} doesn't have any visualizations.$(sgr0)"; \
 		exit 1; \
 	fi
@@ -107,7 +107,7 @@ target/doc-parts/dep/%: Cargo.toml Cargo.lock
 	 cargo -Z unstable-options doc --lib --no-deps -p "${name}@${version}"
 	@rsync -r target/doc/ "$@/"
 target/doc-parts/dep/aoc: $(shell find aoc -type f -print)
-target/doc-parts/dep/aoc_runner: $(shell find aoc_runner aoc_runner_derive -type f -print)
+target/doc-parts/dep/puzzle_runner: $(shell find puzzle_runner puzzle_runner_derive -type f -print)
 
 docs: ${STDLIB_TARGETS} ${DEP_TARGETS}
 	@echo "Building combined docs..."
@@ -153,12 +153,12 @@ leaderboard: .leaderboard.json
 
 target/debug/wasm-pkg: flags = --dev
 target/release/wasm-pkg: flags = --release
-target/%/wasm-pkg: $(shell find aoc aoc_wasm/Cargo.toml aoc_wasm/src web/src -type f -print)
+target/%/wasm-pkg: $(shell find aoc puzzle_wasm/Cargo.toml puzzle_wasm/src web/src -type f -print)
 	@rm -rf $@
-	@wasm-pack build ./aoc_wasm --target web --out-dir "$$PWD/$@" ${flags} 
+	@wasm-pack build ./puzzle_wasm --target web --out-dir "$$PWD/$@" ${flags} 
 
 web-dev: target/debug/wasm-pkg
-	@ln -sfT "$$PWD/$<" web/aoc_wasm
+	@ln -sfT "$$PWD/$<" web/puzzle_wasm
 	@( true \
 		&& cd web \
 		&& npm install \
@@ -167,7 +167,7 @@ web-dev: target/debug/wasm-pkg
 
 target/release/web: target/release/wasm-pkg
 	@rm -rf $@
-	@ln -sfT "$$PWD/$<" web/aoc_wasm
+	@ln -sfT "$$PWD/$<" web/puzzle_wasm
 	@( true \
 		&& cd web \
 		&& npm install \

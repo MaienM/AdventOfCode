@@ -51,10 +51,10 @@ impl BinScanner {
                 p
             },
             current_path: modpath.path.segments,
-            part1: parse_quote!(::aoc_runner::derived::Solver::NotImplemented),
-            part2: parse_quote!(::aoc_runner::derived::Solver::NotImplemented),
-            visual1: parse_quote!(::aoc_runner::derived::Solver::NotImplemented),
-            visual2: parse_quote!(::aoc_runner::derived::Solver::NotImplemented),
+            part1: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
+            part2: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
+            visual1: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
+            visual2: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
             examples: Vec::new(),
         };
 
@@ -99,7 +99,7 @@ impl BinScanner {
             .unwrap_or(&self.path);
 
         parse_quote! {
-            ::aoc_runner::derived::Bin {
+            ::puzzle_runner::derived::Bin {
                 name: #name,
                 title: #title,
                 source_path: #path,
@@ -122,7 +122,7 @@ impl<'ast> Visit<'ast> for BinScanner {
 
         if node.attrs.iter().any(|a| {
             a.meta == Meta::Path(parse_quote!(visual))
-                || a.meta == Meta::Path(parse_quote!(aoc_runner::visual))
+                || a.meta == Meta::Path(parse_quote!(puzzle_runner::visual))
         }) {
             self.mod_visual_path = self.current_path.clone();
         }
@@ -136,20 +136,20 @@ impl<'ast> Visit<'ast> for BinScanner {
         if cp == &self.mod_root_path {
             match node.sig.ident.to_string().as_str() {
                 "part1" => {
-                    self.part1 = parse_quote!(::aoc_runner::derived::Solver::Implemented(|i| #cp::part1(i).to_string()))
+                    self.part1 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part1(i).to_string()))
                 }
                 "part2" => {
-                    self.part2 = parse_quote!(::aoc_runner::derived::Solver::Implemented(|i| #cp::part2(i).to_string()))
+                    self.part2 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part2(i).to_string()))
                 }
                 _ => {}
             }
         } else if cp == &self.mod_visual_path {
             match node.sig.ident.to_string().as_str() {
                 "part1" => {
-                    self.visual1 = parse_quote!(::aoc_runner::derived::Solver::Implemented(|i| #cp::part1(i).into()))
+                    self.visual1 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part1(i).into()))
                 }
                 "part2" => {
-                    self.visual2 = parse_quote!(::aoc_runner::derived::Solver::Implemented(|i| #cp::part2(i).into()))
+                    self.visual2 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part2(i).into()))
                 }
                 _ => {}
             }
@@ -183,7 +183,7 @@ impl<'ast> Visit<'ast> for BinScanner {
         }
 
         // Check if this item is an expanded example.
-        if node.ty == parse_quote!(::aoc_runner::derived::Example) {
+        if node.ty == parse_quote!(::puzzle_runner::derived::Example) {
             self.examples.push(*node.expr.clone());
         }
 
@@ -297,8 +297,8 @@ pub fn register_crate(input: TokenStream) -> TokenStream {
         pub mod bins {
             // Store list of binaries in a static. This is used in the main methods below, but it's
             // also imported by the WASM create.
-            pub static BINS: ::once_cell::sync::Lazy<Vec<::aoc_runner::derived::Bin>> = ::once_cell::sync::Lazy::new(|| {
-                let bins: Vec<::aoc_runner::derived::Bin> = vec![ #(#bins),* ];
+            pub static BINS: ::once_cell::sync::Lazy<Vec<::puzzle_runner::derived::Bin>> = ::once_cell::sync::Lazy::new(|| {
+                let bins: Vec<::puzzle_runner::derived::Bin> = vec![ #(#bins),* ];
 
                 let mut seen = ::std::collections::HashMap::new();
                 for bin in &bins {
@@ -318,14 +318,14 @@ pub fn register_crate(input: TokenStream) -> TokenStream {
             #(#mods)*
 
             pub fn multi() {
-                aoc_runner::multi::BINS.get_or_init(|| Box::new(BINS.clone()));
-                aoc_runner::multi::main();
+                puzzle_runner::multi::BINS.get_or_init(|| Box::new(BINS.clone()));
+                puzzle_runner::multi::main();
             }
 
             #[cfg(feature = "bench")]
             pub fn bench() {
-                aoc_runner::multi::BINS.get_or_init(|| Box::new(BINS.clone()));
-                aoc_runner::bench::main();
+                puzzle_runner::multi::BINS.get_or_init(|| Box::new(BINS.clone()));
+                puzzle_runner::bench::main();
             }
         }
     }
@@ -370,11 +370,11 @@ pub fn register(input: TokenStream) -> TokenStream {
     quote!{
         // Store metadata in a static. This is used in the main method below, but it's also copied
         // to the full list used by the multi entrypoint.
-        pub(crate) static BIN: ::once_cell::sync::Lazy<::aoc_runner::derived::Bin> = ::once_cell::sync::Lazy::new(|| #expr );
+        pub(crate) static BIN: ::once_cell::sync::Lazy<::puzzle_runner::derived::Bin> = ::once_cell::sync::Lazy::new(|| #expr );
 
         // Generate entrypoint that just runs this day.
         pub fn main() {
-            ::aoc_runner::single::main(&*BIN);
+            ::puzzle_runner::single::main(&*BIN);
         }
     }
     .into_token_stream()

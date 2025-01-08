@@ -183,8 +183,8 @@ pub fn part2(input: &str) -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use aoc_runner::example_input;
     use pretty_assertions::assert_eq;
+    use puzzle_runner::example_input;
 
     use super::*;
 
