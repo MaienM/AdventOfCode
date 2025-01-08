@@ -112,7 +112,7 @@ target/doc-parts/dep/%: version = $(shell cargo tree --package aoc --depth 1 -e 
 target/doc-parts/dep/%: Cargo.toml Cargo.lock
 	@echo "Building docs for ${name}..."
 	@rm -rf target/doc
-	@RUSTDOCFLAGS="-Z unstable-options --merge none --parts-out-dir $$PWD/$@" \
+	@RUSTDOCFLAGS="--html-in-header $$PWD/katex.html -Z unstable-options --merge none --parts-out-dir $$PWD/$@" \
 	 cargo -Z unstable-options doc --lib --no-deps -p "${name}@${version}"
 	@rsync -r target/doc/ "$@/"
 target/doc-parts/dep/aoc: $(shell find aoc -type f -print)
@@ -122,7 +122,7 @@ target/doc-parts/dep/puzzle_runner: $(shell find puzzle_runner puzzle_runner_der
 docs: ${STDLIB_TARGETS} ${DEP_TARGETS}
 	@echo "Building combined docs..."
 	@rsync -r $(foreach dep,${STDLIB_TARGETS} ${DEP_TARGETS},${dep}/) target/doc/
-	@RUSTDOCFLAGS="-Z unstable-options --merge finalize $$(printf -- "--include-parts-dir $$PWD/%s " ${STDLIB_TARGETS} ${DEP_TARGETS})" \
+	@RUSTDOCFLAGS="--html-in-header $$PWD/katex.html -Z unstable-options --merge finalize $$(printf -- "--include-parts-dir $$PWD/%s " ${STDLIB_TARGETS} ${DEP_TARGETS})" \
 	  cargo doc --lib --no-deps
 
 #
