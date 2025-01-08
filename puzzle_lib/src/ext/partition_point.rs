@@ -52,6 +52,17 @@ mod tests {
 
     use super::*;
 
+    /// A [`RangeBounds`] that excludes the start.
+    struct RangeExclusive(u8, u8);
+    impl RangeBounds<u8> for RangeExclusive {
+        fn start_bound(&self) -> Bound<&u8> {
+            Bound::Excluded(&self.0)
+        }
+        fn end_bound(&self) -> Bound<&u8> {
+            Bound::Excluded(&self.1)
+        }
+    }
+
     #[test]
     fn partition_point() {
         assert_eq!((1..10).partition_point(|_| true), Some(1));
@@ -61,6 +72,11 @@ mod tests {
         assert_eq!((1..=10).partition_point(|_| true), Some(1));
         assert_eq!((1..=10).partition_point(|v| v > 9), Some(10));
         assert_eq!((1..=10).partition_point(|v| v > 10), None);
+
+        let r = RangeExclusive(1, 10);
+        assert_eq!(r.partition_point(|_| true), Some(2));
+        assert_eq!(r.partition_point(|v| v > 8), Some(9));
+        assert_eq!(r.partition_point(|v| v > 9), None);
 
         assert_eq!(
             (1..1_000_000_000).partition_point(|v| v > 628_162_832),
