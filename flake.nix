@@ -105,9 +105,9 @@
                   enable = true;
                   package = rust;
                 };
-                cargo-udeps = {
+                cargo-machete = {
                   enable = true;
-                  entry = "cargo udeps";
+                  entry = "cargo machete";
                   pass_filenames = false;
                   files = "Cargo\\.toml$|.*\\.rs$";
                 };
@@ -146,7 +146,7 @@
           buildInputs =
             with pkgs;
             [
-              cargo-udeps
+              cargo-machete
               fenixPkgs.rust-analyzer
               gnumake
               rust
