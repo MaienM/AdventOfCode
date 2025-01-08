@@ -1,6 +1,6 @@
-aoc::setup!(title = "Ceres Search");
+puzzle_lib::setup!(title = "Ceres Search");
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2<isize>;
 

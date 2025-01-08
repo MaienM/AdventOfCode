@@ -1,4 +1,4 @@
-aoc::setup!(title = "Grove Positioning System");
+puzzle_lib::setup!(title = "Grove Positioning System");
 
 use std::collections::VecDeque;
 

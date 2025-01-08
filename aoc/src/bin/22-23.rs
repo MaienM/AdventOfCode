@@ -1,8 +1,8 @@
-aoc::setup!(title = "Unstable Diffusion");
+puzzle_lib::setup!(title = "Unstable Diffusion");
 
 use std::collections::HashSet;
 
-use aoc::point::{Direction2, Point2};
+use puzzle_lib::point::{Direction2, Point2};
 
 type Point = Point2<isize>;
 

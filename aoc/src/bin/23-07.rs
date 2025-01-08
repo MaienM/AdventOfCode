@@ -1,4 +1,4 @@
-aoc::setup!(title = "Camel Cards");
+puzzle_lib::setup!(title = "Camel Cards");
 
 type Card = char;
 

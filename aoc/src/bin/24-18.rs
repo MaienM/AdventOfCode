@@ -1,8 +1,8 @@
-aoc::setup!(title = "RAM Run");
+puzzle_lib::setup!(title = "RAM Run");
 
 use std::collections::{BinaryHeap, HashSet};
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 fn parse_input(input: &str) -> Vec<Point2> {
     parse!(input => {

@@ -1,8 +1,8 @@
-aoc::setup!(title = "Blizzard Basin");
+puzzle_lib::setup!(title = "Blizzard Basin");
 
 use std::{collections::HashSet, ops::Range};
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2<u8>;
 

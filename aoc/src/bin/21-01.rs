@@ -1,4 +1,4 @@
-aoc::setup!(title = "Sonar Sweep");
+puzzle_lib::setup!(title = "Sonar Sweep");
 
 fn parse_input(input: &str) -> Vec<u16> {
     parse!(input => {

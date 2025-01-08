@@ -1,8 +1,8 @@
-aoc::setup!(title = "Race Condition");
+puzzle_lib::setup!(title = "Race Condition");
 
 use std::collections::{BinaryHeap, HashSet};
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Map = Vec<Vec<bool>>;
 

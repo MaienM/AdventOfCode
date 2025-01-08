@@ -1,6 +1,6 @@
-aoc::setup!(title = "Warehouse Woes");
+puzzle_lib::setup!(title = "Warehouse Woes");
 
-use aoc::point::{Direction2, Point2};
+use puzzle_lib::point::{Direction2, Point2};
 
 #[derive(Debug, PartialEq, Eq)]
 enum TileSingle {

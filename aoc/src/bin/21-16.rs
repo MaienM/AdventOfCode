@@ -1,4 +1,4 @@
-aoc::setup!(title = "Packet Decoder");
+puzzle_lib::setup!(title = "Packet Decoder");
 
 use std::collections::VecDeque;
 

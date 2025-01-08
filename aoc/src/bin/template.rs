@@ -1,4 +1,4 @@
-aoc::setup!(title = "PLACEHOLDER");
+puzzle_lib::setup!(title = "PLACEHOLDER");
 
 fn parse_input(input: &str) -> Vec<usize> {
     parse!(input => {

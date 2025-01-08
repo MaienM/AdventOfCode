@@ -1,8 +1,8 @@
-aoc::setup!(title = "Restroom Redoubt");
+puzzle_lib::setup!(title = "Restroom Redoubt");
 
 use std::{cmp::Ordering, collections::HashSet};
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2<isize>;
 

@@ -1,8 +1,8 @@
-aoc::setup!(title = "Treetop Tree House");
+puzzle_lib::setup!(title = "Treetop Tree House");
 
 use std::collections::HashSet;
 
-use aoc::point::{Direction2, Point2};
+use puzzle_lib::point::{Direction2, Point2};
 
 type Grid = Vec<Vec<u8>>;
 type Point = Point2<u8>;

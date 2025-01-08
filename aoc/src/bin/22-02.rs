@@ -1,4 +1,4 @@
-aoc::setup!(title = "Rock Paper Scissors");
+puzzle_lib::setup!(title = "Rock Paper Scissors");
 
 use derive_new::new;
 

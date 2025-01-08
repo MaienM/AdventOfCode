@@ -1,4 +1,4 @@
-aoc::setup!(title = "Monkey Market");
+puzzle_lib::setup!(title = "Monkey Market");
 
 use std::collections::HashMap;
 

@@ -1,4 +1,4 @@
-//! The aoc utils prelude.
+//! The puzzle lib prelude, with the most commonly used elements.
 
 pub use itertools::Itertools as _;
 pub use rayon::prelude::*;

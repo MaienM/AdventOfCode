@@ -1,8 +1,8 @@
-aoc::setup!(title = "Garden Groups");
+puzzle_lib::setup!(title = "Garden Groups");
 
 use std::collections::HashSet;
 
-use aoc::point::{Direction2, Point2};
+use puzzle_lib::point::{Direction2, Point2};
 
 type Region = HashSet<Point2>;
 

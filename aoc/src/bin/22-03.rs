@@ -1,4 +1,4 @@
-aoc::setup!(title = "Rucksack Reorganization");
+puzzle_lib::setup!(title = "Rucksack Reorganization");
 
 use std::collections::HashSet;
 

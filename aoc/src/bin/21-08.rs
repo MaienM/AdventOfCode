@@ -1,4 +1,4 @@
-aoc::setup!(title = "Seven Segment Search");
+puzzle_lib::setup!(title = "Seven Segment Search");
 
 /*
  * Overview:

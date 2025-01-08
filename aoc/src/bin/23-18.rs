@@ -1,8 +1,8 @@
-aoc::setup!(title = "Lavaduct Lagoon");
+puzzle_lib::setup!(title = "Lavaduct Lagoon");
 
 use std::{collections::HashSet, ops::RangeInclusive};
 
-use aoc::point::{Direction2, Point2};
+use puzzle_lib::point::{Direction2, Point2};
 
 type Point = Point2<isize>;
 type Direction = Direction2;

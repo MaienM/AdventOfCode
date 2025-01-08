@@ -1,8 +1,8 @@
-aoc::setup!(title = "Resonant Collinearity");
+puzzle_lib::setup!(title = "Resonant Collinearity");
 
 use std::collections::{HashMap, HashSet};
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2<isize>;
 

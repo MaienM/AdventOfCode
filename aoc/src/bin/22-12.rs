@@ -1,12 +1,12 @@
-aoc::setup!(title = "Hill Climbing Algorithm");
+puzzle_lib::setup!(title = "Hill Climbing Algorithm");
 
 use std::{
     cmp::Ordering,
     collections::{BinaryHeap, HashSet},
 };
 
-use aoc::point::Point2;
 use derive_new::new;
+use puzzle_lib::point::Point2;
 
 type Grid = Vec<Vec<u8>>;
 type Point = Point2;

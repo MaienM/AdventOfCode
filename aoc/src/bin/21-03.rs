@@ -1,4 +1,4 @@
-aoc::setup!(title = "Binary Diagnostic");
+puzzle_lib::setup!(title = "Binary Diagnostic");
 
 fn parse_input(input: &str) -> Vec<Vec<u8>> {
     parse!(input => {

@@ -98,17 +98,17 @@ macro_rules! __parse {
 /// Literals in various positions:
 ///
 /// ```
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// parse!("hello world" => "hello " subject);
 /// assert_eq!(subject, "world");
 /// ```
 /// ```
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// parse!("howdy pardner" => greeting /r#" \w+"#/);
 /// assert_eq!(greeting, "howdy");
 /// ```
 /// ```
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// parse!("g'day mate" => greeting ' ' subject);
 /// assert_eq!(greeting, "g'day");
 /// assert_eq!(subject, "mate");
@@ -117,17 +117,17 @@ macro_rules! __parse {
 /// Transformations:
 ///
 /// ```
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// parse!("detonating in 4..." => "detonating in " [seconds as u8] "...");
 /// assert_eq!(seconds, 4u8);
 /// ```
 /// ```
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// parse!("boo" => [word with str::to_uppercase]);
 /// assert_eq!(word, "BOO");
 /// ```
 /// ```
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// //parse!("|1 -1|" => '|' [pair with { [l as i8] ' ' [r as i8] } => (l, r)] '|');
 /// //assert_eq!(pair, (1i8, -1i8));
 /// ```
@@ -135,12 +135,12 @@ macro_rules! __parse {
 /// Split:
 ///
 /// ```
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// parse!("fee-fi-fo-fum" => [words split on '-']);
 /// assert_eq!(words, vec!["fee", "fi", "fo", "fum"]);
 /// ```
 /// ```
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// parse!("10 -10" => [nums split into iterator as i8]);
 /// assert_eq!(nums.next(), Some(10));
 /// assert_eq!(nums.next(), Some(-10));
@@ -148,19 +148,19 @@ macro_rules! __parse {
 /// ```
 /// ```
 /// # use std::collections::HashSet;
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// parse!("n33dl3 in 4 h4yst4ck" => [nums chars into (HashSet<_>) try as u8]);
 /// assert_eq!(nums, HashSet::from([3, 4]));
 /// ```
 /// ```
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// parse!("2 fast 2 furious" => [words find /"[a-z]+"/]);
 /// assert_eq!(words, vec!["fast", "furious"]);
 /// ```
 /// ```
 /// # use std::collections::HashMap;
 /// # use regex::Captures;
-/// # use aoc::parser::parse;
+/// # use puzzle_lib::parser::parse;
 /// fn to_pair(capture: Captures) -> (&str, u8) {
 ///     (
 ///         capture.get(1).unwrap().as_str(),

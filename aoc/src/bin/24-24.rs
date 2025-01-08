@@ -1,4 +1,4 @@
-aoc::setup!(title = "Crossed Wires");
+puzzle_lib::setup!(title = "Crossed Wires");
 
 use std::{collections::HashMap, fs::File, io::Write as _};
 

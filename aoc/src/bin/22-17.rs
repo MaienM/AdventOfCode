@@ -1,8 +1,8 @@
-aoc::setup!(title = "Pyroclastic Flow");
+puzzle_lib::setup!(title = "Pyroclastic Flow");
 
 use std::collections::HashSet;
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2;
 

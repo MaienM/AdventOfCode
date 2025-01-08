@@ -1,12 +1,12 @@
-aoc::setup!(title = "Keypad Conundrum");
+puzzle_lib::setup!(title = "Keypad Conundrum");
 
 use std::{cmp::Ordering, collections::HashMap, vec::Vec};
 
-use aoc::point::Point2;
 use common_macros::hash_map;
 use itertools::repeat_n;
 use memoize::memoize;
 use once_cell::sync::Lazy;
+use puzzle_lib::point::Point2;
 
 fn parse_input(input: &str) -> Vec<&str> {
     parse!(input => {

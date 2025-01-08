@@ -1,4 +1,4 @@
-aoc::setup!(title = "Distress Signal");
+puzzle_lib::setup!(title = "Distress Signal");
 
 use std::cmp::Ordering;
 

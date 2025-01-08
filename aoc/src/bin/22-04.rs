@@ -1,4 +1,4 @@
-aoc::setup!(title = "Camp Cleanup");
+puzzle_lib::setup!(title = "Camp Cleanup");
 
 use std::ops::RangeInclusive;
 

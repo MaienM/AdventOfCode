@@ -1,4 +1,4 @@
-aoc::setup!(title = "Hot Springs");
+puzzle_lib::setup!(title = "Hot Springs");
 
 use std::collections::HashMap;
 

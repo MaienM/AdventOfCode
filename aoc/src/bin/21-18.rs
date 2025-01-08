@@ -1,4 +1,4 @@
-aoc::setup!(title = "Snailfish");
+puzzle_lib::setup!(title = "Snailfish");
 
 use std::collections::LinkedList;
 

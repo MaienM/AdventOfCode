@@ -1,11 +1,11 @@
-aoc::setup!(title = "Monkey Map");
+puzzle_lib::setup!(title = "Monkey Map");
 
 use std::{
     collections::HashSet,
     ops::{Add, Sub},
 };
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2;
 type BlockPoint = Point2<isize>;

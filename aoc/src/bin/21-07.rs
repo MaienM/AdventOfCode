@@ -1,4 +1,4 @@
-aoc::setup!(title = "The Treachery of Whales");
+puzzle_lib::setup!(title = "The Treachery of Whales");
 
 fn parse_input(input: &str) -> Vec<i32> {
     parse!(input => {

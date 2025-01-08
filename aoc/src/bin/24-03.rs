@@ -1,4 +1,4 @@
-aoc::setup!(title = "Mull It Over");
+puzzle_lib::setup!(title = "Mull It Over");
 
 #[derive(Debug, Eq, PartialEq)]
 enum Instruction {

@@ -1,4 +1,4 @@
-aoc::setup!(title = "Proboscidea Volcanium");
+puzzle_lib::setup!(title = "Proboscidea Volcanium");
 
 use std::collections::{BinaryHeap, HashMap, HashSet};
 

@@ -1,8 +1,8 @@
-aoc::setup!(title = "Reindeer Maze");
+puzzle_lib::setup!(title = "Reindeer Maze");
 
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
-use aoc::point::{Direction2, Point2};
+use puzzle_lib::point::{Direction2, Point2};
 
 type Map = Vec<Vec<bool>>;
 

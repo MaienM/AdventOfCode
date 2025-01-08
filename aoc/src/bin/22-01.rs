@@ -1,4 +1,4 @@
-aoc::setup!(title = "Calorie Counting");
+puzzle_lib::setup!(title = "Calorie Counting");
 
 fn parse_input(input: &str) -> Vec<u32> {
     parse!(input => {

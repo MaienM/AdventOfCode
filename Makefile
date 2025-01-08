@@ -107,6 +107,7 @@ target/doc-parts/dep/%: Cargo.toml Cargo.lock
 	 cargo -Z unstable-options doc --lib --no-deps -p "${name}@${version}"
 	@rsync -r target/doc/ "$@/"
 target/doc-parts/dep/aoc: $(shell find aoc -type f -print)
+target/doc-parts/dep/puzzle_lib: $(shell find puzzle_lib -type f -print)
 target/doc-parts/dep/puzzle_runner: $(shell find puzzle_runner puzzle_runner_derive -type f -print)
 
 docs: ${STDLIB_TARGETS} ${DEP_TARGETS}

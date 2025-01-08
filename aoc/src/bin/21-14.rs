@@ -1,4 +1,4 @@
-aoc::setup!(title = "Extended Polymerization");
+puzzle_lib::setup!(title = "Extended Polymerization");
 
 use std::collections::HashMap;
 

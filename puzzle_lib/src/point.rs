@@ -7,12 +7,13 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
-use aoc::prelude::AbsDiff;
 use derive_new::new;
 use num::traits::{
     CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, SaturatingAdd, SaturatingMul,
     SaturatingSub, WrappingAdd, WrappingMul, WrappingSub,
 };
+
+use crate::prelude::*;
 
 // These traits don't exist (and they shouldn't, there's no point to them), but it makes the generation easier if they do, so we'll define them here and then never expose them.
 #[allow(dead_code)]

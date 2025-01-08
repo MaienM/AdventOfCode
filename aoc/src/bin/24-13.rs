@@ -1,6 +1,6 @@
-aoc::setup!(title = "Claw Contraption");
+puzzle_lib::setup!(title = "Claw Contraption");
 
-use aoc::{matrix::Matrix, point::Point2};
+use puzzle_lib::{matrix::Matrix, point::Point2};
 
 type Point = Point2<u64>;
 

@@ -1,4 +1,4 @@
-aoc::setup!(title = "No Space Left On Device");
+puzzle_lib::setup!(title = "No Space Left On Device");
 
 use std::{collections::HashMap, iter::Peekable, vec::IntoIter};
 

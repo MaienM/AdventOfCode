@@ -114,7 +114,6 @@ dependencies = [
  "ansi_term",
  "chrono",
  "common_macros",
- "criterion",
  "derive-new",
  "itertools 0.14.0",
  "memoize",
@@ -122,13 +121,11 @@ dependencies = [
  "once_cell",
  "paste",
  "pretty_assertions",
+ "puzzle_lib",
  "puzzle_runner",
  "raqote",
- "rayon",
- "regex",
  "serde",
  "serde_json",
- "tap",
 ]
 
 [[package]]
@@ -1188,6 +1185,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37d3544b3f2748c54e147655edb5025752e2303145b5aefb3c3ea2c78b973bb0"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "puzzle_lib"
+version = "0.0.0"
+dependencies = [
+ "common_macros",
+ "criterion",
+ "derive-new",
+ "itertools 0.14.0",
+ "num",
+ "paste",
+ "pretty_assertions",
+ "rayon",
+ "regex",
+ "tap",
 ]
 
 [[package]]

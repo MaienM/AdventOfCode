@@ -21,7 +21,7 @@ pub trait Factorize {
     /// # Examples
     ///
     /// ```
-    /// # use aoc::prelude::*;
+    /// # use puzzle_lib::prelude::*;
     /// assert_eq!(7u8.factorize(), vec![7]);
     /// assert_eq!(8u8.factorize(), vec![2, 2, 2]);
     /// assert_eq!(9u8.factorize(), vec![3, 3]);

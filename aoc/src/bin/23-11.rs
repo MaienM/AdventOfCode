@@ -1,8 +1,8 @@
-aoc::setup!(title = "Cosmic Expansion");
+puzzle_lib::setup!(title = "Cosmic Expansion");
 
 use std::collections::HashSet;
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2<usize>;
 type Map = Vec<Point>;

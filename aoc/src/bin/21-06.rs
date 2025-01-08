@@ -1,4 +1,4 @@
-aoc::setup!(title = "Lanternfish");
+puzzle_lib::setup!(title = "Lanternfish");
 
 type State = [u64; 9];
 

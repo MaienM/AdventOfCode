@@ -1,8 +1,8 @@
-aoc::setup!(title = "Regolith Reservoir");
+puzzle_lib::setup!(title = "Regolith Reservoir");
 
 use std::collections::HashSet;
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2<isize>;
 

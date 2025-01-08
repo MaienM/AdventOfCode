@@ -1,4 +1,4 @@
-aoc::setup!(title = "Dive!");
+puzzle_lib::setup!(title = "Dive!");
 
 #[derive(Debug, PartialEq)]
 enum Direction {

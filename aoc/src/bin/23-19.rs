@@ -1,4 +1,4 @@
-aoc::setup!(title = "Aplenty");
+puzzle_lib::setup!(title = "Aplenty");
 
 use std::{collections::HashMap, ops::RangeInclusive};
 

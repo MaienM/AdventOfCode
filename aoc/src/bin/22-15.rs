@@ -1,8 +1,8 @@
-aoc::setup!(title = "Beacon Exclusion Zone");
+puzzle_lib::setup!(title = "Beacon Exclusion Zone");
 
 use std::{iter, ops::Range};
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2<isize>;
 

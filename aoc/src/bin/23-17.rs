@@ -1,11 +1,11 @@
-aoc::setup!(title = "Clumsy Crucible");
+puzzle_lib::setup!(title = "Clumsy Crucible");
 
 use std::{
     cmp::Ordering,
     collections::{BinaryHeap, HashSet},
 };
 
-use aoc::point::{Direction2, Point2};
+use puzzle_lib::point::{Direction2, Point2};
 
 type Point = Point2;
 type Direction = Direction2;

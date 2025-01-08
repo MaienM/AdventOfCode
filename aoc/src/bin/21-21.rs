@@ -1,4 +1,4 @@
-aoc::setup!(title = "Dirac Dice");
+puzzle_lib::setup!(title = "Dirac Dice");
 
 fn parse_input(input: &str) -> [u64; 2] {
     parse!(input => {

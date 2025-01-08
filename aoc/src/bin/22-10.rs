@@ -1,4 +1,4 @@
-aoc::setup!(title = "Cathode-Ray Tube");
+puzzle_lib::setup!(title = "Cathode-Ray Tube");
 
 use std::convert::TryInto;
 

@@ -1,4 +1,4 @@
-aoc::setup!(title = "Amphipod");
+puzzle_lib::setup!(title = "Amphipod");
 
 use std::{
     collections::{BTreeSet, BinaryHeap},

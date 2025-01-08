@@ -1,4 +1,4 @@
-aoc::setup!(title = "Lens Library");
+puzzle_lib::setup!(title = "Lens Library");
 
 use std::vec::Vec;
 

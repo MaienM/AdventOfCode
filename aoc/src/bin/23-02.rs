@@ -1,4 +1,4 @@
-aoc::setup!(title = "Cube Conundrum");
+puzzle_lib::setup!(title = "Cube Conundrum");
 
 #[derive(Debug, PartialEq)]
 struct Game {

@@ -17,7 +17,7 @@ pub trait Primes: Sized {
     /// # Examples
     ///
     /// ```
-    /// # use aoc::prelude::*;
+    /// # use puzzle_lib::prelude::*;
     /// assert_eq!(usize::primes(16), vec![2, 3, 5, 7, 11, 13]);
     /// ```
     fn primes(limit: Self) -> Vec<Self>;

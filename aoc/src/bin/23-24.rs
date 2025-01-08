@@ -1,8 +1,8 @@
-aoc::setup!(title = "Never Tell Me The Odds");
+puzzle_lib::setup!(title = "Never Tell Me The Odds");
 
 use std::ops::Range;
 
-use aoc::{matrix::Matrix, point::Point3};
+use puzzle_lib::{matrix::Matrix, point::Point3};
 
 type Point = Point3<f64>;
 

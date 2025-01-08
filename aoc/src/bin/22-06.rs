@@ -1,4 +1,4 @@
-aoc::setup!(title = "Tuning Trouble");
+puzzle_lib::setup!(title = "Tuning Trouble");
 
 use std::collections::HashSet;
 

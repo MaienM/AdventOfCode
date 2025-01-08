@@ -1,4 +1,4 @@
-aoc::setup!(title = "Historian Hysteria");
+puzzle_lib::setup!(title = "Historian Hysteria");
 
 fn parse_input(input: &str) -> (Vec<usize>, Vec<usize>) {
     let mut leftlist = Vec::new();

@@ -1,4 +1,4 @@
-aoc::setup!(title = "Full of Hot Air");
+puzzle_lib::setup!(title = "Full of Hot Air");
 
 fn to_snafu(mut num: u64) -> String {
     let mut chars = Vec::new();

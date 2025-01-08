@@ -1,4 +1,4 @@
-aoc::setup!(title = "Reactor Reboot");
+puzzle_lib::setup!(title = "Reactor Reboot");
 
 use std::{fmt::Debug, ops::RangeInclusive};
 
@@ -28,6 +28,7 @@ impl Region {
             && ranges_overlap(&self.2, &other.2)
     }
 
+    #[allow(clippy::range_minus_one)]
     fn without(&self, other: &Region) -> Option<Vec<Region>> {
         if !self.overlaps(other) {
             return None;

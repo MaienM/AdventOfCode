@@ -4,9 +4,9 @@ use std::{
 };
 
 use ansi_term::{Colour, Style};
-use aoc::prelude::*;
 use chrono::{DateTime, NaiveDate};
 use once_cell::sync::Lazy;
+use puzzle_lib::prelude::*;
 use serde::Deserialize;
 
 static USER_ID: Lazy<usize> = Lazy::new(|| {

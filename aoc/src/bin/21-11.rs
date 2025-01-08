@@ -1,8 +1,8 @@
-aoc::setup!(title = "Dumbo Octopus");
+puzzle_lib::setup!(title = "Dumbo Octopus");
 
 use std::collections::HashSet;
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Grid = Vec<Vec<i8>>;
 

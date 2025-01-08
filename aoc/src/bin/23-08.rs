@@ -1,4 +1,4 @@
-aoc::setup!(title = "Haunted Wasteland");
+puzzle_lib::setup!(title = "Haunted Wasteland");
 
 use std::{collections::HashMap, sync::Arc};
 

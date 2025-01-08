@@ -1,4 +1,4 @@
-aoc::setup!(title = "Point of Incidence");
+puzzle_lib::setup!(title = "Point of Incidence");
 
 type Map = Vec<Vec<bool>>;
 

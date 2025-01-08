@@ -1,6 +1,6 @@
-use aoc::prelude::*;
 use criterion::{criterion_group, criterion_main, Criterion};
 use num::BigUint;
+use puzzle_lib::prelude::*;
 
 macro_rules! test_bench_num {
     ($c:ident, $num:expr, $expected:expr $(,)?) => {

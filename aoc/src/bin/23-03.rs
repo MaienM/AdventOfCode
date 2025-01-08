@@ -1,8 +1,8 @@
-aoc::setup!(title = "Gear Ratios");
+puzzle_lib::setup!(title = "Gear Ratios");
 
 use std::collections::HashMap;
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2<usize>;
 

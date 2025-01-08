@@ -1,4 +1,4 @@
-aoc::setup!(title = "Boiling Boulders");
+puzzle_lib::setup!(title = "Boiling Boulders");
 
 use std::{
     cmp::Ordering,

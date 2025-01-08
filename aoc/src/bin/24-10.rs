@@ -1,8 +1,8 @@
-aoc::setup!(title = "Hoof It");
+puzzle_lib::setup!(title = "Hoof It");
 
 use std::collections::HashSet;
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Map = Vec<Vec<u8>>;
 

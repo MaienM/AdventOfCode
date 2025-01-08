@@ -1,4 +1,4 @@
-aoc::setup!(title = "Parabolic Reflector Dish");
+puzzle_lib::setup!(title = "Parabolic Reflector Dish");
 
 use std::{
     collections::HashMap,

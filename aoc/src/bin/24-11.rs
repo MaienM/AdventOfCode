@@ -1,4 +1,4 @@
-aoc::setup!(title = "Plutonian Pebbles");
+puzzle_lib::setup!(title = "Plutonian Pebbles");
 
 use std::collections::HashMap;
 

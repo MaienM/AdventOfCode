@@ -1,4 +1,4 @@
-aoc::setup!(title = "Wait For It");
+puzzle_lib::setup!(title = "Wait For It");
 
 #[derive(Debug, PartialEq)]
 struct Race {

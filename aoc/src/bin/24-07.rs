@@ -1,4 +1,4 @@
-aoc::setup!(title = "Bridge Repair");
+puzzle_lib::setup!(title = "Bridge Repair");
 
 type Equation = (usize, Vec<usize>);
 

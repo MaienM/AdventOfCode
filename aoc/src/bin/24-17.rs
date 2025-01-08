@@ -1,4 +1,4 @@
-aoc::setup!(title = "Chronospatial Computer");
+puzzle_lib::setup!(title = "Chronospatial Computer");
 
 type Registers = [usize; 3];
 

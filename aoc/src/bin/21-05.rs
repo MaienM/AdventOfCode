@@ -1,7 +1,7 @@
-aoc::setup!(title = "Hydrothermal Venture");
+puzzle_lib::setup!(title = "Hydrothermal Venture");
 use std::{collections::HashSet, ops::RangeInclusive};
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Point = Point2<i16>;
 type LineDef = (Point, Point);

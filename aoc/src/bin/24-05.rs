@@ -1,4 +1,4 @@
-aoc::setup!(title = "Print Queue");
+puzzle_lib::setup!(title = "Print Queue");
 
 use std::cmp::Ordering;
 

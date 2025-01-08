@@ -1,9 +1,9 @@
-aoc::setup!(title = "Rope Bridge");
+puzzle_lib::setup!(title = "Rope Bridge");
 
 use std::collections::HashSet;
 
-use aoc::point::{Direction2, Point2};
 use derive_new::new;
+use puzzle_lib::point::{Direction2, Point2};
 
 type Point = Point2<isize>;
 

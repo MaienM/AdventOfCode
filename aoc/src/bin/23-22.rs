@@ -1,8 +1,8 @@
-aoc::setup!(title = "Sand Slabs");
+puzzle_lib::setup!(title = "Sand Slabs");
 
 use std::{collections::HashSet, ops::RangeInclusive};
 
-use aoc::point::{Point2, Point3};
+use puzzle_lib::point::{Point2, Point3};
 
 type Point = Point3<usize>;
 

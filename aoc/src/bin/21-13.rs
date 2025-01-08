@@ -1,6 +1,6 @@
-aoc::setup!(title = "Transparent Origami");
+puzzle_lib::setup!(title = "Transparent Origami");
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Grid = Vec<Vec<bool>>;
 

@@ -1,4 +1,4 @@
-aoc::setup!(title = "Beacon Scanner");
+puzzle_lib::setup!(title = "Beacon Scanner");
 
 use std::{
     collections::{BTreeSet, HashSet},

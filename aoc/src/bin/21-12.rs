@@ -1,4 +1,4 @@
-aoc::setup!(title = "Passage Pathing");
+puzzle_lib::setup!(title = "Passage Pathing");
 
 use std::collections::HashMap;
 

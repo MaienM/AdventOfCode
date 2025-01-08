@@ -1,8 +1,8 @@
-aoc::setup!(title = "Pipe Maze");
+puzzle_lib::setup!(title = "Pipe Maze");
 
 use std::collections::HashSet;
 
-use aoc::point::{Direction2, Point2};
+use puzzle_lib::point::{Direction2, Point2};
 
 type Point = Point2<usize>;
 type Direction = Direction2;

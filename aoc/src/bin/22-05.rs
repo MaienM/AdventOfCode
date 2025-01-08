@@ -1,4 +1,4 @@
-aoc::setup!(title = "Supply Stacks");
+puzzle_lib::setup!(title = "Supply Stacks");
 
 use std::collections::VecDeque;
 

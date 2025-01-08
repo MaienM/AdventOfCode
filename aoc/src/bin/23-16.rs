@@ -1,8 +1,8 @@
-aoc::setup!(title = "The Floor Will Be Lava");
+puzzle_lib::setup!(title = "The Floor Will Be Lava");
 
 use std::{collections::HashSet, sync::Arc};
 
-use aoc::point::{Direction2, Point2};
+use puzzle_lib::point::{Direction2, Point2};
 
 type Point = Point2;
 type Direction = Direction2;

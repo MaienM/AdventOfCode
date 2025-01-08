@@ -1,4 +1,4 @@
-aoc::setup!(title = "Giant Squid");
+puzzle_lib::setup!(title = "Giant Squid");
 
 type BaseBoard<T> = [[T; 5]; 5];
 type Board = BaseBoard<u16>;
@@ -47,11 +47,7 @@ fn parse_input(input: &str) -> (Vec<u16>, Vec<Board>) {
 }
 
 fn init_board_state(board: Board) -> BoardState {
-    board.map(|row| {
-        return row.map(|num| {
-            return BoardSpaceState { num, drawn: false };
-        });
-    })
+    board.map(|row| row.map(|num| BoardSpaceState { num, drawn: false }))
 }
 
 fn mark_number(state: &mut BoardState, draw: u16) {

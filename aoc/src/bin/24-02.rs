@@ -1,4 +1,4 @@
-aoc::setup!(title = "Red-Nosed Reports");
+puzzle_lib::setup!(title = "Red-Nosed Reports");
 
 use std::mem;
 

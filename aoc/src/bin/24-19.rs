@@ -1,4 +1,4 @@
-aoc::setup!(title = "Linen Layout");
+puzzle_lib::setup!(title = "Linen Layout");
 
 use std::collections::HashMap;
 

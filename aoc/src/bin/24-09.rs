@@ -1,4 +1,4 @@
-aoc::setup!(title = "Disk Fragmenter");
+puzzle_lib::setup!(title = "Disk Fragmenter");
 
 use std::cmp::Ordering;
 

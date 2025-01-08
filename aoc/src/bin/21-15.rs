@@ -1,8 +1,8 @@
-aoc::setup!(title = "Chiton");
+puzzle_lib::setup!(title = "Chiton");
 
 use std::collections::BinaryHeap;
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Grid = Vec<Vec<u8>>;
 

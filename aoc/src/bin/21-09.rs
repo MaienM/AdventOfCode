@@ -1,8 +1,8 @@
-aoc::setup!(title = "Smoke Basin");
+puzzle_lib::setup!(title = "Smoke Basin");
 
 use std::collections::HashSet;
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type Grid = Vec<Vec<u8>>;
 type Basin = HashSet<Point2>;

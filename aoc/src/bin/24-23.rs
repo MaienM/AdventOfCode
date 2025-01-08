@@ -1,4 +1,4 @@
-aoc::setup!(title = "LAN Party");
+puzzle_lib::setup!(title = "LAN Party");
 
 use std::collections::{HashMap, HashSet};
 

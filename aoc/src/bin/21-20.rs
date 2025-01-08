@@ -1,4 +1,4 @@
-aoc::setup!(title = "Trench Map");
+puzzle_lib::setup!(title = "Trench Map");
 
 use std::{fmt::Debug, ops::RangeInclusive};
 

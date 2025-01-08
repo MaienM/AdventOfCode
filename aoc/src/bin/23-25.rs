@@ -1,4 +1,4 @@
-aoc::setup!(title = "Snowverload");
+puzzle_lib::setup!(title = "Snowverload");
 
 use std::collections::{HashMap, HashSet};
 

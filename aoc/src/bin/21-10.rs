@@ -1,4 +1,4 @@
-aoc::setup!(title = "Syntax Scoring");
+puzzle_lib::setup!(title = "Syntax Scoring");
 
 fn parse_input(input: &str) -> Vec<&str> {
     parse!(input => { [lines split on '\n'] } => lines)

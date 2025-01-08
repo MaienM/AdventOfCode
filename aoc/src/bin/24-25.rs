@@ -1,4 +1,4 @@
-aoc::setup!(title = "Code Chronicle");
+puzzle_lib::setup!(title = "Code Chronicle");
 
 type HMap = [u8; 5];
 

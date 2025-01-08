@@ -1,8 +1,8 @@
-aoc::setup!(title = "Step Counter");
+puzzle_lib::setup!(title = "Step Counter");
 
 use std::collections::HashSet;
 
-use aoc::point::Point2;
+use puzzle_lib::point::Point2;
 
 type PointUnbound = Point2<isize>;
 type PointBound = Point2<usize>;
