@@ -105,6 +105,12 @@
                   enable = true;
                   package = rust;
                 };
+                cargo-udeps = {
+                  enable = true;
+                  entry = "cargo udeps";
+                  pass_filenames = false;
+                  files = "Cargo\\.toml$|.*\\.rs$";
+                };
                 clippy = {
                   enable = true;
                   packageOverrides.cargo = rust;
@@ -140,9 +146,10 @@
           buildInputs =
             with pkgs;
             [
-              rust
+              cargo-udeps
               fenixPkgs.rust-analyzer
               gnumake
+              rust
 
               # Tests.
               cargo-nextest
