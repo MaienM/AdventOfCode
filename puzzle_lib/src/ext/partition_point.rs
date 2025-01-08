@@ -2,6 +2,8 @@ use std::ops::{Bound, RangeBounds};
 
 use num::PrimInt;
 
+use crate::ext::midpoint::Midpoint;
+
 /// Find the partition point of a collection, as [`slice::partition_point`].
 pub trait PartitionPoint<T> {
     /// Returns the index of the partition point according to the given predicate (the index of the first element of the second partition).
@@ -23,15 +25,15 @@ where
         let mut min = match self.start_bound() {
             Bound::Included(n) => *n,
             Bound::Excluded(n) => *n + T::one(),
-            Bound::Unbounded => panic!("Cannot find partition point of an unbounded range."),
+            Bound::Unbounded => T::min_value(),
         };
         let mut max = match self.end_bound() {
             Bound::Included(n) => *n,
             Bound::Excluded(n) => *n - T::one(),
-            Bound::Unbounded => panic!("Cannot find partition point of an unbounded range."),
+            Bound::Unbounded => T::max_value(),
         };
-        while min != max {
-            let midpoint = min + ((max - min) >> 1);
+        while min < max {
+            let midpoint = T::mid_point(min, max);
             if f(midpoint) {
                 max = midpoint;
             } else {
@@ -78,9 +80,6 @@ mod tests {
         assert_eq!(r.partition_point(|v| v > 8), Some(9));
         assert_eq!(r.partition_point(|v| v > 9), None);
 
-        assert_eq!(
-            (1..1_000_000_000).partition_point(|v| v > 628_162_832),
-            Some(628_162_833)
-        );
+        assert_eq!((..).partition_point(|v| v > 628_162_832), Some(628_162_833));
     }
 }
