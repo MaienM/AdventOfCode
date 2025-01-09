@@ -56,6 +56,9 @@ macro_rules! __parse {
 /// - An assignment (`[name]`). This will take the value that is matched at the given location and
 ///   store it in a variable with that name. This supports [transformations](#transformations)
 ///   (e.g. `[name as type]`).
+/// - An assignment of a fixed size (`[name take num]`). Like the previous item, but instead of
+///   taking all the text matched at the given location it only takes the specified number of
+///   bytes and leaves the rest for the next section.
 ///
 /// # Literals
 ///
@@ -146,6 +149,12 @@ macro_rules! __parse {
 /// ```
 /// ```
 /// # use puzzle_lib::parser::parse;
+/// parse!("+12" => [prefix take 1 as char] [num as u8]);
+/// assert_eq!(prefix, '+');
+/// assert_eq!(num, 12);
+/// ```
+/// ```
+/// # use puzzle_lib::parser::parse;
 /// parse!("boo" => [word with str::to_uppercase]);
 /// assert_eq!(word, "BOO");
 /// ```
@@ -214,6 +223,7 @@ macro_rules! __parse__ {
     // Store element as identifier.
     // [
     //   $name
+    //   (take $num)?
     //   (
     //      as $type ||
     //      with $transformer ||
@@ -440,6 +450,22 @@ macro_rules! __parse__ {
         }).unwrap() => $($rest)*);
     };
 
+    // Fixed-length item.
+    ([[ $($tmpnames:ident)+ ]] $input:expr => [$name:ident take $num:literal $($restinner:tt)*] $($rest:tt)*) => {
+        ::paste::paste!{
+            let [< $($tmpnames)+ _input >] = $input;
+            let [< $($tmpnames)+ >] = [< $($tmpnames)+ _input >].split_at_checked($num).ok_or_else(|| {
+                format!(
+                    "couldn't take {} bytes from {:?}",
+                    $num,
+                    ::paste::paste!([< $($tmpnames)+ _input >]),
+                )
+            }).unwrap();
+        };
+        $crate::parser::__parse__!([[ $($tmpnames)+ _1 ]] ::paste::paste!([< $($tmpnames)+ >]).0 => [$name $($restinner)*]);
+        $crate::parser::__parse__!([[ $($tmpnames)+ _2 ]] ::paste::paste!([< $($tmpnames)+ >]).1 => $($rest)*);
+    };
+
     // Recursively process everything until the next instance of a given literal.
     ([[ $($tmpnames:ident)+ ]] $input:expr => $first:tt $sep:literal $($rest:tt)*) => {
         $crate::parser::__parse__!(literal; literal; [[ $($tmpnames)+ ]] $input => $first $sep $($rest)*);
@@ -584,6 +610,13 @@ mod tests {
     fn parse_singular_custom() {
         parse!("Hello" => [foo with str::to_lowercase]);
         assert_eq!(foo, "hello");
+    }
+
+    #[test]
+    fn parse_take() {
+        parse!("+12" => [prefix take 1 as char] [num as u8]);
+        assert_eq!(prefix, '+');
+        assert_eq!(num, 12);
     }
 
     #[test]
