@@ -1,6 +1,23 @@
 //! Helpers for parsing text into structures
 #![doc(hidden)]
 
+/// Things that can be used with the `try` construct in [`parse!`].
+pub trait Tryable<T> {
+    fn to_option(self) -> Option<T>;
+}
+impl<T> Tryable<T> for Option<T> {
+    #[inline]
+    fn to_option(self) -> Option<T> {
+        self
+    }
+}
+impl<T, E> Tryable<T> for Result<T, E> {
+    #[inline]
+    fn to_option(self) -> Option<T> {
+        self.ok()
+    }
+}
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __parse {
@@ -345,7 +362,7 @@ macro_rules! __parse__ {
     };
     // second with (which is the custom transform function and explititly happens after the indexed flag when present)
     (split; $ty:tt; $input:expr => { sel::$selargs:tt into::$intoargs:tt with::$withargs1:tt::[try $transformer:expr] }) => {
-        $crate::parser::__parse__!(split; $ty; $input => { sel::$selargs into::$intoargs with::$withargs1::[$transformer] }).filter_map(Result::ok)
+        $crate::parser::__parse__!(split; $ty; $input => { sel::$selargs into::$intoargs with::$withargs1::[$transformer] }).filter_map($crate::parser::Tryable::to_option)
     };
     (split; $ty:tt; $input:expr => { sel::$selargs:tt into::$intoargs:tt with::$withargs1:tt::[$transformer:expr] }) => {
         $crate::parser::__parse__!(split; $ty; $input => { sel::$selargs into::$intoargs with::$withargs1 }).map($transformer)
@@ -359,7 +376,7 @@ macro_rules! __parse__ {
     };
     // first with
     (split; $ty:tt; $input:expr => { sel::$selargs:tt with::[try $transformer:expr] }) => {
-        $crate::parser::__parse__!(split; $ty; $input => { sel::$selargs with::[$transformer] }).filter_map(Result::ok)
+        $crate::parser::__parse__!(split; $ty; $input => { sel::$selargs with::[$transformer] }).filter_map($crate::parser::Tryable::to_option)
     };
     (split; $ty:tt; $input:expr => { sel::$selargs:tt with::[$transformer:expr] }) => {
         $crate::parser::__parse__!(split; $ty; $input => { sel::$selargs }).map($transformer)
@@ -789,6 +806,25 @@ mod tests {
     }
 
     #[test]
+    fn parse_list_with_try_transform_option() {
+        let transformer = |value: &str| {
+            if value == value.to_uppercase() {
+                Some(value.len())
+            } else {
+                None
+            }
+        };
+        parse!("Hello WORLD" => [items split try with transformer]);
+        assert_eq!(items, vec![5]);
+    }
+
+    #[test]
+    fn parse_list_with_try_transform_result() {
+        parse!("foo 12" => [items split try with str::parse::<u8>]);
+        assert_eq!(items, vec![12]);
+    }
+
+    #[test]
     fn parse_list_type_and_with_transform() {
         parse!("9 25" => [items split as u8 with u8::isqrt]);
         assert_eq!(items, vec![3, 5]);
@@ -796,7 +832,7 @@ mod tests {
 
     #[test]
     fn parse_list_try_type_and_try_with_transform() {
-        parse!("9 foo 25 140" => [items split try as u8 try with |v| v.checked_next_power_of_two().ok_or("")]);
+        parse!("9 foo 25 140" => [items split try as u8 try with u8::checked_next_power_of_two]);
         assert_eq!(items, vec![16, 32]);
     }
 
