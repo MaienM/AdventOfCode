@@ -1,3 +1,5 @@
+//! A WebAssembly package bundling all puzzles for use in a browser.
+
 use std::time::Duration;
 
 use aoc::bins::BINS;
@@ -182,6 +184,9 @@ pub fn list() -> Vec<Bin> {
 }
 
 /// Run a single part of a single [`Bin`].
+///
+/// This is just a wrapper around [`Solver::run`], mostly present because [`Solver`] doesn't
+/// translate into a web-compatible format easily.
 ///
 /// # Errors
 ///
