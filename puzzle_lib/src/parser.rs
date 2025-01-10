@@ -113,6 +113,9 @@ macro_rules! __parse {
 ///     depends on the other options).
 ///   - `into (type)`. This will call [`collect`](Iterator::collect) on the iterator to transform
 ///     it into the given type.
+///   - `try into (type)`. This will first call [`collect`](Iterator::collect) on the iterator to
+///     transform it into a [`Vec`], and then it wil call [`TryInto::try_into`] to attemp to
+///     convert it into the given type.
 /// - A transformation (optional):
 ///   - Any of the base [transformations](#transformations).
 ///   - `try transformation`. A base [transformation](#transformations) that's allowed to fail,
@@ -191,7 +194,7 @@ macro_rules! __parse {
 /// ```
 /// ```
 /// # use puzzle_lib::parser::parse;
-/// // parse!("1 2 4 8" => [nums split as u8 with u8::reverse_bits]);
+/// // parse!("1 2 4 8" => [nums split try into ([u8; 4]) as u8 with u8::reverse_bits]);
 /// // assert_eq!(nums, vec![128, 64, 32, 16]);
 /// ```
 /// ```
@@ -261,7 +264,7 @@ macro_rules! __parse__ {
     //   indexed?
     //   (
     //      into iterator ||
-    //      into ($collection);
+    //      try? into ($collection);
     //      default $collection Vec
     //   )
     //   (
@@ -311,9 +314,12 @@ macro_rules! __parse__ {
     (split; $ty:tt; $input:expr => [ sel::$selargs:tt ]; $($rest:tt)*) => {
         $crate::parser::__parse__!(split; $ty; $input => [ sel::$selargs into::[] ]; $($rest)*)
     };
-    // into $collection
+    // (try?) into $collection
     (split; $ty:tt; $input:expr => [ sel::$selargs:tt into::[$($flags:ident)*] ]; into iterator $($rest:tt)*) => {
         $crate::parser::__parse__!(split; $ty; $input => [ sel::$selargs into::[$($flags)*; Iterator] ]; $($rest)*)
+    };
+    (split; $ty:tt; $input:expr => [ sel::$selargs:tt into::[$($flags:ident)*] ]; try into ($collection:ty) $($rest:tt)*) => {
+        $crate::parser::__parse__!(split; $ty; $input => [ sel::$selargs into::[$($flags)*; try $collection] ]; $($rest)*)
     };
     (split; $ty:tt; $input:expr => [ sel::$selargs:tt into::[$($flags:ident)*] ]; into ($collection:ty) $($rest:tt)*) => {
         $crate::parser::__parse__!(split; $ty; $input => [ sel::$selargs into::[$($flags)*; $collection] ]; $($rest)*)
@@ -366,6 +372,13 @@ macro_rules! __parse__ {
     // convert to collection (or not)
     (split; $ty:tt; $input:expr => { sel::$selargs:tt into::[$($flags:ident)*; Iterator] $($rest:tt)* }) => {
         $crate::parser::__parse__!(split; $ty; $input => { sel::$selargs into::[$($flags)*] $($rest)* })
+    };
+    (split; $ty:tt; $input:expr => { sel::$selargs:tt into::[$($flags:ident)*; try $collection:ty] $($rest:tt)* }) => {
+        {
+            let value = $crate::parser::__parse__!(split; $ty; $input => { sel::$selargs into::[$($flags)*] $($rest)* }).collect::<Vec<_>>();
+            let value: $collection = value.try_into().unwrap();
+            value
+        }
     };
     (split; $ty:tt; $input:expr => { sel::$selargs:tt into::[$($flags:ident)*; $collection:ty] $($rest:tt)* }) => {
         $crate::parser::__parse__!(split; $ty; $input => { sel::$selargs into::[$($flags)*] $($rest)* }).collect::<$collection>()
@@ -763,6 +776,12 @@ mod tests {
     fn parse_list_custom_collection() {
         parse!("1 2" => [items split into (HashSet<_>)]);
         assert_eq!(items, HashSet::from(["1", "2"]));
+    }
+
+    #[test]
+    fn parse_list_custom_try_collection() {
+        parse!("1 2" => [items split try into ([&str; 2])]);
+        assert_eq!(items, ["1", "2"]);
     }
 
     #[test]
