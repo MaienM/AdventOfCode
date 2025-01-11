@@ -105,7 +105,7 @@ fn solve(sequence: &str, robots: usize) -> usize {
         let mut next_paths = HashMap::new();
         for (sequence, count) in paths {
             for path in get_optimal_path(&DIR_KEYPAD, &sequence) {
-                *(next_paths.entry(path).or_default()) += count;
+                next_paths.increment_by(path, count);
             }
         }
         paths = next_paths;

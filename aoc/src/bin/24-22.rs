@@ -60,10 +60,7 @@ pub fn part2(input: &str) -> usize {
     let mut sum_by_delta = HashMap::new();
     for price_by_delta in price_by_deltas {
         for (delta, price) in price_by_delta {
-            sum_by_delta
-                .entry(delta)
-                .and_modify(|v| *v += price)
-                .or_insert(price);
+            sum_by_delta.increment_by(delta, price);
         }
     }
     sum_by_delta.into_values().max().unwrap()

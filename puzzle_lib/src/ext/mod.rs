@@ -3,6 +3,7 @@
 mod abs_diff;
 mod chain_sort;
 mod count_occurences;
+mod counter;
 mod factorize;
 mod midpoint;
 mod partition_point;
@@ -11,6 +12,7 @@ mod primes;
 pub use abs_diff::*;
 pub use chain_sort::*;
 pub use count_occurences::*;
+pub use counter::*;
 pub use factorize::*;
 pub use midpoint::*;
 pub use partition_point::*;

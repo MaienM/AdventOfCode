@@ -69,7 +69,7 @@ fn get_counts(points: &[Point]) -> HashMap<Point, u16> {
     let mut neighbour_counts = HashMap::new();
     for point in points {
         for neighbour in point.neighbours() {
-            *(neighbour_counts.entry(neighbour).or_default()) += 1;
+            neighbour_counts.increment_one(neighbour);
         }
     }
     for point in points {

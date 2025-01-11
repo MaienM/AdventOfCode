@@ -1,5 +1,7 @@
 use std::{collections::HashMap, hash::Hash};
 
+use super::Counter;
+
 /// Count the number of occurences of each element in a collection.
 pub trait CountOccurences<T> {
     /// Count how often each item occurs.
@@ -17,7 +19,7 @@ where
     {
         let mut map = HashMap::new();
         for item in self {
-            map.entry(item).and_modify(|c| *c += 1).or_insert(1);
+            map.increment_one(item);
         }
         map
     }

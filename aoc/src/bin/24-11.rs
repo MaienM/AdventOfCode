@@ -27,7 +27,7 @@ fn solve(nums: Vec<usize>, cycles: usize) -> usize {
         let mut new_map = HashMap::new();
         for (num, count) in map {
             for new_num in cycle(num) {
-                *new_map.entry(new_num).or_insert(0) += count;
+                new_map.increment_by(new_num, count);
             }
         }
         map = new_map;

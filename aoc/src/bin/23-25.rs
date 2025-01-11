@@ -45,7 +45,7 @@ pub fn part1(input: &str) -> usize {
 
                 for edge in graph.get(node).unwrap() {
                     if !group.contains(edge) {
-                        *unvisited.entry(edge).or_default() += 1;
+                        unvisited.increment_one(edge);
                     }
                 }
             }

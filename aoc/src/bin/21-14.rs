@@ -19,7 +19,7 @@ impl From<&str> for Polymer {
 
         let mut pairs = PolymerPairCounts::new();
         for pair in value.chars().tuple_windows() {
-            *pairs.entry(pair).or_default() += 1;
+            pairs.increment_one(pair);
         }
 
         Self { pairs, start, end }
@@ -44,8 +44,8 @@ fn do_step(polymer: Polymer, rules: &Rules) -> Polymer {
         let left = (pair.0, *insertion);
         let right = (*insertion, pair.1);
 
-        *new_pairs.entry(left).or_default() += count;
-        *new_pairs.entry(right).or_default() += count;
+        new_pairs.increment_by(left, count);
+        new_pairs.increment_by(right, count);
     }
     Polymer {
         pairs: new_pairs,
@@ -56,14 +56,14 @@ fn do_step(polymer: Polymer, rules: &Rules) -> Polymer {
 fn get_polymer_char_counts(polymer: &Polymer) -> HashMap<char, u64> {
     let mut char_counts: HashMap<char, u64> = HashMap::new();
     for (pair, count) in &polymer.pairs {
-        *char_counts.entry(pair.0).or_default() += *count;
-        *char_counts.entry(pair.1).or_default() += *count;
+        char_counts.increment_by(pair.0, *count);
+        char_counts.increment_by(pair.1, *count);
     }
     for count in char_counts.values_mut() {
         *count /= 2;
     }
-    *char_counts.entry(polymer.start).or_default() += 1;
-    *char_counts.entry(polymer.end).or_default() += 1;
+    char_counts.increment_one(polymer.start);
+    char_counts.increment_one(polymer.end);
     char_counts
 }
 

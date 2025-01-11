@@ -40,18 +40,8 @@ impl<'a> Graph<'a> {
             "Big caves may not be directly connected as this would create infinite paths, but {left} and {right} are.",
         );
 
-        *self
-            .edges
-            .entry(left)
-            .or_default()
-            .entry(right)
-            .or_default() += 1;
-        *self
-            .edges
-            .entry(right)
-            .or_default()
-            .entry(left)
-            .or_default() += 1;
+        self.edges.entry(left).or_default().increment_one(right);
+        self.edges.entry(right).or_default().increment_one(left);
     }
 
     pub fn flatten_big_nodes(&mut self) {
@@ -65,7 +55,7 @@ impl<'a> Graph<'a> {
             for left in edges.keys() {
                 self.edges.get_mut(left).unwrap().remove(node);
                 for right in edges.keys() {
-                    *self.edges.get_mut(left).unwrap().entry(right).or_default() += 1;
+                    self.edges.get_mut(left).unwrap().increment_one(right);
                 }
             }
         }
