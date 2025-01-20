@@ -38,7 +38,7 @@ fn parse_input_lines<'a>(
                     };
                     match parse_input_lines(subdir, lines) {
                         "/" => return "/",
-                        ".." => continue,
+                        ".." => {}
                         _ => panic!(),
                     }
                 }

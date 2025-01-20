@@ -42,7 +42,7 @@ impl BinScanner {
         let modpath: ExprPath = parse_quote!(self);
         let mut scanner = Self {
             path: path.to_owned(),
-            name: path.split('/').last().unwrap().replace(".rs", ""),
+            name: path.split('/').next_back().unwrap().replace(".rs", ""),
             title: None,
             mod_root_path: modpath.path.segments.clone(),
             mod_visual_path: {
@@ -279,7 +279,7 @@ pub fn register_crate(input: TokenStream) -> TokenStream {
     for file in files {
         let modident = file
             .split('/')
-            .last()
+            .next_back()
             .unwrap()
             .replace('-', "_")
             .strip_suffix(".rs")

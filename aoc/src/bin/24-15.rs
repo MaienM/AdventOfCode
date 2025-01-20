@@ -68,7 +68,7 @@ pub fn part1(input: &str) -> usize {
     for mov in moves {
         let next = current + mov;
         match map[next.y][next.x] {
-            TileSingle::Wall => continue,
+            TileSingle::Wall => {}
             TileSingle::Box => {
                 let mut check = next + mov;
                 loop {
@@ -151,7 +151,7 @@ pub fn part2(input: &str) -> usize {
     'main: for mov in moves {
         let next = current + mov;
         match map[next.y][next.x] {
-            TileDouble::Wall => continue,
+            TileDouble::Wall => {}
             TileDouble::BoxLeft | TileDouble::BoxRight => match mov {
                 Direction2::North | Direction2::South => {
                     let mut checks = vec![if map[next.y][next.x] == TileDouble::BoxLeft {

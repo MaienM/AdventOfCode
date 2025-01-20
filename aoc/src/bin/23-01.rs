@@ -6,7 +6,7 @@ fn parse_input(input: &str) -> Vec<u32> {
             { [nums chars into iterator try as u32] }
             => {
                 let first = nums.next().unwrap();
-                first * 10 + nums.last().unwrap_or(first)
+                first * 10 + nums.next_back().unwrap_or(first)
             }
         ]
     } => lines)
