@@ -29,6 +29,12 @@ jobs:
           toolchain: nightly
           components: rustfmt clippy
 
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+          
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
       - name: Check formatting
         run: cargo fmt --check
 
@@ -36,7 +42,7 @@ jobs:
         run: cargo clippy
 
       - name: Run tests
-        run: make test-lib
+        run: make test-libs
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
