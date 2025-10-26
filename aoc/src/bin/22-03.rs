@@ -50,7 +50,7 @@ pub fn part2(input: &str) -> u16 {
             }
             (None, None, None) => return sum,
             _ => panic!("Got partial group"),
-        };
+        }
     }
 }
 

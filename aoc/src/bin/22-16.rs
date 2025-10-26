@@ -10,7 +10,7 @@ struct Valve<'a> {
 
 type Valves<'a> = HashMap<&'a str, Valve<'a>>;
 
-fn parse_input(input: &str) -> Valves {
+fn parse_input(input: &str) -> Valves<'_> {
     parse!(input => {
         [valves split on '\n' into (Valves) with
             { "Valve " name " has flow rate=" [flow as u16] ';' _ "to valve" _ ' ' [tunnels split on ", "] }
@@ -176,7 +176,7 @@ fn run_cycle_single_actor<'a, const C: usize>(
     } else {
         state.actors[idx].1 -= 1;
         run_cycle_single_actor(global_state, state, idx + 1);
-    };
+    }
 }
 
 fn run_cycles<const C: usize>(valves: &Valves, cycles: u16) -> u16 {

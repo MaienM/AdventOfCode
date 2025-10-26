@@ -102,7 +102,7 @@ fn parse_input(input: &str) -> Map {
                 '<' => blizards.push(Blizard(Point::new(x as u8, y as u8), Direction::West)),
                 '.' => {}
                 _ => panic!("Invalid character {chr:?} in map at ({x}, {y})."),
-            };
+            }
         }
     }
     Map {

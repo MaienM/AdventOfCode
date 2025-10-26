@@ -224,10 +224,12 @@ struct MainArgs {
 
 /// The entrypoint for the multi-day CLI.
 pub fn main() {
-    assert!(
-        !cfg!(feature = "visual"),
-        "this entrypoint doesn't support feature 'visual'."
-    );
+    const {
+        assert!(
+            !cfg!(feature = "visual"),
+            "this entrypoint doesn't support feature 'visual'."
+        );
+    }
 
     let args = MainArgs::parse();
 

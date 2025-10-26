@@ -270,6 +270,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn example_do_step() {
         let algorithm = [
             false, false, true, false, true, false, false, true, true, true, true, true, false,

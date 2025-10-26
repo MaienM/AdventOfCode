@@ -51,7 +51,7 @@ struct Instruction<'a> {
     color: &'a str,
 }
 
-fn parse_input(input: &str) -> Vec<Instruction> {
+fn parse_input(input: &str) -> Vec<Instruction<'_>> {
     parse!(input => {
         [instructions split on '\n' with
             { [direction with (parse_direction)] " " [distance as usize] " (#" color ")" }
@@ -129,7 +129,7 @@ fn solve(instructions: &[Instruction]) -> usize {
                     .checked_sub(instruction.distance as isize)
                     .unwrap();
             }
-        };
+        }
     }
 
     let mut by_row: Vec<(isize, Vec<(Tile, Point)>)> = map

@@ -80,7 +80,7 @@ fn do_split(entries: &mut Entries) -> bool {
     left.push_back((path.clone(), value / 2));
     path.pop();
     path.push(1);
-    left.push_back((path.clone(), (value + 1) / 2));
+    left.push_back((path.clone(), value.div_ceil(2)));
 
     left.append(&mut right);
 

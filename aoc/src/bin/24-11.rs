@@ -11,7 +11,7 @@ fn cycle(num: usize) -> Vec<usize> {
         return vec![1];
     }
     let s = num.to_string();
-    if s.len() % 2 == 0 {
+    if s.len().is_multiple_of(2) {
         vec![
             s[..(s.len() / 2)].parse().unwrap(),
             s[(s.len() / 2)..].parse().unwrap(),

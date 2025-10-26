@@ -53,7 +53,6 @@ fn track_beams(
     while point.x < bounds.x && point.y < bounds.y {
         energized[point.y][point.x] = true;
 
-        #[allow(clippy::match_on_vec_items)]
         match map[point.y][point.x] {
             Tile::MirrorUpRight => {
                 let direction = match direction {

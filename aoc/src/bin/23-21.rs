@@ -38,7 +38,7 @@ fn parse_input(input: &str) -> Input {
                     line_tiles.push(Tile::Rock);
                 }
                 _ => panic!("Invalid tile {chr:?}."),
-            };
+            }
         }
         tiles.push(line_tiles);
     }

@@ -40,7 +40,6 @@ macro_rules! impl_point_operator {
                 <T as [<$op:camel>]<R>>::Output: Into<T>,
             {
                 type Output = Self;
-                #[must_use]
                 #[inline]
                 fn [<$op>](self, rhs: $name<R>) -> Self {
                     Self {
@@ -173,7 +172,6 @@ macro_rules! create_point {
             type Output = $name<<T as AbsDiff<T>>::Output>;
 
             /// Get a point that represents the absolute differences of all coordinates of the two points.
-            #[must_use]
             fn abs_diff(self, other: Self) -> Self::Output {
                 Self::Output {
                     $($var: T::abs_diff(self.$var, other.$var)),+
@@ -354,7 +352,6 @@ macro_rules! impl_direction_operator {
                 <T as Sub<T>>::Output: Into<T>,
             {
                 type Output = Self;
-                #[must_use]
                 #[inline]
                 fn [<$op>](self, direction: $name) -> Self {
                     match direction {
@@ -394,7 +391,6 @@ macro_rules! impl_direction_operator {
                 <T as Sub<R>>::Output: Into<T>,
             {
                 type Output = Self;
-                #[must_use]
                 #[inline]
                 fn [<$op>](self, DirectionWithMagnitude(direction, magnitude): DirectionWithMagnitude<$name, R>) -> Self {
                     match direction {

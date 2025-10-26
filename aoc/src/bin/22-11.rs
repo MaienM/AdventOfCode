@@ -61,7 +61,7 @@ fn do_round(monkeys: &mut [Monkey], counter: &mut [u64], therapy: &impl Fn(u64) 
 
         for item in monkey.items.iter().chain(new.iter()) {
             let item = therapy(monkey.operation.apply(*item));
-            let test = item % monkey.test == 0;
+            let test = item.is_multiple_of(monkey.test);
             let target = monkey.targets[usize::from(!test)];
             new_items[target].push(item);
             counter[i] += 1;

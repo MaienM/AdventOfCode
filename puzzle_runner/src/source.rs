@@ -82,7 +82,7 @@ impl Source {
                 *path = f(std::mem::take(path));
             }
             _ => {}
-        };
+        }
         result
     }
 }

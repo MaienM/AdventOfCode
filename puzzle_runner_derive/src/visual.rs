@@ -44,7 +44,7 @@ impl<'ast> Visit<'ast> for ModScanner {
                 self.info = Err(Error::new(node.span(), "must be pub(super)"));
                 return;
             }
-        };
+        }
 
         let ident = &node.ident;
         let cp = &self.current_path;

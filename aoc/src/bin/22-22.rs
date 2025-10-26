@@ -233,7 +233,7 @@ impl State {
         let block = self.grid.block_size;
         let (nextposition, nextdirection) = match self.direction {
             Direction::Up => {
-                if self.position.y % block == 0 {
+                if self.position.y.is_multiple_of(block) {
                     self.wrap(
                         Point::new(self.position.x, self.position.y + block - 1),
                         &self.get_current_directions().top,
@@ -246,7 +246,7 @@ impl State {
                 }
             }
             Direction::Down => {
-                if (self.position.y + 1) % block == 0 {
+                if (self.position.y + 1).is_multiple_of(block) {
                     self.wrap(
                         Point::new(self.position.x, self.position.y + 1),
                         &self.get_current_directions().bottom,
@@ -259,7 +259,7 @@ impl State {
                 }
             }
             Direction::Left => {
-                if self.position.x % block == 0 {
+                if self.position.x.is_multiple_of(block) {
                     self.wrap(
                         Point::new(self.position.x + block - 1, self.position.y),
                         &self.get_current_directions().left,
@@ -272,7 +272,7 @@ impl State {
                 }
             }
             Direction::Right => {
-                if (self.position.x + 1) % block == 0 {
+                if (self.position.x + 1).is_multiple_of(block) {
                     self.wrap(
                         Point::new(self.position.x + 1, self.position.y),
                         &self.get_current_directions().right,

@@ -132,7 +132,6 @@ fn to_graph_inner(map: &Map, graph: &mut Graph, from_node: Point, from: Point, m
         if neighbour == prev {
             continue;
         }
-        #[allow(clippy::match_on_vec_items)]
         match map.tiles[neighbour.y][neighbour.x] {
             Tile::Wall => {}
             Tile::Open => panic!(

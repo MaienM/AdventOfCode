@@ -66,7 +66,7 @@ impl<'a> Graph<'a> {
     }
 }
 
-fn parse_input(input: &str) -> Graph {
+fn parse_input(input: &str) -> Graph<'_> {
     parse!(input => [pairs split on '\n' with { left '-' right } => (left, right)]);
 
     let mut graph = Graph::new();

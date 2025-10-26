@@ -26,7 +26,7 @@ fn parse_input(input: &str) -> Vec<&str> {
     } => steps)
 }
 
-fn parse_step(input: &str) -> Step {
+fn parse_step(input: &str) -> Step<'_> {
     if input.contains('=') {
         parse!(input => { label '=' [focal as usize] } => Step { label, operation: Operation::Place(focal) })
     } else {
@@ -74,7 +74,7 @@ pub fn part2(input: &str) -> usize {
                 match idx {
                     Some(idx) => currbox[idx] = lens,
                     None => currbox.push(lens),
-                };
+                }
             }
         }
     }

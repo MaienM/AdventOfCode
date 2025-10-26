@@ -20,7 +20,7 @@ struct Map<'a> {
     translations: Vec<Translation>,
 }
 
-fn parse_input(input: &str) -> Input {
+fn parse_input(input: &str) -> Input<'_> {
     parse!(input => {
         "seeds: " [seeds split as usize]
         "\n\n"

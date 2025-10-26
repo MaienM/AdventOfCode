@@ -76,7 +76,7 @@ impl From<char> for ModuleType<'_> {
     }
 }
 
-fn parse_input(input: &str) -> Input {
+fn parse_input(input: &str) -> Input<'_> {
     parse!(input =>
         [modules split on '\n' into (HashMap<_, _>) with
             { [ty take 1 as char with ModuleType::from] name " -> " [outputs split on ", "] }
@@ -120,7 +120,7 @@ fn parse_input(input: &str) -> Input {
         module.inputs = module_inputs.remove(name).unwrap();
         if let ModuleType::Conjunction(ref mut input_states) = module.ty {
             *input_states = module.inputs.iter().map(|k| (*k, false)).collect();
-        };
+        }
     }
 
     Input {

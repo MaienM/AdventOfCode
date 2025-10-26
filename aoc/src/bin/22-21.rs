@@ -26,7 +26,7 @@ enum Job<'a> {
     Operation(&'a str, Operation, &'a str),
 }
 
-fn parse_input(input: &str) -> HashMap<&str, Job> {
+fn parse_input(input: &str) -> HashMap<&str, Job<'_>> {
     parse!(input => {
         [monkeys split on '\n' into (HashMap<_, _>) with
             { name ": " [job split] }

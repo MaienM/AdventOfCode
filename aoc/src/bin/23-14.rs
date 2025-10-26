@@ -35,7 +35,6 @@ fn slide_north(map: &mut Map) {
     for x in 0..width {
         let mut rolling = 0;
         for y in (0..map.len()).rev() {
-            #[allow(clippy::match_on_vec_items)]
             match map[y][x] {
                 Cell::RoundRock => {
                     rolling += 1;
@@ -61,7 +60,6 @@ fn slide_south(map: &mut Map) {
     for x in 0..width {
         let mut rolling = 0;
         for y in 0..map.len() {
-            #[allow(clippy::match_on_vec_items)]
             match map[y][x] {
                 Cell::RoundRock => {
                     rolling += 1;
@@ -87,7 +85,6 @@ fn slide_east(map: &mut Map) {
     for row in map {
         let mut rolling = 0;
         for x in 0..width {
-            #[allow(clippy::match_on_vec_items)]
             match row[x] {
                 Cell::RoundRock => {
                     rolling += 1;
@@ -113,7 +110,6 @@ fn slide_west(map: &mut Map) {
     for row in map {
         let mut rolling = 0;
         for x in (0..width).rev() {
-            #[allow(clippy::match_on_vec_items)]
             match row[x] {
                 Cell::RoundRock => {
                     rolling += 1;

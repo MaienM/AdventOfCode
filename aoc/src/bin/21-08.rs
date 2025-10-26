@@ -72,7 +72,7 @@ type Line<'a> = (Signals<'a>, Digits<'a>);
 
 const CHAR_OFFSET: usize = 'a' as usize;
 
-fn parse_input(input: &str) -> Vec<Line> {
+fn parse_input(input: &str) -> Vec<Line<'_>> {
     parse!(input => {
         [lines split on '\n' with
             { [signals split] " | " [digits split] }

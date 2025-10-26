@@ -63,7 +63,7 @@ fn parse_input_lines<'a>(
     }
 }
 
-fn parse_input(input: &str) -> Entry {
+fn parse_input(input: &str) -> Entry<'_> {
     let mut lines: Peekable<IntoIter<&'_ str>> = input
         .lines()
         .collect::<Vec<&'_ str>>()
@@ -82,7 +82,7 @@ fn get_dir_sizes(matches: &mut Vec<usize>, entry: &Entry) {
         for e in dir.values() {
             get_dir_sizes(matches, e);
         }
-    };
+    }
 }
 
 pub fn part1(input: &str) -> usize {

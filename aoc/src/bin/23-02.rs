@@ -27,7 +27,7 @@ fn parse_round(input: &str) -> Round {
             "green" => round.green = count,
             "blue" => round.blue = count,
             _ => panic!("Invalid color {color}."),
-        };
+        }
     }
     round
 }

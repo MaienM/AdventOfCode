@@ -13,14 +13,6 @@ fn range(start: usize, end: usize) -> Box<dyn Iterator<Item = usize>> {
     }
 }
 
-fn diff(start: usize, end: usize) -> usize {
-    if start < end {
-        end - start
-    } else {
-        start - end
-    }
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Move {
     HallwayRoom(usize, (usize, usize)),
@@ -93,7 +85,7 @@ impl<const SEATS: usize> Board<SEATS> {
             }
 
             let stepcost = 10u32.pow(typ as u32);
-            let stepcount = (sourceseat + 1) + (targetseat + 1) + diff(sourceroom, typ) * 2;
+            let stepcount = (sourceseat + 1) + (targetseat + 1) + sourceroom.abs_diff(typ) * 2;
             moves.push(MoveWithCost(
                 stepcost * stepcount as u32,
                 Move::RoomRoom((sourceroom, sourceseat), (typ, targetseat)),
@@ -133,7 +125,7 @@ impl<const SEATS: usize> Board<SEATS> {
                         }
                     }
 
-                    let stepcount = (roomseat + 1) + diff(sourcepos, targetpos);
+                    let stepcount = (roomseat + 1) + sourcepos.abs_diff(targetpos);
                     moves.push(MoveWithCost(
                         stepcost * stepcount as u32,
                         Move::HallwayRoom(targetpos, (room, roomseat)),
@@ -155,7 +147,7 @@ impl<const SEATS: usize> Board<SEATS> {
                 for targetpos in range {
                     if let Some(typ) = self.hallway[targetpos] {
                         if typ == room {
-                            let stepcount = (roomseat + 1) + diff(sourcepos, targetpos);
+                            let stepcount = (roomseat + 1) + sourcepos.abs_diff(targetpos);
                             moves.push(MoveWithCost(
                                 stepcost * stepcount as u32,
                                 Move::HallwayRoom(targetpos, (room, roomseat)),

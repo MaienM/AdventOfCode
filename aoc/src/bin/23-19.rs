@@ -100,7 +100,7 @@ impl<'a> From<&'a str> for Workflow<'a> {
     }
 }
 impl Workflow<'_> {
-    fn outcome(&self, part: &Part) -> &Outcome {
+    fn outcome(&self, part: &Part) -> &Outcome<'_> {
         for instruction in &self.instructions {
             if instruction.matches(part) {
                 return &instruction.outcome;
@@ -131,7 +131,7 @@ struct Input<'a> {
     parts: Vec<Part>,
 }
 
-fn parse_input(input: &str) -> Input {
+fn parse_input(input: &str) -> Input<'_> {
     parse!(input => {
         [workflows split on '\n' into (HashMap<_, _>) with
             { name '{' [workflow as Workflow] '}' }

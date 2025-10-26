@@ -31,7 +31,7 @@ impl Operand {
 type Wires<'a> = HashMap<&'a str, bool>;
 type Gates<'a> = HashMap<&'a str, (&'a str, Operand, &'a str)>;
 
-fn parse_input(input: &str) -> (Wires, Gates) {
+fn parse_input(input: &str) -> (Wires<'_>, Gates<'_>) {
     parse!(input => {
         [wires split on '\n' into (HashMap<_, _>) with
             { name ": " [value as u8] }

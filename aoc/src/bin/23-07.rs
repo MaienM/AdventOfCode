@@ -102,7 +102,7 @@ pub fn part2(input: &str) -> usize {
             match card {
                 0 => jokers += 1,
                 card => groups[card as usize] += 1,
-            };
+            }
         }
         groups.sort_unstable();
 

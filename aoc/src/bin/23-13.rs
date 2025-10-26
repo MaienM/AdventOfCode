@@ -31,7 +31,7 @@ fn find_reflection_row(map: &Map, with_smudge: bool) -> Option<usize> {
                     }
                 }
                 Some(_) => continue 'row,
-            };
+            }
         }
         if found_smudge {
             return Some(i);

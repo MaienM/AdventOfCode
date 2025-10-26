@@ -51,7 +51,7 @@ struct PartialPath {
 // Sorting comparisons are inverted since we always want the smallest item from the max-heap.
 impl PartialOrd for PartialPath {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(other.steps.cmp(&self.steps))
+        Some(self.cmp(other))
     }
 }
 impl Ord for PartialPath {

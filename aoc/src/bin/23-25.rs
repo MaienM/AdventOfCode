@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 type Graph<'a> = HashMap<&'a str, HashSet<&'a str>>;
 
-fn parse_input(input: &str) -> Graph {
+fn parse_input(input: &str) -> Graph<'_> {
     parse!(input =>
         [map split on '\n' into (HashMap<_, _>) with
             { from ": " [to split into (HashSet<_>)] }

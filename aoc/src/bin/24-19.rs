@@ -2,26 +2,6 @@ puzzle_lib::setup!(title = "Linen Layout");
 
 use std::collections::HashMap;
 
-enum Color {
-    White,
-    Blue,
-    Black,
-    Red,
-    Green,
-}
-impl From<char> for Color {
-    fn from(value: char) -> Self {
-        match value {
-            'w' => Self::White,
-            'u' => Self::Blue,
-            'b' => Self::Black,
-            'r' => Self::Red,
-            'g' => Self::Green,
-            _ => panic!(),
-        }
-    }
-}
-
 fn parse_input(input: &str) -> (Vec<&str>, Vec<&str>) {
     parse!(input => {
         [patterns split on ", "]
