@@ -9,7 +9,7 @@ use wasm_bindgen::prelude::*;
 pub use wasm_bindgen_rayon::init_thread_pool;
 
 mod r#extern;
-use r#extern::{performance, Number};
+use r#extern::{Number, performance};
 
 mod time {
     use std::time::Duration;

@@ -16,11 +16,7 @@ fn parse_input(input: &str) -> Vec<(Point, Point)> {
 }
 
 fn range(a: usize, b: usize) -> RangeInclusive<usize> {
-    if a > b {
-        b..=a
-    } else {
-        a..=b
-    }
+    if a > b { b..=a } else { a..=b }
 }
 
 pub fn part1(input: &str) -> usize {

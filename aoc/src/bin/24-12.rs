@@ -15,11 +15,11 @@ fn find_region(tiles: &[Vec<char>], members: &mut HashSet<Point2>, current: &Poi
         if members.contains(&neighbour) {
             continue;
         }
-        if let Some(c) = tiles.get(neighbour.y).and_then(|row| row.get(neighbour.x)) {
-            if *c == chr {
-                members.insert(neighbour);
-                find_region(tiles, members, &neighbour, chr);
-            }
+        if let Some(c) = tiles.get(neighbour.y).and_then(|row| row.get(neighbour.x))
+            && *c == chr
+        {
+            members.insert(neighbour);
+            find_region(tiles, members, &neighbour, chr);
         }
     }
 }

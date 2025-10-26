@@ -1,11 +1,11 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
+    Error, ItemEnum, ItemMod, ItemStruct, Path, PathSegment, Token, VisRestricted, Visibility,
     parse_macro_input, parse_quote,
     punctuated::Punctuated,
     spanned::Spanned,
     visit::{self, Visit},
-    Error, ItemEnum, ItemMod, ItemStruct, Path, PathSegment, Token, VisRestricted, Visibility,
 };
 
 struct ModScanner {

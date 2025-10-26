@@ -16,11 +16,7 @@ fn parse_input(input: &str) -> Vec<LineDef> {
 }
 
 fn range(a: i16, b: i16) -> RangeInclusive<i16> {
-    if a < b {
-        a..=b
-    } else {
-        b..=a
-    }
+    if a < b { a..=b } else { b..=a }
 }
 
 fn get_points(linedef: LineDef) -> Vec<Point> {

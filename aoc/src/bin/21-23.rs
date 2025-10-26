@@ -118,10 +118,10 @@ impl<const SEATS: usize> Board<SEATS> {
 
                     // We need to check to see what is currently between us and our target. If whatever is between us and our target needs to pass us to get to its room this leads to a deadlock, so we can write off that move as an option.
                     for i in range(targetpos, roompos) {
-                        if let Some(otyp) = self.hallway[i] {
-                            if range(i, ROOM_POSITIONS[otyp]).any(|p| p == targetpos) {
-                                continue 'target;
-                            }
+                        if let Some(otyp) = self.hallway[i]
+                            && range(i, ROOM_POSITIONS[otyp]).any(|p| p == targetpos)
+                        {
+                            continue 'target;
                         }
                     }
 

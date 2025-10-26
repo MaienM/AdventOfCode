@@ -4,8 +4,8 @@ use std::{collections::HashSet, sync::OnceLock, time::Duration};
 
 use ansi_term::Colour::{Cyan, Purple};
 use clap::{
-    builder::{PossibleValue, PossibleValuesParser, TypedValueParser},
     Parser,
+    builder::{PossibleValue, PossibleValuesParser, TypedValueParser},
 };
 use rayon::ThreadPoolBuilder;
 

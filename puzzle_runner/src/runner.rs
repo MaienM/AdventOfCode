@@ -6,8 +6,9 @@ use std::{
 };
 
 use ansi_term::{
-    unstyle, ANSIStrings,
+    ANSIStrings,
     Colour::{Blue, Green, Purple, Red},
+    unstyle,
 };
 
 use crate::derived::Solver;

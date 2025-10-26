@@ -17,19 +17,19 @@ impl Mul<&Matrix> for &Matrix {
     fn mul(self, rhs: &Matrix) -> Self::Output {
         Matrix(
             (
-                self.0 .0 * rhs.0 .0 + self.0 .1 * rhs.1 .0 + self.0 .2 * rhs.2 .0,
-                self.0 .0 * rhs.0 .1 + self.0 .1 * rhs.1 .1 + self.0 .2 * rhs.2 .1,
-                self.0 .0 * rhs.0 .2 + self.0 .1 * rhs.1 .2 + self.0 .2 * rhs.2 .2,
+                self.0.0 * rhs.0.0 + self.0.1 * rhs.1.0 + self.0.2 * rhs.2.0,
+                self.0.0 * rhs.0.1 + self.0.1 * rhs.1.1 + self.0.2 * rhs.2.1,
+                self.0.0 * rhs.0.2 + self.0.1 * rhs.1.2 + self.0.2 * rhs.2.2,
             ),
             (
-                self.1 .0 * rhs.0 .0 + self.1 .1 * rhs.1 .0 + self.1 .2 * rhs.2 .0,
-                self.1 .0 * rhs.0 .1 + self.1 .1 * rhs.1 .1 + self.1 .2 * rhs.2 .1,
-                self.1 .0 * rhs.0 .2 + self.1 .1 * rhs.1 .2 + self.1 .2 * rhs.2 .2,
+                self.1.0 * rhs.0.0 + self.1.1 * rhs.1.0 + self.1.2 * rhs.2.0,
+                self.1.0 * rhs.0.1 + self.1.1 * rhs.1.1 + self.1.2 * rhs.2.1,
+                self.1.0 * rhs.0.2 + self.1.1 * rhs.1.2 + self.1.2 * rhs.2.2,
             ),
             (
-                self.2 .0 * rhs.0 .0 + self.2 .1 * rhs.1 .0 + self.2 .2 * rhs.2 .0,
-                self.2 .0 * rhs.0 .1 + self.2 .1 * rhs.1 .1 + self.2 .2 * rhs.2 .1,
-                self.2 .0 * rhs.0 .2 + self.2 .1 * rhs.1 .2 + self.2 .2 * rhs.2 .2,
+                self.2.0 * rhs.0.0 + self.2.1 * rhs.1.0 + self.2.2 * rhs.2.0,
+                self.2.0 * rhs.0.1 + self.2.1 * rhs.1.1 + self.2.2 * rhs.2.1,
+                self.2.0 * rhs.0.2 + self.2.1 * rhs.1.2 + self.2.2 * rhs.2.2,
             ),
         )
     }
@@ -88,9 +88,9 @@ impl Mul<&Matrix> for PointDelta {
     type Output = PointDelta;
 
     fn mul(self, rhs: &Matrix) -> Self::Output {
-        let c0 = self.0 * rhs.0 .0 + self.1 * rhs.1 .0 + self.2 * rhs.2 .0;
-        let c1 = self.0 * rhs.0 .1 + self.1 * rhs.1 .1 + self.2 * rhs.2 .1;
-        let c2 = self.0 * rhs.0 .2 + self.1 * rhs.1 .2 + self.2 * rhs.2 .2;
+        let c0 = self.0 * rhs.0.0 + self.1 * rhs.1.0 + self.2 * rhs.2.0;
+        let c1 = self.0 * rhs.0.1 + self.1 * rhs.1.1 + self.2 * rhs.2.1;
+        let c2 = self.0 * rhs.0.2 + self.1 * rhs.1.2 + self.2 * rhs.2.2;
         Self(c0, c1, c2)
     }
 }

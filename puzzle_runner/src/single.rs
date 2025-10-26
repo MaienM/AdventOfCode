@@ -9,7 +9,7 @@ use rayon::ThreadPoolBuilder;
 use crate::{
     derived::Bin,
     runner::{DurationThresholds, InstantTimer, SolverResult},
-    source::{source_path_fill_tokens, Source, SourceValueParser},
+    source::{Source, SourceValueParser, source_path_fill_tokens},
 };
 
 #[derive(Parser, Debug)]

@@ -4,7 +4,7 @@
 
 use std::path::Path;
 
-use clap::{builder::ArgPredicate, value_parser, Parser};
+use clap::{Parser, builder::ArgPredicate, value_parser};
 use criterion::Criterion;
 
 use super::{derived::Solver, multi::TargetArgs};

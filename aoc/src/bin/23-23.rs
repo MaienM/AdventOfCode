@@ -172,7 +172,7 @@ fn find_longest_path_inner(
         }
     }
     visited |= from;
-    let result = graph
+    graph
         .graph
         .get(&from)
         .unwrap()
@@ -181,8 +181,7 @@ fn find_longest_path_inner(
             *steps as isize + find_longest_path_inner(graph, abort_if, visited, *curr, to)
         })
         .max()
-        .unwrap();
-    result
+        .unwrap()
 }
 
 fn find_longest_path(graph: &mut Graph, from: Point, to: Point) -> isize {

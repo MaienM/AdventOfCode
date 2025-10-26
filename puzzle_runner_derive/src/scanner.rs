@@ -2,13 +2,13 @@ use std::{env, fs::read_to_string, path::PathBuf};
 
 use proc_macro::{Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use regex::Regex;
 use syn::{
-    parse_file, parse_macro_input, parse_quote,
+    Error, Expr, ExprPath, ItemFn, ItemMod, ItemStatic, Lit, Meta, PathSegment, Token, parse_file,
+    parse_macro_input, parse_quote,
     punctuated::Punctuated,
     visit::{self, Visit},
-    Error, Expr, ExprPath, ItemFn, ItemMod, ItemStatic, Lit, Meta, PathSegment, Token,
 };
 
 use crate::examples;
@@ -165,11 +165,7 @@ impl<'ast> Visit<'ast> for BinScanner {
                 return None;
             };
             let is_example = list.path.get_ident().is_some_and(|i| *i == "example_input");
-            if is_example {
-                Some(list)
-            } else {
-                None
-            }
+            if is_example { Some(list) } else { None }
         });
         if let Some(annotation) = example_annotation {
             let mut node = node.clone();

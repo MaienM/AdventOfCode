@@ -2,7 +2,7 @@
 #![cfg(feature = "visual")]
 
 use std::{
-    sync::{mpsc, MutexGuard},
+    sync::{MutexGuard, mpsc},
     thread::{self, JoinHandle},
 };
 

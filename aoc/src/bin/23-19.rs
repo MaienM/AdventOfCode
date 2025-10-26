@@ -155,7 +155,7 @@ pub fn part1(input: &str) -> usize {
                     Outcome::Result(true) => {
                         return Some(
                             part.x as usize + part.m as usize + part.a as usize + part.s as usize,
-                        )
+                        );
                     }
                     Outcome::Result(false) => return None,
                     Outcome::GoTo(next) => current = next,

@@ -40,11 +40,7 @@ where
                 min = midpoint + T::one();
             }
         }
-        if f(min) {
-            Some(min)
-        } else {
-            None
-        }
+        if f(min) { Some(min) } else { None }
     }
 }
 

@@ -1,9 +1,9 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use syn::{
-    parse::Parser, parse_macro_input, parse_quote, spanned::Spanned, Error, Expr, ItemStatic, Lit,
-    LitStr,
+    Error, Expr, ItemStatic, Lit, LitStr, parse::Parser, parse_macro_input, parse_quote,
+    spanned::Spanned,
 };
 
 struct Args {
@@ -116,7 +116,7 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
                 _ => {
                     return Err(
                         meta.error("unsupported value, must be either a string or an integer")
-                    )
+                    );
                 }
             }
         } else if meta.path.is_ident("part1") {
