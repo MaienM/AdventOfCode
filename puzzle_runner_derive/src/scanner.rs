@@ -191,63 +191,46 @@ impl<'ast> Visit<'ast> for BinScanner {
     }
 }
 
-enum SourcePath {
-    Ok(PathBuf),
-    Empty,
-    Error(String),
-}
-impl SourcePath {
-    pub fn unwrap(self) -> Result<PathBuf, String> {
-        match self {
-            SourcePath::Ok(path) => Ok(path),
-            SourcePath::Empty => Err("path of source file is empty".to_owned()),
-            SourcePath::Error(err) => Err(err),
-        }
+fn get_source_path() -> Result<PathBuf, &'static str> {
+    let mut span = Span::call_site();
+    while let Some(parent) = span.parent() {
+        span = parent;
     }
-}
-
-fn get_source_path() -> SourcePath {
-    let file = {
-        let mut span = Span::call_site();
-        while let Some(parent) = span.parent() {
-            span = parent;
-        }
-        span.source_file()
-    };
-    if file.is_real() {
-        let path = file.path();
-        if path.to_str() == Some("") {
-            // This is likely a tool such as rust_analyzer, which provides an call site with an empty path.
-            SourcePath::Empty
-        } else {
-            SourcePath::Ok(path)
-        }
+    if let Some(path) = span.local_file() {
+        Ok(path)
     } else {
-        SourcePath::Error("unable to determine path of source file".to_owned())
+        Err("path of source file is empty")
     }
 }
 
 fn find_binaries() -> Result<Vec<String>, String> {
     let path = "bin".to_owned();
     let filename_regex = Regex::new(r"^\d{2}-\d{2}\.rs$").unwrap();
-    let source_path = get_source_path().unwrap()?;
+    let source_path = get_source_path()?;
     let abs_path = env::current_dir()
         .map_err(|err| format!("error determining working directory: {err}"))?
         .join(source_path.clone())
         .parent()
         .ok_or(format!(
-            "failed to determine parent of source file {source_path:?}"
+            "failed to determine parent of source file {}",
+            source_path.display(),
         ))?
         .join(path.clone())
         .canonicalize()
         .map_err(|err| format!("error resolving {path:?}: {err}"))?;
     let mut files = Vec::new();
     let dir = abs_path.read_dir().map_err(|err| {
-        format!("error listing files in {path:?} (resolved to {abs_path:?}): {err}")
+        format!(
+            "error listing files in {path:?} (resolved to {}): {err}",
+            abs_path.display()
+        )
     })?;
     for entry in dir {
         let entry = entry.map_err(|err| {
-            format!("error listing files in {path:?} (resolved to {abs_path:?}): {err}")
+            format!(
+                "error listing files in {path:?} (resolved to {}): {err}",
+                abs_path.display()
+            )
         })?;
         let fname = entry.file_name().into_string().map_err(|err| {
             let err = err.into_string().unwrap();
@@ -334,7 +317,7 @@ pub fn register_crate(input: TokenStream) -> TokenStream {
 
 pub fn register(input: TokenStream) -> TokenStream {
     let expr = match get_source_path() {
-        SourcePath::Ok(path) => {
+        Ok(path) => {
             let mut scanner = BinScanner::scan_file(path.to_str().unwrap());
 
             let args_parser = syn::meta::parser(|meta| {
@@ -357,13 +340,8 @@ pub fn register(input: TokenStream) -> TokenStream {
 
             scanner.to_expr()
         }
-        SourcePath::Empty => {
+        Err(_) => {
             parse_quote! { ::core::todo!() }
-        }
-        SourcePath::Error(err) => {
-            return Error::new(Span::call_site().into(), err)
-                .to_compile_error()
-                .into();
         }
     };
 
