@@ -146,6 +146,7 @@
           buildInputs =
             with pkgs;
             [
+              cargo-expand
               cargo-machete
               fenixPkgs.rust-analyzer
               gnumake
