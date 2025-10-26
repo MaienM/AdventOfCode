@@ -1,13 +1,12 @@
 //! Helpers for the multi-day CLI entrypoint (`aoc`).
 
-use std::{collections::HashSet, time::Duration};
+use std::{collections::HashSet, sync::OnceLock, time::Duration};
 
 use ansi_term::Colour::{Cyan, Purple};
 use clap::{
     builder::{PossibleValue, PossibleValuesParser, TypedValueParser},
     Parser,
 };
-use once_cell::race::OnceBox;
 use rayon::ThreadPoolBuilder;
 
 use super::source::source_path_fill_tokens;
@@ -17,7 +16,7 @@ use crate::{
     source::{Source, SourceValueParser},
 };
 
-pub static BINS: OnceBox<Vec<Bin>> = OnceBox::new();
+pub static BINS: OnceLock<Vec<Bin>> = OnceLock::new();
 
 /// Create parser for --only/--skip.
 fn create_target_value_parser() -> impl TypedValueParser {

@@ -69,10 +69,10 @@ pub fn visual(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
         ///
         /// [`VISUAL_CHANNEL`] is available as a convenience for senders.
         #[cfg(feature = "visual")]
-        static VISUAL_CHANNEL_FULL: ::once_cell::sync::Lazy<(
+        static VISUAL_CHANNEL_FULL: ::std::sync::LazyLock<(
             ::std::sync::Arc<::std::sync::mpsc::Sender<#info_path>>,
             ::std::sync::Arc<::std::sync::Mutex<::std::sync::mpsc::Receiver<#info_path>>>,
-        )> = ::once_cell::sync::Lazy::new(|| {
+        )> = ::std::sync::LazyLock::new(|| {
             let (tx, rx) = ::std::sync::mpsc::channel();
             (
                 ::std::sync::Arc::new(tx),
@@ -82,9 +82,9 @@ pub fn visual(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
 
         /// Sender to send information to the current visualization.
         #[cfg(feature = "visual")]
-        static VISUAL_CHANNEL: ::once_cell::sync::Lazy<
+        static VISUAL_CHANNEL: ::std::sync::LazyLock<
             ::std::sync::Arc<::std::sync::mpsc::Sender<#info_path>>,
-        > = ::once_cell::sync::Lazy::new(|| {
+        > = ::std::sync::LazyLock::new(|| {
             VISUAL_CHANNEL_FULL.0.clone()
         });
     }

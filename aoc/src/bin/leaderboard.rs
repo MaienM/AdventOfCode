@@ -1,15 +1,15 @@
 use std::{
     collections::{HashMap, HashSet},
     env, fs,
+    sync::LazyLock,
 };
 
 use ansi_term::{Colour, Style};
 use chrono::{DateTime, NaiveDate};
-use once_cell::sync::Lazy;
 use puzzle_lib::prelude::*;
 use serde::Deserialize;
 
-static USER_ID: Lazy<usize> = Lazy::new(|| {
+static USER_ID: LazyLock<usize> = LazyLock::new(|| {
     env::var("USER_ID")
         .ok()
         .and_then(|v| v.parse::<usize>().ok())

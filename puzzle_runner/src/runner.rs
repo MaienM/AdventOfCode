@@ -1,12 +1,14 @@
 //! Helpers to run solutions & collect the results & runtimes.
 
-use std::time::{Duration, Instant};
+use std::{
+    sync::LazyLock,
+    time::{Duration, Instant},
+};
 
 use ansi_term::{
     unstyle, ANSIStrings,
     Colour::{Blue, Green, Purple, Red},
 };
-use once_cell::sync::Lazy;
 
 use crate::derived::Solver;
 
@@ -32,10 +34,10 @@ impl Timer for InstantTimer {
     }
 }
 
-static SYMBOL_UNKNOWN: Lazy<String> = Lazy::new(|| "?".to_owned());
-static SYMBOL_OK: Lazy<String> = Lazy::new(|| Green.paint("✔").to_string());
-static SYMBOL_INCORRECT: Lazy<String> = Lazy::new(|| Red.paint("✘").to_string());
-static SYMBOL_ERROR: Lazy<String> = Lazy::new(|| Red.paint("⚠").to_string());
+static SYMBOL_UNKNOWN: LazyLock<String> = LazyLock::new(|| "?".to_owned());
+static SYMBOL_OK: LazyLock<String> = LazyLock::new(|| Green.paint("✔").to_string());
+static SYMBOL_INCORRECT: LazyLock<String> = LazyLock::new(|| Red.paint("✘").to_string());
+static SYMBOL_ERROR: LazyLock<String> = LazyLock::new(|| Red.paint("⚠").to_string());
 
 /// The result of running a [`Solver`].
 #[derive(Clone)]

@@ -280,7 +280,7 @@ pub fn register_crate(input: TokenStream) -> TokenStream {
         pub mod bins {
             // Store list of binaries in a static. This is used in the main methods below, but it's
             // also imported by the WASM create.
-            pub static BINS: ::once_cell::sync::Lazy<Vec<::puzzle_runner::derived::Bin>> = ::once_cell::sync::Lazy::new(|| {
+            pub static BINS: ::std::sync::LazyLock<Vec<::puzzle_runner::derived::Bin>> = ::std::sync::LazyLock::new(|| {
                 let bins: Vec<::puzzle_runner::derived::Bin> = vec![ #(#bins),* ];
 
                 let mut seen = ::std::collections::HashMap::new();
@@ -301,13 +301,13 @@ pub fn register_crate(input: TokenStream) -> TokenStream {
             #(#mods)*
 
             pub fn multi() {
-                puzzle_runner::multi::BINS.get_or_init(|| Box::new(BINS.clone()));
+                puzzle_runner::multi::BINS.get_or_init(|| BINS.clone());
                 puzzle_runner::multi::main();
             }
 
             #[cfg(feature = "bench")]
             pub fn bench() {
-                puzzle_runner::multi::BINS.get_or_init(|| Box::new(BINS.clone()));
+                puzzle_runner::multi::BINS.get_or_init(|| BINS.clone());
                 puzzle_runner::bench::main();
             }
         }
@@ -348,7 +348,7 @@ pub fn register(input: TokenStream) -> TokenStream {
     quote!{
         // Store metadata in a static. This is used in the main method below, but it's also copied
         // to the full list used by the multi entrypoint.
-        pub(crate) static BIN: ::once_cell::sync::Lazy<::puzzle_runner::derived::Bin> = ::once_cell::sync::Lazy::new(|| #expr );
+        pub(crate) static BIN: ::std::sync::LazyLock<::puzzle_runner::derived::Bin> = ::std::sync::LazyLock::new(|| #expr );
 
         // Generate entrypoint that just runs this day.
         pub fn main() {

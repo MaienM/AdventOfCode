@@ -1,11 +1,10 @@
 puzzle_lib::setup!(title = "Keypad Conundrum");
 
-use std::{cmp::Ordering, collections::HashMap, vec::Vec};
+use std::{cmp::Ordering, collections::HashMap, sync::LazyLock, vec::Vec};
 
 use common_macros::hash_map;
 use itertools::repeat_n;
 use memoize::memoize;
-use once_cell::sync::Lazy;
 use puzzle_lib::point::Point2;
 
 fn parse_input(input: &str) -> Vec<&str> {
@@ -25,7 +24,7 @@ impl From<&Keypad> for usize {
     }
 }
 
-static NUM_KEYPAD: Lazy<Keypad> = Lazy::new(|| Keypad {
+static NUM_KEYPAD: LazyLock<Keypad> = LazyLock::new(|| Keypad {
     positions: hash_map![
         '7' => Point2::new(0, 0),
         '8' => Point2::new(1, 0),
@@ -42,7 +41,7 @@ static NUM_KEYPAD: Lazy<Keypad> = Lazy::new(|| Keypad {
     dead: Point2::new(0, 3),
 });
 
-static DIR_KEYPAD: Lazy<Keypad> = Lazy::new(|| Keypad {
+static DIR_KEYPAD: LazyLock<Keypad> = LazyLock::new(|| Keypad {
     positions: hash_map![
         '^' => Point2::new(1, 0),
         'A' => Point2::new(2, 0),
