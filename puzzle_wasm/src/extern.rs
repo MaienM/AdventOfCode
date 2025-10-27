@@ -5,7 +5,7 @@ use web_sys::Performance;
 
 #[wasm_bindgen]
 extern "C" {
-    #[no_mangle]
+    #[wasm_bindgen(thread_local_v2)]
     pub static performance: Performance;
 
     #[wasm_bindgen(typescript_type = number)]

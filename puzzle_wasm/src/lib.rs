@@ -10,6 +10,7 @@ pub use wasm_bindgen_rayon::init_thread_pool;
 
 mod r#extern;
 use r#extern::{Number, performance};
+use web_sys::Performance;
 
 mod time {
     use std::time::Duration;
@@ -40,13 +41,13 @@ pub struct PerformanceTimer(f64);
 impl Timer for PerformanceTimer {
     #[inline]
     fn start() -> Self {
-        Self(performance.now())
+        Self(performance.with(Performance::now))
     }
 
     #[inline]
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn elapsed(&self) -> Duration {
-        let end = performance.now();
+        let end = performance.with(Performance::now);
         time::elapsed_to_duration(end - self.0)
     }
 }
@@ -56,11 +57,11 @@ impl Timer for PerformanceTimer {
 /// This will block for the length of one resolution, the worst I've seen is `16.66ms` (1/60th of a second).
 #[wasm_bindgen]
 pub fn get_timer_resolution() -> Number {
-    let start = performance.now();
+    let start = performance.with(Performance::now);
     let mut end = start;
     #[allow(clippy::float_cmp)]
     while start == end {
-        end = performance.now();
+        end = performance.with(Performance::now);
     }
     let duration = time::elapsed_to_duration(end - start);
     time::duration_to_js(&duration)
