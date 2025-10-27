@@ -3,5 +3,5 @@
 .session
 inputs/
 target/
-web/aoc_wasm
+web/*_wasm
 web/node_modules/
