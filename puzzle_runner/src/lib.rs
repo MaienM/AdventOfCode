@@ -16,3 +16,7 @@ mod source;
 pub mod visual;
 
 pub use puzzle_runner_derive::{example_input, register, register_crate, visual};
+
+#[cfg(not(target_arch = "wasm32"))]
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;

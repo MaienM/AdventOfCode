@@ -177,6 +177,10 @@
             ]
             ++ self.checks.${system}.pre-commit-check.enabledPackages;
           NODE_OPTIONS = "--openssl-legacy-provider";
+
+          # See https://github.com/tikv/jemallocator/issues/108#issuecomment-2642756257 and
+          # https://github.com/tikv/jemallocator/issues/108#issuecomment-3189533076.
+          hardeningDisable = [ "fortify" ];
         };
       }
     );
