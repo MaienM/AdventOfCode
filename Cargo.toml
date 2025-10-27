@@ -1,7 +1,8 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
 	"aoc",
+	"puzzle_lib",
 	"puzzle_runner",
 	"puzzle_runner_derive",
 	"puzzle_wasm",
