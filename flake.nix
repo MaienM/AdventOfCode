@@ -24,8 +24,12 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         fenixPkgs = fenix.packages."${system}";
+        toolchain = fenixPkgs.fromToolchainName {
+          name = "nightly-2025-09-28";
+          sha256 = "sha256-v+i2vvBAKg14CNWODfuTQ5ikMo43vEOznqXy6vAb8WA=";
+        };
         rust = fenixPkgs.combine [
-          (fenixPkgs.latest.withComponents [
+          (toolchain.withComponents [
             "cargo"
             "clippy"
             "rust-src"
