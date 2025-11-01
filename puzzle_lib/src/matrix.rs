@@ -147,14 +147,160 @@ where
     /// ```
     /// # use puzzle_lib::matrix::Matrix;
     /// let matrix = Matrix::new([
-    ///     [2, 1, -1, 8],
-    ///     [-3, -1, 2, -11],
-    ///     [-2, 1, 2, -3],
+    ///     [ 2,  1, -1,   8],
+    ///     [-3, -1,  2, -11],
+    ///     [-2,  1,  2,  -3],
     /// ]);
     /// let result = matrix.gauss_jordan_elimination();
     /// assert_eq!(result[0].round(), 2.0);  // x
     /// assert_eq!(result[1].round(), 3.0);  // y
     /// assert_eq!(result[2].round(), -1.0); // z
+    /// ```
+    ///
+    /// # Explanation
+    ///
+    /// The first phase of this is to convert it to echelon row form, which has the effect of
+    /// eliminating some of the variables from some of the equations. This is done by taking each
+    /// equation (working from top to bottom) and adding it to the equations below it (multiplying
+    /// it by some factor) to eliminate one of the variables (working from left to right) from the
+    /// second equation.
+    ///
+    /// During this phase we also take the step to reorder the equations to have the largest
+    /// (absolute) number for the column we're looking at at the top. This is not strictly
+    /// required, but this helps get a more precise result due to floating point behaviour.
+    ///
+    /// ```math
+    ///  2x + y -  z = 8 \\
+    /// -3x - y + 2z = -11 \\
+    /// -2x + y + 2z = -3 \\
+    /// ```
+    ///
+    /// is reordered to
+    ///
+    /// ```math
+    /// -3x - y + 2z = -11 \\
+    ///  2x + y -  z = 8 \\
+    /// -2x + y + 2z = -3 \\
+    /// ```
+    ///
+    /// and then the second and third equation have (a multiple of) the first equation
+    /// added/removed to eliminate `x`
+    ///
+    /// ```math
+    /// \Big(2x + y - z\Big) - \Big(\frac{-2}3 * (-3x - y + 2z)\Big) = 8 - \Big(\frac{-2}3 * -11\Big) \\
+    /// \Big(2x + y - z\Big) - \Big(2x + \frac23y - 1\frac13z\Big) = 8 - 7\frac13 \\
+    /// \frac13y - \frac13z = \frac23 \\
+    /// ```
+    ///
+    /// ```math
+    /// \Big(-2z + y + 2z\Big) - \Big(\frac23 * (-3x - y + 2z)\Big) = 8 - \Big(\frac23 * -11\Big) \\
+    /// \Big(-2z + y + 2z\Big) - \Big(-2x - \frac23y + 1\frac13z\Big) = 8 - -7\frac13 \\
+    /// 1\frac23y + \frac23z = 4\frac13 \\
+    /// ```
+    ///
+    /// resulting in the following set of equations
+    ///
+    /// ```math
+    /// -3x - y + 2z = -11 \\
+    /// \frac13y + \frac13z = \frac23 \\
+    /// 1\frac23y + \frac23z = 4\frac13 \\
+    /// ```
+    ///
+    /// This same process is then repeated starting at the second column and row, first reordering
+    ///
+    /// ```math
+    /// -3x - y + 2z = -11 \\
+    /// 1\frac23y + \frac23z = 4\frac13 \\
+    /// \frac13y + \frac13z = \frac23 \\
+    /// ```
+    ///
+    /// and then using the second equation to eliminate `y` from the third equation
+    ///
+    /// ```math
+    /// \Big(\frac13y + \frac13z\Big) - \frac15 * \Big(1\frac23y + \frac23z\Big) = \frac23 - \Big(\frac15 * 4\frac13\Big) \\
+    /// \Big(\frac13y + \frac13z\Big) - \Big(\frac13y + \frac2{15}z\Big) = \frac23 - \frac{13}{15} \\
+    /// \frac15z = \frac{-1}5 \\
+    /// ```
+    ///
+    /// resulting in the following set of equations
+    ///
+    /// ```math
+    /// -3x - y + 2z = -11 \\
+    /// \frac13y + \frac13z = \frac23 \\
+    /// \frac15z = \frac{-1}5 \\
+    /// ```
+    ///
+    /// At this point we can follow this process no further, which means we've finished the first
+    /// phase and have arrived at row echelon format. The second phase is to get to reduced row
+    /// echelon format, which will solve for our variables (if possible given the input equations).
+    ///
+    /// This is done by taking each equation (working from bottom to top), multiplying it so that
+    /// its first (and hopefully only, else there will be no solution for this set of equations)
+    /// variable has a multiplier of `1`, and then using this equation to eliminate this variable
+    /// from the equations above it.
+    ///
+    /// ```math
+    /// 5 * \frac15z = 5 * \frac{-1}5 \\
+    /// z = -1 \\
+    /// ```
+    ///
+    /// this can then be used to eliminate `z` from the equations above it
+    ///
+    /// ```math
+    /// -3x - y + 2z - 2 * z = -11 - 2 * (-1) \\
+    /// -3x - y = -9 \\
+    /// ```
+    ///
+    /// ```math
+    /// \frac13y + \frac13z - \frac13 * z = \frac23 - \frac13 * (-1) \\
+    /// \frac13y = 1 \\
+    /// ```
+    ///
+    /// resulting in the following set of equations
+    ///
+    /// ```math
+    /// -3x - y = -9 \\
+    /// \frac13y = 1 \\
+    /// z = -1 \\
+    /// ```
+    ///
+    /// This leaves the second equation with only `y` as variable, so we can repeat this process,
+    /// first multiplying it to get `1y`
+    ///
+    /// ```math
+    /// \frac13y = 1 \\
+    /// y = 3 \\
+    /// ```
+    ///
+    /// and then using it to eliminate `y` from the first equation
+    ///
+    /// ```math
+    /// -3x - y + y = -9 + 3\\
+    /// -3x = -6 \\
+    /// ```
+    ///
+    /// resulting in the following set of equations
+    ///
+    /// ```math
+    /// -3x = -6 \\
+    /// y = 3 \\
+    /// z = -1 \\
+    /// ```
+    ///
+    /// Finally, this leaves the first equation with only `x` as variable, so we can once again
+    /// multiply it to get `1x`
+    ///
+    /// ```math
+    /// -3x = -6 \\
+    /// x = 2 \\
+    /// ```
+    ///
+    /// resulting in the following set of equations/answers
+    ///
+    /// ```math
+    /// x = 2 \\
+    /// y = 3 \\
+    /// z = -1 \\
     /// ```
     #[must_use]
     pub fn gauss_jordan_elimination(&self) -> [f64; R] {
