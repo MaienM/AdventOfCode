@@ -127,8 +127,8 @@ target/doc-parts/dep/puzzle_runner: $(shell find puzzle_runner puzzle_runner_der
 docs: ${STDLIB_TARGETS} ${DEP_TARGETS} katex.html
 	@echo "Building combined docs..."
 	@rsync -r $(foreach dep,${STDLIB_TARGETS} ${DEP_TARGETS},${dep}/) target/doc/
-	@RUSTDOCFLAGS="--html-in-header $$PWD/katex.html -Z unstable-options --merge finalize $$(printf -- "--include-parts-dir $$PWD/%s " ${STDLIB_TARGETS} ${DEP_TARGETS})" \
-	  cargo doc --lib --no-deps
+	@RUSTDOCFLAGS="--enable-index-page --html-in-header $$PWD/katex.html -Z unstable-options --merge finalize $$(printf -- "--include-parts-dir $$PWD/%s " ${STDLIB_TARGETS} ${DEP_TARGETS})" \
+	 cargo doc --lib --no-deps
 
 #
 # Benchmarking.
