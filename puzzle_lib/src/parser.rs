@@ -633,6 +633,12 @@ mod tests {
     }
 
     #[test]
+    #[should_panic = "couldn't take 10 bytes"]
+    fn parse_take_err() {
+        parse!("hello" => [_name take 10 as char]);
+    }
+
+    #[test]
     fn parse_single_sep() {
         parse!("foo, 12" => foo ", " [bar as u8]);
         assert_eq!(foo, "foo");
@@ -685,6 +691,12 @@ mod tests {
     #[test]
     fn parse_leading_literal_regex() {
         parse!("a6" => /"a"/ _v);
+    }
+
+    #[test]
+    #[should_panic = "couldn't find"]
+    fn parse_leading_literal_regex_mismatch() {
+        parse!("1a6" => /"a"/ _v);
     }
 
     #[test]
@@ -902,7 +914,7 @@ mod tests {
 
     #[test]
     fn parse_chars_custom_type() {
-        parse!("12" => [items chars as u8]);
+        parse!("12" => [items chars as i8]);
         assert_eq!(items, vec![1, 2]);
     }
 

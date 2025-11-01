@@ -27,6 +27,8 @@ pub trait Factorize {
     /// assert_eq!(9u8.factorize(), vec![3, 3]);
     /// assert_eq!(210u8.factorize(), vec![2, 3, 5, 7]);
     /// assert_eq!(65537u32.factorize(), vec![65537]);
+    /// // Factors beyond the precomputed list work but will be slower.
+    /// assert_eq!(4295229443u64.factorize(), vec![65537, 65539]);
     /// ```
     fn factorize(&self) -> Vec<Self>
     where

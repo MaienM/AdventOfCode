@@ -99,3 +99,38 @@ impl Primes for usize {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+
+    #[test]
+    fn mark_multiples_existing_edgecase() {
+        // This triggers all edgecases in the first marking pass. With the highest prime in the
+        // list being `37` the start wil be `39`. When doing the markings for `5` the initial
+        // pstart will be `25`. Because this is below the start this will be adjusted to the first
+        // multiple of `5` that's greater than `39`, which is `40`. Because this is even this will
+        // then further be adjusted to the next multiple of `5`, which is `45`.
+        let mut primes = vec![2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37];
+        usize::extend_primes(&mut primes, 50);
+        assert_eq!(
+            primes,
+            vec![2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
+        );
+    }
+
+    #[test]
+    fn mark_multiples_new_edgecase() {
+        // This triggers the marking in the second pass. This run will find the prime `5` and then
+        // proceed to mark all odd multiples of this prime between `5^2` and limit (i.e., `25`,
+        // `35`).
+        let mut primes = vec![2, 3];
+        usize::extend_primes(&mut primes, 50);
+        assert_eq!(
+            primes,
+            vec![2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
+        );
+    }
+}

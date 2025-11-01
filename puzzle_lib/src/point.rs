@@ -604,6 +604,60 @@ mod tests {
     }
 
     #[test]
+    fn add_checked() {
+        let point = Point2::<u8>::new(10, 5);
+        assert_eq!(
+            point.checked_add(&Point2::new(8, 2)),
+            Some(Point2::new(18, 7))
+        );
+        assert_eq!(point.checked_add(&Point2::new(8, 254)), None);
+
+        let point = Point3::<u8>::new(10, 5, 7);
+        assert_eq!(
+            point.checked_add(&Point3::new(8, 2, 4)),
+            Some(Point3::new(18, 7, 11))
+        );
+        assert_eq!(point.checked_add(&Point3::new(8, 254, 4)), None);
+    }
+
+    #[test]
+    fn add_saturating() {
+        let point = Point2::<u8>::new(10, 5);
+        assert_eq!(point.saturating_add(&Point2::new(8, 2)), Point2::new(18, 7));
+        assert_eq!(
+            point.saturating_add(&Point2::new(8, 254)),
+            Point2::new(18, 255)
+        );
+
+        let point = Point3::<u8>::new(10, 5, 7);
+        assert_eq!(
+            point.saturating_add(&Point3::new(8, 2, 4)),
+            Point3::new(18, 7, 11)
+        );
+        assert_eq!(
+            point.saturating_add(&Point3::new(8, 254, 4)),
+            Point3::new(18, 255, 11)
+        );
+    }
+
+    #[test]
+    fn add_wrapping() {
+        let point = Point2::<u8>::new(10, 5);
+        assert_eq!(point.wrapping_add(&Point2::new(8, 2)), Point2::new(18, 7));
+        assert_eq!(point.wrapping_add(&Point2::new(8, 254)), Point2::new(18, 3));
+
+        let point = Point3::<u8>::new(10, 5, 7);
+        assert_eq!(
+            point.wrapping_add(&Point3::new(8, 2, 4)),
+            Point3::new(18, 7, 11)
+        );
+        assert_eq!(
+            point.wrapping_add(&Point3::new(8, 254, 4)),
+            Point3::new(18, 3, 11)
+        );
+    }
+
+    #[test]
     fn sub() {
         assert_eq!(Point2::new(10, 5) - Point2::new(8, 2), Point2::new(2, 3));
         assert_eq!(
@@ -621,6 +675,57 @@ mod tests {
         let mut point = Point3::new(10, 5, 7);
         point -= Point3::new(8, 2, 1);
         assert_eq!(point, Point3::new(2, 3, 6));
+    }
+
+    #[test]
+    fn sub_checked() {
+        let point = Point2::<u8>::new(10, 5);
+        assert_eq!(
+            point.checked_sub(&Point2::new(8, 2)),
+            Some(Point2::new(2, 3))
+        );
+        assert_eq!(point.checked_sub(&Point2::new(8, 7)), None);
+
+        let point = Point3::<u8>::new(10, 5, 7);
+        assert_eq!(
+            point.checked_sub(&Point3::new(8, 2, 4)),
+            Some(Point3::new(2, 3, 3))
+        );
+        assert_eq!(point.checked_sub(&Point3::new(8, 7, 4)), None);
+    }
+
+    #[test]
+    fn sub_saturating() {
+        let point = Point2::<u8>::new(10, 5);
+        assert_eq!(point.saturating_sub(&Point2::new(8, 2)), Point2::new(2, 3));
+        assert_eq!(point.saturating_sub(&Point2::new(8, 7)), Point2::new(2, 0));
+
+        let point = Point3::<u8>::new(10, 5, 7);
+        assert_eq!(
+            point.saturating_sub(&Point3::new(8, 2, 4)),
+            Point3::new(2, 3, 3)
+        );
+        assert_eq!(
+            point.saturating_sub(&Point3::new(8, 7, 4)),
+            Point3::new(2, 0, 3)
+        );
+    }
+
+    #[test]
+    fn sub_wrapping() {
+        let point = Point2::<u8>::new(10, 5);
+        assert_eq!(point.wrapping_sub(&Point2::new(8, 2)), Point2::new(2, 3));
+        assert_eq!(point.wrapping_sub(&Point2::new(8, 7)), Point2::new(2, 254));
+
+        let point = Point3::<u8>::new(10, 5, 7);
+        assert_eq!(
+            point.wrapping_sub(&Point3::new(8, 2, 4)),
+            Point3::new(2, 3, 3)
+        );
+        assert_eq!(
+            point.wrapping_sub(&Point3::new(8, 7, 4)),
+            Point3::new(2, 254, 3)
+        );
     }
 
     #[test]
@@ -644,6 +749,66 @@ mod tests {
     }
 
     #[test]
+    fn mul_checked() {
+        let point = Point2::<u8>::new(10, 5);
+        assert_eq!(
+            point.checked_mul(&Point2::new(8, 2)),
+            Some(Point2::new(80, 10))
+        );
+        assert_eq!(point.checked_mul(&Point2::new(8, 100)), None);
+
+        let point = Point3::<u8>::new(10, 5, 7);
+        assert_eq!(
+            point.checked_mul(&Point3::new(8, 2, 4)),
+            Some(Point3::new(80, 10, 28))
+        );
+        assert_eq!(point.checked_mul(&Point3::new(8, 100, 4)), None);
+    }
+
+    #[test]
+    fn mul_saturating() {
+        let point = Point2::<u8>::new(10, 5);
+        assert_eq!(
+            point.saturating_mul(&Point2::new(8, 2)),
+            Point2::new(80, 10)
+        );
+        assert_eq!(
+            point.saturating_mul(&Point2::new(8, 100)),
+            Point2::new(80, 255)
+        );
+
+        let point = Point3::<u8>::new(10, 5, 7);
+        assert_eq!(
+            point.saturating_mul(&Point3::new(8, 2, 4)),
+            Point3::new(80, 10, 28)
+        );
+        assert_eq!(
+            point.saturating_mul(&Point3::new(8, 100, 4)),
+            Point3::new(80, 255, 28)
+        );
+    }
+
+    #[test]
+    fn mul_wrapping() {
+        let point = Point2::<u8>::new(10, 5);
+        assert_eq!(point.wrapping_mul(&Point2::new(8, 2)), Point2::new(80, 10));
+        assert_eq!(
+            point.wrapping_mul(&Point2::new(8, 100)),
+            Point2::new(80, 244)
+        );
+
+        let point = Point3::<u8>::new(10, 5, 7);
+        assert_eq!(
+            point.wrapping_mul(&Point3::new(8, 2, 4)),
+            Point3::new(80, 10, 28)
+        );
+        assert_eq!(
+            point.wrapping_mul(&Point3::new(8, 100, 4)),
+            Point3::new(80, 244, 28)
+        );
+    }
+
+    #[test]
     fn div() {
         assert_eq!(Point2::new(20, 15) / Point2::new(2, 3), Point2::new(10, 5));
         assert_eq!(
@@ -661,6 +826,31 @@ mod tests {
         let mut point = Point3::new(20, 15, 28);
         point /= Point3::new(2, 3, 4);
         assert_eq!(point, Point3::new(10, 5, 7));
+    }
+
+    #[test]
+    fn div_checked() {
+        let point = Point2::<u8>::new(10, 9);
+        assert_eq!(
+            point.checked_div(&Point2::new(2, 3)),
+            Some(Point2::new(5, 3))
+        );
+        assert_eq!(
+            point.checked_div(&Point2::new(3, 2)),
+            Some(Point2::new(3, 4))
+        );
+        assert_eq!(point.checked_div(&Point2::new(8, 0)), None);
+
+        let point = Point3::<u8>::new(10, 9, 7);
+        assert_eq!(
+            point.checked_div(&Point3::new(2, 3, 1)),
+            Some(Point3::new(5, 3, 7))
+        );
+        assert_eq!(
+            point.checked_div(&Point3::new(3, 2, 4)),
+            Some(Point3::new(3, 4, 1))
+        );
+        assert_eq!(point.checked_div(&Point3::new(8, 0, 1)), None);
     }
 
     #[test]
@@ -714,11 +904,11 @@ mod tests {
         assert_eq!(point.adjacent_to_ortho(&Point2::new(10, 3)), false);
 
         let point: Point3<u8> = Point3::new(10, 5, 8);
-        //
+
         assert_eq!(point.adjacent_to_ortho(&Point3::new(10, 5, 7)), true);
         assert_eq!(point.adjacent_to_ortho(&Point3::new(10, 6, 8)), true);
         assert_eq!(point.adjacent_to_ortho(&Point3::new(9, 5, 8)), true);
-        //
+
         assert_eq!(point.adjacent_to_ortho(&point), false);
         assert_eq!(point.adjacent_to_ortho(&Point3::new(11, 6, 8)), false);
         assert_eq!(point.adjacent_to_ortho(&Point3::new(12, 5, 8)), false);
@@ -737,12 +927,12 @@ mod tests {
         assert_eq!(point.adjacent_to_diag(&Point2::new(10, 3)), false);
 
         let point: Point3<u8> = Point3::new(10, 5, 8);
-        //
+
         assert_eq!(point.adjacent_to_diag(&Point3::new(10, 5, 7)), true);
         assert_eq!(point.adjacent_to_diag(&Point3::new(10, 6, 8)), true);
         assert_eq!(point.adjacent_to_diag(&Point3::new(9, 5, 8)), true);
         assert_eq!(point.adjacent_to_diag(&Point3::new(11, 6, 8)), true);
-        //
+
         assert_eq!(point.adjacent_to_diag(&point), false);
         assert_eq!(point.adjacent_to_diag(&Point3::new(12, 5, 8)), false);
     }
@@ -890,7 +1080,7 @@ mod tests {
     }
 
     #[test]
-    fn direction_add() {
+    fn add_direction() {
         assert_eq!(Point2::new(10, 5) + Direction2::East, Point2::new(11, 5));
         assert_eq!(Point2::new(10, 5) + Direction2::West, Point2::new(9, 5));
         assert_eq!(
@@ -904,7 +1094,7 @@ mod tests {
     }
 
     #[test]
-    fn direction_add_assign() {
+    fn add_assign_direction() {
         let mut point = Point2::new(10, 5);
         point += Direction2::East;
         assert_eq!(point, Point2::new(11, 5));
@@ -919,36 +1109,7 @@ mod tests {
     }
 
     #[test]
-    fn direction_sub() {
-        assert_eq!(Point2::new(10, 5) - Direction2::East, Point2::new(9, 5));
-        assert_eq!(Point2::new(10, 5) - Direction2::West, Point2::new(11, 5));
-        assert_eq!(
-            Point3::new(10, 5, 7) - Direction3::Up,
-            Point3::new(10, 5, 6)
-        );
-        assert_eq!(
-            Point3::new(10, 5, 7) - Direction3::Down,
-            Point3::new(10, 5, 8)
-        );
-    }
-
-    #[test]
-    fn direction_sub_assign() {
-        let mut point = Point2::new(10, 5);
-        point -= Direction2::East;
-        assert_eq!(point, Point2::new(9, 5));
-        point -= Direction2::North;
-        assert_eq!(point, Point2::new(9, 6));
-
-        let mut point = Point3::new(10, 5, 7);
-        point -= Direction3::Up;
-        assert_eq!(point, Point3::new(10, 5, 6));
-        point -= Direction3::Left;
-        assert_eq!(point, Point3::new(11, 5, 6));
-    }
-
-    #[test]
-    fn direction_add_mul() {
+    fn add_direction_magnitude() {
         assert_eq!(
             Point2::new(10, 5) + Direction2::East * 3,
             Point2::new(13, 5)
@@ -965,7 +1126,7 @@ mod tests {
     }
 
     #[test]
-    fn direction_add_assign_mul() {
+    fn add_assign_direction_magnitude() {
         let mut point = Point2::new(10, 5);
         point += Direction2::East * 3;
         assert_eq!(point, Point2::new(13, 5));
@@ -980,7 +1141,96 @@ mod tests {
     }
 
     #[test]
-    fn direction_sub_mul() {
+    fn checked_add_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).checked_add_direction(Direction2::East, &3),
+            Some(Point2::new(13, 5))
+        );
+        assert_eq!(
+            Point2::<u8>::new(10, 5).checked_add_direction(Direction2::West, &255),
+            None
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).checked_add_direction(Direction3::Up, &3),
+            Some(Point3::new(10, 5, 10))
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).checked_add_direction(Direction3::Down, &255),
+            None
+        );
+    }
+
+    #[test]
+    fn saturating_add_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).saturating_add_direction(Direction2::East, &3),
+            Point2::new(13, 5)
+        );
+        assert_eq!(
+            Point2::<u8>::new(10, 5).saturating_add_direction(Direction2::West, &255),
+            Point2::new(0, 5)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).saturating_add_direction(Direction3::Up, &3),
+            Point3::new(10, 5, 10)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).saturating_add_direction(Direction3::Down, &255),
+            Point3::new(10, 5, 0)
+        );
+    }
+
+    #[test]
+    fn wrapping_add_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).wrapping_add_direction(Direction2::East, &3),
+            Point2::new(13, 5)
+        );
+        assert_eq!(
+            Point2::<u8>::new(10, 5).wrapping_add_direction(Direction2::West, &255),
+            Point2::new(11, 5)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).wrapping_add_direction(Direction3::Up, &3),
+            Point3::new(10, 5, 10)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).wrapping_add_direction(Direction3::Down, &255),
+            Point3::new(10, 5, 8)
+        );
+    }
+
+    #[test]
+    fn sub_direction() {
+        assert_eq!(Point2::new(10, 5) - Direction2::East, Point2::new(9, 5));
+        assert_eq!(Point2::new(10, 5) - Direction2::West, Point2::new(11, 5));
+        assert_eq!(
+            Point3::new(10, 5, 7) - Direction3::Up,
+            Point3::new(10, 5, 6)
+        );
+        assert_eq!(
+            Point3::new(10, 5, 7) - Direction3::Down,
+            Point3::new(10, 5, 8)
+        );
+    }
+
+    #[test]
+    fn sub_assign_direction() {
+        let mut point = Point2::new(10, 5);
+        point -= Direction2::East;
+        assert_eq!(point, Point2::new(9, 5));
+        point -= Direction2::North;
+        assert_eq!(point, Point2::new(9, 6));
+
+        let mut point = Point3::new(10, 5, 7);
+        point -= Direction3::Up;
+        assert_eq!(point, Point3::new(10, 5, 6));
+        point -= Direction3::Left;
+        assert_eq!(point, Point3::new(11, 5, 6));
+    }
+
+    #[test]
+    fn sub_direction_magnitude() {
         assert_eq!(Point2::new(10, 5) - Direction2::East * 3, Point2::new(7, 5));
         assert_eq!(
             Point2::new(10, 5) - Direction2::West * 3,
@@ -997,7 +1247,7 @@ mod tests {
     }
 
     #[test]
-    fn direction_sub_assign_mul() {
+    fn sub_assign_direction_magnitude() {
         let mut point = Point2::new(10, 5);
         point -= Direction2::East * 3;
         assert_eq!(point, Point2::new(7, 5));
@@ -1009,5 +1259,65 @@ mod tests {
         assert_eq!(point, Point3::new(10, 5, 4));
         point -= Direction3::Left * 3;
         assert_eq!(point, Point3::new(13, 5, 4));
+    }
+
+    #[test]
+    fn checked_sub_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).checked_sub_direction(Direction2::East, &3),
+            Some(Point2::new(7, 5))
+        );
+        assert_eq!(
+            Point2::<u8>::new(10, 5).checked_sub_direction(Direction2::West, &255),
+            None
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).checked_sub_direction(Direction3::Up, &3),
+            Some(Point3::new(10, 5, 4))
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).checked_sub_direction(Direction3::Down, &255),
+            None
+        );
+    }
+
+    #[test]
+    fn saturating_sub_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).saturating_sub_direction(Direction2::East, &3),
+            Point2::new(7, 5)
+        );
+        assert_eq!(
+            Point2::<u8>::new(10, 5).saturating_sub_direction(Direction2::West, &255),
+            Point2::new(255, 5)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).saturating_sub_direction(Direction3::Up, &3),
+            Point3::new(10, 5, 4)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).saturating_sub_direction(Direction3::Down, &255),
+            Point3::new(10, 5, 255)
+        );
+    }
+
+    #[test]
+    fn wrapping_sub_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).wrapping_sub_direction(Direction2::East, &3),
+            Point2::new(7, 5)
+        );
+        assert_eq!(
+            Point2::<u8>::new(10, 5).wrapping_sub_direction(Direction2::West, &255),
+            Point2::new(9, 5)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).wrapping_sub_direction(Direction3::Up, &3),
+            Point3::new(10, 5, 4)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).wrapping_sub_direction(Direction3::Down, &255),
+            Point3::new(10, 5, 6)
+        );
     }
 }

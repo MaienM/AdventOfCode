@@ -88,3 +88,20 @@ where
         *self.entry(key).or_insert(start) += step;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+
+    #[test]
+    fn test_btree() {
+        let mut counter: BTreeMap<&str, u8> = BTreeMap::new();
+        counter.increment_by_starting_at("foo", 10, 5);
+        counter.increment_by_starting_at("bar", 1, 0);
+        counter.increment_by_starting_at("foo", 1, 100);
+        assert_eq!(counter.get(&"foo"), Some(&16));
+        assert_eq!(counter.get(&"bar"), Some(&1));
+    }
+}
