@@ -1,2 +1,0 @@
-[profile.default]
-default-filter = 'not (kind(lib) & test(#bin::_*))'
