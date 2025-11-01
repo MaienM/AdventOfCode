@@ -203,7 +203,7 @@ pub fn part2(input: &str) -> usize {
                 + hailstones[2].position.z * hailstones[2].velocity.y,
         ],
     ]);
-    let result = matrix.gauss_jordan_elimination();
+    let result = matrix.gauss_jordan_elimination().unwrap();
     let stone = Hailstone {
         position: Point::new(result[0], result[1], result[2]),
         velocity: Point::new(result[3], result[4], result[5]),

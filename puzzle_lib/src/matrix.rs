@@ -5,7 +5,6 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use itertools::Itertools;
 use num::{NumCast, ToPrimitive};
 
 /// A mathemathical matrix.
@@ -151,7 +150,7 @@ where
     ///     [-3, -1,  2, -11],
     ///     [-2,  1,  2,  -3],
     /// ]);
-    /// let result = matrix.gauss_jordan_elimination();
+    /// let result = matrix.gauss_jordan_elimination().unwrap();
     /// assert_eq!(result[0].round(), 2.0);  // x
     /// assert_eq!(result[1].round(), 3.0);  // y
     /// assert_eq!(result[2].round(), -1.0); // z
@@ -303,12 +302,17 @@ where
     /// z = -1 \\
     /// ```
     #[must_use]
-    pub fn gauss_jordan_elimination(&self) -> [f64; R] {
+    pub fn gauss_jordan_elimination(&self) -> Option<[f64; C - 1]> {
         let mut matrix = self.cast::<f64>().unwrap();
 
+        // We need at least as many expressions as there are variables.
+        if R < C - 1 {
+            return None;
+        }
+
+        // Transform the matrix into row echelon form using Gaussian elimination.
         let mut pivot_row = 0;
         let mut pivot_col = 0;
-
         while pivot_row < R && pivot_col < C {
             let (max_idx, max) = matrix
                 .iter()
@@ -338,12 +342,15 @@ where
             pivot_col += 1;
         }
 
+        // Transform the matrix into reduced row echelon form using back substitution.
         for pivot_row in (0..R).rev() {
             let Some((pivot_col, _)) = matrix[pivot_row]
                 .iter()
                 .enumerate()
                 .find(|(_, v)| v.abs() > f64::EPSILON)
             else {
+                // Empty row, which means this equation was an exact multiple of another and has
+                // been fully eliminated at this point.
                 continue;
             };
 
@@ -360,12 +367,22 @@ where
             }
         }
 
-        matrix
-            .into_iter()
-            .map(|row| row[C - 1])
-            .collect_vec()
-            .try_into()
-            .unwrap()
+        // At this point each row should have at most two non-zero values; one arbitrary value in
+        // the last column (the value of the variable, could be zero) and one in one of the other
+        // columns with value `1` which indicates which variable that answer is for. Verify this is
+        // the case & that the copy the anwser to the results.
+        let mut results = [0.0; C - 1];
+        for r in 0..R {
+            for c in 0..(C - 1) {
+                if (matrix[r][c] - (if r == c { 1.0 } else { 0.0 })) > 0.000_000_001 {
+                    return None;
+                }
+            }
+            if r < C - 1 {
+                results[r] = matrix[r][C - 1];
+            }
+        }
+        Some(results)
     }
 }
 
@@ -373,12 +390,14 @@ where
 mod tests {
     use core::f64;
 
+    use super::*;
+
     macro_rules! assert_eq_approx {
         ($actual:expr, $expected:expr $(,)?) => {{
             let actual = $actual;
             let expected = $expected;
             assert!(
-                (actual - expected).abs() < 0.000_005,
+                (actual - expected).abs() < 0.000_000_001,
                 "expected {:?} to approximately equal {:?}",
                 actual,
                 expected,
@@ -388,20 +407,99 @@ mod tests {
 
     #[test]
     fn gauss_jordan_elimination() {
-        let matrix = super::Matrix([
-            [2.0, 1.0, -1.0, 8.0],
-            [-3.0, -1.0, 2.0, -11.0],
-            [-2.0, 1.0, 2.0, -3.0],
+        #[rustfmt::skip]
+        let matrix = Matrix([
+            [ 2,  1, -1,   8],
+            [-3, -1,  2, -11],
+            [-2,  1,  2,  -3],
         ]);
         let result = matrix.gauss_jordan_elimination();
+        assert!(result.is_some());
+        let result = result.unwrap();
         assert_eq_approx!(result[0], 2.0);
         assert_eq_approx!(result[1], 3.0);
         assert_eq_approx!(result[2], -1.0);
     }
 
+    /// Validate that one of the answers being 0 does not trip up the check for whether the matrix
+    /// is solved at the end.
+    #[test]
+    fn gauss_jordan_elimination_zero_answer() {
+        #[rustfmt::skip]
+        let matrix = Matrix([
+            [ 2,  1, -1,  5],
+            [-3, -1,  2, -8],
+            [-2,  1,  2, -6],
+        ]);
+        let result = matrix.gauss_jordan_elimination();
+        assert!(result.is_some());
+        let result = result.unwrap();
+        assert_eq_approx!(result[0], 2.0);
+        assert_eq_approx!(result[1], 0.0);
+        assert_eq_approx!(result[2], -1.0);
+    }
+
+    /// Validate that having more equations than necessary doesn't cause issues.
+    #[test]
+    fn gauss_jordan_elimination_extra_equations() {
+        #[rustfmt::skip]
+        let matrix = Matrix([
+            [ 2,  1, -1,   8],
+            [ 4,  2, -2,  16],
+            [-3, -1,  2, -11],
+            [-2,  1,  2,  -3],
+            [ 1, -2,  3,  -7],
+            [ 2,  3, -1,  14],
+        ]);
+        let result = matrix.gauss_jordan_elimination();
+        assert!(result.is_some());
+        let result = result.unwrap();
+        assert_eq_approx!(result[0], 2.0);
+        assert_eq_approx!(result[1], 3.0);
+        assert_eq_approx!(result[2], -1.0);
+    }
+
+    /// Validate that having less equations than variables results in no answer.
+    #[test]
+    fn gauss_jordan_elimination_insufficient_equations() {
+        #[rustfmt::skip]
+        let matrix = Matrix([
+            [ 2,  1, -1,  8],
+            [-2,  1,  2, -3],
+        ]);
+        let result = matrix.gauss_jordan_elimination();
+        assert!(result.is_none());
+    }
+
+    /// Validate that having equations that don't provide enough information results in no answer.
+    #[test]
+    fn gauss_jordan_elimination_insufficent_unique_equations() {
+        #[rustfmt::skip]
+        let matrix = Matrix([
+            [ 2,  1, -1,  8],
+            [ 4,  2, -2, 16], // this row is 2x the previous row
+            [-2,  1,  2, -3],
+        ]);
+        let result = matrix.gauss_jordan_elimination();
+        assert!(result.is_none());
+    }
+
+    /// Validate that having conflicting equations results in no answer.
+    #[test]
+    fn gauss_jordan_elimination_conflicting_equations() {
+        #[rustfmt::skip]
+        let matrix = Matrix([
+            [ 2,  1, -1,  8],
+            [ 4,  2, -2, 6],
+            [-2,  1,  2, -3],
+        ]);
+        let result = matrix.gauss_jordan_elimination();
+        assert!(result.is_none());
+    }
+
     #[test]
     fn format() {
-        let matrix = super::Matrix([
+        let matrix = Matrix([
             [1.0, 2.0, 3.0],
             [-1.0, f64::consts::PI, 1.0 / 7.0],
             [1_000.0, 0.0, 2.5],
