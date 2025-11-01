@@ -56,18 +56,22 @@ run-%:
 	@cargo build --release --bin aoc
 	@cargo run --release --bin aoc --quiet -- --only $(subst run-,,$@)
 
+test-libs: ignore=nix/store|puzzle_runner|puzzle_wasm
+test-libs: ignore_puzzles=aoc
 test-libs:
 	@cargo llvm-cov clean --workspace
 	@cargo llvm-cov --no-report nextest --lib --no-fail-fast --cargo-quiet
-	@cargo llvm-cov --no-report --doc
+	@cargo llvm-cov --no-report --doc --no-fail-fast
+
 	@cmd="$$( \
-		cargo llvm-cov report --doctests --ignore-filename-regex 'nix/store|puzzle_runner|puzzle_wasm|aoc' --color always -v 2>&1 \
+		cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}|${ignore_puzzles}' --color always -v 2>&1 \
 		| grep -oE 'Running\S* `.*`' \
 		| tail -n1 \
 		| cut -d '`' -f2 \
 	 )" \
 	 && eval "$$cmd" --show-region-summary=false --show-branch-summary=false
-	@cargo llvm-cov report --doctests --ignore-filename-regex 'nix/store|puzzle_runner|puzzle_wasm' --html
+	@LLVM_COV_FLAGS='--show-directory-coverage' \
+	 cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --html
 
 test-and-run-%: bin = $(subst test-and-run-,,$@)
 test-and-run-%: inputs/%.txt
