@@ -288,7 +288,11 @@ where
     T: Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("Point({:?}, {:?})", self.x, self.y))
+        f.write_str("Point(")?;
+        self.x.fmt(f)?;
+        f.write_str(", ")?;
+        self.y.fmt(f)?;
+        f.write_str(")")
     }
 }
 impl<T> Debug for Point3<T>
@@ -296,7 +300,13 @@ where
     T: Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("Point({:?}, {:?}, {:?})", self.x, self.y, self.z))
+        f.write_str("Point(")?;
+        self.x.fmt(f)?;
+        f.write_str(", ")?;
+        self.y.fmt(f)?;
+        f.write_str(", ")?;
+        self.z.fmt(f)?;
+        f.write_str(")")
     }
 }
 impl<T> Debug for Point4<T>
@@ -304,10 +314,15 @@ where
     T: Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!(
-            "Point({:?}, {:?}, {:?}, {:?})",
-            self.x, self.y, self.z, self.w
-        ))
+        f.write_str("Point(")?;
+        self.x.fmt(f)?;
+        f.write_str(", ")?;
+        self.y.fmt(f)?;
+        f.write_str(", ")?;
+        self.z.fmt(f)?;
+        f.write_str(", ")?;
+        self.w.fmt(f)?;
+        f.write_str(")")
     }
 }
 
@@ -856,6 +871,21 @@ mod tests {
                 Point3::new(1, 6, 254),
                 Point3::new(1, 6, 255),
             ]
+        );
+    }
+
+    #[test]
+    fn format() {
+        assert_eq!(format!("{:?}", Point2::new(10, 12)), "Point(10, 12)");
+        assert_eq!(format!("{:?}", Point3::new(10, 12, 3)), "Point(10, 12, 3)");
+        assert_eq!(
+            format!("{:?}", Point4::new(10, 12, 3, 80)),
+            "Point(10, 12, 3, 80)"
+        );
+
+        assert_eq!(
+            format!("{:.1?}", Point2::new(10.123, 12.0)),
+            "Point(10.1, 12.0)"
         );
     }
 
