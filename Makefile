@@ -109,7 +109,7 @@ target/doc-parts/stdlib/%: target/stdlib
 DEP_TARGETS = $(foreach dep,$(shell cargo tree --package aoc --depth 1 -e normal --prefix none | cut -d' ' -f1),target/doc-parts/dep/$(dep))
 target/doc-parts/dep/%: name = $(notdir $@)
 target/doc-parts/dep/%: version = $(shell cargo tree --package aoc --depth 1 -e normal --prefix none | grep -E "^${name} " | cut -d' ' -f2 | sed 's/^v//')
-target/doc-parts/dep/%: Cargo.toml Cargo.lock
+target/doc-parts/dep/%: Cargo.toml Cargo.lock katex.html
 	@echo "Building docs for ${name}..."
 	@rm -rf target/doc
 	@RUSTDOCFLAGS="--html-in-header $$PWD/katex.html -Z unstable-options --merge none --parts-out-dir $$PWD/$@" \
@@ -119,7 +119,7 @@ target/doc-parts/dep/aoc: $(shell find aoc -type f -print)
 target/doc-parts/dep/puzzle_lib: $(shell find puzzle_lib -type f -print)
 target/doc-parts/dep/puzzle_runner: $(shell find puzzle_runner puzzle_runner_derive -type f -print)
 
-docs: ${STDLIB_TARGETS} ${DEP_TARGETS}
+docs: ${STDLIB_TARGETS} ${DEP_TARGETS} katex.html
 	@echo "Building combined docs..."
 	@rsync -r $(foreach dep,${STDLIB_TARGETS} ${DEP_TARGETS},${dep}/) target/doc/
 	@RUSTDOCFLAGS="--html-in-header $$PWD/katex.html -Z unstable-options --merge finalize $$(printf -- "--include-parts-dir $$PWD/%s " ${STDLIB_TARGETS} ${DEP_TARGETS})" \
