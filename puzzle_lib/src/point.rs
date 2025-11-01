@@ -393,6 +393,60 @@ macro_rules! impl_direction_operator {
                     }
                 }
             }
+            // Checked.
+            impl<T> $point<T>
+            where
+                T: CheckedAdd + CheckedSub + One + Copy,
+            {
+                #[must_use]
+                #[inline]
+                pub fn [<checked_ $op _direction>](&self, direction: $name) -> Option<Self> {
+                    Some(match direction {
+                        $(
+                            $name::$member => Self {
+                                $var: impl_direction_operator!(call; self.$var; [checked_ ($op; $method)](&T::one()))?,
+                                ..*self
+                            },
+                        )+
+                    })
+                }
+            }
+            // Saturating.
+            impl<T> $point<T>
+            where
+                T: SaturatingAdd + SaturatingSub + One + Copy,
+            {
+                #[must_use]
+                #[inline]
+                pub fn [<saturating_ $op _direction>](&self, direction: $name) -> Self {
+                    match direction {
+                        $(
+                            $name::$member => Self {
+                                $var: impl_direction_operator!(call; self.$var; [saturating_ ($op; $method)](&T::one())),
+                                ..*self
+                            },
+                        )+
+                    }
+                }
+            }
+            // Wrapping.
+            impl<T> $point<T>
+            where
+                T: WrappingAdd + WrappingSub + One + Copy,
+            {
+                #[must_use]
+                #[inline]
+                pub fn [<wrapping_ $op _direction>](&self, direction: $name) -> Self {
+                    match direction {
+                        $(
+                            $name::$member => Self {
+                                $var: impl_direction_operator!(call; self.$var; [wrapping_ ($op; $method)](&T::one())),
+                                ..*self
+                            },
+                        )+
+                    }
+                }
+            }
 
             //
             // Point & Direction with magnitude.
@@ -439,11 +493,11 @@ macro_rules! impl_direction_operator {
             {
                 #[must_use]
                 #[inline]
-                pub fn [<checked_ $op _direction>](&self, direction: $name, magnitude: &T) -> Option<Self> {
+                pub fn [<checked_ $op _direction_magnitude>](&self, DirectionWithMagnitude(direction, magnitude): DirectionWithMagnitude<$name, T>) -> Option<Self> {
                     Some(match direction {
                         $(
                             $name::$member => Self {
-                                $var: impl_direction_operator!(call; self.$var; [checked_ ($op; $method)](magnitude))?,
+                                $var: impl_direction_operator!(call; self.$var; [checked_ ($op; $method)](&magnitude))?,
                                 ..*self
                             },
                         )+
@@ -457,11 +511,11 @@ macro_rules! impl_direction_operator {
             {
                 #[must_use]
                 #[inline]
-                pub fn [<saturating_ $op _direction>](&self, direction: $name, magnitude: &T) -> Self {
+                pub fn [<saturating_ $op _direction_magnitude>](&self, DirectionWithMagnitude(direction, magnitude): DirectionWithMagnitude<$name, T>) -> Self {
                     match direction {
                         $(
                             $name::$member => Self {
-                                $var: impl_direction_operator!(call; self.$var; [saturating_ ($op; $method)](magnitude)),
+                                $var: impl_direction_operator!(call; self.$var; [saturating_ ($op; $method)](&magnitude)),
                                 ..*self
                             },
                         )+
@@ -475,11 +529,11 @@ macro_rules! impl_direction_operator {
             {
                 #[must_use]
                 #[inline]
-                pub fn [<wrapping_ $op _direction>](&self, direction: $name, magnitude: &T) -> Self {
+                pub fn [<wrapping_ $op _direction_magnitude>](&self, DirectionWithMagnitude(direction, magnitude): DirectionWithMagnitude<$name, T>) -> Self {
                     match direction {
                         $(
                             $name::$member => Self {
-                                $var: impl_direction_operator!(call; self.$var; [wrapping_ ($op; $method)](magnitude)),
+                                $var: impl_direction_operator!(call; self.$var; [wrapping_ ($op; $method)](&magnitude)),
                                 ..*self
                             },
                         )+
@@ -1109,6 +1163,66 @@ mod tests {
     }
 
     #[test]
+    fn checked_add_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).checked_add_direction(Direction2::East),
+            Some(Point2::new(11, 5))
+        );
+        assert_eq!(
+            Point2::<u8>::new(0, 5).checked_add_direction(Direction2::West),
+            None
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).checked_add_direction(Direction3::Up),
+            Some(Point3::new(10, 5, 8))
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 0).checked_add_direction(Direction3::Down),
+            None
+        );
+    }
+
+    #[test]
+    fn saturating_add_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).saturating_add_direction(Direction2::East),
+            Point2::new(11, 5)
+        );
+        assert_eq!(
+            Point2::<u8>::new(0, 5).saturating_add_direction(Direction2::West),
+            Point2::new(0, 5)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).saturating_add_direction(Direction3::Up),
+            Point3::new(10, 5, 8)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 0).saturating_add_direction(Direction3::Down),
+            Point3::new(10, 5, 0)
+        );
+    }
+
+    #[test]
+    fn wrapping_add_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).wrapping_add_direction(Direction2::East),
+            Point2::new(11, 5)
+        );
+        assert_eq!(
+            Point2::<u8>::new(0, 5).wrapping_add_direction(Direction2::West),
+            Point2::new(255, 5)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).wrapping_add_direction(Direction3::Up),
+            Point3::new(10, 5, 8)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 0).wrapping_add_direction(Direction3::Down),
+            Point3::new(10, 5, 255)
+        );
+    }
+
+    #[test]
     fn add_direction_magnitude() {
         assert_eq!(
             Point2::new(10, 5) + Direction2::East * 3,
@@ -1141,61 +1255,61 @@ mod tests {
     }
 
     #[test]
-    fn checked_add_direction() {
+    fn checked_add_direction_magnitude() {
         assert_eq!(
-            Point2::<u8>::new(10, 5).checked_add_direction(Direction2::East, &3),
+            Point2::<u8>::new(10, 5).checked_add_direction_magnitude(Direction2::East * 3),
             Some(Point2::new(13, 5))
         );
         assert_eq!(
-            Point2::<u8>::new(10, 5).checked_add_direction(Direction2::West, &255),
+            Point2::<u8>::new(10, 5).checked_add_direction_magnitude(Direction2::West * 255),
             None
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).checked_add_direction(Direction3::Up, &3),
+            Point3::<u8>::new(10, 5, 7).checked_add_direction_magnitude(Direction3::Up * 3),
             Some(Point3::new(10, 5, 10))
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).checked_add_direction(Direction3::Down, &255),
+            Point3::<u8>::new(10, 5, 7).checked_add_direction_magnitude(Direction3::Down * 255),
             None
         );
     }
 
     #[test]
-    fn saturating_add_direction() {
+    fn saturating_add_direction_magnitude() {
         assert_eq!(
-            Point2::<u8>::new(10, 5).saturating_add_direction(Direction2::East, &3),
+            Point2::<u8>::new(10, 5).saturating_add_direction_magnitude(Direction2::East * 3),
             Point2::new(13, 5)
         );
         assert_eq!(
-            Point2::<u8>::new(10, 5).saturating_add_direction(Direction2::West, &255),
+            Point2::<u8>::new(10, 5).saturating_add_direction_magnitude(Direction2::West * 255),
             Point2::new(0, 5)
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).saturating_add_direction(Direction3::Up, &3),
+            Point3::<u8>::new(10, 5, 7).saturating_add_direction_magnitude(Direction3::Up * 3),
             Point3::new(10, 5, 10)
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).saturating_add_direction(Direction3::Down, &255),
+            Point3::<u8>::new(10, 5, 7).saturating_add_direction_magnitude(Direction3::Down * 255),
             Point3::new(10, 5, 0)
         );
     }
 
     #[test]
-    fn wrapping_add_direction() {
+    fn wrapping_add_direction_magnitude() {
         assert_eq!(
-            Point2::<u8>::new(10, 5).wrapping_add_direction(Direction2::East, &3),
+            Point2::<u8>::new(10, 5).wrapping_add_direction_magnitude(Direction2::East * 3),
             Point2::new(13, 5)
         );
         assert_eq!(
-            Point2::<u8>::new(10, 5).wrapping_add_direction(Direction2::West, &255),
+            Point2::<u8>::new(10, 5).wrapping_add_direction_magnitude(Direction2::West * 255),
             Point2::new(11, 5)
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).wrapping_add_direction(Direction3::Up, &3),
+            Point3::<u8>::new(10, 5, 7).wrapping_add_direction_magnitude(Direction3::Up * 3),
             Point3::new(10, 5, 10)
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).wrapping_add_direction(Direction3::Down, &255),
+            Point3::<u8>::new(10, 5, 7).wrapping_add_direction_magnitude(Direction3::Down * 255),
             Point3::new(10, 5, 8)
         );
     }
@@ -1227,6 +1341,66 @@ mod tests {
         assert_eq!(point, Point3::new(10, 5, 6));
         point -= Direction3::Left;
         assert_eq!(point, Point3::new(11, 5, 6));
+    }
+
+    #[test]
+    fn checked_sub_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).checked_sub_direction(Direction2::East),
+            Some(Point2::new(9, 5))
+        );
+        assert_eq!(
+            Point2::<u8>::new(255, 5).checked_sub_direction(Direction2::West),
+            None
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).checked_sub_direction(Direction3::Up),
+            Some(Point3::new(10, 5, 6))
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 255).checked_sub_direction(Direction3::Down),
+            None
+        );
+    }
+
+    #[test]
+    fn saturating_sub_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).saturating_sub_direction(Direction2::East),
+            Point2::new(9, 5)
+        );
+        assert_eq!(
+            Point2::<u8>::new(255, 5).saturating_sub_direction(Direction2::West),
+            Point2::new(255, 5)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).saturating_sub_direction(Direction3::Up),
+            Point3::new(10, 5, 6)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 255).saturating_sub_direction(Direction3::Down),
+            Point3::new(10, 5, 255)
+        );
+    }
+
+    #[test]
+    fn wrapping_sub_direction() {
+        assert_eq!(
+            Point2::<u8>::new(10, 5).wrapping_sub_direction(Direction2::East),
+            Point2::new(9, 5)
+        );
+        assert_eq!(
+            Point2::<u8>::new(255, 5).wrapping_sub_direction(Direction2::West),
+            Point2::new(0, 5)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 7).wrapping_sub_direction(Direction3::Up),
+            Point3::new(10, 5, 6)
+        );
+        assert_eq!(
+            Point3::<u8>::new(10, 5, 255).wrapping_sub_direction(Direction3::Down),
+            Point3::new(10, 5, 0)
+        );
     }
 
     #[test]
@@ -1262,61 +1436,61 @@ mod tests {
     }
 
     #[test]
-    fn checked_sub_direction() {
+    fn checked_sub_direction_magnitude() {
         assert_eq!(
-            Point2::<u8>::new(10, 5).checked_sub_direction(Direction2::East, &3),
+            Point2::<u8>::new(10, 5).checked_sub_direction_magnitude(Direction2::East * 3),
             Some(Point2::new(7, 5))
         );
         assert_eq!(
-            Point2::<u8>::new(10, 5).checked_sub_direction(Direction2::West, &255),
+            Point2::<u8>::new(10, 5).checked_sub_direction_magnitude(Direction2::West * 255),
             None
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).checked_sub_direction(Direction3::Up, &3),
+            Point3::<u8>::new(10, 5, 7).checked_sub_direction_magnitude(Direction3::Up * 3),
             Some(Point3::new(10, 5, 4))
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).checked_sub_direction(Direction3::Down, &255),
+            Point3::<u8>::new(10, 5, 7).checked_sub_direction_magnitude(Direction3::Down * 255),
             None
         );
     }
 
     #[test]
-    fn saturating_sub_direction() {
+    fn saturating_sub_direction_magnitude() {
         assert_eq!(
-            Point2::<u8>::new(10, 5).saturating_sub_direction(Direction2::East, &3),
+            Point2::<u8>::new(10, 5).saturating_sub_direction_magnitude(Direction2::East * 3),
             Point2::new(7, 5)
         );
         assert_eq!(
-            Point2::<u8>::new(10, 5).saturating_sub_direction(Direction2::West, &255),
+            Point2::<u8>::new(10, 5).saturating_sub_direction_magnitude(Direction2::West * 255),
             Point2::new(255, 5)
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).saturating_sub_direction(Direction3::Up, &3),
+            Point3::<u8>::new(10, 5, 7).saturating_sub_direction_magnitude(Direction3::Up * 3),
             Point3::new(10, 5, 4)
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).saturating_sub_direction(Direction3::Down, &255),
+            Point3::<u8>::new(10, 5, 7).saturating_sub_direction_magnitude(Direction3::Down * 255),
             Point3::new(10, 5, 255)
         );
     }
 
     #[test]
-    fn wrapping_sub_direction() {
+    fn wrapping_sub_direction_magnitude() {
         assert_eq!(
-            Point2::<u8>::new(10, 5).wrapping_sub_direction(Direction2::East, &3),
+            Point2::<u8>::new(10, 5).wrapping_sub_direction_magnitude(Direction2::East * 3),
             Point2::new(7, 5)
         );
         assert_eq!(
-            Point2::<u8>::new(10, 5).wrapping_sub_direction(Direction2::West, &255),
+            Point2::<u8>::new(10, 5).wrapping_sub_direction_magnitude(Direction2::West * 255),
             Point2::new(9, 5)
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).wrapping_sub_direction(Direction3::Up, &3),
+            Point3::<u8>::new(10, 5, 7).wrapping_sub_direction_magnitude(Direction3::Up * 3),
             Point3::new(10, 5, 4)
         );
         assert_eq!(
-            Point3::<u8>::new(10, 5, 7).wrapping_sub_direction(Direction3::Down, &255),
+            Point3::<u8>::new(10, 5, 7).wrapping_sub_direction_magnitude(Direction3::Down * 255),
             Point3::new(10, 5, 6)
         );
     }

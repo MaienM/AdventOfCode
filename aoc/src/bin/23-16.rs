@@ -66,7 +66,7 @@ fn track_beams(
                     bounds,
                     energized,
                     processed,
-                    point.wrapping_add_direction(direction, &1),
+                    point.wrapping_add_direction(direction),
                     direction,
                 );
                 return;
@@ -83,7 +83,7 @@ fn track_beams(
                     bounds,
                     energized,
                     processed,
-                    point.wrapping_add_direction(direction, &1),
+                    point.wrapping_add_direction(direction),
                     direction,
                 );
                 return;
@@ -103,7 +103,7 @@ fn track_beams(
             _ => {}
         }
 
-        point = point.wrapping_add_direction(direction, &1);
+        point = point.wrapping_add_direction(direction);
     }
 }
 

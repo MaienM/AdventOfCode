@@ -59,14 +59,14 @@ fn price_normal(region: &Region) -> usize {
 
 fn has_neighbour_ortho(region: &Region, point: &Point2, direction: Direction2) -> bool {
     point
-        .checked_add_direction(direction, &1)
+        .checked_add_direction(direction)
         .is_some_and(|p| region.contains(&p))
 }
 
 fn has_neighbour_diag(region: &Region, point: &Point2, direction: [Direction2; 2]) -> bool {
     point
-        .checked_add_direction(direction[0], &1)
-        .and_then(|p| p.checked_add_direction(direction[1], &1))
+        .checked_add_direction(direction[0])
+        .and_then(|p| p.checked_add_direction(direction[1]))
         .is_some_and(|p| region.contains(&p))
 }
 
