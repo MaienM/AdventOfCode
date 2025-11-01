@@ -72,6 +72,7 @@ test-libs:
 	 && eval "$$cmd" --show-region-summary=false --show-branch-summary=false
 	@LLVM_COV_FLAGS='--show-directory-coverage' \
 	 cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --html
+	@cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --lcov --output-path target/llvm-cov/lcov
 
 test-and-run-%: bin = $(subst test-and-run-,,$@)
 test-and-run-%: inputs/%.txt
