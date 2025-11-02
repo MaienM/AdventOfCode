@@ -21,6 +21,7 @@ tap = "=1.0.1"
 num = "=0.4.3"
 regex = "=1.12.2"
 itertools = "=0.14.0"
+inherit-methods-macro = "=0.1.0"
 
 [dev-dependencies]
 common_macros = "=0.1.1"
