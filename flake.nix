@@ -26,7 +26,7 @@
         fenixPkgs = fenix.packages."${system}";
         toolchain = fenixPkgs.fromToolchainName {
           name = "nightly-2025-09-28";
-          sha256 = "sha256-v+i2vvBAKg14CNWODfuTQ5ikMo43vEOznqXy6vAb8WA=";
+          sha256 = "sha256-F+nlO3ckY2zt5fqeBrKgO7gJ+8t5SUL8Jdu31kM6Q9k=";
         };
         rust = fenixPkgs.combine [
           (toolchain.withComponents [
@@ -145,7 +145,7 @@
 
         inherit rust;
 
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           inherit (self.checks.${system}.pre-commit-check) shellHook;
           buildInputs =
             with pkgs;

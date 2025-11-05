@@ -1,0 +1,86 @@
+name: Test, build, & optionally publish on GitHub Pages
+
+on:
+  push:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Load Nix develop shell
+        uses: nicknovitski/nix-develop@v1.2.1
+
+      - name: Check package
+        run: cargo check
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Lint
+        run: cargo clippy
+
+      - name: Run tests
+        run: make test-libs
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: target/llvm-cov/html/
+
+      - name: Check for unused dependencies
+        uses: bnjbvr/cargo-machete@main
+
+  pages:
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+    needs: checks
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Load Nix develop shell
+        uses: nicknovitski/nix-develop@v1.2.1
+
+      - name: Build web version
+        run: make target/release/web
+
+      - name: Upload web build
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./target/release/web
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
