@@ -27,6 +27,11 @@ function! s:OpenInput()
 	exe "e inputs/" . l:fn . ".txt"
 endfunction
 
+function! s:ShowInput()
+	let l:fn = expand("%:t:r")
+	call VimuxRunCommand("cat inputs/" . l:fn . ".txt")
+endfunction
+
 function! s:OpenWebsite()
 	let l:fn = expand("%:t:r")
 	let l:year = substitute(l:fn, "^\\v(\\d{2})-\\d{2}$", "\\1", "")
@@ -41,5 +46,6 @@ augroup LVIMRC
 	au BufEnter *.rs nnoremap <buffer> <leader>rB :call <SID>Bench(v:true)<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>rT :call <SID>RunAll()<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>gi :call <SID>OpenInput()<CR>
+	au BufEnter *.rs nnoremap <buffer> <leader>gI :call <SID>ShowInput()<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>gb :call <SID>OpenWebsite()<CR>
 augroup END
