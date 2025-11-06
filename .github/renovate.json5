@@ -13,4 +13,11 @@
 		':separateMultipleMajorReleases',
 		'security:minimumReleaseAgeNpm',
 	],
+	packageRules: [
+		{
+			matchDatasources: ['npm'],
+			matchUpdateTypes: ['minor', 'patch'],
+			groupName: 'dependencies',
+		},
+	],
 }
