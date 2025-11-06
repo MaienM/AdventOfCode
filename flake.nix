@@ -150,6 +150,7 @@
           buildInputs =
             with pkgs;
             [
+              cargo-edit
               cargo-expand
               cargo-machete
               fenixPkgs.rust-analyzer
