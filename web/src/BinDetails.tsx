@@ -1,5 +1,4 @@
 import { ArrowBack, KeyboardArrowDown, Publish, Source, StarRate } from '@mui/icons-material';
-import LoadingButton from '@mui/lab/LoadingButton';
 import { Button, IconButton, Menu, MenuItem, Stack, TextField, Toolbar, Typography } from '@mui/material';
 import * as React from 'react';
 import { Link, useParams } from 'react-router';
@@ -96,7 +95,7 @@ export default () => {
 				/>
 
 				<Stack spacing={2} direction={{ xs: 'column', sm: 'row' }}>
-					<LoadingButton
+					<Button
 						variant="contained"
 						disabled={running}
 						// eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -104,7 +103,7 @@ export default () => {
 						loading={running}
 					>
 						Solve
-					</LoadingButton>
+					</Button>
 					{bin.examples.length === 0 ? null : (
 						<>
 							<Button

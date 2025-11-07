@@ -5,13 +5,13 @@ import * as React from 'react';
 import { Link } from 'react-router';
 import Context from './context';
 
-const Header = ({ currentMonth }: PickersCalendarHeaderProps<Date>): React.ReactNode => (
+const Header = ({ currentMonth }: PickersCalendarHeaderProps): React.ReactNode => (
 	<Typography variant="h5">
 		{currentMonth.getFullYear()}
 	</Typography>
 );
 
-interface DayProps extends PickersDayProps<Date> {
+interface DayProps extends PickersDayProps {
 	bins: Record<number, Bin>;
 }
 
@@ -19,7 +19,7 @@ const Day = (props: DayProps) => {
 	const { day, bins } = props;
 	const bin = day.getMonth() === 11 ? bins[day.getDate()] : undefined;
 
-	const propOverrides: Omit<Partial<PickersDayProps<Date>>, 'sx'> & { sx: Record<string, string> } = {
+	const propOverrides: Omit<Partial<PickersDayProps>, 'sx'> & { sx: Record<string, string> } = {
 		sx: {},
 		selected: false,
 		disabled: !bin,

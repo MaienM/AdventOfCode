@@ -1,5 +1,5 @@
 import { GitHub } from '@mui/icons-material';
-import { AppBar, Container, Grid2, IconButton, Toolbar, Typography } from '@mui/material';
+import { AppBar, Container, Grid, IconButton, Toolbar, Typography } from '@mui/material';
 import { uniq } from 'lodash-es';
 import * as React from 'react';
 import BinCalendar from './BinCalendar';
@@ -33,13 +33,13 @@ export default () => {
 				</Toolbar>
 			</AppBar>
 			<Container component="main" sx={{ p: 2 }} maxWidth={false}>
-				<Grid2 container>
+				<Grid container>
 					{years.map((year) => (
-						<Grid2 key={year} size={{ xs: 12, sm: 6, xl: 4 }}>
+						<Grid key={year} size={{ xs: 12, sm: 6, xl: 4 }}>
 							<BinCalendar year={+year} />
-						</Grid2>
+						</Grid>
 					))}
-				</Grid2>
+				</Grid>
 			</Container>
 		</>
 	);
