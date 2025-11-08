@@ -205,13 +205,12 @@ pub fn run(name: &str, part: u8, input: &str) -> Result<SolverResult, String> {
         _ => return Err(format!("Invalid part {part}.")),
     };
 
-    std::panic::catch_unwind(move || solver.run::<PerformanceTimer>(input, None).try_into())
-        .map_err(|_| "solution panicked".to_string())?
+    console_error_panic_hook::set_once();
+    solver.run::<PerformanceTimer>(input, None).try_into()
 }
 
-#[doc(hidden)]
-pub fn main() {
-    #[allow(unexpected_cfgs)]
-    #[cfg(feature = "debug")]
+/// Setup the panic handler.
+#[wasm_bindgen]
+pub fn init_panic_handler() {
     console_error_panic_hook::set_once();
 }

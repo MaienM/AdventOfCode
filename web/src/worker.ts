@@ -20,7 +20,7 @@ class Worker {
 
 	private async initWASM() {
 		await initWASM();
-		// await initWASM((wasmData as unknown as { default: WebAssembly.Module }).default);
+		await aoc.init_panic_handler();
 		await aoc.initThreadPool(navigator.hardwareConcurrency);
 	}
 
