@@ -121,6 +121,7 @@ export default () => {
 							>
 								{bin.examples.map((example) => (
 									<MenuItem
+										key={example.name}
 										onClick={() => {
 											setInput(example.input);
 											setExample(example);
