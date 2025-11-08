@@ -2,7 +2,6 @@ import { ThemeProvider } from '@emotion/react';
 import { createTheme, CssBaseline } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import * as Comlink from 'comlink';
 import { enGB } from 'date-fns/locale';
 import GitHost from 'hosted-git-info';
 import * as React from 'react';
@@ -11,7 +10,7 @@ import { HashRouter, Route, Routes } from 'react-router';
 import BinDetails from './BinDetails';
 import Context from './context';
 import Overview from './Overview';
-import type { AOCWorker } from './worker';
+import { AOCWorkerWrapper } from './worker-wrapper';
 
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
@@ -26,8 +25,7 @@ interface PackageInfo {
 	};
 }
 
-const worker = new Worker(new URL('./worker', import.meta.url));
-const aocWorker = Comlink.wrap<AOCWorker>(worker);
+const aocWorker = new AOCWorkerWrapper();
 
 const repository = await (async () => {
 	const [commitHash, packageInfo] = await Promise.all([

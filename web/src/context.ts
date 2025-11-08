@@ -1,10 +1,11 @@
 import type GitHost from 'hosted-git-info';
 import { createContext } from 'react';
-import type { AOCWorker, Bin } from './worker';
+import type { Bin } from './worker';
+import { AOCWorkerWrapper } from './worker-wrapper';
 
-interface CommonContext {
+interface Context {
 	/// The worker.
-	worker: AOCWorker;
+	worker: AOCWorkerWrapper;
 
 	/// The bins.
 	bins: Bin[];
@@ -16,4 +17,4 @@ interface CommonContext {
 	repository: GitHost;
 }
 
-export default createContext<CommonContext>(null);
+export default createContext<Context>(null);

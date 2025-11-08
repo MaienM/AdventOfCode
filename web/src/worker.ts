@@ -1,5 +1,5 @@
-import initWASM, * as aoc from 'puzzle_wasm';
 import * as Comlink from 'comlink';
+import initWASM, * as aoc from 'puzzle_wasm';
 
 export type Bin = Omit<aoc.Bin, 'free'>;
 export type Example = Omit<aoc.Example, 'free'>;
@@ -29,7 +29,7 @@ class Worker {
 		return +aoc.get_timer_resolution();
 	}
 
-	async list(): Promise<aoc.Bin[]> {
+	async list(): Promise<Bin[]> {
 		await this.initWASMPromise;
 		return aoc.list().map((bin) => ({
 			name: bin.name,
@@ -44,7 +44,7 @@ class Worker {
 				part1: example.part1,
 				part2: example.part2,
 			})),
-		} as aoc.Bin));
+		} as Bin));
 	}
 
 	async run(name: string, part: number, input: string): Promise<Result> {
