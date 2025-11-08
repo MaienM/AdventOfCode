@@ -274,6 +274,15 @@ checksum = "f3f6d59c71e7dc3af60f0af9db32364d96a16e9310f3f5db2b55ed642162dd35"
 
 [[package]]
 name = "console_error_panic_hook"
+version = "0.1.6"
+source = "git+https://github.com/Chase-Silk/console_error_panic_hook?rev=13ebf32810ceb0a874fdda725c4d0c9fb7fd0910#13ebf32810ceb0a874fdda725c4d0c9fb7fd0910"
+dependencies = [
+ "cfg-if",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "console_error_panic_hook"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a06aeb73f470f66dcdbf7223caeebb85984942f22f1adb2a088cf9668146bbbc"
@@ -934,7 +943,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d1a093126f2ed9012fc0b146934c97eb0273e54983680a8bf5309b6b4a365b32"
 dependencies = [
  "cc",
- "console_error_panic_hook",
+ "console_error_panic_hook 0.1.7",
  "dlib",
  "futures",
  "instant",
@@ -1237,7 +1246,7 @@ name = "puzzle_wasm"
 version = "0.0.0"
 dependencies = [
  "aoc",
- "console_error_panic_hook",
+ "console_error_panic_hook 0.1.6",
  "puzzle_runner",
  "wasm-bindgen",
  "wasm-bindgen-rayon",
