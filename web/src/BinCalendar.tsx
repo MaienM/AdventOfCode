@@ -1,5 +1,6 @@
 import { Typography } from '@mui/material';
 import { DateCalendar, PickersCalendarHeaderProps, PickersDay, PickersDayProps } from '@mui/x-date-pickers';
+import { differenceInCalendarISOWeeks, isSameISOWeek } from 'date-fns';
 import type { Bin } from 'puzzle_wasm';
 import * as React from 'react';
 import { Link } from 'react-router';
@@ -13,44 +14,47 @@ const Header = ({ currentMonth }: PickersCalendarHeaderProps): React.ReactNode =
 
 interface DayProps extends PickersDayProps {
 	bins: Record<number, Bin>;
+	firstDay: Date;
+	lastDay: Date;
 }
 
 const Day = (props: DayProps) => {
-	const { day, bins } = props;
-	const bin = day.getMonth() === 11 ? bins[day.getDate()] : undefined;
+	const { day, bins, firstDay, lastDay, ...rest } = props;
+	const inRange = firstDay <= day && day <= lastDay;
 
-	const propOverrides: Omit<Partial<PickersDayProps>, 'sx'> & { sx: Record<string, string> } = {
+	const childProps: Omit<PickersDayProps, 'sx'> & { sx: Record<string, string> } = {
+		...rest,
+		day,
 		sx: {},
 		selected: false,
-		disabled: !bin,
-		title: bin?.title,
 	};
 
-	// Hide irrelevant days.
-	if (day.getMonth() === 11 && day.getDate() > 25) {
-		// Past the 25th...
-		if (day.getDate() - day.getUTCDay() > 25) {
-			// ... and in a new week, so just hide all days in this week.
-			return null;
+	// Hide days outside the range.
+	if (!inRange) {
+		if (isSameISOWeek(day, firstDay) || isSameISOWeek(day, lastDay)) {
+			// Day is in the same week as the start/end, so we hide it so that the element is still there for spacing.
+			childProps.outsideCurrentMonth = true;
 		} else {
-			// ... but in the same week so still needed for spacing.
-			propOverrides.outsideCurrentMonth = true;
+			// Just don't render it at all.
+			return null;
 		}
-	} else if (day.getMonth() === 0) {
-		// Will always be in a new week.
-		return null;
 	}
+
+	// Get bin info.
+	const bin = inRange ? bins[day.getDate()] : undefined;
+	childProps.disabled = !bin;
+	childProps.title = bin?.title;
 
 	// Color based on completion.
 	if (bin?.parts >= 2) {
-		propOverrides.sx.bgcolor = 'color-mix(in srgb, gold 10%, transparent)';
+		childProps.sx.bgcolor = 'color-mix(in srgb, gold 10%, transparent)';
 	} else if (bin?.parts === 1) {
-		propOverrides.sx.bgcolor = 'color-mix(in srgb, silver 15%, transparent)';
+		childProps.sx.bgcolor = 'color-mix(in srgb, silver 15%, transparent)';
 	}
 
 	return (
 		<Link to={bin?.name}>
-			<PickersDay {...props} {...propOverrides} />
+			<PickersDay {...childProps} />
 		</Link>
 	);
 };
@@ -68,14 +72,16 @@ export default ({ year }: Props) => {
 		() => Object.fromEntries(context.bins.filter((bin) => bin.year === year).map((bin) => [bin.day, bin] as const)),
 		[context.bins],
 	);
-	const startOfMonth = new Date(year, 11); // months are zero-indexed
-	const weekCount = startOfMonth.getUTCDay() < 4 ? 4 : 5; // if the first of the month is mon-thu the 1-25th will only span 4 weeks, else it will span 5
+	const firstDay = new Date(year, 11, 1); // months are zero-indexed
+	const lastDay = new Date(year, 11, year < 2025 ? 25 : 12);
+	const weekCount = differenceInCalendarISOWeeks(lastDay, firstDay) + 1;
 
 	return (
 		<DateCalendar
 			value={null}
-			referenceDate={new Date(year, 11)} // months are zero-indexed
-			maxDate={new Date(year, 11, 25)}
+			referenceDate={firstDay}
+			minDate={firstDay}
+			maxDate={lastDay}
 			views={['day']}
 			sx={{
 				height: 100 + 38 * weekCount,
@@ -87,6 +93,8 @@ export default ({ year }: Props) => {
 			slotProps={{
 				day: {
 					bins: byDay,
+					firstDay,
+					lastDay,
 				} as unknown,
 			}}
 		/>
