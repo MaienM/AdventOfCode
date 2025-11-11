@@ -18,6 +18,16 @@ function! s:Bench(baseline)
 	endif
 endfunction
 
+function! s:Profile(baseline)
+	let l:fn = expand("%")
+	if l:fn =~ ".*/bin/.*\.rs"
+		let l:day = expand("%:t:r")
+		call VimuxRunCommand("clear; make profile-" . (a:baseline ? "set-baseline-" : "") . l:day)
+	else
+		echo "No benchmarks for libs (yet)."
+	endif
+endfunction
+
 function! s:RunAll()
 	call VimuxRunCommand("clear; make run-all")
 endfunction
@@ -44,6 +54,8 @@ augroup LVIMRC
 	au BufEnter *.rs nnoremap <buffer> <leader>rt :call <SID>TestRun()<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>rb :call <SID>Bench(v:false)<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>rB :call <SID>Bench(v:true)<CR>
+	au BufEnter *.rs nnoremap <buffer> <leader>rp :call <SID>Profile(v:false)<CR>
+	au BufEnter *.rs nnoremap <buffer> <leader>rP :call <SID>Profile(v:true)<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>rT :call <SID>RunAll()<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>gi :call <SID>OpenInput()<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>gI :call <SID>ShowInput()<CR>

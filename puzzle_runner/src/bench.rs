@@ -2,10 +2,16 @@
 
 #![cfg(feature = "bench")]
 
-use std::path::Path;
+use std::{
+    fs::{File, create_dir_all},
+    io::Write,
+    path::Path,
+    time::Duration,
+};
 
 use clap::{Parser, builder::ArgPredicate, value_parser};
-use criterion::Criterion;
+use criterion::{Criterion, profiler::Profiler as CProfiler};
+use pprof::{ProfilerGuard, protos::Message};
 
 use super::{derived::Solver, multi::TargetArgs};
 
@@ -15,9 +21,13 @@ struct BenchArgs {
     #[command(flatten)]
     targets: TargetArgs,
 
-    /// Noop for compatibility.
-    #[arg(long, num_args = 0)]
+    /// For compatibility with criterion CLI.
+    #[arg(long, num_args = 0, hide = true)]
     bench: (),
+
+    /// For compatibility with criterion CLI.
+    #[arg(long, num_args = 1, hide = true)]
+    profile_time: Option<f64>,
 
     /// Save results under a named baseline.
     #[arg(
@@ -38,6 +48,40 @@ struct BenchArgs {
     /// Set the number of samples to collect.
     #[arg(long, default_value = "100", value_parser = value_parser![u64].range(10..))]
     samples: u64,
+
+    /// Save profile results with this name.
+    #[arg(long)]
+    profile_name: Option<String>,
+}
+
+#[derive(Default)]
+struct Profiler<'a> {
+    name: String,
+    profiler: Option<ProfilerGuard<'a>>,
+}
+impl CProfiler for Profiler<'_> {
+    fn start_profiling(&mut self, _benchmark_id: &str, _benchmark_dir: &Path) {
+        self.profiler = Some(ProfilerGuard::new(100).unwrap());
+    }
+
+    fn stop_profiling(&mut self, _benchmark_id: &str, benchmark_dir: &Path) {
+        create_dir_all(benchmark_dir).unwrap();
+
+        let path = benchmark_dir.join(&self.name).with_extension("pb");
+        let mut file = File::create(path).unwrap();
+        let mut content = Vec::new();
+        self.profiler
+            .take()
+            .unwrap()
+            .report()
+            .build()
+            .unwrap()
+            .pprof()
+            .unwrap()
+            .write_to_vec(&mut content)
+            .unwrap();
+        file.write_all(&content).unwrap();
+    }
 }
 
 pub fn main() {
@@ -49,12 +93,22 @@ pub fn main() {
     let args = BenchArgs::parse();
 
     let mut criterion = Criterion::default();
+    criterion = criterion.sample_size(args.samples as usize);
+
     if let Some(name) = args.save_baseline {
         criterion = criterion.save_baseline(name);
     } else if let Some(name) = args.baseline {
         criterion = criterion.retain_baseline(name, true);
     }
-    criterion = criterion.sample_size(args.samples as usize);
+
+    if let Some(time) = args.profile_time {
+        criterion = criterion
+            .with_profiler(Profiler {
+                name: args.profile_name.unwrap_or("default".to_owned()),
+                ..Profiler::default()
+            })
+            .profile_time(Some(Duration::from_secs_f64(time)));
+    }
 
     let bins = args.targets.filtered_binaries();
     for target in args.targets.get_targets(&bins) {

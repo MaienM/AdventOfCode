@@ -5,16 +5,20 @@ edition.workspace = true
 
 [features]
 default = []
+bench = [
+	"dep:criterion",
+	"dep:pprof",
+]
 visual = [
 	"dep:raqote",
 	"dep:font-kit",
 	"dep:minifb",
 ]
-bench = ["dep:criterion"]
 
 [dependencies]
 # for bench
 criterion = { version = "=0.7.0", optional = true }
+pprof = { version = "0.15.0", optional = true, features = ["criterion", "protobuf-codec"] }
 
 # for visual
 raqote = { version = "=0.8.5", optional = true }

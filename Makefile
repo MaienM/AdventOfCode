@@ -131,12 +131,8 @@ docs: ${STDLIB_TARGETS} ${DEP_TARGETS} katex.html
 	 cargo doc --lib --no-deps
 
 #
-# Benchmarking.
+# Benchmarking & profiling.
 #
-
-benchmark-all:
-	@cargo bench --bench main --features bench --quiet -- --save-baseline current
-	@critcmp baseline current
 
 benchmark-%: bin = $(subst benchmark-,,$@)
 benchmark-%: test-and-run-% inputs/%.txt
@@ -144,14 +140,20 @@ benchmark-%: test-and-run-% inputs/%.txt
 	@cargo bench --bench main --features bench --quiet -- --only ${bin} --save-baseline current
 	@critcmp baseline current --filter ${bin}
 
-benchmark-set-baseline-all:
-	@echo "$(setaf6)>>>>> Updating benchmark baselines <<<<<$(sgr0)"
-	@cargo bench --bench main --features bench --quiet -- --save-baseline baseline
-
 benchmark-set-baseline-%: bin = $(subst benchmark-set-baseline-,,$@)
-benchmark-set-baseline-%: inputs/%.txt
+benchmark-set-baseline-%: test-and-run-% inputs/%.txt
 	@echo "$(setaf6)>>>>> Updating benchmark baseline for ${bin} <<<<<$(sgr0)"
 	@cargo bench --bench main --features bench --quiet -- --only ${bin} --save-baseline baseline
+
+profile-%: bin = $(subst profile-,,$@)
+profile-%: test-and-run-% inputs/%.txt
+	@echo "$(setaf6)>>>>> Profileing ${bin} <<<<<$(sgr0)"
+	@cargo bench --bench main --features bench --quiet -- --only ${bin} --profile-time 15 --profile-name current
+
+profile-set-baseline-%: bin = $(subst profile-set-baseline-,,$@)
+profile-set-baseline-%: test-and-run-% inputs/%.txt
+	@echo "$(setaf6)>>>>> Updating profile baseline for ${bin} <<<<<$(sgr0)"
+	@cargo bench --bench main --features bench --quiet -- --only ${bin} --profile-time 15 --profile-name baseline
 
 #
 # Leaderboard.
