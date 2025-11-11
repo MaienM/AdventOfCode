@@ -28,6 +28,7 @@
             config,
             inputs',
             pkgs,
+            system,
             ...
           }:
           let
@@ -50,6 +51,24 @@
                 "rust-std"
               ])
             ];
+            pprofme =
+              let
+                artifacts = {
+                  x86_64-linux = pkgs.fetchurl {
+                    url = "https://github.com/polarsignals/pprofme/releases/download/v0.1.0/pprofme_Linux_x86_64";
+                    hash = "sha256-tuS3DKJcPM3j1O1Fl1nAOSSpZOr2UdA0Of/fxPkG6nc=";
+                  };
+                  aarch64-darwin = pkgs.fetchurl {
+                    url = "https://github.com/polarsignals/pprofme/releases/download/v0.1.0/pprofme_Darwin_arm64";
+                    hash = "sha256-jeZtc1/6w93WbrKdCjXWEi71H/ec1PgzmDZpkGtVglI=";
+                  };
+                };
+              in
+              pkgs.runCommand "pprofme" { } ''
+                mkdir -p $out/bin
+                cp ${artifacts.${system}} $out/bin/pprofme
+                chmod +x $out/bin/pprofme
+              '';
           in
           {
             devShells.default = pkgs.mkShell {
@@ -68,6 +87,7 @@
                 # Benchmarks.
                 critcmp
                 gnuplot
+                pprofme
 
                 # Web version.
                 wasm-pack

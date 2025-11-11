@@ -149,11 +149,23 @@ profile-%: bin = $(subst profile-,,$@)
 profile-%: test-and-run-% inputs/%.txt
 	@echo "$(setaf6)>>>>> Profileing ${bin} <<<<<$(sgr0)"
 	@cargo bench --bench main --features bench --quiet -- --only ${bin} --profile-time 15 --profile-name current
+	@for f in target/criterion/${bin}_*/profile/current.pb; do \
+		name="$${f%/profile/current.pb}"; \
+		name="$${name##*/}"; \
+		name="$${name//_/ }"; \
+		pprofme upload "$$f" --description="$$name @ $$(stat --format '%y' "$$f")"; \
+	done
 
 profile-set-baseline-%: bin = $(subst profile-set-baseline-,,$@)
 profile-set-baseline-%: test-and-run-% inputs/%.txt
 	@echo "$(setaf6)>>>>> Updating profile baseline for ${bin} <<<<<$(sgr0)"
 	@cargo bench --bench main --features bench --quiet -- --only ${bin} --profile-time 15 --profile-name baseline
+	@for f in target/criterion/${bin}_*/profile/baseline.pb; do \
+		name="$${f%/profile/baseline.pb}"; \
+		name="$${name##*/}"; \
+		name="$${name//_/ }"; \
+		pprofme upload "$$f" --description="$$name @ $$(stat --format '%y' "$$f") (baseline)"; \
+	done
 
 #
 # Leaderboard.
