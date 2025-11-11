@@ -8,6 +8,10 @@ members = [
 	"puzzle_wasm",
 ]
 
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage,coverage_nightly)'] }
 
