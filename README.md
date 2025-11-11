@@ -6,15 +6,6 @@ You can run the precompiled webassembly version in the browser [here](https://ma
 
 Chromium based browsers will yield better runtimes and more accurate timings than Firefox.
 
-## Nix
-
-If you have Nix installed you can run this project without even downloading it!
-
-``` shell
-nix run --extra-experimental-features 'nix-command flakes' 'github:MaienM/AdventOfCode#aoc'
-nix run --extra-experimental-features 'nix-command flakes' 'github:MaienM/AdventOfCode#21-01'
-```
-
 ## Development
 
 Using Nix you can get an environment with all required dependencies by running:
