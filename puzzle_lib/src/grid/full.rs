@@ -31,6 +31,14 @@ where
         self.width == other.width && self.height == other.height && self.cells == other.cells
     }
 }
+impl<D> Hash for FullGrid<D>
+where
+    D: Hash,
+{
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.cells.hash(state);
+    }
+}
 
 impl<D> FullGrid<D> {
     fn get_points_iter(width: usize, height: usize) -> impl Iterator<Item = Point2<usize>> {
@@ -428,6 +436,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::hash::{DefaultHasher, Hasher};
+
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -520,6 +530,23 @@ mod tests {
         let grid1: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
         let grid2: FullGrid<_> = vec![vec![1, 2, 3], vec![4, 5, 6]].into();
         assert_eq!(grid1, grid2);
+    }
+
+    #[test]
+    fn hash() {
+        let grid: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
+        assert_eq!(
+            {
+                let mut hasher = DefaultHasher::new();
+                grid.hash(&mut hasher);
+                hasher.finish()
+            },
+            {
+                let mut hasher = DefaultHasher::new();
+                grid.cells.hash(&mut hasher);
+                hasher.finish()
+            },
+        );
     }
 
     #[test]
