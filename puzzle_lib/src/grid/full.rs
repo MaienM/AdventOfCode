@@ -2,6 +2,7 @@ use std::{
     fmt::Debug,
     mem::{self},
     ops::{Index, IndexMut},
+    sync::OnceLock,
 };
 
 use inherit_methods_macro::inherit_methods;
@@ -13,11 +14,21 @@ use crate::{grid::internal::PointBoundariesImpl, point::Point2};
 /// A 2-dimensional grid with all points present & some arbitrary data stored for each point.
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct FullGrid<D> {
-    points: Vec<Point2<usize>>,
+    points: OnceLock<Vec<Point2<usize>>>,
     cells: Vec<D>,
     width: usize,
     height: usize,
     boundaries: PointBoundariesImpl<Point2<usize>>,
+}
+impl<D> FullGrid<D> {
+    fn get_points_iter(width: usize, height: usize) -> impl Iterator<Item = Point2<usize>> {
+        (0..height).flat_map(move |y| (0..width).map(move |x| Point2::new(x, y)))
+    }
+
+    fn get_points(&self) -> &Vec<Point2<usize>> {
+        self.points
+            .get_or_init(|| FullGrid::<D>::get_points_iter(self.width, self.height).collect())
+    }
 }
 impl<D> PointCollection<Point2<usize>> for FullGrid<D> {
     fn contains_point(&self, point: &Point2<usize>) -> bool {
@@ -25,11 +36,11 @@ impl<D> PointCollection<Point2<usize>> for FullGrid<D> {
     }
 
     fn into_iter_points(self) -> impl Iterator<Item = Point2<usize>> {
-        self.points.into_iter()
+        FullGrid::<D>::get_points_iter(self.width, self.height)
     }
 
     fn iter_points(&self) -> impl Iterator<Item = &Point2<usize>> {
-        self.points.iter()
+        self.get_points().iter()
     }
 
     fn area(&self) -> (Point2<usize>, Point2<usize>) {
@@ -164,15 +175,16 @@ impl<D: 'static> PointDataCollection<Point2<usize>, D> for FullGrid<D> {
     }
 
     fn into_iter_pairs(self) -> impl Iterator<Item = (Point2<usize>, D)> {
-        self.points.into_iter().zip(self.cells)
+        FullGrid::<D>::get_points_iter(self.width, self.height).zip(self.cells)
     }
 
     fn iter_pairs(&self) -> impl Iterator<Item = (&Point2<usize>, &D)> {
-        self.points.iter().zip(self.cells.iter())
+        self.get_points().iter().zip(self.cells.iter())
     }
 
     fn iter_mut_pairs(&mut self) -> impl Iterator<Item = (&Point2<usize>, &mut D)> {
-        self.points.iter().zip(self.cells.iter_mut())
+        self.get_points();
+        self.points.get().unwrap().iter().zip(self.cells.iter_mut())
     }
 }
 #[inherit_methods(from = "self.boundaries")]
@@ -206,9 +218,7 @@ where
         cells.resize_with(width * height, D::default);
 
         Self {
-            points: (0..height)
-                .flat_map(|y| (0..width).map(move |x| Point2::new(x, y)))
-                .collect(),
+            points: OnceLock::new(),
             cells,
             width,
             height,
@@ -249,9 +259,7 @@ impl<D> From<Vec<Vec<D>>> for FullGrid<D> {
         }
 
         Self {
-            points: (0..height)
-                .flat_map(|y| (0..width).map(move |x| Point2::new(x, y)))
-                .collect(),
+            points: OnceLock::new(),
             cells: cells.into_iter().flatten().collect(),
             width,
             height,
@@ -405,16 +413,17 @@ mod tests {
     #[test]
     fn from_vec() {
         let grid: FullGrid<_> = vec![vec![1, 2], vec![3, 4], vec![5, 6]].into();
+        assert_eq!(grid.points.get(), None);
         assert_eq!(
-            grid.points,
-            vec![
+            grid.get_points(),
+            &vec![
                 Point2::new(0, 0),
                 Point2::new(1, 0),
                 Point2::new(0, 1),
                 Point2::new(1, 1),
                 Point2::new(0, 2),
                 Point2::new(1, 2),
-            ]
+            ],
         );
         assert_eq!(grid.cells, vec![1, 2, 3, 4, 5, 6]);
         assert_eq!(
@@ -444,16 +453,17 @@ mod tests {
     #[test]
     fn from_array() {
         let grid: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
+        assert_eq!(grid.points.get(), None);
         assert_eq!(
-            grid.points,
-            vec![
+            grid.get_points(),
+            &vec![
                 Point2::new(0, 0),
                 Point2::new(1, 0),
                 Point2::new(2, 0),
                 Point2::new(0, 1),
                 Point2::new(1, 1),
                 Point2::new(2, 1),
-            ]
+            ],
         );
         assert_eq!(grid.cells, vec![1, 2, 3, 4, 5, 6]);
         assert_eq!(
@@ -465,14 +475,15 @@ mod tests {
     #[test]
     fn from_iters() {
         let grid: FullGrid<_> = "12,34".split(',').map(|row| row.chars()).collect();
+        assert_eq!(grid.points.get(), None);
         assert_eq!(
-            grid.points,
-            vec![
+            grid.get_points(),
+            &vec![
                 Point2::new(0, 0),
                 Point2::new(1, 0),
                 Point2::new(0, 1),
                 Point2::new(1, 1),
-            ]
+            ],
         );
         assert_eq!(grid.cells, vec!['1', '2', '3', '4']);
         assert_eq!(
