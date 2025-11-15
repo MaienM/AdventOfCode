@@ -1,5 +1,6 @@
 use std::{
     fmt::Debug,
+    hash::Hash,
     iter::IntoIterator,
     mem::{self},
     ops::{Index, IndexMut},
@@ -13,7 +14,7 @@ use super::{PointBoundaries, PointCollection, PointCollectionInsertResult, Point
 use crate::{grid::internal::PointBoundariesImpl, point::Point2};
 
 /// A 2-dimensional grid with all points present & some arbitrary data stored for each point.
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, Clone)]
 pub struct FullGrid<D> {
     points: OnceLock<Vec<Point2<usize>>>,
     cells: Vec<D>,
@@ -21,6 +22,16 @@ pub struct FullGrid<D> {
     height: usize,
     boundaries: PointBoundariesImpl<Point2<usize>>,
 }
+
+impl<D> PartialEq for FullGrid<D>
+where
+    D: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.width == other.width && self.height == other.height && self.cells == other.cells
+    }
+}
+
 impl<D> FullGrid<D> {
     fn get_points_iter(width: usize, height: usize) -> impl Iterator<Item = Point2<usize>> {
         (0..height).flat_map(move |y| (0..width).map(move |x| Point2::new(x, y)))
@@ -502,6 +513,13 @@ mod tests {
             grid.boundaries,
             PointBoundariesImpl::new(Point2::new(0, 0), Point2::new(1, 1))
         );
+    }
+
+    #[test]
+    fn partial_eq() {
+        let grid1: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
+        let grid2: FullGrid<_> = vec![vec![1, 2, 3], vec![4, 5, 6]].into();
+        assert_eq!(grid1, grid2);
     }
 
     #[test]
