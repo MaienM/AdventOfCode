@@ -1,5 +1,6 @@
 use std::{
     fmt::Debug,
+    iter::IntoIterator,
     mem::{self},
     ops::{Index, IndexMut},
     sync::OnceLock,
@@ -236,31 +237,35 @@ where
     II: Iterator<Item = D>,
 {
     fn from_iter<OI: IntoIterator<Item = II>>(iter: OI) -> Self {
-        let cells = iter
-            .into_iter()
-            .map(Iterator::collect::<Vec<_>>)
-            .collect::<Vec<_>>();
-        cells.into()
-    }
-}
-impl<D> From<Vec<Vec<D>>> for FullGrid<D> {
-    fn from(cells: Vec<Vec<D>>) -> Self {
-        let height = cells.len();
-        assert!(height > 0, "must have height > 0");
+        let iter = iter.into_iter();
+        let min_height = iter.size_hint().0;
+        let mut width = 0;
+        let mut cells = Vec::new();
 
-        let width = cells[0].len();
-        assert!(width > 0, "must have width > 0");
-        for (i, row) in cells.iter().enumerate().skip(1) {
-            assert_eq!(
-                row.len(),
-                width,
-                "Rows have different lengths (row 0 vs row {i})"
-            );
+        for (y, row) in iter.enumerate() {
+            cells.extend(row);
+            if y == 0 {
+                width = cells.len();
+                assert!(width > 0, "must have width > 0");
+                cells.reserve(min_height * width);
+            } else {
+                let row_width = cells.len() - (y * width);
+                assert_eq!(
+                    row_width, width,
+                    "Rows have different lengths (row 0 vs row {y})"
+                );
+            }
         }
+
+        // If we get to this point with width == 0 that must mean that the above loop had 0
+        // iterators (i.e., 0 rows) as otherwise the assertion in that loop would have already
+        // panicked, so this means a height of 0.
+        assert!(width > 0, "must have height > 0");
+        let height = cells.len() / width;
 
         Self {
             points: OnceLock::new(),
-            cells: cells.into_iter().flatten().collect(),
+            cells,
             width,
             height,
             boundaries: PointBoundariesImpl::new(
@@ -270,13 +275,20 @@ impl<D> From<Vec<Vec<D>>> for FullGrid<D> {
         }
     }
 }
+impl<D> From<Vec<Vec<D>>> for FullGrid<D> {
+    fn from(cells: Vec<Vec<D>>) -> Self {
+        cells.into_iter().map(IntoIterator::into_iter).collect()
+    }
+}
 impl<D, const R: usize, const C: usize> From<[[D; R]; C]> for FullGrid<D> {
     fn from(cells: [[D; R]; C]) -> Self {
-        cells
-            .into_iter()
-            .map(std::convert::Into::into)
-            .collect::<Vec<_>>()
-            .into()
+        Self {
+            points: OnceLock::new(),
+            cells: cells.into_iter().flatten().collect(),
+            width: R,
+            height: C,
+            boundaries: PointBoundariesImpl::new(Point2::new(0, 0), Point2::new(R - 1, C - 1)),
+        }
     }
 }
 
