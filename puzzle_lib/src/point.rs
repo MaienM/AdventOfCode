@@ -165,6 +165,50 @@ macro_rules! create_point {
         impl_point_operator!($name, mul, $($var),+);
         impl_point_operator!($name, div, $($var),+);
 
+        impl<T> $name<T>
+        where
+            T: Copy
+        {
+            /// Convert to another type of point.
+            ///
+            /// # Examples.
+            /// ```
+            /// # use puzzle_lib::point::Point;
+            /// let point = Point2::new(1u8, 1);
+            /// assert_eq!(point.cast(), Point2::new(1u16, 1));
+            /// ```
+            pub fn cast<O>(&self) -> $name<O>
+            where
+                O: From<T>
+            {
+                $name {
+                    $($var: self.$var.into()),+
+                }
+            }
+
+            /// Try to convert to another type of point.
+            ///
+            /// # Examples.
+            /// ```
+            /// # use puzzle_lib::point::Point;
+            /// let point = Point2::new(-1i8, 1);
+            /// assert_eq!(point.try_cast(), Ok(Point2::new(-1i16, 1)));
+            /// assert!(point.try_cast::<u8>().is_err());
+            /// ```
+            ///
+            /// # Errors
+            ///
+            /// Will fail if the conversion of any of the point's coordinates fails.
+            pub fn try_cast<O>(&self) -> Result<$name<O>, <O as TryFrom<T>>::Error>
+            where
+                O: TryFrom<T>
+            {
+                Ok($name {
+                    $($var: self.$var.try_into()?),+
+                })
+            }
+        }
+
         impl<'a, T> AbsDiff<&'a $name<T>> for &'a $name<T>
         where
             T: Copy + AbsDiff<T>,
