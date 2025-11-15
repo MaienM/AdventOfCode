@@ -11,7 +11,10 @@ use inherit_methods_macro::inherit_methods;
 use itertools::Itertools;
 
 use super::{PointBoundaries, PointCollection, PointCollectionInsertResult, PointDataCollection};
-use crate::{grid::internal::PointBoundariesImpl, point::Point2};
+use crate::{
+    grid::internal::{PointBoundariesImpl, PointOrRef},
+    point::Point2,
+};
 
 /// A 2-dimensional grid with all points present & some arbitrary data stored for each point.
 #[derive(Debug, Eq, Clone)]
@@ -112,35 +115,33 @@ impl<D: 'static> PointDataCollection<Point2<usize>, D> for FullGrid<D> {
         unsafe { self.cells.get_unchecked_mut(point.y * self.width + point.x) }
     }
 
-    fn get_many<'a, I>(&self, points: I) -> impl Iterator<Item = (&'a Point2<usize>, Option<&D>)>
+    fn get_many<PR, I>(&self, points: I) -> impl Iterator<Item = (PR, Option<&D>)>
     where
-        I: Iterator<Item = &'a Point2<usize>>,
+        PR: PointOrRef<Point2<usize>>,
+        I: Iterator<Item = PR>,
     {
-        points.map(|point| (point, self.get(point)))
+        points.map(|point| (point, self.get(point.resolve_ref())))
     }
 
-    unsafe fn get_many_unchecked<'a, I>(
-        &self,
-        points: I,
-    ) -> impl Iterator<Item = (&'a Point2<usize>, &D)>
+    unsafe fn get_many_unchecked<PR, I>(&self, points: I) -> impl Iterator<Item = (PR, &D)>
     where
-        I: Iterator<Item = &'a Point2<usize>>,
+        PR: PointOrRef<Point2<usize>>,
+        I: Iterator<Item = PR>,
     {
-        unsafe { points.map(|point| (point, self.get_unchecked(point))) }
+        unsafe { points.map(|point| (point, self.get_unchecked(point.resolve_ref()))) }
     }
 
-    fn get_many_mut<'a, I>(
-        &mut self,
-        points: I,
-    ) -> impl Iterator<Item = (&'a Point2<usize>, Option<&mut D>)>
+    fn get_many_mut<PR, I>(&mut self, points: I) -> impl Iterator<Item = (PR, Option<&mut D>)>
     where
-        I: Iterator<Item = &'a Point2<usize>>,
+        PR: PointOrRef<Point2<usize>>,
+        I: Iterator<Item = PR>,
     {
         let slice: *mut [D] = self.cells.as_mut_slice();
         points.into_iter().map(move |point| {
+            let pr = point.resolve_ref();
             let value = unsafe {
-                if point.x < self.width && point.y < self.height {
-                    Some((&mut *slice).get_unchecked_mut(point.y * self.width + point.x))
+                if pr.x < self.width && pr.y < self.height {
+                    Some((&mut *slice).get_unchecked_mut(pr.y * self.width + pr.x))
                 } else {
                     None
                 }
@@ -149,18 +150,20 @@ impl<D: 'static> PointDataCollection<Point2<usize>, D> for FullGrid<D> {
         })
     }
 
-    unsafe fn get_many_unchecked_mut<'a, I>(
+    unsafe fn get_many_unchecked_mut<PR, I>(
         &mut self,
         points: I,
-    ) -> impl Iterator<Item = (&'a Point2<usize>, &mut D)>
+    ) -> impl Iterator<Item = (PR, &mut D)>
     where
-        I: Iterator<Item = &'a Point2<usize>>,
+        PR: PointOrRef<Point2<usize>>,
+        I: Iterator<Item = PR>,
     {
         // Note that this can return a valid reference to the wrong element when out of bounds.
         // E.g. for a 2x2 grid getting (2, 0) will result in returning the element for (1, 1).
         let slice: *mut [D] = self.cells.as_mut_slice();
         points.into_iter().map(move |point| {
-            let value = unsafe { (&mut *slice).get_unchecked_mut(point.y * self.width + point.x) };
+            let pr = point.resolve_ref();
+            let value = unsafe { (&mut *slice).get_unchecked_mut(pr.y * self.width + pr.x) };
             (point, value)
         })
     }

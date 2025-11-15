@@ -6,6 +6,11 @@ use std::{
 
 use num::{CheckedAdd, CheckedSub, Num};
 
+use crate::{
+    grid::internal::PointOrRef,
+    point::{Point2, Point3, Point4},
+};
+
 /// Trait alias for types that can be used as a point index type.
 pub trait PointType:
     Num + CheckedAdd + CheckedSub + PartialOrd + Ord + PartialEq + Eq + Hash + Copy + Debug
@@ -13,6 +18,18 @@ pub trait PointType:
 }
 impl<PT> PointType for PT where
     PT: Num + CheckedAdd + CheckedSub + PartialOrd + Ord + PartialEq + Eq + Hash + Copy + Debug
+{
+}
+
+/// Marker trait for types that can be used as a point type.
+pub trait GridPoint: Copy + Eq + Hash {}
+impl<PT> GridPoint for Point2<PT> where PT: PointType
+{
+}
+impl<PT> GridPoint for Point3<PT> where PT: PointType
+{
+}
+impl<PT> GridPoint for Point4<PT> where PT: PointType
 {
 }
 
@@ -30,7 +47,7 @@ pub enum PointCollectionInsertResult<T> {
 /// A collection of points.
 pub trait PointCollection<P>
 where
-    P: 'static,
+    P: GridPoint + 'static,
 {
     /// Returns `true` if the collection contains a point.
     ///
@@ -103,7 +120,7 @@ where
 pub trait PointOnlyCollection<P>
 where
     Self: PointCollection<P>,
-    P: 'static,
+    P: GridPoint + 'static,
 {
     /// Add a point to the collection.
     ///
@@ -144,7 +161,7 @@ where
 pub trait PointDataCollection<P, D>
 where
     Self: PointCollection<P> + Index<P> + IndexMut<P>,
-    P: 'static,
+    P: GridPoint + 'static,
     D: 'static,
 {
     /// Get a reference to an element, or `None` if not present/out of bounds.
@@ -233,9 +250,10 @@ where
     /// assert!(pairs.contains(&(&Point2::new(0, 1), Some(&3))));
     /// assert!(pairs.contains(&(&Point2::new(2, 2), None)));
     /// ```
-    fn get_many<'a, I>(&self, points: I) -> impl Iterator<Item = (&'a P, Option<&D>)>
+    fn get_many<PR, I>(&self, points: I) -> impl Iterator<Item = (PR, Option<&D>)>
     where
-        I: Iterator<Item = &'a P>;
+        PR: PointOrRef<P>,
+        I: Iterator<Item = PR>;
 
     /// Get references to multiple elements at once without doing bounds checking.
     ///
@@ -261,9 +279,10 @@ where
     /// assert!(pairs.contains(&(&Point2::new(0, 1), &10)));
     /// assert!(pairs.contains(&(&Point2::new(0, 2), &12)));
     /// ```
-    unsafe fn get_many_unchecked<'a, I>(&self, points: I) -> impl Iterator<Item = (&'a P, &D)>
+    unsafe fn get_many_unchecked<PR, I>(&self, points: I) -> impl Iterator<Item = (PR, &D)>
     where
-        I: Iterator<Item = &'a P>,
+        PR: PointOrRef<P>,
+        I: Iterator<Item = PR>,
     {
         self.get_many(points).map(|(p, d)| (p, d.unwrap()))
     }
@@ -284,9 +303,10 @@ where
     /// assert_eq!(pairs.len(), 1);
     /// assert!(pairs.contains(&(&Point2::new(0, 1), &3)));
     /// ```
-    fn get_filter_many<'a, I>(&self, points: I) -> impl Iterator<Item = (&'a P, &D)>
+    fn get_filter_many<PR, I>(&self, points: I) -> impl Iterator<Item = (PR, &D)>
     where
-        I: Iterator<Item = &'a P>,
+        PR: PointOrRef<P>,
+        I: Iterator<Item = PR>,
     {
         self.get_many(points).filter_map(|(p, d)| d.map(|d| (p, d)))
     }
@@ -307,9 +327,10 @@ where
     /// assert!(pairs.contains(&(&Point2::new(0, 1), Some(&mut 3))));
     /// assert!(pairs.contains(&(&Point2::new(2, 2), None)));
     /// ```
-    fn get_many_mut<'a, I>(&mut self, points: I) -> impl Iterator<Item = (&'a P, Option<&mut D>)>
+    fn get_many_mut<PR, I>(&mut self, points: I) -> impl Iterator<Item = (PR, Option<&mut D>)>
     where
-        I: Iterator<Item = &'a P>;
+        PR: PointOrRef<P>,
+        I: Iterator<Item = PR>;
 
     /// Get mutable references to multiple elements at once without doing bounds checking.
     ///
@@ -335,12 +356,13 @@ where
     /// assert!(pairs.contains(&(&Point2::new(0, 1), &mut 10)));
     /// assert!(pairs.contains(&(&Point2::new(0, 2), &mut 12)));
     /// ```
-    unsafe fn get_many_unchecked_mut<'a, I>(
+    unsafe fn get_many_unchecked_mut<PR, I>(
         &mut self,
         points: I,
-    ) -> impl Iterator<Item = (&'a P, &mut D)>
+    ) -> impl Iterator<Item = (PR, &mut D)>
     where
-        I: Iterator<Item = &'a P>;
+        PR: PointOrRef<P>,
+        I: Iterator<Item = PR>;
 
     /// Get mutable references to multiple elements at once, dropping any points that aren't in the
     /// collection.
@@ -358,9 +380,10 @@ where
     /// assert_eq!(pairs.len(), 1);
     /// assert!(pairs.contains(&(&Point2::new(0, 1), &mut 3)));
     /// ```
-    fn get_filter_many_mut<'a, I>(&mut self, points: I) -> impl Iterator<Item = (&'a P, &mut D)>
+    fn get_filter_many_mut<PR, I>(&mut self, points: I) -> impl Iterator<Item = (PR, &mut D)>
     where
-        I: Iterator<Item = &'a P>,
+        PR: PointOrRef<P>,
+        I: Iterator<Item = PR>,
     {
         self.get_many_mut(points)
             .filter_map(|(p, d)| d.map(|d| (p, d)))

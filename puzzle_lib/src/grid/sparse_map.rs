@@ -10,7 +10,10 @@ use itertools::Itertools;
 use super::{
     PointBoundaries, PointCollection, PointCollectionInsertResult, PointDataCollection, PointType,
 };
-use crate::{grid::internal::PointBoundariesImpl, point::Point2};
+use crate::{
+    grid::internal::{PointBoundariesImpl, PointOrRef},
+    point::Point2,
+};
 
 /// A collection of 2-dimensional points with associated data.
 ///
@@ -85,22 +88,21 @@ where
         self.cells.get_mut(point)
     }
 
-    fn get_many<'a, I>(&self, points: I) -> impl Iterator<Item = (&'a Point2<PT>, Option<&D>)>
+    fn get_many<PR, I>(&self, points: I) -> impl Iterator<Item = (PR, Option<&D>)>
     where
-        I: Iterator<Item = &'a Point2<PT>>,
+        PR: PointOrRef<Point2<PT>>,
+        I: Iterator<Item = PR>,
     {
-        points.map(|point| (point, self.cells.get(point)))
+        points.map(|point| (point, self.cells.get(point.resolve_ref())))
     }
 
-    fn get_many_mut<'a, I>(
-        &mut self,
-        points: I,
-    ) -> impl Iterator<Item = (&'a Point2<PT>, Option<&mut D>)>
+    fn get_many_mut<PR, I>(&mut self, points: I) -> impl Iterator<Item = (PR, Option<&mut D>)>
     where
-        I: Iterator<Item = &'a Point2<PT>>,
+        PR: PointOrRef<Point2<PT>>,
+        I: Iterator<Item = PR>,
     {
         points.unique().map(|point| {
-            let value = self.cells.get_mut(point).map(|data| {
+            let value = self.cells.get_mut(point.resolve_ref()).map(|data| {
                 let ptr = data as *mut _;
                 unsafe { &mut *ptr }
             });
@@ -108,15 +110,16 @@ where
         })
     }
 
-    unsafe fn get_many_unchecked_mut<'a, I>(
+    unsafe fn get_many_unchecked_mut<PR, I>(
         &mut self,
         points: I,
-    ) -> impl Iterator<Item = (&'a Point2<PT>, &mut D)>
+    ) -> impl Iterator<Item = (PR, &mut D)>
     where
-        I: Iterator<Item = &'a Point2<PT>>,
+        PR: PointOrRef<Point2<PT>>,
+        I: Iterator<Item = PR>,
     {
         points.map(|point| unsafe {
-            let value = self.cells.get_mut(point).unwrap_unchecked();
+            let value = self.cells.get_mut(point.resolve_ref()).unwrap_unchecked();
             let ptr = value as *mut _;
             (point, &mut *ptr)
         })
@@ -234,36 +237,33 @@ where
     unsafe fn get_unchecked(&self, point: &Point2<PT>) -> &D;
     fn get_mut(&mut self, point: &Point2<PT>) -> Option<&mut D>;
     unsafe fn get_unchecked_mut(&mut self, point: &Point2<PT>) -> &mut D;
-    fn get_many<'a, I>(&self, points: I) -> impl Iterator<Item = (&'a Point2<PT>, Option<&D>)>
+    fn get_many<PR, I>(&self, points: I) -> impl Iterator<Item = (PR, Option<&D>)>
     where
-        I: Iterator<Item = &'a Point2<PT>>;
-    unsafe fn get_many_unchecked<'a, I>(
-        &self,
-        points: I,
-    ) -> impl Iterator<Item = (&'a Point2<PT>, &D)>
+        PR: PointOrRef<Point2<PT>>,
+        I: Iterator<Item = PR>;
+    unsafe fn get_many_unchecked<PR, I>(&self, points: I) -> impl Iterator<Item = (PR, &D)>
     where
-        I: Iterator<Item = &'a Point2<PT>>;
-    fn get_filter_many<'a, I>(&self, points: I) -> impl Iterator<Item = (&'a Point2<PT>, &D)>
+        PR: PointOrRef<Point2<PT>>,
+        I: Iterator<Item = PR>;
+    fn get_filter_many<PR, I>(&self, points: I) -> impl Iterator<Item = (PR, &D)>
     where
-        I: Iterator<Item = &'a Point2<PT>>;
-    fn get_many_mut<'a, I>(
+        PR: PointOrRef<Point2<PT>>,
+        I: Iterator<Item = PR>;
+    fn get_many_mut<PR, I>(&mut self, points: I) -> impl Iterator<Item = (PR, Option<&mut D>)>
+    where
+        PR: PointOrRef<Point2<PT>>,
+        I: Iterator<Item = PR>;
+    unsafe fn get_many_unchecked_mut<PR, I>(
         &mut self,
         points: I,
-    ) -> impl Iterator<Item = (&'a Point2<PT>, Option<&mut D>)>
+    ) -> impl Iterator<Item = (PR, &mut D)>
     where
-        I: Iterator<Item = &'a Point2<PT>>;
-    unsafe fn get_many_unchecked_mut<'a, I>(
-        &mut self,
-        points: I,
-    ) -> impl Iterator<Item = (&'a Point2<PT>, &mut D)>
+        PR: PointOrRef<Point2<PT>>,
+        I: Iterator<Item = PR>;
+    fn get_filter_many_mut<PR, I>(&mut self, points: I) -> impl Iterator<Item = (PR, &mut D)>
     where
-        I: Iterator<Item = &'a Point2<PT>>;
-    fn get_filter_many_mut<'a, I>(
-        &mut self,
-        points: I,
-    ) -> impl Iterator<Item = (&'a Point2<PT>, &mut D)>
-    where
-        I: Iterator<Item = &'a Point2<PT>>;
+        PR: PointOrRef<Point2<PT>>,
+        I: Iterator<Item = PR>;
     fn remove(&mut self, point: &Point2<PT>) -> Option<D>;
     fn into_iter_data(self) -> impl Iterator<Item = D>;
     fn iter_data(&self) -> impl Iterator<Item = &D>;

@@ -1,7 +1,9 @@
+use std::hash::Hash;
+
 use derive_new::new;
 
 use super::{PointBoundaries, PointType};
-use crate::point::Point2;
+use crate::{grid::GridPoint, point::Point2};
 
 #[derive(Debug, Eq, PartialEq, Clone, new)]
 pub struct PointBoundariesImpl<P>(P, P);
@@ -33,6 +35,42 @@ where
             (value.0.y, value.1.y)
         };
         Self(Point2::new(x1, y1), Point2::new(x2, y2))
+    }
+}
+
+pub trait PointOrRef<P>: Copy + Eq + Hash
+where
+    P: GridPoint,
+{
+    fn resolve_val(self) -> P;
+    fn resolve_ref(&self) -> &P;
+}
+impl<P> PointOrRef<P> for P
+where
+    P: GridPoint,
+{
+    #[inline]
+    fn resolve_val(self) -> P {
+        self
+    }
+
+    #[inline]
+    fn resolve_ref(&self) -> &P {
+        self
+    }
+}
+impl<P> PointOrRef<P> for &P
+where
+    P: GridPoint,
+{
+    #[inline]
+    fn resolve_val(self) -> P {
+        *self
+    }
+
+    #[inline]
+    fn resolve_ref(&self) -> &P {
+        self
     }
 }
 
@@ -98,5 +136,16 @@ mod tests {
             PointBoundariesImpl::from((&Point2::new(5, -5), &Point2::new(-10, 10))),
             boundaries,
         );
+    }
+
+    #[test]
+    fn point_or_ref() {
+        let value = Point2::new(2, 4);
+        assert_eq!(value.resolve_val(), value);
+        assert_eq!(value.resolve_ref(), &value);
+
+        let reference = &value;
+        assert_eq!(reference.resolve_val(), value);
+        assert_eq!(reference.resolve_ref(), &value);
     }
 }
