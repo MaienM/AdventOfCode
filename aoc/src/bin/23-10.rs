@@ -72,16 +72,16 @@ fn extract_start(map: &mut [Vec<Tile>]) -> Point {
         .collect();
 
     map[start.y][start.x] = {
-        if connections.contains(&start.wrapping_add_direction(Direction::North)) {
-            if connections.contains(&start.wrapping_add_direction(Direction::West)) {
+        if connections.contains(&start.wrapping_add_direction2(Direction::North)) {
+            if connections.contains(&start.wrapping_add_direction2(Direction::West)) {
                 Tile::NorthWest
-            } else if connections.contains(&start.wrapping_add_direction(Direction::East)) {
+            } else if connections.contains(&start.wrapping_add_direction2(Direction::East)) {
                 Tile::NorthEast
             } else {
                 Tile::Vertical
             }
-        } else if connections.contains(&start.wrapping_add_direction(Direction::South)) {
-            if connections.contains(&start.wrapping_add_direction(Direction::West)) {
+        } else if connections.contains(&start.wrapping_add_direction2(Direction::South)) {
+            if connections.contains(&start.wrapping_add_direction2(Direction::West)) {
                 Tile::SouthWest
             } else {
                 Tile::SouthEast

@@ -19,7 +19,7 @@ fn for_line_until(
 ) {
     let mut current = start;
     loop {
-        let Some(next) = current.checked_add_direction(direction) else {
+        let Some(next) = current.checked_add_direction2(direction) else {
             return;
         };
         current = next;
