@@ -9,7 +9,7 @@ use std::{
 
 use derive_new::new;
 use num::traits::{
-    CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, SaturatingAdd, SaturatingMul,
+    CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Num, One, SaturatingAdd, SaturatingMul,
     SaturatingSub, WrappingAdd, WrappingMul, WrappingSub,
 };
 
@@ -94,6 +94,36 @@ macro_rules! impl_point_operator {
                     Self {
                         $($var: self.$var.[<wrapping_ $op>](&rhs.$var)),+
                     }
+                }
+            }
+
+            // Regular with scalar value.
+            impl<T, R> [<$op:camel>]<R> for $name<T>
+            where
+                T: [<$op:camel>]<R>,
+                <T as [<$op:camel>]<R>>::Output: Into<T>,
+                R: Num + Copy,
+            {
+                type Output = Self;
+                #[inline]
+                fn [<$op>](self, rhs: R) -> Self {
+                    Self {
+                        $($var: self.$var.[<$op>](rhs).into()),+
+                    }
+                }
+            }
+            // Assign with scalar value.
+            impl<T, R> [<$op:camel Assign>]<R> for $name<T>
+            where
+                T: [<$op:camel>]<R> + Copy,
+                <T as [<$op:camel>]<R>>::Output: Into<T>,
+                R: Num + Copy,
+            {
+                #[inline]
+                fn [<$op _assign>](&mut self, rhs: R) {
+                    *self = Self {
+                        $($var: self.$var.[<$op>](rhs).into()),+
+                    };
                 }
             }
         }
@@ -1537,5 +1567,73 @@ mod tests {
             Point3::<u8>::new(10, 5, 7).wrapping_sub_direction_magnitude(Direction3::Down * 255),
             Point3::new(10, 5, 6)
         );
+    }
+
+    #[test]
+    fn add_scalar() {
+        assert_eq!(Point2::new(10, 5) + 3, Point2::new(13, 8));
+        assert_eq!(Point3::new(10, 5, 7) + 4, Point3::new(14, 9, 11));
+    }
+
+    #[test]
+    fn add_assign_scalar() {
+        let mut point = Point2::new(10, 5);
+        point += 3;
+        assert_eq!(point, Point2::new(13, 8));
+
+        let mut point = Point3::new(10, 5, 7);
+        point += 4;
+        assert_eq!(point, Point3::new(14, 9, 11));
+    }
+
+    #[test]
+    fn sub_scalar() {
+        assert_eq!(Point2::new(10, 5) - 3, Point2::new(7, 2));
+        assert_eq!(Point3::new(10, 5, 7) - 4, Point3::new(6, 1, 3));
+    }
+
+    #[test]
+    fn sub_assign_scalar() {
+        let mut point = Point2::new(10, 5);
+        point -= 3;
+        assert_eq!(point, Point2::new(7, 2));
+
+        let mut point = Point3::new(10, 5, 7);
+        point -= 4;
+        assert_eq!(point, Point3::new(6, 1, 3));
+    }
+
+    #[test]
+    fn mul_scalar() {
+        assert_eq!(Point2::new(10, 5) * 3, Point2::new(30, 15));
+        assert_eq!(Point3::new(10, 5, 7) * 4, Point3::new(40, 20, 28));
+    }
+
+    #[test]
+    fn mul_assign_scalar() {
+        let mut point = Point2::new(10, 5);
+        point *= 3;
+        assert_eq!(point, Point2::new(30, 15));
+
+        let mut point = Point3::new(10, 5, 7);
+        point *= 4;
+        assert_eq!(point, Point3::new(40, 20, 28));
+    }
+
+    #[test]
+    fn div_scalar() {
+        assert_eq!(Point2::new(20, 15) / 3, Point2::new(6, 5));
+        assert_eq!(Point3::new(20, 15, 28) / 4, Point3::new(5, 3, 7));
+    }
+
+    #[test]
+    fn div_assign_scalar() {
+        let mut point = Point2::new(20, 15);
+        point /= 3;
+        assert_eq!(point, Point2::new(6, 5));
+
+        let mut point = Point3::new(20, 15, 28);
+        point /= 4;
+        assert_eq!(point, Point3::new(5, 3, 7));
     }
 }
