@@ -19,7 +19,7 @@ use crate::{
 ///
 /// This is efficient if only a small portion of the covered region is actually used. If a
 /// substantial portion of it is used a [`crate::grid::FullGrid`] is probably more efficient.
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct SparsePointMap<PT, D>
 where
     PT: PointType + 'static,
