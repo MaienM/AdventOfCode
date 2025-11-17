@@ -180,7 +180,7 @@ where
 
     /// Get a reference to an element without doing bounds checking.
     ///
-    /// For a safe alternative see [`get`].
+    /// For a safe alternative see [`Self::get`].
     ///
     /// # Safety
     ///
@@ -215,7 +215,7 @@ where
 
     /// Get a mutable reference to an element without doing bounds checking.
     ///
-    /// For a safe alternative see [`get_mut`].
+    /// For a safe alternative see [`Self::get_mut`].
     ///
     /// # Safety
     ///
@@ -259,7 +259,7 @@ where
     ///
     /// The resulting iterator may be in a different order.
     ///
-    /// For a safe alternative see [`get_many`].
+    /// For a safe alternative see [`Self::get_many`].
     ///
     /// # Safety
     ///
@@ -336,7 +336,7 @@ where
     ///
     /// The resulting iterator may be in a different order.
     ///
-    /// For a safe alternative see [`get_many_mut`].
+    /// For a safe alternative see [`Self::get_many_mut`].
     ///
     /// # Safety
     ///

@@ -12,7 +12,7 @@ use crate::point::Point2;
 /// A collection of 2-dimensional points.
 ///
 /// This is efficient if only a small portion of the covered region is actually used. If a
-/// substantial portion of it is used a [`FullGrid`] is probably more efficient.
+/// substantial portion of it is used a [`crate::grid::FullGrid`] is probably more efficient.
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct SparsePointSet<PT>
 where
@@ -91,7 +91,7 @@ where
 /// A collection of 2-dimensional points within specified boundaries.
 ///
 /// This is efficient if only a small portion of the covered region is actually used. If a
-/// substantial portion of it is used a [`FullGrid`] is probably more efficient.
+/// substantial portion of it is used a [`crate::grid::FullGrid`] is probably more efficient.
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct BoundedSparsePointSet<PT>
 where

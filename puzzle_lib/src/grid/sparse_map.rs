@@ -18,7 +18,7 @@ use crate::{
 /// A collection of 2-dimensional points with associated data.
 ///
 /// This is efficient if only a small portion of the covered region is actually used. If a
-/// substantial portion of it is used a [`FullGrid`] is probably more efficient.
+/// substantial portion of it is used a [`crate::grid::FullGrid`] is probably more efficient.
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct SparsePointMap<PT, D>
 where
@@ -184,7 +184,7 @@ where
 /// A collection of 2-dimensional points within specified boundaries, with associated data.
 ///
 /// This is efficient if only a small portion of the covered region is actually used. If a
-/// substantial portion of it is used a [`FullGrid`] is probably more efficient.
+/// substantial portion of it is used a [`crate::grid::FullGrid`] is probably more efficient.
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct BoundedSparsePointMap<PT, D>
 where
