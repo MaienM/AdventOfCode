@@ -76,6 +76,13 @@ where
         self.cells.get_mut(&point).expect("no entry found for key")
     }
 }
+#[inherit_methods(from = "self.cells")]
+impl<PT, D> Extend<(Point2<PT>, D)> for SparsePointMap<PT, D>
+where
+    PT: PointType + 'static,
+{
+    fn extend<T: IntoIterator<Item = (Point2<PT>, D)>>(&mut self, iter: T);
+}
 impl<PT, D: 'static> PointDataCollection<Point2<PT>, D> for SparsePointMap<PT, D>
 where
     PT: PointType + 'static,
@@ -217,6 +224,13 @@ where
     PT: PointType + 'static,
 {
     fn index_mut(&mut self, index: Point2<PT>) -> &mut Self::Output;
+}
+#[inherit_methods(from = "self.grid")]
+impl<PT, D> Extend<(Point2<PT>, D)> for BoundedSparsePointMap<PT, D>
+where
+    PT: PointType + 'static,
+{
+    fn extend<T: IntoIterator<Item = (Point2<PT>, D)>>(&mut self, iter: T);
 }
 #[inherit_methods(from = "self.grid")]
 impl<PT, D> PointDataCollection<Point2<PT>, D> for BoundedSparsePointMap<PT, D>

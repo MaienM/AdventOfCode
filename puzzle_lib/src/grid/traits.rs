@@ -119,7 +119,7 @@ where
 /// A collection of points without associated data.
 pub trait PointOnlyCollection<P>
 where
-    Self: PointCollection<P>,
+    Self: PointCollection<P> + Extend<P>,
     P: GridPoint + 'static,
 {
     /// Add a point to the collection.
@@ -160,7 +160,7 @@ where
 /// A collection of points with associated data.
 pub trait PointDataCollection<P, D>
 where
-    Self: PointCollection<P> + Index<P> + IndexMut<P>,
+    Self: PointCollection<P> + Index<P> + IndexMut<P> + Extend<(P, D)>,
     P: GridPoint + 'static,
     D: 'static,
 {

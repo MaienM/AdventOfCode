@@ -20,6 +20,13 @@ where
 {
     points: HashSet<Point2<PT>>,
 }
+#[inherit_methods(from = "self.points")]
+impl<PT> Extend<Point2<PT>> for SparsePointSet<PT>
+where
+    PT: PointType + 'static,
+{
+    fn extend<T: IntoIterator<Item = Point2<PT>>>(&mut self, iter: T);
+}
 impl<PT> PointCollection<Point2<PT>> for SparsePointSet<PT>
 where
     PT: PointType + 'static,
@@ -99,6 +106,13 @@ where
 {
     grid: SparsePointSet<PT>,
     boundaries: PointBoundariesImpl<Point2<PT>>,
+}
+#[inherit_methods(from = "self.grid")]
+impl<PT> Extend<Point2<PT>> for BoundedSparsePointSet<PT>
+where
+    PT: PointType + 'static,
+{
+    fn extend<T: IntoIterator<Item = Point2<PT>>>(&mut self, iter: T);
 }
 #[inherit_methods(from = "self.grid")]
 impl<PT> PointCollection<Point2<PT>> for BoundedSparsePointSet<PT>

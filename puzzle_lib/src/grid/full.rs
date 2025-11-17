@@ -70,6 +70,17 @@ impl<D> PointCollection<Point2<usize>> for FullGrid<D> {
         (Point2::new(0, 0), Point2::new(self.width, self.height))
     }
 }
+
+impl<D> Extend<(Point2<usize>, D)> for FullGrid<D>
+where
+    D: 'static,
+{
+    fn extend<T: IntoIterator<Item = (Point2<usize>, D)>>(&mut self, iter: T) {
+        for (point, data) in iter {
+            self.insert(point, data);
+        }
+    }
+}
 impl<D> Index<Point2<usize>> for FullGrid<D> {
     type Output = D;
 
@@ -550,6 +561,13 @@ mod tests {
                 hasher.finish()
             },
         );
+    }
+
+    #[test]
+    fn extend() {
+        let mut grid: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
+        grid.extend([(Point2::new(1, 1), 9)]);
+        assert_eq!(grid[Point2::new(1, 1)], 9);
     }
 
     #[test]
