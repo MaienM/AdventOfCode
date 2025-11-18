@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     fmt::Debug,
-    ops::{Index, IndexMut},
+    ops::{Index, IndexMut, RangeBounds},
 };
 
 use inherit_methods_macro::inherit_methods;
@@ -11,8 +11,8 @@ use super::{
     PointBoundaries, PointCollection, PointCollectionInsertResult, PointDataCollection, PointType,
 };
 use crate::{
-    grid::internal::{PointBoundariesImpl, PointOrRef},
-    point::Point2,
+    grid::internal::PointOrRef,
+    point::{Point2, Point2Range, PointRange},
 };
 
 /// A collection of 2-dimensional points with associated data.
@@ -193,17 +193,19 @@ where
 /// This is efficient if only a small portion of the covered region is actually used. If a
 /// substantial portion of it is used a [`crate::grid::FullGrid`] is probably more efficient.
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct BoundedSparsePointMap<PT, D>
+pub struct BoundedSparsePointMap<PT, D, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     grid: SparsePointMap<PT, D>,
-    boundaries: PointBoundariesImpl<Point2<PT>>,
+    boundaries: R,
 }
 #[inherit_methods(from = "self.grid")]
-impl<PT, D> PointCollection<Point2<PT>> for BoundedSparsePointMap<PT, D>
+impl<PT, D, R> PointCollection<Point2<PT>> for BoundedSparsePointMap<PT, D, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     fn contains_point(&self, point: &Point2<PT>) -> bool;
     fn into_iter_points(self) -> impl Iterator<Item = Point2<PT>>;
@@ -211,35 +213,39 @@ where
     fn area(&self) -> (Point2<PT>, Point2<PT>);
 }
 #[inherit_methods(from = "self.grid")]
-impl<PT, D> Index<Point2<PT>> for BoundedSparsePointMap<PT, D>
+impl<PT, D, R> Index<Point2<PT>> for BoundedSparsePointMap<PT, D, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     type Output = D;
     fn index(&self, index: Point2<PT>) -> &Self::Output;
 }
 #[inherit_methods(from = "self.grid")]
-impl<PT, D> IndexMut<Point2<PT>> for BoundedSparsePointMap<PT, D>
+impl<PT, D, R> IndexMut<Point2<PT>> for BoundedSparsePointMap<PT, D, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     fn index_mut(&mut self, index: Point2<PT>) -> &mut Self::Output;
 }
 #[inherit_methods(from = "self.grid")]
-impl<PT, D> Extend<(Point2<PT>, D)> for BoundedSparsePointMap<PT, D>
+impl<PT, D, R> Extend<(Point2<PT>, D)> for BoundedSparsePointMap<PT, D, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     fn extend<T: IntoIterator<Item = (Point2<PT>, D)>>(&mut self, iter: T);
 }
 #[inherit_methods(from = "self.grid")]
-impl<PT, D> PointDataCollection<Point2<PT>, D> for BoundedSparsePointMap<PT, D>
+impl<PT, D, R> PointDataCollection<Point2<PT>, D> for BoundedSparsePointMap<PT, D, R>
 where
-    D: 'static,
     PT: PointType + 'static,
+    D: 'static,
+    R: PointRange<Point2<PT>>,
 {
     fn insert(&mut self, point: Point2<PT>, data: D) -> PointCollectionInsertResult<D> {
-        if self.in_boundaries(&point) {
+        if self.boundaries.contains(&point) {
             self.grid.insert(point, data)
         } else {
             println!("Point {point:?} is out of bounds {:?}", self.boundaries);
@@ -286,41 +292,42 @@ where
     fn iter_pairs(&self) -> impl Iterator<Item = (&Point2<PT>, &D)>;
     fn iter_mut_pairs(&mut self) -> impl Iterator<Item = (&Point2<PT>, &mut D)>;
 }
-#[inherit_methods(from = "self.boundaries")]
-impl<PT, D> PointBoundaries<Point2<PT>> for BoundedSparsePointMap<PT, D>
+impl<PT, D, R> PointBoundaries<Point2<PT>, R> for BoundedSparsePointMap<PT, D, R>
 where
     PT: PointType,
+    R: PointRange<Point2<PT>>,
 {
-    fn boundaries(&self) -> (&Point2<PT>, &Point2<PT>);
-    fn in_boundaries(&self, point: &Point2<PT>) -> bool;
+    fn boundaries(&self) -> &R {
+        &self.boundaries
+    }
 }
 
 // Add boundaries to unbound map or redefine boundaries of bound map.
-#[inherit_methods(from = "self.grid")]
-impl<PT, D> BoundedSparsePointMap<PT, D>
+impl<PT, D, R> BoundedSparsePointMap<PT, D, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     /// Change the boundaries.
     ///
     /// # Errors
     ///
     /// Will return `Err` if any of the points are outside the new boundaries.
-    #[allow(private_bounds)]
-    pub fn set_boundaries<B>(&mut self, boundaries: B) -> Result<(), String>
+    pub fn with_boundaries<RX, RY>(
+        self,
+        boundaries: Point2Range<RX, RY>,
+    ) -> Result<BoundedSparsePointMap<PT, D, Point2Range<RX, RY>>, String>
     where
-        B: Into<PointBoundariesImpl<Point2<PT>>>,
+        RX: RangeBounds<PT> + Debug,
+        RY: RangeBounds<PT> + Debug,
     {
-        let boundaries: PointBoundariesImpl<_> = boundaries.into();
-        if let Some(invalid) = self
-            .grid
-            .iter_points()
-            .find(|p| !boundaries.in_boundaries(p))
-        {
+        if let Some(invalid) = self.grid.iter_points().find(|p| !boundaries.contains(p)) {
             Err(format!("{invalid:?} not within in bounds {boundaries:?}"))
         } else {
-            self.boundaries = boundaries;
-            Ok(())
+            Ok(BoundedSparsePointMap {
+                grid: self.grid,
+                boundaries,
+            })
         }
     }
 }
@@ -333,21 +340,19 @@ where
     /// # Errors
     ///
     /// Will return `Err` if any of the points are outside the boundaries.
-    #[allow(private_bounds)]
-    pub fn with_boundaries<B>(self, boundaries: B) -> Result<BoundedSparsePointMap<PT, D>, String>
+    pub fn with_boundaries<RX, RY>(
+        self,
+        boundaries: Point2Range<RX, RY>,
+    ) -> Result<BoundedSparsePointMap<PT, D, Point2Range<RX, RY>>, String>
     where
-        B: Into<PointBoundariesImpl<Point2<PT>>>,
+        RX: RangeBounds<PT> + Debug,
+        RY: RangeBounds<PT> + Debug,
     {
-        let mut bounded = BoundedSparsePointMap {
+        let bounded = BoundedSparsePointMap {
             grid: self,
-            boundaries: (
-                &Point2::new(PT::zero(), PT::zero()),
-                &Point2::new(PT::zero(), PT::zero()),
-            )
-                .into(),
+            boundaries: Point2Range::from(..),
         };
-        bounded.set_boundaries(boundaries)?;
-        Ok(bounded)
+        bounded.with_boundaries(boundaries)
     }
 }
 
@@ -502,30 +507,45 @@ mod tests {
             .collect();
         assert!(
             grid.clone()
-                .with_boundaries((&Point2::new(0, 0), &Point2::new(3, 3)))
+                .with_boundaries((Point2::new(0, 0)..=Point2::new(3, 3)).into())
                 .is_ok()
         );
         assert!(
-            grid.with_boundaries((&Point2::new(0, 0), &Point2::new(2, 2)))
+            grid.with_boundaries((Point2::new(0, 0)..Point2::new(3, 3)).into())
                 .is_err()
         );
     }
 
     #[test]
-    fn bounded_map_boundaries() {
+    fn bounded_with_boundaries() {
         let grid: SparsePointMap<_, _> = [(Point2::new(1, 2), 4), (Point2::new(2, 3), 6)]
             .into_iter()
             .collect();
-        let mut grid = grid
-            .with_boundaries((&Point2::new(0, 0), &Point2::new(3, 3)))
+        let grid = grid
+            .with_boundaries((Point2::new(0, 0)..=Point2::new(3, 3)).into())
             .unwrap();
         assert!(
-            grid.set_boundaries((&Point2::new(0, 0), &Point2::new(6, 6)))
+            grid.clone()
+                .with_boundaries((Point2::new(0, 0)..Point2::new(6, 6)).into())
                 .is_ok()
         );
         assert!(
-            grid.set_boundaries((&Point2::new(0, 0), &Point2::new(2, 2)))
+            grid.with_boundaries((Point2::new(0, 0)..Point2::new(2, 2)).into())
                 .is_err()
+        );
+    }
+
+    #[test]
+    fn boundaries() {
+        let grid: SparsePointMap<_, _> = [(Point2::new(1, 2), 4), (Point2::new(2, 3), 6)]
+            .into_iter()
+            .collect();
+        let grid = grid
+            .with_boundaries((Point2::new(0, 0)..=Point2::new(3, 3)).into())
+            .unwrap();
+        assert_eq!(
+            grid.boundaries(),
+            &(Point2::new(0, 0)..=Point2::new(3, 3)).into()
         );
     }
 }

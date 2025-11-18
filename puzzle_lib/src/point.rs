@@ -4,7 +4,10 @@ use std::{
     collections::HashSet,
     fmt::Debug,
     hash::Hash,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
+    ops::{
+        Add, AddAssign, Div, DivAssign, Mul, MulAssign, Range, RangeBounds, RangeFrom, RangeFull,
+        RangeInclusive, RangeTo, RangeToInclusive, Sub, SubAssign,
+    },
 };
 
 use derive_new::new;
@@ -28,6 +31,19 @@ trait WrappingDiv {
 //
 // Point.
 //
+
+pub trait PointRange<P>: Debug {
+    /// Returns `true` if `point` is contained in the range.
+    ///
+    /// # Examples.
+    /// ```
+    /// # use puzzle_lib::point::{Point2,Point2Range,PointRange};
+    /// let range: Point2Range<_, _> = (Point2::new(1, 2)..Point2::new(4, 5)).into();
+    /// assert!(range.contains(&Point2::new(1, 3)));
+    /// assert!(!range.contains(&Point2::new(4, 3)));
+    /// ```
+    fn contains(&self, point: &P) -> bool;
+}
 
 // Implements an operator (add/sub/mul/div) for a point type, including the assign, checked, saturating, and wrapping variants.
 macro_rules! impl_point_operator {
@@ -169,6 +185,17 @@ macro_rules! call_chain {
     };
 }
 
+macro_rules! and_chain {
+    ($expr:expr $(,)?) => ($expr);
+    ($expr:expr, $($exprs:expr),* $(,)?) => ($expr && and_chain!($($exprs),*));
+}
+
+macro_rules! expand_static {
+    ($ignore:tt, $use:ty) => {
+        $use
+    };
+}
+
 // Generate a point class with the given name and variables.
 macro_rules! create_point {
     (
@@ -203,7 +230,7 @@ macro_rules! create_point {
             ///
             /// # Examples.
             /// ```
-            /// # use puzzle_lib::point::Point;
+            /// # use puzzle_lib::point::Point2;
             /// let point = Point2::new(1u8, 1);
             /// assert_eq!(point.cast(), Point2::new(1u16, 1));
             /// ```
@@ -220,7 +247,7 @@ macro_rules! create_point {
             ///
             /// # Examples.
             /// ```
-            /// # use puzzle_lib::point::Point;
+            /// # use puzzle_lib::point::Point2;
             /// let point = Point2::new(-1i8, 1);
             /// assert_eq!(point.try_cast(), Ok(Point2::new(-1i16, 1)));
             /// assert!(point.try_cast::<u8>().is_err());
@@ -318,6 +345,74 @@ macro_rules! create_point {
                 let mut neighbours = HashSet::new();
                 impl_neighbor_diag_inner!(neighbours, *self, $($var),+);
                 neighbours
+            }
+        }
+
+        paste::paste! {
+            #[doc = "A range of [`crate::point::" $name "`]."]
+            #[allow(clippy::redundant_field_names)]
+            #[derive(Debug, Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd, new)]
+            pub struct [<$name Range>]<$([<R $var:upper>]),+> {
+                $(
+                    pub $var: [<R $var:upper>]
+                ),+
+            }
+            impl<T, $([<R $var:upper>]),+> PointRange<$name<T>> for [<$name Range>]<$([<R $var:upper>]),+>
+            where
+                T: PartialOrd<T>,
+                $([<R $var:upper>]: RangeBounds<T> + Debug),+
+            {
+                fn contains(&self, point: &$name<T>) -> bool {
+                    and_chain!($(self.$var.contains(&point.$var)),+)
+                }
+            }
+
+            impl<T> From<Range<$name<T>>> for [<$name Range>]<$(expand_static!($var, Range<T>)),+> {
+                fn from(range: Range<$name<T>>) -> Self {
+                    Self {
+                        $($var: (range.start.$var)..(range.end.$var)),+
+                    }
+                }
+            }
+            impl<T> From<RangeInclusive<$name<T>>> for [<$name Range>]<$(expand_static!($var, RangeInclusive<T>)),+>
+            where
+                T: Copy,
+            {
+                fn from(range: RangeInclusive<$name<T>>) -> Self {
+                    let start = range.start();
+                    let end = range.end();
+                    Self {
+                        $($var: (start.$var)..=(end.$var)),+
+                    }
+                }
+            }
+            impl<T> From<RangeFrom<$name<T>>> for [<$name Range>]<$(expand_static!($var, RangeFrom<T>)),+> {
+                fn from(range: RangeFrom<$name<T>>) -> Self {
+                    Self {
+                        $($var: (range.start.$var)..),+
+                    }
+                }
+            }
+            impl<T> From<RangeTo<$name<T>>> for [<$name Range>]<$(expand_static!($var, RangeTo<T>)),+> {
+                fn from(range: RangeTo<$name<T>>) -> Self {
+                    Self {
+                        $($var: ..(range.end.$var)),+
+                    }
+                }
+            }
+            impl<T> From<RangeToInclusive<$name<T>>> for [<$name Range>]<$(expand_static!($var, RangeToInclusive<T>)),+> {
+                fn from(range: RangeToInclusive<$name<T>>) -> Self {
+                    Self {
+                        $($var: ..=(range.end.$var)),+
+                    }
+                }
+            }
+            impl From<RangeFull> for [<$name Range>]<$(expand_static!($var, RangeFull)),+> {
+                fn from(_: RangeFull) -> Self {
+                    Self {
+                        $($var: ..),+
+                    }
+                }
             }
         }
     };
@@ -1670,5 +1765,50 @@ mod tests {
         let mut point = Point3::new(20, 15, 28);
         point /= 4;
         assert_eq!(point, Point3::new(5, 3, 7));
+    }
+
+    #[test]
+    fn range() {
+        let range: Point2Range<_, _> = (Point2::new(1, 1)..Point2::new(5, 5)).into();
+        assert!(!range.contains(&Point2::new(0, 0)));
+        assert!(range.contains(&Point2::new(2, 1)));
+        assert!(!range.contains(&Point2::new(5, 2)));
+        assert!(!range.contains(&Point2::new(6, 3)));
+    }
+
+    #[test]
+    fn range_inclusive() {
+        let range: Point2Range<_, _> = (Point2::new(1, 1)..=Point2::new(5, 5)).into();
+        assert!(!range.contains(&Point2::new(0, 0)));
+        assert!(range.contains(&Point2::new(2, 1)));
+        assert!(range.contains(&Point2::new(5, 2)));
+        assert!(!range.contains(&Point2::new(6, 3)));
+    }
+
+    #[test]
+    fn range_from() {
+        let range: Point2Range<_, _> = (Point2::new(1, 1)..).into();
+        assert!(!range.contains(&Point2::new(0, 0)));
+        assert!(range.contains(&Point2::new(2, 1)));
+        assert!(range.contains(&Point2::new(5, 2)));
+        assert!(range.contains(&Point2::new(6, 3)));
+    }
+
+    #[test]
+    fn range_to() {
+        let range: Point2Range<_, _> = (..Point2::new(5, 5)).into();
+        assert!(range.contains(&Point2::new(0, 0)));
+        assert!(range.contains(&Point2::new(2, 1)));
+        assert!(!range.contains(&Point2::new(5, 2)));
+        assert!(!range.contains(&Point2::new(6, 3)));
+    }
+
+    #[test]
+    fn range_to_inclusive() {
+        let range: Point2Range<_, _> = (..=Point2::new(5, 5)).into();
+        assert!(range.contains(&Point2::new(0, 0)));
+        assert!(range.contains(&Point2::new(2, 1)));
+        assert!(range.contains(&Point2::new(5, 2)));
+        assert!(!range.contains(&Point2::new(6, 3)));
     }
 }

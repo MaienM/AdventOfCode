@@ -1,13 +1,12 @@
-use std::{collections::HashSet, fmt::Debug};
+use std::{collections::HashSet, fmt::Debug, ops::RangeBounds};
 
 use inherit_methods_macro::inherit_methods;
 use itertools::Itertools;
 
 use super::{
     PointBoundaries, PointCollection, PointCollectionInsertResult, PointOnlyCollection, PointType,
-    internal::PointBoundariesImpl,
 };
-use crate::point::Point2;
+use crate::point::{Point2, Point2Range, PointRange};
 
 /// A collection of 2-dimensional points.
 ///
@@ -100,24 +99,27 @@ where
 /// This is efficient if only a small portion of the covered region is actually used. If a
 /// substantial portion of it is used a [`crate::grid::FullGrid`] is probably more efficient.
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct BoundedSparsePointSet<PT>
+pub struct BoundedSparsePointSet<PT, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     grid: SparsePointSet<PT>,
-    boundaries: PointBoundariesImpl<Point2<PT>>,
+    boundaries: R,
 }
 #[inherit_methods(from = "self.grid")]
-impl<PT> Extend<Point2<PT>> for BoundedSparsePointSet<PT>
+impl<PT, R> Extend<Point2<PT>> for BoundedSparsePointSet<PT, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     fn extend<T: IntoIterator<Item = Point2<PT>>>(&mut self, iter: T);
 }
 #[inherit_methods(from = "self.grid")]
-impl<PT> PointCollection<Point2<PT>> for BoundedSparsePointSet<PT>
+impl<PT, R> PointCollection<Point2<PT>> for BoundedSparsePointSet<PT, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     fn contains_point(&self, point: &Point2<PT>) -> bool;
     fn into_iter_points(self) -> impl Iterator<Item = Point2<PT>>;
@@ -125,12 +127,13 @@ where
     fn area(&self) -> (Point2<PT>, Point2<PT>);
 }
 #[inherit_methods(from = "self.grid")]
-impl<PT> PointOnlyCollection<Point2<PT>> for BoundedSparsePointSet<PT>
+impl<PT, R> PointOnlyCollection<Point2<PT>> for BoundedSparsePointSet<PT, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     fn insert(&mut self, point: Point2<PT>) -> PointCollectionInsertResult<()> {
-        if self.in_boundaries(&point) {
+        if self.boundaries.contains(&point) {
             self.grid.insert(point)
         } else {
             PointCollectionInsertResult::OutOfBounds
@@ -139,41 +142,43 @@ where
 
     fn remove(&mut self, point: &Point2<PT>) -> bool;
 }
-#[inherit_methods(from = "self.boundaries")]
-impl<PT> PointBoundaries<Point2<PT>> for BoundedSparsePointSet<PT>
+impl<PT, R> PointBoundaries<Point2<PT>, R> for BoundedSparsePointSet<PT, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
-    fn boundaries(&self) -> (&Point2<PT>, &Point2<PT>);
-    fn in_boundaries(&self, point: &Point2<PT>) -> bool;
+    fn boundaries(&self) -> &R {
+        &self.boundaries
+    }
 }
 
 // Add boundaries to unbound set or redefine boundaries of bound set.
 #[inherit_methods(from = "self.grid")]
-impl<PT> BoundedSparsePointSet<PT>
+impl<PT, R> BoundedSparsePointSet<PT, R>
 where
     PT: PointType + 'static,
+    R: PointRange<Point2<PT>>,
 {
     /// Change the boundaries.
     ///
     /// # Errors
     ///
     /// Will return `Err` if any of the points are outside the new boundaries.
-    #[allow(private_bounds)]
-    pub fn set_boundaries<B>(&mut self, boundaries: B) -> Result<(), String>
+    pub fn with_boundaries<RX, RY>(
+        self,
+        boundaries: Point2Range<RX, RY>,
+    ) -> Result<BoundedSparsePointSet<PT, Point2Range<RX, RY>>, String>
     where
-        B: Into<PointBoundariesImpl<Point2<PT>>>,
+        RX: RangeBounds<PT> + Debug,
+        RY: RangeBounds<PT> + Debug,
     {
-        let boundaries: PointBoundariesImpl<_> = boundaries.into();
-        if let Some(invalid) = self
-            .grid
-            .iter_points()
-            .find(|p| !boundaries.in_boundaries(p))
-        {
+        if let Some(invalid) = self.grid.iter_points().find(|p| !boundaries.contains(p)) {
             Err(format!("{invalid:?} not within in bounds {boundaries:?}"))
         } else {
-            self.boundaries = boundaries;
-            Ok(())
+            Ok(BoundedSparsePointSet {
+                grid: self.grid,
+                boundaries,
+            })
         }
     }
 }
@@ -186,21 +191,19 @@ where
     /// # Errors
     ///
     /// Will return `Err` if any of the points are outside the boundaries.
-    #[allow(private_bounds)]
-    pub fn with_boundaries<B>(self, boundaries: B) -> Result<BoundedSparsePointSet<PT>, String>
+    pub fn with_boundaries<RX, RY>(
+        self,
+        boundaries: Point2Range<RX, RY>,
+    ) -> Result<BoundedSparsePointSet<PT, Point2Range<RX, RY>>, String>
     where
-        B: Into<PointBoundariesImpl<Point2<PT>>>,
+        RX: RangeBounds<PT> + Debug,
+        RY: RangeBounds<PT> + Debug,
     {
-        let mut bounded = BoundedSparsePointSet {
+        let bounded = BoundedSparsePointSet {
             grid: self,
-            boundaries: (
-                &Point2::new(PT::zero(), PT::zero()),
-                &Point2::new(PT::zero(), PT::zero()),
-            )
-                .into(),
+            boundaries: Point2Range::from(..),
         };
-        bounded.set_boundaries(boundaries)?;
-        Ok(bounded)
+        bounded.with_boundaries(boundaries)
     }
 }
 
@@ -226,11 +229,11 @@ mod tests {
         let grid: SparsePointSet<_> = [Point2::new(1, 2), Point2::new(2, 3)].into_iter().collect();
         assert!(
             grid.clone()
-                .with_boundaries((&Point2::new(0, 0), &Point2::new(3, 3)))
+                .with_boundaries((Point2::new(0, 0)..=Point2::new(3, 3)).into())
                 .is_ok()
         );
         assert!(
-            grid.with_boundaries((&Point2::new(0, 0), &Point2::new(2, 2)))
+            grid.with_boundaries((Point2::new(0, 0)..Point2::new(2, 2)).into())
                 .is_err()
         );
     }
@@ -239,7 +242,7 @@ mod tests {
     fn bounded_insert() {
         let grid: SparsePointSet<_> = [Point2::new(1, 2), Point2::new(2, 3)].into_iter().collect();
         let mut grid = grid
-            .with_boundaries((&Point2::new(0, 0), &Point2::new(3, 3)))
+            .with_boundaries((Point2::new(0, 0)..=Point2::new(3, 3)).into())
             .unwrap();
         assert_eq!(
             grid.insert(Point2::new(3, 1)),
@@ -256,18 +259,31 @@ mod tests {
     }
 
     #[test]
-    fn bounded_set_boundaries() {
+    fn bounded_with_boundaries() {
         let grid: SparsePointSet<_> = [Point2::new(1, 2), Point2::new(2, 3)].into_iter().collect();
-        let mut grid = grid
-            .with_boundaries((&Point2::new(0, 0), &Point2::new(3, 3)))
+        let grid = grid
+            .with_boundaries((Point2::new(0, 0)..=Point2::new(3, 3)).into())
             .unwrap();
         assert!(
-            grid.set_boundaries((&Point2::new(0, 0), &Point2::new(6, 6)))
+            grid.clone()
+                .with_boundaries((Point2::new(0, 0)..Point2::new(6, 6)).into())
                 .is_ok()
         );
         assert!(
-            grid.set_boundaries((&Point2::new(0, 0), &Point2::new(2, 2)))
+            grid.with_boundaries((Point2::new(0, 0)..Point2::new(2, 2)).into())
                 .is_err()
+        );
+    }
+
+    #[test]
+    fn boundaries() {
+        let grid: SparsePointSet<_> = [Point2::new(1, 2), Point2::new(2, 3)].into_iter().collect();
+        let grid = grid
+            .with_boundaries((Point2::new(0, 0)..=Point2::new(3, 3)).into())
+            .unwrap();
+        assert_eq!(
+            grid.boundaries(),
+            &(Point2::new(0, 0)..=Point2::new(3, 3)).into()
         );
     }
 }

@@ -8,7 +8,7 @@ use num::{CheckedAdd, CheckedSub, Num};
 
 use crate::{
     grid::internal::PointOrRef,
-    point::{Point2, Point3, Point4},
+    point::{Point2, Point3, Point4, PointRange},
 };
 
 /// Trait alias for types that can be used as a point index type.
@@ -401,7 +401,7 @@ where
     /// # use puzzle_lib::grid::*;
     /// # use puzzle_lib::point::Point2;
     /// let grid: SparsePointMap<u8, u8> = [(Point2::new(0, 1), 10), (Point2::new(0, 2), 12)].into_iter().collect();
-    /// let mut grid: BoundedSparsePointMap<u8, u8> = grid.with_boundaries((&Point2::new(0, 0), &Point2::new(2, 2))).unwrap();
+    /// let mut grid: BoundedSparsePointMap<u8, u8, _> = grid.with_boundaries((Point2::new(0, 0)..=Point2::new(2, 2)).into()).unwrap();
     /// assert_eq!(grid.get(&Point2::new(2, 1)), None);
     /// assert_eq!(grid.insert(Point2::new(2, 1), 6), PointCollectionInsertResult::Inserted);
     /// assert_eq!(grid.get(&Point2::new(2, 1)), Some(&6));
@@ -545,29 +545,19 @@ where
 }
 
 /// A collection with strict boundaries in which all the points must fall.
-pub trait PointBoundaries<P> {
+pub trait PointBoundaries<P, R>
+where
+    R: PointRange<P>,
+{
     /// Get the minimum and maximum point allowed within the boundaries (both inclusive).
     ///
     /// # Examples
     ///
     /// ```
     /// # use puzzle_lib::grid::*;
-    /// # use puzzle_lib::point::Point2;
+    /// # use puzzle_lib::point::{Point2,Point2Range};
     /// let grid: FullGrid<u8> = [[1, 2], [3, 4], [5, 6]].into();
-    /// assert_eq!(grid.boundaries(), (&Point2::new(0, 0), &Point2::new(1, 2)));
+    /// assert_eq!(grid.boundaries(), &(Point2::new(0, 0)..Point2::new(2, 3)).into());
     /// ```
-    fn boundaries(&self) -> (&P, &P);
-
-    /// Check whether a point is inside the boundaries of this collection.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use puzzle_lib::grid::*;
-    /// # use puzzle_lib::point::Point2;
-    /// let grid: FullGrid<u8> = [[1, 2], [3, 4], [5, 6]].into();
-    /// assert_eq!(grid.in_boundaries(&Point2::new(0, 1)), true);
-    /// assert_eq!(grid.in_boundaries(&Point2::new(3, 1)), false);
-    /// ```
-    fn in_boundaries(&self, point: &P) -> bool;
+    fn boundaries(&self) -> &R;
 }

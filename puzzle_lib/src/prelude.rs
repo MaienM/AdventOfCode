@@ -9,4 +9,5 @@ pub use crate::parser::parse;
 pub use crate::{
     ext::*,
     grid::{PointBoundaries, PointCollection, PointDataCollection, PointOnlyCollection},
+    point::PointRange,
 };

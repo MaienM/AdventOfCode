@@ -3,18 +3,19 @@ use std::{
     hash::Hash,
     iter::IntoIterator,
     mem::{self},
-    ops::{Index, IndexMut},
+    ops::{Index, IndexMut, Range},
     sync::OnceLock,
 };
 
-use inherit_methods_macro::inherit_methods;
 use itertools::Itertools;
 
 use super::{PointBoundaries, PointCollection, PointCollectionInsertResult, PointDataCollection};
 use crate::{
-    grid::internal::{PointBoundariesImpl, PointOrRef},
-    point::Point2,
+    grid::internal::PointOrRef,
+    point::{Point2, Point2Range, PointRange},
 };
+
+type Boundaries = Point2Range<Range<usize>, Range<usize>>;
 
 /// A 2-dimensional grid with all points present & some arbitrary data stored for each point.
 #[derive(Debug, Eq, Clone)]
@@ -23,7 +24,7 @@ pub struct FullGrid<D> {
     cells: Vec<D>,
     width: usize,
     height: usize,
-    boundaries: PointBoundariesImpl<Point2<usize>>,
+    boundaries: Boundaries,
 }
 
 impl<D> PartialEq for FullGrid<D>
@@ -55,7 +56,7 @@ impl<D> FullGrid<D> {
 }
 impl<D> PointCollection<Point2<usize>> for FullGrid<D> {
     fn contains_point(&self, point: &Point2<usize>) -> bool {
-        self.boundaries.in_boundaries(point)
+        self.boundaries.contains(point)
     }
 
     fn into_iter_points(self) -> impl Iterator<Item = Point2<usize>> {
@@ -189,7 +190,7 @@ impl<D: 'static> PointDataCollection<Point2<usize>, D> for FullGrid<D> {
     }
 
     fn remove(&mut self, point: &Point2<usize>) -> Option<D> {
-        if self.in_boundaries(point) {
+        if self.boundaries.contains(point) {
             panic!("points cannot be removed from a FullGrid");
         } else {
             None
@@ -221,10 +222,10 @@ impl<D: 'static> PointDataCollection<Point2<usize>, D> for FullGrid<D> {
         self.points.get().unwrap().iter().zip(self.cells.iter_mut())
     }
 }
-#[inherit_methods(from = "self.boundaries")]
-impl<D> PointBoundaries<Point2<usize>> for FullGrid<D> {
-    fn boundaries(&self) -> (&Point2<usize>, &Point2<usize>);
-    fn in_boundaries(&self, point: &Point2<usize>) -> bool;
+impl<D> PointBoundaries<Point2<usize>, Boundaries> for FullGrid<D> {
+    fn boundaries(&self) -> &Boundaries {
+        &self.boundaries
+    }
 }
 
 // Create empty.
@@ -256,10 +257,7 @@ where
             cells,
             width,
             height,
-            boundaries: PointBoundariesImpl::new(
-                Point2::new(0, 0),
-                Point2::new(width - 1, height - 1),
-            ),
+            boundaries: (Point2::new(0, 0)..Point2::new(width, height)).into(),
         }
     }
 }
@@ -301,10 +299,7 @@ where
             cells,
             width,
             height,
-            boundaries: PointBoundariesImpl::new(
-                Point2::new(0, 0),
-                Point2::new(width - 1, height - 1),
-            ),
+            boundaries: (Point2::new(0, 0)..Point2::new(width, height)).into(),
         }
     }
 }
@@ -320,7 +315,7 @@ impl<D, const R: usize, const C: usize> From<[[D; R]; C]> for FullGrid<D> {
             cells: cells.into_iter().flatten().collect(),
             width: R,
             height: C,
-            boundaries: PointBoundariesImpl::new(Point2::new(0, 0), Point2::new(R - 1, C - 1)),
+            boundaries: (Point2::new(0, 0)..Point2::new(R, C)).into(),
         }
     }
 }
@@ -475,7 +470,7 @@ mod tests {
         assert_eq!(grid.cells, vec![1, 2, 3, 4, 5, 6]);
         assert_eq!(
             grid.boundaries,
-            PointBoundariesImpl::new(Point2::new(0, 0), Point2::new(1, 2))
+            (Point2::new(0, 0)..Point2::new(2, 3)).into()
         );
     }
 
@@ -515,7 +510,7 @@ mod tests {
         assert_eq!(grid.cells, vec![1, 2, 3, 4, 5, 6]);
         assert_eq!(
             grid.boundaries,
-            PointBoundariesImpl::new(Point2::new(0, 0), Point2::new(2, 1))
+            (Point2::new(0, 0)..Point2::new(3, 2)).into(),
         );
     }
 
@@ -535,7 +530,7 @@ mod tests {
         assert_eq!(grid.cells, vec!['1', '2', '3', '4']);
         assert_eq!(
             grid.boundaries,
-            PointBoundariesImpl::new(Point2::new(0, 0), Point2::new(1, 1))
+            (Point2::new(0, 0)..Point2::new(2, 2)).into(),
         );
     }
 
