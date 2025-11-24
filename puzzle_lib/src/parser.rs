@@ -83,9 +83,6 @@ macro_rules! __parse {
 /// - A combination of previous two (`as type with func`). This will convert to the given
 ///   type (as per above) and then call the provided function (as per above) with the result of
 ///   this conversion.
-/// - A call (`with func`). This will call the provided function with a single argument (the
-///   matched string), and it will then store the result of that call. When used on an indexed
-///   iterator the single argument will instead be a tuple (`(index: usize, matched: &str)`).
 /// - A nested parse (`with { segments } => result`). This take the matched string and feed it into
 ///   a nested call of this macro with the given segments & result mapping.
 /// - [A split operation](#split).
@@ -117,10 +114,48 @@ macro_rules! __parse {
 ///     transform it into a [`Vec`], and then it wil call [`TryInto::try_into`] to attemp to
 ///     convert it into the given type.
 /// - A transformation (optional):
-///   - Any of the base [transformations](#transformations).
-///   - `try transformation`. A base [transformation](#transformations) that's allowed to fail,
+///   - Any of the [base transformations](#transformations).
+///   - `try transformation`. A [base transformation](#transformations) that's allowed to fail,
 ///     with failing elements dropped from the resulting iterator. Only supported for typecasts and
 ///     calls.
+///   - `match`. A [match transformation](#match).
+///   - `try match`. A [match transformation](#match) which returns `Option`s, with `None` results
+///     dropped from the resulting iterator.
+///   - `try transformation match`. This combines a [base transformation](#transformations) that's
+///     allowed to fail with a [match transformation](#match). The input type for this match will
+///     be `Result`, with items that are successfully transformed by the base transformation being
+///     wrapped in`Ok` & items that failed to be transformed being wrapped in `Err`.
+///   - `try transformation try match`. A combination of the `try transformations match` form with
+///     the `try match` form, with the match input following the former and the match behaviour
+///     following the latter.
+///
+/// # Match
+///
+/// The match transformation processes the items in a collection by running them through a match
+/// statement. Just like a match statement the body is made up of match rules separated by commas.
+/// The format of these match rules is inspired by the default match statement, but doesn't quite
+/// follow it. Each match rule contains the following segments, separated by `=>`:
+///
+/// - The pattern, which functions just like in regular match arm, including binding variables with
+///   `@` and using match guards.
+/// - Instructions to save the index at which the match occurred (optional). This creates an
+///   additional variable at the same level that the variable in which the collection is stored is
+///   located. This has one of the following forms:
+///   - `index into name`. This simply stores the index in the variable with the given name. This
+///     must match exactly once per collection (i.e., this variable cannot be undefined or defined
+///     multiple times).
+///   - `try index into name`. This is like the `index into name` form, but the variable becomes an
+///     [`Option`] and it is allowed to match 0 times (but still not multiple times).
+///   - `indexes into name`. This is like the `index into name` form, but the variable becomes a
+///     [`Vec`] and it is allowed to match any number of times.
+/// - The expression to evaluate for matching values (optional). If not provided the input value
+///   will be passed through (i.e. the rule `v` is equivalent to `v => v`). In addition to an
+///   expression/regular match body the following shorthands are accepted to use one of the base
+///   [transformations](#transformations):
+///     - `as type`
+///     - `with { segments } => result`
+///
+/// A fallback arm will be added at the end which panics with the unmatched value.
 ///
 /// # Examples
 ///
@@ -194,13 +229,35 @@ macro_rules! __parse {
 /// ```
 /// ```
 /// # use puzzle_lib::parser::parse;
-/// // parse!("1 2 4 8" => [nums split try into ([u8; 4]) as u8 with u8::reverse_bits]);
-/// // assert_eq!(nums, vec![128, 64, 32, 16]);
+/// parse!("1 2 4 8" => [nums split try into ([u8; 4]) as u8 with u8::reverse_bits]);
+/// assert_eq!(nums, [128, 64, 32, 16]);
 /// ```
 /// ```
 /// # use puzzle_lib::parser::parse;
 /// parse!("2 fast 2 furious" => [words find /"[a-z]+"/]);
 /// assert_eq!(words, vec!["fast", "furious"]);
+/// ```
+/// ```
+/// # use puzzle_lib::parser::parse;
+/// parse!("hello world" => [words split match { "hello" | "goodbye" => "greeting", _ => "subject" } ]);
+/// assert_eq!(words, vec!["greeting", "subject"]);
+/// ```
+/// ```
+/// # use puzzle_lib::parser::parse;
+/// parse!("1 2 30 4" => [nums split as u8 try match { 1..5, _ => None } ]);
+/// assert_eq!(nums, vec![1, 2, 4]);
+/// ```
+/// ```
+/// # use puzzle_lib::parser::parse;
+/// parse!("1 2 | 30 4" => [nums split match { "|" => index into split_idx => 0, _ => as u8 } ]);
+/// assert_eq!(nums, vec![1, 2, 0, 30, 4]);
+/// assert_eq!(split_idx, 2);
+/// ```
+/// ```compile_fail
+/// # use puzzle_lib::parser::parse;
+/// // Combining `into iterator` with a match that captures indexes doesn't work as expected (since
+/// // these captures would only happen when consuming the iterator) so this is disallowed.
+/// parse!("1 2" => [items split into iterator match { "1" => index into idx, _ } ]);
 /// ```
 /// ```
 /// # use std::collections::HashMap;
@@ -364,76 +421,97 @@ macro_rules! __parse__ {
     //      try? as $type ||
     //      with [nested-bracketed] ||
     //      with { nested } => result ||
+    //      try? match { ... } ||
     //      try? with $transformer ||
+    //      try? as $type try? match { ... } ||
     //      try? as $type with $transformer;
-    //      default $type &str)
+    //      default $type &str
     //   )
     // ]
 
+    // Note that there are 3 possible values for the indexing flag:
+    // - `explicit`: The user explictly requested indexing, and the (index, value) tuple will be
+    //   used as value for any further expressions/transformations.
+    // - `implicit`: The user used one of the index storing statements in the match body, and thus
+    //   we need to iterate with index, but the matched value & and further
+    //   expressions/transformations will continue to use the value without index.
+    // - `none`: The used did not request indexing & the match body doesn't require it, so we do
+    //   not need to iterate with index.
+
     // chars
     (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident chars $($rest:tt)* ]) => {
-        #[allow(unused_mut)]
-        let mut $ident = $crate::parser::__parse__!(@splitp; [ input=$input item=(char) sel=(chars) ]; $($rest)*);
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(char) sel=(chars) ]; $($rest)*);
     };
     // find /"regex"/
     (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident find /$pattern:literal/ $($rest:tt)* ]) => {
-        #[allow(unused_mut)]
-        let mut $ident = $crate::parser::__parse__!(@splitp; [ input=$input item=(str) sel=(find $pattern) ]; $($rest)*);
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(str) sel=(find $pattern) ]; $($rest)*);
     };
     // capture /"regex"/
     (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident capture /$pattern:literal/ $($rest:tt)* ]) => {
-        #[allow(unused_mut)]
-        let mut $ident = $crate::parser::__parse__!(@splitp; [ input=$input item=(str) sel=(capture $pattern) ]; $($rest)*);
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(str) sel=(capture $pattern) ]; $($rest)*);
     };
     // split
     (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident split $($rest:tt)* ]) => {
-        #[allow(unused_mut)]
-        let mut $ident = $crate::parser::__parse__!(@splitp; [ input=$input item=(str) ]; $($rest)*);
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(str) ]; $($rest)*);
     };
     // on $sep
-    (@splitp; [ input=$input:tt item=$item:tt ]; on /$sep:literal/ $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=(on regex $sep) ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt ]; on /$sep:literal/ $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=(on regex $sep) ]; $($rest)*)
     };
-    (@splitp; [ input=$input:tt item=$item:tt ]; on $sep:literal $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=(on literal $sep) ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt ]; on $sep:literal $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=(on literal $sep) ]; $($rest)*)
     };
-    (@splitp; [ input=$input:tt item=$item:tt ]; $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=(on literal " ") ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=(on literal " ") ]; $($rest)*)
     };
     // indexed
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt ]; indexed $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=(indexed) ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt ]; indexed $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=explicit ]; $($rest)*)
     };
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt ]; $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=() ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=none ]; $($rest)*)
     };
     // (try?) into $collection
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=($($flags:ident)*) ]; into iterator $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=($($flags)*; Iterator) ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt ]; into iterator $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=(Iterator) ]; $($rest)*)
     };
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=($($flags:ident)*) ]; try into ($collection:ty) $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=($($flags)*; try $collection) ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt ]; try into ($collection:ty) $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=(try $collection) ]; $($rest)*)
     };
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=($($flags:ident)*) ]; into ($collection:ty) $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=($($flags)*; $collection) ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt ]; into ($collection:ty) $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=($collection) ]; $($rest)*)
     };
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=($($flags:ident)*) ]; $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=($($flags)*; Vec<_>) ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=(Vec<_>) ]; $($rest)*)
+    };
+    // try as $type (try)? match
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:ident into=$into:tt ]; try as $type:tt match $match:tt $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=splitp input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into trytype=$type matchflag=() ]; match $match $($rest)*)
+    };
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:ident into=$into:tt ]; try as $type:tt try match $match:tt $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=splitp input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into trytype=$type matchflag=(try) ]; match $match $($rest)*)
+    };
+    (@splitp; [ match=$match:tt indexes=$indexes:tt input=$input:tt ident=$ident:tt item=($($item:tt)+) sel=$sel:tt indexing=$indexing:ident into=$into:tt trytype=$type:tt matchflag=($($matchflag:ident)?) ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(_) sel=$sel indexing=$indexing into=$into with1=(
+            |item| $crate::parser::Tryable::to_option($crate::parser::__parse_type__!(item => $($item)+ => try $type)).ok_or(item)
+        ) indexes=$indexes with2=($($matchflag)?
+            |item| $crate::parser::__parse__!(@match_body; [ match=$match indexing=$indexing type=((usize), (Result<$($item)+, $type>)) input=(item) matchflag=($($matchflag)?) ];)
+        ) ]; $($rest)*)
     };
     // (try)? as $type
-    (@splitp; [ input=$input:tt item=($($item:tt)+) sel=$sel:tt into=$into:tt ]; as $type:tt $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$type sel=$sel into=$into with1=(
+    (@splitp; [ input=$input:tt ident=$ident:tt item=($($item:tt)+) sel=$sel:tt indexing=$indexing:tt into=$into:tt ]; as $type:tt $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=($type) sel=$sel indexing=$indexing into=$into with1=(
             |item| $crate::parser::__parse_type__!(item => $($item)+ => $type)
         ) ]; $($rest)*)
     };
-    (@splitp; [ input=$input:tt item=($($item:tt)+) sel=$sel:tt into=$into:tt ]; try as $type:tt $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=(Option<$type>) sel=$sel into=$into with1=(try
+    (@splitp; [ input=$input:tt ident=$ident:tt item=($($item:tt)+) sel=$sel:tt indexing=$indexing:tt into=$into:tt ]; try as $type:tt $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(Option<$type>) sel=$sel indexing=$indexing into=$into with1=(try
             |item| $crate::parser::__parse_type__!(item => $($item)+ => try $type)
         ) ]; $($rest)*)
     };
     // with [nested-bracketed]
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=$into:tt ]; with [ $($nested:tt)+ ]) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=$into with1=(
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt ]; with [ $($nested:tt)+ ]) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into with1=(
             |item| {
                 $crate::parser::__parse__!(@parse; [ input=item tmp=(tmp) ]; [ result $($nested)+ ]);
                 result
@@ -441,76 +519,96 @@ macro_rules! __parse__ {
         ) ];)
     };
     // with { nested } => result
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=$into:tt ]; with { $($nested:tt)+ } => $result:expr) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=$into with1=(
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt ]; with { $($nested:tt)+ } => $result:expr) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into with1=(
             |item| $crate::parser::parse!(item => { $($nested)+ } => $result)
         ) ];)
     };
     // (try)? with $transformer
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=$into:tt ]; $($rest:tt)*) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=$into with1=() ]; $($rest)*)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into with1=() ]; $($rest)*)
     };
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=$into:tt with1=$with1:tt ]; with $transformer:expr) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=$into with1=$with1 with2=($transformer) ];)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt with1=$with1:tt ]; with $transformer:expr) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into with1=$with1 indexes=() with2=($transformer) ];)
     };
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=$into:tt with1=$with1:tt ]; try with $transformer:expr) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=$into with1=$with1 with2=(try $transformer) ];)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt with1=$with1:tt ]; try with $transformer:expr) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into with1=$with1 indexes=() with2=(try $transformer) ];)
     };
-    (@splitp; [ input=$input:tt item=$item:tt sel=$sel:tt into=$into:tt with1=$with1:tt ];) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input item=$item sel=$sel into=$into with1=$with1 with2=() ];)
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt with1=$with1:tt ];) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into with1=$with1 indexes=() with2=() ];)
+    };
+    // (try)? match
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt with1=$with1:tt ]; match $match:tt $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=splitp input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into with1=$with1 matchflag=() ]; match $match $($rest)*)
+    };
+    (@splitp; [ input=$input:tt ident=$ident:tt item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt with1=$with1:tt ]; try match $match:tt $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=splitp input=$input ident=$ident item=$item sel=$sel indexing=$indexing into=$into with1=$with1 matchflag=(try) ]; match $match $($rest)*)
+    };
+    (@splitp; [ match=$match:tt indexes=$indexes:tt input=$input:tt ident=$ident:tt item=($($item:tt)+) sel=$sel:tt indexing=$indexing:ident into=$into:tt with1=$with1:tt matchflag=($($matchflag:ident)?) ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(_) sel=$sel indexing=$indexing into=$into with1=$with1 indexes=$indexes with2=($($matchflag)?
+            |item| $crate::parser::__parse__!(@match_body; [ match=$match indexing=$indexing type=((usize), ($($item)+)) input=(item) matchflag=($($matchflag)?) ];)
+        ) ]; $($rest)*)
+    };
+    // combining into iterator with a match that captures indexes doesn't work as expected since
+    // the capture will only happen once the iterator is consumed, so prevent this case
+    (@splitp; [ input=$input:tt ident=$ident:tt item=($($item:tt)+) sel=$sel:tt indexing=$indexing:ident into=(Iterator) with1=$with1:tt indexes=($($indexes:tt)+) $($args:tt)* ]; $($rest:tt)*) => {
+        compile_error!("Cannot combine `into iterator` with a `match` that captures indexes.");
     };
 
     // done. work backwards by repeatedly transforming some portion of the definition into a
     // chained method call
-    (@splitp; [ input=$input:tt item=$item:tt $($rest:tt)* ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item $($rest)* ];)
+    (@splitp; [ input=$input:tt ident=$ident:ident item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt with1=$with1:tt indexes=$indexes:tt $($rest:tt)* ];) => {
+        $crate::parser::__parse__!(@match_define_vars; [ indexes=$indexes itype=usize ];);
+        #[allow(unused_mut)]
+        let mut $ident = $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel indexing=$indexing into=$into with1=$with1 $($rest)* ];);
+        $crate::parser::__parse__!(@match_validate_vars; [ indexes=$indexes ];);
     };
     // convert to collection (or not)
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt into=($($flags:ident)*; Iterator) $($rest:tt)* ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel into=($($flags)*) $($rest)* ];)
+    (@splitf; [ input=$input:tt sel=$sel:tt indexing=$indexing:tt into=(Iterator) $($rest:tt)* ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel indexing=$indexing $($rest)* ];)
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt into=($($flags:ident)*; try $collection:ty) $($rest:tt)* ];) => {
+    (@splitf; [ input=$input:tt sel=$sel:tt indexing=$indexing:tt into=(try $collection:ty) $($rest:tt)* ];) => {
         {
-            let value = $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel into=($($flags)*) $($rest)* ];).collect::<Vec<_>>();
+            let value = $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel indexing=$indexing $($rest)* ];).collect::<Vec<_>>();
             let value: $collection = value.try_into().unwrap();
             value
         }
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt into=($($flags:ident)*; $collection:ty) $($rest:tt)* ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel into=($($flags)*) $($rest)* ];).collect::<$collection>()
+    (@splitf; [ input=$input:tt sel=$sel:tt indexing=$indexing:tt into=($collection:ty) $($rest:tt)* ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel indexing=$indexing $($rest)* ];).collect::<$collection>()
     };
     // second with (which is the custom transform function and explicitly happens after the indexed flag when present)
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt into=$into:tt with1=$with1:tt with2=(try $transformer:expr) ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel into=$into with1=$with1 with2=($transformer) ];).filter_map($crate::parser::Tryable::to_option)
+    (@splitf; [ input=$input:tt sel=$sel:tt indexing=$indexing:tt with1=$with1:tt with2=(try $transformer:expr) ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel indexing=$indexing with1=$with1 with2=($transformer) ];).filter_map($crate::parser::Tryable::to_option)
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt into=$into:tt with1=$with1:tt with2=($transformer:expr) ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel into=$into with1=$with1 ];).map($transformer)
+    (@splitf; [ input=$input:tt sel=$sel:tt indexing=$indexing:tt with1=$with1:tt with2=($transformer:expr) ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel indexing=$indexing with1=$with1 ];).map($transformer)
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt into=$into:tt with1=$with1:tt with2=() ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel into=$into with1=$with1 ];)
+    (@splitf; [ input=$input:tt sel=$sel:tt indexing=$indexing:tt with1=$with1:tt with2=() ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel indexing=$indexing with1=$with1 ];)
     };
-    // indexed flag
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt into=(indexed) $($rest:tt)* ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel $($rest)* ];).enumerate()
+    // indexing
+    (@splitf; [ input=$input:tt sel=$sel:tt indexing=none $($rest:tt)* ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel $($rest)* ];)
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt into=() $($rest:tt)* ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel $($rest)* ];)
+    (@splitf; [ input=$input:tt sel=$sel:tt indexing=$indexing:tt $($rest:tt)* ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel $($rest)* ];).enumerate()
     };
     // first with
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt with1=(try $transformer:expr) ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel with1=($transformer) ];).filter_map($crate::parser::Tryable::to_option)
+    (@splitf; [ input=$input:tt sel=$sel:tt with1=(try $transformer:expr) ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel with1=($transformer) ];).filter_map($crate::parser::Tryable::to_option)
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt with1=($transformer:expr) ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel ];).map($transformer)
+    (@splitf; [ input=$input:tt sel=$sel:tt with1=($transformer:expr) ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel ];).map($transformer)
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=$sel:tt with1=() ];) => {
-        $crate::parser::__parse__!(@splitf; [ input=$input item=$item sel=$sel ];)
+    (@splitf; [ input=$input:tt sel=$sel:tt with1=() ];) => {
+        $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel ];)
     };
     // the initial split
-    (@splitf; [ input=$input:tt item=$item:tt sel=(chars) ];) => {
+    (@splitf; [ input=$input:tt sel=(chars) ];) => {
         $input.chars()
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=(on $sepkind:ident $sep:literal) ];) => {
+    (@splitf; [ input=$input:tt sel=(on $sepkind:ident $sep:literal) ];) => {
         $crate::parser::__parse_literal__!(
             kind=$sepkind
             action=split
@@ -518,12 +616,193 @@ macro_rules! __parse__ {
             sep=$crate::parser::__parse_literal__!(kind=$sepkind action=create value=$sep)
         )
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=(find $pattern:literal) ];) => {
+    (@splitf; [ input=$input:tt sel=(find $pattern:literal) ];) => {
         ::regex::Regex::new($pattern).unwrap().find_iter($input).map(|m| m.as_str())
     };
-    (@splitf; [ input=$input:tt item=$item:tt sel=(capture $pattern:literal) ];) => {
+    (@splitf; [ input=$input:tt sel=(capture $pattern:literal) ];) => {
         ::regex::Regex::new($pattern).unwrap().captures_iter($input)
     };
+
+    // Match transformation. This isn't available as a top-level transform, but can be used as a
+    // nested transform for collections.
+    // [
+    //   match {
+    //      (
+    //         selector
+    //         (=> (
+    //             try? index into $name
+    //             indexes into $name
+    //         ))?
+    //         (=>
+    //            as $type ||
+    //            with $transformer ||
+    //            as $type with $transformer ||
+    //            with [{ nested } => result] ||
+    //            literal
+    //         )?
+    //      ),+
+    //   }
+    // ]
+
+    // Process the macro body into an easier to work with form. This takes in the `match { ... }`
+    // form and processes it, and then it calls the step specified with `$next` with the modified
+    // list of arguments.
+    //
+    // The following items are prepended to the arguments:
+    // - match=([ $pat ]::[ ($indexvar $indextype)? ]::[ $transform? ] ...)
+    // - indexes=([ $indexvar $indextype] ...)
+    //
+    // In addition the indexed argument (if present) is updated if required.
+    (@matchp; [ next=$next:tt $($passthrough:tt)* ]; match { $($args:tt)+ } $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next done=() todo=($($args)+) $($passthrough)* ];)
+    };
+    // read next match arm
+    (@matchp; [ next=$next:tt done=$done:tt todo=($pat:pat $(if $cond:expr)? $(=> $($idents:ident)+)? $(, $($todo:tt)*)?) $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next done=$done current=([$pat $(if $cond)?]::[$($($idents)+)?]::[]) todo=($($($todo)*)?) $($passthrough)* ]; $($rest)*)
+    };
+    (@matchp; [ next=$next:tt done=$done:tt todo=($pat:pat $(if $cond:expr)? $(=> $($idents:ident)+)? $(, $($todo:tt)*)?) $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; ( next=$next done=$done current=([$pat $(if $cond)?]::[$($($idents)+)?]::[]) todo=($($($todo)*)?) $($passthrough)* ); $($rest)*)
+    };
+    (@matchp; [ next=$next:tt done=$done:tt todo=($pat:pat $(if $cond:expr)? => $($index:ident)+ => $($trans:ident)+ $(, $($todo:tt)*)?) $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; ( next=$next done=$done current=([$pat $(if $cond)?]::[$($index)+]::[$($trans)+]) todo=($($($todo)*)?) $($passthrough)* ); $($rest)*)
+    };
+    (@matchp; [ next=$next:tt done=$done:tt todo=($pat:pat $(if $cond:expr)? => $($index:ident)+ => $trans:expr $(, $($todo:tt)*)?) $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next done=$done current=([$pat $(if $cond)?]::[$($index)+]::[$trans]) todo=($($($todo)*)?) $($passthrough)* ]; $($rest)*)
+    };
+    (@matchp; [ next=$next:tt done=$done:tt todo=($pat:pat $(if $cond:expr)? => $trans:expr $(, $($todo:tt)*)?) $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next done=$done current=([$pat $(if $cond)?]::[]::[$trans]) todo=($($($todo)*)?) $($passthrough)* ]; $($rest)*)
+    };
+    // $selector => index into $name (=> $transformation)?
+    (@matchp; [ next=$next:tt done=($($done:tt)*) current=($pat:tt::[index into $pname:ident]::$trans:tt) todo=$todo:tt $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next done=($($done)* $pat::[$pname index]::$trans) todo=$todo $($passthrough)* ]; $($rest)*)
+    };
+    // $selector => try index into $name (=> $transformation)?
+    (@matchp; [ next=$next:tt done=($($done:tt)*) current=($pat:tt::[try index into $pname:ident]::$trans:tt) todo=$todo:tt $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next done=($($done)* $pat::[$pname try index]::$trans) todo=$todo $($passthrough)* ]; $($rest)*)
+    };
+    // $selector => indexes into $name (=> $transformation)?
+    (@matchp; [ next=$next:tt done=($($done:tt)*) current=($pat:tt::[indexes into $pname:ident]::$trans:tt) todo=$todo:tt $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next done=($($done)* $pat::[$pname indexes]::$trans) todo=$todo $($passthrough)* ]; $($rest)*)
+    };
+    // $selector (=> $transformation)?
+    (@matchp; [ next=$next:tt done=($($done:tt)*) current=($pat:tt::[]::$trans:tt) todo=$todo:tt $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next done=($($done)* $pat::[]::$trans) todo=$todo $($passthrough)* ]; $($rest)*)
+    };
+    // $selector => idents is ambiguous as to whether these idents are about the index or about a
+    // transformation. We tried the first option above, so given that failed we'll move it to the
+    // transformation slot and consider this arm complete (the transformation slot isn't parsed
+    // during the normalization step).
+    (@matchp; [ next=$next:tt done=($($done:tt)*) current=($pat:tt::[$($args:ident)+]::[]) todo=$todo:tt $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next done=($($done)* $pat::[]::[$($args)+]) todo=$todo $($passthrough)* ]; $($rest)*)
+    };
+    // parsing is done, add match and indexes flags
+    (@matchp; [ next=$next:tt done=($($pat:tt::[$($($indexargs:ident)+)?]::$trans:tt)+) todo=() $($passthrough:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next match=($($pat::[$($($indexargs)+)?]::$trans)+) indexes=($($([$($indexargs)+])?)+) ] [ $($passthrough)* ]; $($rest)*)
+    };
+    // update indexing flag (if present)
+    (@matchp; [ next=$next:tt match=$match:tt indexes=() $($flags:tt)+ ] [ indexing=none $($tail:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next match=$match indexes=() $($flags)+ indexing=none $($tail)+ ] []; $($rest)*)
+    };
+    (@matchp; [ next=$next:tt match=$match:tt indexes=$indexes:tt $($flags:tt)+ ] [ indexing=none $($tail:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=$next match=$match indexes=$indexes $($flags)+ indexing=implicit $($tail)+ ] []; $($rest)*)
+    };
+    (@matchp; [ $($flags:tt)+ ] [ indexing=$indexing:ident $($tail:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ $($flags)+ indexing=$indexing $($tail)+ ] []; $($rest)*)
+    };
+    (@matchp; [ $($flags:tt)+ ] [ $key:ident = $value:tt $($tail:tt)* ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ $($flags)+ $key=$value ] [ $($tail)* ]; $($rest)*)
+    };
+    (@matchp; [ next=$next:tt $($flags:tt)+ ] []; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@$next; [ $($flags)+ ]; $($rest)*)
+    };
+
+    // The following sections are to generate the actual code segments. There are a few rules to
+    // this:
+    // - All segments must be used, and they must be in the correct order (@match_define_vars,
+    //   @match_body, @match_validate_vars)
+    // - The type must always be in the form (index_type, value_type) regardless of the index flag.
+    // - The input must be in the form expected for the index flag (i.e., of value_type if the
+    //   flags is none and of (index_type, value_type) otherwise).
+
+    // Generate definitions for the variables set in the match block.
+    (@match_define_vars; [ indexes=($($index:tt)*) itype=$itype:tt ];) => {
+        $(
+            $crate::parser::__parse__!(@match_define_vars; [ index=$index itype=$itype ];);
+        )*
+    };
+    (@match_define_vars; [ index=[$name:ident $(try)? index] itype=$itype:tt ];) => {
+        let mut $name: Option<$itype> = None;
+    };
+    (@match_define_vars; [ index=[$name:ident indexes] itype=$itype:tt ];) => {
+        let mut $name = Vec::<$itype>::new();
+    };
+
+    // Generate match expression.
+    (@match_body; [ match=$match:tt indexing=explicit type=($itype:tt, $vtype:tt) input=($input:expr) matchflag=$matchflag:tt ];) => {
+        $crate::parser::__parse__!(@match_body; [ match=$match vtype=(($itype, $vtype)) index=($input.0) value=($input) matchflag=$matchflag ];)
+    };
+    (@match_body; [ match=$match:tt indexing=implicit type=($itype:tt, $vtype:tt) input=($input:expr) matchflag=$matchflag:tt ];) => {
+        $crate::parser::__parse__!(@match_body; [ match=$match vtype=$vtype index=($input.0) value=($input.1) matchflag=$matchflag ];)
+    };
+    (@match_body; [ match=$match:tt indexing=none type=($itype:tt, $vtype:tt) input=($input:expr) matchflag=$matchflag:tt ];) => {
+        $crate::parser::__parse__!(@match_body; [ match=$match vtype=$vtype index=(None) value=($input) matchflag=$matchflag ];)
+    };
+    (@match_body; [ match=($([ $pat:pat $(if $cond:expr)? ]::$indexargs:tt::$trans:tt)+) vtype=$vtype:tt index=$index:tt value=$value:tt matchflag=$matchflag:tt ];) => {
+        match $value {
+            $(
+                $pat $(if $cond)? => {
+                    $crate::parser::__parse__!(@match_body_index; [ index=$index args=$indexargs ];);
+                    $crate::parser::__parse__!(@match_body_transform; [ vtype=$vtype value=$value matchflag=$matchflag trans=$trans ];)
+                },
+            )+
+            #[allow(unreachable_patterns)]
+            _ => $crate::parser::__parse__!(@match_body_fallback; [ index=$index value=$value ];),
+        }
+    };
+    (@match_body_fallback; [ index=(None) value=$value:tt ];) => {
+        panic!("value {:?} doesn't match any of the match arms.", $value)
+    };
+    (@match_body_fallback; [ index=$index:tt value=($value:expr) ];) => {
+        panic!("value {:?} at index {:?} doesn't match any of the match arms.", $value, $index)
+    };
+
+    // Generate index assignment.
+    (@match_body_index; [ index=($index:expr) args=[$name:ident $(try)? index] ];) => {
+        if let Some(existing) = $name {
+            panic!("index {} was set multiple times (at {:?} and {:?}).", stringify!($name), existing, $index);
+        }
+        $name = Some($index);
+    };
+    (@match_body_index; [ index=($index:expr) args=[$name:ident indexes] ];) => {
+        $name.push($index);
+    };
+    (@match_body_index; [ index=($index:expr) args=[] ];) => {};
+
+    // Generate transformation.
+    (@match_body_transform; [ vtype=$vtype:tt value=($value:expr) matchflag=(try) trans=[] ];) => (Some($value));
+    (@match_body_transform; [ vtype=$vtype:tt value=($value:expr) matchflag=() trans=[] ];) => ($value);
+    (@match_body_transform; [ vtype=($($vtype:tt)+) value=($value:expr) matchflag=$matchflag:tt trans=[as $target:tt] ];) => {
+        $crate::parser::__parse_type__!($value => $($vtype)+ => $target)
+    };
+    (@match_body_transform; [ vtype=$vtype:tt value=($value:expr) matchflag=$matchflag:tt trans=[with { $($nested:tt)+ } => $result:expr] ];) => {
+        $crate::parser::parse!($input => { $($nested)+ } => $result)
+    };
+    (@match_body_transform; [ vtype=$vtype:tt value=($value:expr) matchflag=$matchflag:tt trans=[$expr:expr] ];) => {
+        #[allow(unused_braces)]
+        $expr
+    };
+
+    // Generate definitions for the variables set in the match block.
+    (@match_validate_vars; [ indexes=($($index:tt)*) ];) => {
+        $(
+            $crate::parser::__parse__!(@match_validate_vars; [ index=$index ];);
+        )*
+    };
+    (@match_validate_vars; [ index=[$name:ident index] ];) => {
+        let $name = $name.expect(&format!("index {} was never set.", stringify!($name)));
+    };
+    (@match_validate_vars; [ index=$index:tt ];) => {};
+
 }
 #[doc(hidden)]
 pub use __parse__;
@@ -585,8 +864,8 @@ macro_rules! __parse_type__ {
         $crate::parser::__parse_type__!($var => $from => try $to).unwrap()
     };
 
-    ($var:expr => $from:tt => try $type:tt) => ($type::try_from($var));
-    ($var:expr => $from:tt => $type:tt) => ($type::from($var));
+    ($var:expr => $from:tt => try $type:tt) => (<$type>::try_from($var));
+    ($var:expr => $from:tt => $type:tt) => (<$type>::from($var));
 }
 #[doc(hidden)]
 pub use __parse_type__;
@@ -916,6 +1195,110 @@ mod tests {
     fn parse_list_try_type_and_try_with_transform() {
         parse!("9 foo 25 140" => [items split try as u8 try with u8::checked_next_power_of_two]);
         assert_eq!(items, vec![16, 32]);
+    }
+
+    #[test]
+    fn parse_list_match() {
+        parse!("1 2 3" => [items split match { "1" => "one", "2" => "two", _ => "too many" }]);
+        assert_eq!(items, vec!["one", "two", "too many"]);
+    }
+
+    #[test]
+    fn parse_list_match_as() {
+        parse!("12 4 6" => [items split as u8 match { (..=4) => "good", 5..=8 => "great", 9.. => "fantastic" }]);
+        assert_eq!(items, vec!["fantastic", "good", "great"]);
+    }
+
+    #[test]
+    fn parse_list_match_try_as() {
+        parse!("one 12 two 4 6 0" => [items split try as u8 match { Ok(1..=4) => "good", Ok(5..=8) => "great", Ok(9..) => "fantastic", _ => "terrible" }]);
+        assert_eq!(
+            items,
+            vec![
+                "terrible",
+                "fantastic",
+                "terrible",
+                "good",
+                "great",
+                "terrible"
+            ]
+        );
+    }
+
+    #[test]
+    #[should_panic = "doesn't match any of the match arms"]
+    fn parse_list_match_unmatched() {
+        parse!("foo bar baz" => [_items split match { "foo" | "bar" => 42 }]);
+    }
+
+    #[test]
+    fn parse_list_match_store_index() {
+        parse!("foo bar baz" => [items split match { "bar" => index into bar_idx, _ }]);
+        assert_eq!(items, vec!["foo", "bar", "baz"]);
+        assert_eq!(bar_idx, 1);
+    }
+
+    #[test]
+    #[should_panic = "index _idx was never set"]
+    fn parse_list_match_store_index_not_found() {
+        parse!("1 2 3" => [_items split match { "hello" => index into _idx, _ }]);
+    }
+
+    #[test]
+    #[should_panic = "index _large_idx was set multiple times"]
+    fn parse_list_match_store_index_multiple() {
+        parse!("1 2 3 80 4 90" => [_items split as u8 match { 50.. => index into _large_idx, _ }]);
+    }
+
+    #[test]
+    fn parse_list_match_try_store_index() {
+        parse!("foo bar baz" => [items split match { "bar" => try index into bar_idx, _ }]);
+        assert_eq!(items, vec!["foo", "bar", "baz"]);
+        assert_eq!(bar_idx, Some(1));
+    }
+
+    #[test]
+    fn parse_list_match_try_store_index_not_found() {
+        parse!("1 2 3" => [items split match { "hello" => try index into idx, _ }]);
+        assert_eq!(items, vec!["1", "2", "3"]);
+        assert_eq!(idx, None);
+    }
+
+    #[test]
+    #[should_panic = "index _large_idx was set multiple times"]
+    fn parse_list_match_try_store_index_multiple() {
+        parse!("1 2 3 80 4 90" => [_items split as u8 match { 50.. => try index into _large_idx, _ }]);
+    }
+
+    #[test]
+    fn parse_list_try_as_match() {
+        parse!("1 2 foo 3 4 foobar 5 6" => [items split try as u8 match { Ok(v) => v, Err(v) => (v.len() as u8 * 10) }]);
+        assert_eq!(items, vec![1, 2, 30, 3, 4, 60, 5, 6]);
+    }
+
+    #[test]
+    fn parse_list_try_match() {
+        parse!("hay hay hay needle hay shoe hay hay" => [items split try match { "hay" => None, v => Some(v) }]);
+        assert_eq!(items, vec!["needle", "shoe"]);
+    }
+
+    #[test]
+    fn parse_list_match_guard() {
+        parse!("foo bar baz" => [items split match { v if v.starts_with('b'), _ => "boo" }]);
+        assert_eq!(items, vec!["boo", "bar", "baz"]);
+    }
+
+    #[test]
+    fn parse_list_indexed_match() {
+        parse!("fee-fi-fo-fum" => [items split on '-' indexed match { (i, v) if v.len() > i => 10, (i, v) => (i - v.len()) }]);
+        assert_eq!(items, vec![10, 10, 0, 0]);
+    }
+
+    #[test]
+    fn parse_list_indexed_match_store_indexes() {
+        parse!("1 2 22 3 4 53 5 6" => [items split as u8 match { v if v > 10 => indexes into indexes => 0, _ }]);
+        assert_eq!(items, vec![1, 2, 0, 3, 4, 0, 5, 6]);
+        assert_eq!(indexes, vec![2, 5]);
     }
 
     #[test]
