@@ -45,6 +45,25 @@ where
 }
 
 impl<D> FullGrid<D> {
+    /// Swap two elements in the grid.
+    ///
+    /// If a equals to b, it’s guaranteed that elements won’t change value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use puzzle_lib::grid::*;
+    /// # use puzzle_lib::point::Point2;
+    /// let mut grid: FullGrid<u8> = [[1, 2], [3, 4], [5, 6]].into();
+    /// assert_eq!(grid[Point2::new(1, 1)], 4);
+    /// grid.swap(&Point2::new(1, 1), &Point2::new(1, 0));
+    /// assert_eq!(grid[Point2::new(1, 1)], 2);
+    /// ```
+    pub fn swap(&mut self, a: &Point2<usize>, b: &Point2<usize>) {
+        self.cells
+            .swap(a.y * self.width + a.x, b.y * self.width + b.x);
+    }
+
     fn get_points_iter(width: usize, height: usize) -> impl Iterator<Item = Point2<usize>> {
         (0..height).flat_map(move |y| (0..width).map(move |x| Point2::new(x, y)))
     }
