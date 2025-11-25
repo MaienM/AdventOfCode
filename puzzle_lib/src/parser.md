@@ -46,6 +46,7 @@ The following options can be used to transform a matched value:
   macro with the given segments & result mapping.
 - [A split operation](#split).
 - [A cells operation](#cells).
+- [A match operation](#match).
 
 # Split
 
@@ -101,15 +102,15 @@ they must appear in:
 
 # Match
 
-The `match` transformation processes the items in a collection by running them through a match statement. Just like a
-match statement the body is made up of match rules separated by commas. The format of these match rules is inspired by
-the default match statement, but doesn't quite follow it. Each match rule contains the following segments, separated by
-`=>`:
+The `match` transformation processes the value by running it through a match statement. Just like a match statement the
+body is made up of match rules separated by commas. The format of these match rules is inspired by the default match
+statement, but doesn't quite follow it. Each match rule contains the following segments, separated by `=>`:
 
 - The pattern, which functions just like in regular match arm, including binding variables with `@` and using match
   guards.
-- Instructions to save the index at which the match occurred (optional). This creates an additional variable at the same
-  level that the variable in which the collection is stored is located. This has one of the following forms:
+- Instructions to save the index at which the match occurred (optional). Only available when used as an option
+  on a `split` or `cells` operation. This creates an additional variable at the same level that the variable in which
+  the collection is stored is located. This has one of the following forms:
   - `index into name`. This simply stores the index in the variable with the given name. It must match exactly once
     per collection (i.e., this variable cannot be undefined or defined multiple times).
   - `try index into name`. This is like the `index into name` form, but the variable becomes a [`Option`], and it is

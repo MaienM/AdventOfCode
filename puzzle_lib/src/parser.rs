@@ -161,6 +161,13 @@ macro_rules! __parse__ {
         $crate::parser::__parse__!(@parse; $args; [ $ident as str ]);
     };
 
+    (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident match $match:tt ]) => {
+        let $ident = $crate::parser::__parse__!(@matchp; [ next=parsem input=$input matchflag=() ]; match $match);
+    };
+    (@parsem; [ match=$match:tt indexes=() input=$input:tt matchflag=() ];) => {
+        $crate::parser::__parse__!(@match_body; [ match=$match indexing=none type=((), (&str)) input=$input matchflag=() ];)
+    };
+
     // Split element into a collection.
     // [
     //   $name
@@ -483,8 +490,8 @@ macro_rules! __parse__ {
     // done
     (@cellsf; [ input=$input:tt ];) => ($input);
 
-    // Match transformation. This isn't available as a top-level transform, but can be used as a
-    // nested transform for collections.
+    // Match transformation. Note that not all options will be available in all contexts (e.g., the
+    // indexes are only available on split/cells).
     // [
     //   match {
     //      (
@@ -1171,6 +1178,26 @@ mod tests {
         parse!("1 2 22 3 4 53 5 6" => [items split as u8 match { v if v > 10 => indexes into indexes => 0, _ }]);
         assert_eq!(items, vec![1, 2, 0, 3, 4, 0, 5, 6]);
         assert_eq!(indexes, vec![2, 5]);
+    }
+
+    #[test]
+    fn parse_list_nested_match() {
+        #[derive(Debug, PartialEq, Eq)]
+        enum Sign {
+            Plus,
+            Minus,
+        }
+        parse!("+1 +2 -3" => [items split with
+            {
+                [sign take 1 match { "+" => Sign::Plus, "-" => Sign::Minus }]
+                [num as u8]
+            }
+            => (sign, num)
+        ]);
+        assert_eq!(
+            items,
+            vec![(Sign::Plus, 1), (Sign::Plus, 2), (Sign::Minus, 3)]
+        );
     }
 
     #[test]
