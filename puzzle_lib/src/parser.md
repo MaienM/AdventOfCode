@@ -45,10 +45,11 @@ The following options can be used to transform a matched value:
 - A nested parse (`with { segments } => result`). This takes the matched string and feeds it into a nested call of this
   macro with the given segments & result mapping.
 - [A split operation](#split).
+- [A cells operation](#cells).
 
 # Split
 
-The split keyword will take the matched string and split it into an iterator or collection. This entire operation is
+The `split` keyword will take the matched string and split it into an iterator or collection. This entire operation is
 described by a series of options (most optional) which describe how to split the string and how to process the resulting
 iterator.
 
@@ -83,9 +84,24 @@ Here are all the options in the order they must appear in:
   - `try transformation try match`. A combination of the `try transformations match` form with the `try match` form,
     with the match input following the former and the match behavior following the latter.
 
+# Cells
+
+The `cells` keyword will take the matched strings and parse it into a [`crate::grid::FullGrid`], with each line being a
+row and each character on that line being a cell within that row.
+
+This accepts additional options to transform the `char` values for each cell. Here are all the options, in the order
+they must appear in:
+
+- `indexed` (optional). This will transform the cell value into `(Point2<usize>, char)` and then perform the rest of the
+  transformation using that value. This doesn't affect the output type, just the type used for the transformation. Using
+  this makes the next argument mandatory.
+- A transformation (optional). This can be any of the transformations supported by (`split`)[#split) that doesn't filter
+  out values (e.g., it can be `as $type` but not `try as $type`). The index type captured by match operations will be
+  `Poin2<usize>` instead of `usize`.
+
 # Match
 
-The match transformation processes the items in a collection by running them through a match statement. Just like a
+The `match` transformation processes the items in a collection by running them through a match statement. Just like a
 match statement the body is made up of match rules separated by commas. The format of these match rules is inspired by
 the default match statement, but doesn't quite follow it. Each match rule contains the following segments, separated by
 `=>`:
@@ -248,4 +264,26 @@ parse!("foo=1 bar baz=2" => [map capture /r#"(\w+)=(\d+)"#/ into (HashMap<_, _>)
 assert_eq!(map.len(), 2);
 assert_eq!(map.get(&"foo"), Some(&1));
 assert_eq!(map.get(&"baz"), Some(&2));
+```
+
+Grid:
+
+```rust
+# use puzzle_lib::parser::parse;
+parse!("012\n345" => [grid cells as u8]);
+assert_eq!(grid, [[0, 1, 2], [3, 4, 5]].into());
+```
+
+```rust
+# use puzzle_lib::parser::parse;
+parse!("012\n345" => [grid cells match { '0'..='4' => as u8, _ => 100 }]);
+assert_eq!(grid, [[0, 1, 2], [3, 4, 100]].into());
+```
+
+```rust
+# use puzzle_lib::parser::parse;
+# use puzzle_lib::point::Point2;
+parse!("012\n345" => [grid cells match { '3' => index into start, _ }]);
+assert_eq!(grid, [['0', '1', '2'], ['3', '4', '5']].into());
+assert_eq!(start, Point2::new(0, 1));
 ```

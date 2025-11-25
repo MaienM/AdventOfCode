@@ -317,7 +317,7 @@ macro_rules! __parse__ {
     // done. work backwards by repeatedly transforming some portion of the definition into a
     // chained method call
     (@splitp; [ input=$input:tt ident=$ident:ident item=$item:tt sel=$sel:tt indexing=$indexing:tt into=$into:tt with1=$with1:tt indexes=$indexes:tt $($rest:tt)* ];) => {
-        $crate::parser::__parse__!(@match_define_vars; [ indexes=$indexes itype=usize ];);
+        $crate::parser::__parse__!(@match_define_vars; [ indexes=$indexes itype=(usize) ];);
         #[allow(unused_mut)]
         let mut $ident = $crate::parser::__parse__!(@splitf; [ input=$input sel=$sel indexing=$indexing into=$into with1=$with1 $($rest)* ];);
         $crate::parser::__parse__!(@match_validate_vars; [ indexes=$indexes ];);
@@ -381,6 +381,107 @@ macro_rules! __parse__ {
     (@splitf; [ input=$input:tt sel=(capture $pattern:literal) ];) => {
         ::regex::Regex::new($pattern).unwrap().captures_iter($input)
     };
+
+    // Parse element into a grid.
+    // [
+    //   $name
+    //   cells
+    //   indexed?
+    //   (
+    //      as $type ||
+    //      match { ... } ||
+    //      with $transformer ||
+    //      try? as $type match { ... };
+    //      default $type char
+    //   )
+    // ]
+
+    // cells
+    (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident cells $($rest:tt)* ]) => {
+        $crate::parser::__parse__!(@cellsp; [ input=$input ident=$ident item=(char) ]; $($rest)*);
+    };
+    // indexed
+    (@cellsp; [ input=$input:tt ident=$ident:tt item=$item:tt ]; indexed $($rest:tt)*) => {
+        $crate::parser::__parse__!(@cellsp; [ input=$input ident=$ident item=$item indexing=explicit ]; $($rest)*)
+    };
+    (@cellsp; [ input=$input:tt ident=$ident:tt item=$item:tt ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@cellsp; [ input=$input ident=$ident item=$item indexing=none ]; $($rest)*)
+    };
+    // try as $type match
+    (@cellsp; [ input=$input:tt ident=$ident:tt item=$item:tt indexing=$indexing:ident ]; try as $type:tt match $match:tt $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=cellsp input=$input ident=$ident item=$item indexing=$indexing trytype=$type ]; match $match $($rest)*)
+    };
+    (@cellsp; [ match=$match:tt indexes=$indexes:tt input=$input:tt ident=$ident:tt item=($($item:tt)+) indexing=$indexing:ident trytype=$type:tt matchflag=() ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@cellsp; [ input=$input ident=$ident item=(_) indexing=$indexing indexes=$indexes with1=(
+            |item| $crate::parser::Tryable::to_option($crate::parser::__parse_type__!(item => $($item)+ => try $type)).ok_or(item)
+        ) with2=(
+            move |item| $crate::parser::__parse__!(@match_body; [ match=$match indexing=$indexing type=(($crate::point::Point2<usize>), (Result<$($item)+, $type>)) input=(item) matchflag=() ];)
+        ) ]; $($rest)*)
+    };
+    // as $type
+    (@cellsp; [ input=$input:tt ident=$ident:tt item=($($item:tt)+) indexing=$indexing:tt ]; as $type:tt $($rest:tt)*) => {
+        $crate::parser::__parse__!(@cellsp; [ input=$input ident=$ident item=($type) indexing=$indexing with1=(
+            |item| $crate::parser::__parse_type__!(item => $($item)+ => $type)
+        ) ]; $($rest)*)
+    };
+    // with $transformer
+    (@cellsp; [ input=$input:tt ident=$ident:tt item=$item:tt indexing=$indexing:tt ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@cellsp; [ input=$input ident=$ident item=$item indexing=$indexing with1=() ]; $($rest)*)
+    };
+    (@cellsp; [ input=$input:tt ident=$ident:tt item=$item:tt indexing=$indexing:tt with1=$with1:tt ]; with $transformer:expr) => {
+        $crate::parser::__parse__!(@cellsp; [ input=$input ident=$ident item=$item indexing=$indexing indexes=() with1=$with1 with2=($transformer) ];)
+    };
+    (@cellsp; [ input=$input:tt ident=$ident:tt item=$item:tt indexing=$indexing:tt with1=$with1:tt ];) => {
+        $crate::parser::__parse__!(@cellsp; [ input=$input ident=$ident item=$item indexing=$indexing indexes=() with1=$with1 with2=() ];)
+    };
+    // match
+    (@cellsp; [ input=$input:tt ident=$ident:tt item=$item:tt indexing=$indexing:tt with1=$with1:tt ]; match $match:tt $($rest:tt)*) => {
+        $crate::parser::__parse__!(@matchp; [ next=cellsp input=$input ident=$ident item=$item indexing=$indexing with1=$with1 matchflag=() ]; match $match $($rest)*)
+    };
+    (@cellsp; [ match=$match:tt indexes=$indexes:tt input=$input:tt ident=$ident:tt item=($($item:tt)+) indexing=$indexing:ident with1=$with1:tt matchflag=() ]; $($rest:tt)*) => {
+        $crate::parser::__parse__!(@cellsp; [ input=$input ident=$ident item=(_) indexing=$indexing indexes=$indexes with1=$with1 with2=(
+            move |item| $crate::parser::__parse__!(@match_body; [ match=$match indexing=$indexing type=((usize), ($($item)+)) input=(item) matchflag=() ];)
+        ) ]; $($rest)*)
+    };
+
+    // done. work backwards by repeatedly transforming some portion of the definition into a
+    // chained method call
+    (@cellsp; [ input=$input:tt ident=$ident:ident item=$item:tt indexing=$indexing:tt indexes=$indexes:tt $($rest:tt)* ];) => {
+        $crate::parser::__parse__!(@match_define_vars; [ indexes=$indexes itype=($crate::point::Point2<usize>) ];);
+        #[allow(unused_mut)]
+        let mut $ident = $crate::parser::__parse__!(@cellsf; [ input=$input indexing=$indexing indexes=$indexes $($rest)* ];).collect::<$crate::grid::FullGrid<_>>();
+        $crate::parser::__parse__!(@match_validate_vars; [ indexes=$indexes ];);
+    };
+    // indexing
+    (@cellsf; [ input=$input:tt indexing=none indexes=$indexes:tt $($rest:tt)* ];) => {
+        $input.split('\n').map(|row| {
+            let iter = row.chars();
+            $crate::parser::__parse__!(@cellsf; [ input=iter $($rest)* ];)
+        })
+    };
+    (@cellsf; [ input=$input:tt indexing=$indexing:tt indexes=$indexes:tt $($rest:tt)* ];) => {
+        $input.split('\n').enumerate().map(|(y, row)| {
+            $crate::parser::__parse__!(@match_clone_vars; [ indexes=$indexes ];);
+            let iter = row.char_indices().map(move |(x, cell)| ($crate::point::Point2::new(x, y), cell));
+            $crate::parser::__parse__!(@cellsf; [ input=iter $($rest)* ];)
+        })
+    };
+    // second with
+    (@cellsf; [ input=$input:tt with1=$with1:tt with2=($transformer:expr) ];) => {
+        $crate::parser::__parse__!(@cellsf; [ input=$input with1=$with1 ];).map($transformer)
+    };
+    (@cellsf; [ input=$input:tt with1=$with1:tt with2=() ];) => {
+        $crate::parser::__parse__!(@cellsf; [ input=$input with1=$with1 ];)
+    };
+    // first with
+    (@cellsf; [ input=$input:tt with1=($transformer:expr) ];) => {
+        $crate::parser::__parse__!(@cellsf; [ input=$input ];).map($transformer)
+    };
+    (@cellsf; [ input=$input:tt with1=() ];) => {
+        $crate::parser::__parse__!(@cellsf; [ input=$input ];)
+    };
+    // done
+    (@cellsf; [ input=$input:tt ];) => ($input);
 
     // Match transformation. This isn't available as a top-level transform, but can be used as a
     // nested transform for collections.
@@ -489,11 +590,21 @@ macro_rules! __parse__ {
             $crate::parser::__parse__!(@match_define_vars; [ index=$index itype=$itype ];);
         )*
     };
-    (@match_define_vars; [ index=[$name:ident $(try)? index] itype=$itype:tt ];) => {
-        let mut $name: Option<$itype> = None;
+    (@match_define_vars; [ index=[$name:ident $(try)? index] itype=($($itype:tt)+) ];) => {
+        let $name = ::std::rc::Rc::new(::std::cell::OnceCell::<$($itype)+>::new());
     };
-    (@match_define_vars; [ index=[$name:ident indexes] itype=$itype:tt ];) => {
-        let mut $name = Vec::<$itype>::new();
+    (@match_define_vars; [ index=[$name:ident indexes] itype=($($itype:tt)+) ];) => {
+        let $name = ::std::rc::Rc::new(::std::cell::RefCell::new(Vec::<$($itype)+>::new()));
+    };
+
+    // Generate clones of the variables set in the match block.
+    (@match_clone_vars; [ indexes=($($index:tt)*) ];) => {
+        $(
+            $crate::parser::__parse__!(@match_clone_vars; [ index=$index ];);
+        )*
+    };
+    (@match_clone_vars; [ index=[$name:ident $($args:ident)+] ];) => {
+        let $name = $name.clone();
     };
 
     // Generate match expression.
@@ -527,13 +638,12 @@ macro_rules! __parse__ {
 
     // Generate index assignment.
     (@match_body_index; [ index=($index:expr) args=[$name:ident $(try)? index] ];) => {
-        if let Some(existing) = $name {
-            panic!("index {} was set multiple times (at {:?} and {:?}).", stringify!($name), existing, $index);
+        if $name.set($index).is_err() {
+            panic!("index {} was set multiple times (at {:?} and {:?}).", stringify!($name), $name.get().unwrap(), $index);
         }
-        $name = Some($index);
     };
-    (@match_body_index; [ index=($index:expr) args=[$name:ident indexes] ];) => {
-        $name.push($index);
+    (@match_body_index; [index=($index:expr) args=[$name:ident indexes] ];) => {
+        $name.borrow_mut().push($index);
     };
     (@match_body_index; [ index=($index:expr) args=[] ];) => {};
 
@@ -558,9 +668,11 @@ macro_rules! __parse__ {
         )*
     };
     (@match_validate_vars; [ index=[$name:ident index] ];) => {
-        let $name = $name.expect(&format!("index {} was never set.", stringify!($name)));
+        let $name = ::std::rc::Rc::into_inner($name).unwrap().into_inner().expect(&format!("index {} was never set.", stringify!($name)));
     };
-    (@match_validate_vars; [ index=$index:tt ];) => {};
+    (@match_validate_vars; [ index=[$name:ident $($args:ident)+] ];) => {
+        let $name = ::std::rc::Rc::into_inner($name).unwrap().into_inner();
+    };
 
 }
 #[doc(hidden)]
@@ -662,6 +774,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
+    use crate::point::Point2;
 
     #[test]
     fn parse_singular() {
@@ -1094,6 +1207,31 @@ mod tests {
     fn parse_chars_with_transformer() {
         parse!("1a" => [items chars with |c| c.to_digit(16).unwrap()]);
         assert_eq!(items, vec![1, 10]);
+    }
+
+    #[test]
+    fn parse_cells() {
+        parse!("012\n345" => [grid cells]);
+        assert_eq!(grid, [['0', '1', '2'], ['3', '4', '5']].into());
+    }
+
+    #[test]
+    fn parse_cells_as() {
+        parse!("012\n345" => [grid cells as u8]);
+        assert_eq!(grid, [[0, 1, 2], [3, 4, 5]].into());
+    }
+
+    #[test]
+    fn parse_cells_match() {
+        parse!("012\n345" => [grid cells match { '3' => 100, _ => as u8 }]);
+        assert_eq!(grid, [[0, 1, 2], [100, 4, 5]].into());
+    }
+
+    #[test]
+    fn parse_cells_match_index() {
+        parse!("012\n345" => [grid cells match { '3' => index into start, _ }]);
+        assert_eq!(grid, [['0', '1', '2'], ['3', '4', '5']].into());
+        assert_eq!(start, Point2::new(0, 1));
     }
 
     #[test]
