@@ -8,6 +8,7 @@ use std::{
 };
 
 use itertools::Itertools;
+use rayon::iter::{IntoParallelIterator as _, ParallelIterator as _};
 
 use super::{PointBoundaries, PointCollection, PointCollectionInsertResult, PointDataCollection};
 use crate::{
@@ -436,7 +437,7 @@ impl<D> FullGrid<D>
 where
     D: 'static,
 {
-    /// Return a grid with the same dimensions as `self`, with function `f` applied to eachcell in
+    /// Return a grid with the same dimensions as `self`, with function `f` applied to each cell in
     /// order.
     ///
     /// # Examples
@@ -455,6 +456,33 @@ where
         FullGrid {
             points: self.points,
             cells: self.cells.into_iter().map(f).collect(),
+            width: self.width,
+            height: self.height,
+            boundaries: self.boundaries,
+        }
+    }
+
+    /// Return a grid with the same dimensions as `self`, with function `f` applied to each cell in
+    /// parallel.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use puzzle_lib::grid::*;
+    /// # use puzzle_lib::point::Point2;
+    /// let grid: FullGrid<u8> = [[1, 2], [3, 4], [5, 6]].into();
+    /// let grid = grid.map(|v| v * 2);
+    /// assert_eq!(grid.get(&Point2::new(0, 1)), Some(&6));
+    /// ```
+    pub fn par_map<F, ND>(self, f: F) -> FullGrid<ND>
+    where
+        F: (Fn(D) -> ND) + Sync + Send,
+        D: Send,
+        ND: Send,
+    {
+        FullGrid {
+            points: self.points,
+            cells: self.cells.into_par_iter().map(f).collect(),
             width: self.width,
             height: self.height,
             boundaries: self.boundaries,
@@ -705,5 +733,23 @@ mod tests {
     fn remove_out_of_bounds() {
         let mut grid: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
         assert_eq!(grid.remove(&Point2::new(3, 1)), None);
+    }
+
+    #[test]
+    fn map() {
+        let grid: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
+        let grid = grid.map(|v| v * 2);
+        assert_eq!(grid.width(), 3);
+        assert_eq!(grid.height(), 2);
+        assert_eq!(grid.get(&Point2::new(1, 1)), Some(&10));
+    }
+
+    #[test]
+    fn par_map() {
+        let grid: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
+        let grid = grid.par_map(|v| v * 2);
+        assert_eq!(grid.width(), 3);
+        assert_eq!(grid.height(), 2);
+        assert_eq!(grid.get(&Point2::new(1, 1)), Some(&10));
     }
 }
