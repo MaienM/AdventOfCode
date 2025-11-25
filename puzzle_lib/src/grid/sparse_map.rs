@@ -6,6 +6,10 @@ use std::{
 
 use inherit_methods_macro::inherit_methods;
 use itertools::Itertools;
+use rayon::{
+    iter::{FromParallelIterator, ParallelIterator as _},
+    prelude::IntoParallelIterator,
+};
 
 use super::{
     PointBoundaries, PointCollection, PointCollectionInsertResult, PointDataCollection, PointType,
@@ -174,8 +178,24 @@ impl<PT, D> FromIterator<(Point2<PT>, D)> for SparsePointMap<PT, D>
 where
     PT: PointType + 'static,
 {
-    fn from_iter<I: IntoIterator<Item = (Point2<PT>, D)>>(iter: I) -> Self {
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = (Point2<PT>, D)>,
+    {
         let points = iter.into_iter().collect::<HashMap<_, _>>();
+        points.into()
+    }
+}
+impl<PT, D> FromParallelIterator<(Point2<PT>, D)> for SparsePointMap<PT, D>
+where
+    PT: PointType + Send + 'static,
+    D: Send,
+{
+    fn from_par_iter<I>(par_iter: I) -> Self
+    where
+        I: IntoParallelIterator<Item = (Point2<PT>, D)>,
+    {
+        let points = par_iter.into_par_iter().collect::<HashMap<_, _>>();
         points.into()
     }
 }
@@ -358,10 +378,33 @@ where
 
 #[cfg(test)]
 mod tests {
+    use common_macros::hash_map;
     use pretty_assertions::assert_eq;
 
     use super::*;
     use crate::assert_unordered_eq;
+
+    #[test]
+    fn from_iter() {
+        let grid: SparsePointMap<_, _> = [(Point2::new(1, 2), 4), (Point2::new(2, 3), 6)]
+            .into_iter()
+            .collect();
+        assert_eq!(
+            grid.cells,
+            hash_map! { Point2::new(1, 2) => 4, Point2::new(2, 3) => 6 }
+        );
+    }
+
+    #[test]
+    fn from_par_iter() {
+        let grid: SparsePointMap<_, _> = [(Point2::new(1, 2), 4), (Point2::new(2, 3), 6)]
+            .into_par_iter()
+            .collect();
+        assert_eq!(
+            grid.cells,
+            hash_map! { Point2::new(1, 2) => 4, Point2::new(2, 3) => 6 }
+        );
+    }
 
     #[test]
     fn contains_point() {
