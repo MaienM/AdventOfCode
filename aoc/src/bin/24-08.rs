@@ -1,8 +1,11 @@
 puzzle_lib::setup!(title = "Resonant Collinearity");
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-use puzzle_lib::point::Point2;
+use puzzle_lib::{
+    grid::{PointCollectionInsertResult, SparsePointSet},
+    point::Point2,
+};
 
 type Point = Point2<isize>;
 
@@ -15,8 +18,8 @@ fn parse_input(input: &str) -> (HashMap<char, Vec<Point>>, Point) {
             .collect::<Vec<_>>()
     });
     let bounds = Point::new(
-        input.split('\n').next().unwrap().len() as isize,
-        input.split('\n').count() as isize,
+        input.split('\n').next().unwrap().len() as isize - 1,
+        input.split('\n').count() as isize - 1,
     );
     for (char, point) in nodes {
         map.entry(char).or_default().push(point);
@@ -24,57 +27,42 @@ fn parse_input(input: &str) -> (HashMap<char, Vec<Point>>, Point) {
     (map, bounds)
 }
 
-fn in_bounds(node: &Point, bounds: &Point) -> bool {
-    0 <= node.x && node.x < bounds.x && 0 <= node.y && node.y < bounds.y
-}
-
 pub fn part1(input: &str) -> usize {
     let (map, bounds) = parse_input(input);
-    let mut antinodes = HashSet::new();
+    let mut antinodes = SparsePointSet::default()
+        .with_boundaries((Point2::new(0, 0)..=bounds).into())
+        .unwrap();
     for nodes in map.into_values() {
-        for node1 in &nodes {
-            for node2 in &nodes {
-                if node1 == node2 {
-                    continue;
-                }
-                let diff = *node1 - *node2;
-                antinodes.insert(*node1 + diff);
-                antinodes.insert(*node2 - diff);
-            }
+        for (node1, node2) in nodes.into_iter().tuple_combinations() {
+            let diff = node1 - node2;
+            antinodes.insert(node1 + diff);
+            antinodes.insert(node2 - diff);
         }
     }
-    antinodes
-        .into_iter()
-        .filter(|an| in_bounds(an, &bounds))
-        .count()
+    antinodes.iter_points().count()
 }
 
 pub fn part2(input: &str) -> usize {
     let (map, bounds) = parse_input(input);
-    let mut antinodes = HashSet::new();
+    let mut antinodes = SparsePointSet::default()
+        .with_boundaries((Point2::new(0, 0)..=bounds).into())
+        .unwrap();
     for nodes in map.into_values() {
-        for node1 in &nodes {
-            for node2 in &nodes {
-                if node1 == node2 {
-                    continue;
-                }
-                let diff = *node1 - *node2;
+        for (node1, node2) in nodes.into_iter().tuple_combinations() {
+            let diff = node1 - node2;
 
-                let mut node = *node1;
-                while in_bounds(&node, &bounds) {
-                    antinodes.insert(node);
-                    node += diff;
-                }
+            let mut node = node1;
+            while antinodes.insert(node) != PointCollectionInsertResult::OutOfBounds {
+                node += diff;
+            }
 
-                let mut node = *node2;
-                while in_bounds(&node, &bounds) {
-                    antinodes.insert(node);
-                    node -= diff;
-                }
+            let mut node = node2;
+            while antinodes.insert(node) != PointCollectionInsertResult::OutOfBounds {
+                node -= diff;
             }
         }
     }
-    antinodes.len()
+    antinodes.iter_points().count()
 }
 
 #[cfg(test)]
@@ -132,7 +120,7 @@ mod tests {
                     Point::new(9, 9),
                 ],
             ],
-            Point::new(12, 12),
+            Point::new(11, 11),
         );
         assert_eq!(actual, expected);
     }

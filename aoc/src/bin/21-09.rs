@@ -2,39 +2,27 @@ puzzle_lib::setup!(title = "Smoke Basin");
 
 use std::collections::HashSet;
 
-use puzzle_lib::point::Point2;
+use puzzle_lib::{grid::FullGrid, point::Point2};
 
-type Grid = Vec<Vec<u8>>;
+type Grid = FullGrid<u8>;
 type Basin = HashSet<Point2>;
 
 fn parse_input(input: &str) -> Grid {
-    parse!(input => {
-        [grid split on '\n' with [chars as u8]]
-    } => grid)
+    parse!(input => { [grid cells as u8] } => grid)
 }
 
 fn get_low_points(grid: &Grid) -> Vec<Point2> {
-    (0..grid[0].len())
-        .cartesian_product(0..grid.len())
-        .map(|(x, y)| Point2::new(x, y))
-        .filter(|point| {
-            let height = grid[point.y][point.x];
-            point.neighbours_ortho().into_iter().all(|n| {
-                grid.get(n.y)
-                    .and_then(|row| row.get(n.x))
-                    .is_none_or(|h| *h > height)
-            })
+    grid.iter_pairs()
+        .filter(|(point, height)| {
+            grid.get_filter_many(point.neighbours_ortho().iter())
+                .all(|(_, h)| h > *height)
         })
+        .map(|(point, _)| *point)
         .collect()
 }
 
 fn expand_basin(grid: &Grid, basin: &mut Basin, point: Point2) {
-    if basin.contains(&point)
-        || grid
-            .get(point.y)
-            .and_then(|row| row.get(point.x))
-            .is_none_or(|h| *h == 9)
-    {
+    if basin.contains(&point) || grid.get(&point).is_none_or(|h| *h == 9) {
         return;
     }
     basin.insert(point);
@@ -47,7 +35,7 @@ pub fn part1(input: &str) -> u32 {
     let grid = parse_input(input);
     get_low_points(&grid)
         .into_iter()
-        .map(|point| u32::from(grid[point.y][point.x] + 1))
+        .map(|point| u32::from(grid[point] + 1))
         .sum()
 }
 
@@ -84,13 +72,14 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
-        let expected = vec![
-            vec![2, 1, 9, 9, 9, 4, 3, 2, 1, 0],
-            vec![3, 9, 8, 7, 8, 9, 4, 9, 2, 1],
-            vec![9, 8, 5, 6, 7, 8, 9, 8, 9, 2],
-            vec![8, 7, 6, 7, 8, 9, 6, 7, 8, 9],
-            vec![9, 8, 9, 9, 9, 6, 5, 6, 7, 8],
-        ];
+        let expected = [
+            [2, 1, 9, 9, 9, 4, 3, 2, 1, 0],
+            [3, 9, 8, 7, 8, 9, 4, 9, 2, 1],
+            [9, 8, 5, 6, 7, 8, 9, 8, 9, 2],
+            [8, 7, 6, 7, 8, 9, 6, 7, 8, 9],
+            [9, 8, 9, 9, 9, 6, 5, 6, 7, 8],
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 }

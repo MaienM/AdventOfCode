@@ -25,25 +25,15 @@ const WINNING_LINES: [[(usize, usize); 5]; 10] = [
 ];
 
 fn parse_input(input: &str) -> (Vec<u16>, Vec<Board>) {
-    parse!(input =>
+    parse!(input => {
         [draws split on ',' as u16]
         "\n\n"
-        [boards split on "\n\n" with [split on '\n' with [split try as u16]]]
-    );
-
-    let boards = boards
-        .into_iter()
-        .map(|board| {
-            board
-                .into_iter()
-                .map(|line| line.try_into().unwrap())
-                .collect::<Vec<_>>()
-                .try_into()
-                .unwrap()
-        })
-        .collect();
-
-    (draws, boards)
+        [boards split on "\n\n" with
+            [split on '\n' try into (Board) with
+                [split try into ([u16; 5]) try as u16]
+            ]
+        ]
+    } => (draws, boards))
 }
 
 fn init_board_state(board: Board) -> BoardState {

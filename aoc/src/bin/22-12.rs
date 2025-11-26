@@ -6,40 +6,19 @@ use std::{
 };
 
 use derive_new::new;
-use puzzle_lib::point::Point2;
+use puzzle_lib::{grid::FullGrid, point::Point2};
 
-type Grid = Vec<Vec<u8>>;
+type Grid = FullGrid<u8>;
 type Point = Point2;
 
 fn parse_input(input: &str) -> (Grid, Point, Point) {
-    let placeholder_start = 100;
-    let placeholder_end = 101;
-
-    parse!(input =>
-        [grid split on '\n' with
-            [chars with |c| match c {
-                'S' => placeholder_start,
-                'E' => placeholder_end,
-                c => c as u8 - b'a',
-            } ]
-        ]
-    );
-
-    let mut start = Option::None;
-    let mut end = Option::None;
-    for (y, row) in grid.iter_mut().enumerate() {
-        for (x, value) in row.iter_mut().enumerate() {
-            if value == &placeholder_start {
-                *value = 0;
-                start = Option::Some(Point::new(x, y));
-            } else if value == &placeholder_end {
-                *value = 25;
-                end = Option::Some(Point::new(x, y));
-            }
-        }
-    }
-
-    (grid, start.unwrap(), end.unwrap())
+    parse!(input => {
+        [grid cells match {
+            'S' => index into start => 0,
+            'E' => index into end => 25,
+            c => c as u8 - b'a',
+        }]
+    } => (grid, start, end))
 }
 
 #[derive(Debug, Eq, PartialEq, new)]
@@ -68,7 +47,7 @@ fn pathfind(
 ) -> u16 {
     let mut visited: HashSet<Point> = HashSet::new();
     let mut paths: BinaryHeap<PartialPath> = BinaryHeap::new();
-    paths.push(PartialPath::new(0, grid[start.y][start.x], start));
+    paths.push(PartialPath::new(0, grid[start], start));
     loop {
         let current = paths.pop().unwrap();
         for point in current.point.neighbours_ortho() {
@@ -76,7 +55,7 @@ fn pathfind(
                 continue;
             }
 
-            let Some(height) = grid.get(point.y).and_then(|row| row.get(point.x)) else {
+            let Some(height) = grid.get(&point) else {
                 continue;
             };
             if predicate_valid(*height, current.height) {
@@ -131,12 +110,12 @@ mod tests {
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
         let expected = (
-            Grid::from(vec![
-                vec![0, 0, 1, 16, 15, 14, 13, 12],
-                vec![0, 1, 2, 17, 24, 23, 23, 11],
-                vec![0, 2, 2, 18, 25, 25, 23, 10],
-                vec![0, 2, 2, 19, 20, 21, 22, 9],
-                vec![0, 1, 3, 4, 5, 6, 7, 8],
+            Grid::from([
+                [0, 0, 1, 16, 15, 14, 13, 12],
+                [0, 1, 2, 17, 24, 23, 23, 11],
+                [0, 2, 2, 18, 25, 25, 23, 10],
+                [0, 2, 2, 19, 20, 21, 22, 9],
+                [0, 1, 3, 4, 5, 6, 7, 8],
             ]),
             Point::new(0, 0),
             Point::new(5, 2),

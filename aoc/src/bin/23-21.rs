@@ -2,10 +2,10 @@ puzzle_lib::setup!(title = "Step Counter");
 
 use std::collections::HashSet;
 
-use puzzle_lib::point::Point2;
+use puzzle_lib::{grid::FullGrid, point::Point2};
 
+type Point = Point2<usize>;
 type PointUnbound = Point2<isize>;
-type PointBound = Point2<usize>;
 
 #[derive(Debug, PartialEq)]
 enum Tile {
@@ -13,43 +13,19 @@ enum Tile {
     Plot,
 }
 
-#[derive(Debug, PartialEq)]
-struct Input {
-    start: PointUnbound,
-    bounds: PointBound,
-    tiles: Vec<Vec<Tile>>,
+type Grid = FullGrid<Tile>;
+
+fn parse_input(input: &str) -> (Grid, Point2) {
+    parse!(input => {
+        [grid cells match {
+            'S' => index into start => Tile::Plot,
+            '.' => Tile::Plot,
+            '#' => Tile::Rock,
+        }]
+    } => (grid, start))
 }
 
-fn parse_input(input: &str) -> Input {
-    let mut start = None;
-    let mut tiles = Vec::new();
-    for (y, line) in input.split('\n').enumerate() {
-        let mut line_tiles = Vec::new();
-        for (x, chr) in line.char_indices() {
-            match chr {
-                'S' => {
-                    start = Some(Point2::new(x as isize, y as isize));
-                    line_tiles.push(Tile::Plot);
-                }
-                '.' => {
-                    line_tiles.push(Tile::Plot);
-                }
-                '#' => {
-                    line_tiles.push(Tile::Rock);
-                }
-                _ => panic!("Invalid tile {chr:?}."),
-            }
-        }
-        tiles.push(line_tiles);
-    }
-    Input {
-        start: start.unwrap(),
-        bounds: Point2::new(tiles[0].len(), tiles.len()),
-        tiles,
-    }
-}
-
-fn wrap_point(point: &PointUnbound, bounds: &PointBound) -> PointBound {
+fn wrap_point(point: &PointUnbound, bounds: &Point) -> Point {
     Point2::new(
         (point.x + ((point.x.unsigned_abs() / bounds.x + 1) * bounds.x) as isize) as usize
             % bounds.x,
@@ -58,13 +34,16 @@ fn wrap_point(point: &PointUnbound, bounds: &PointBound) -> PointBound {
     )
 }
 
-fn solve_naive<const N: usize>(input: &Input, targets: [usize; N]) -> [usize; N] {
+fn solve_naive<const N: usize>(grid: &Grid, start: &Point, targets: [usize; N]) -> [usize; N] {
+    let bounds = grid.area().1;
+    let start: PointUnbound = start.try_cast().unwrap();
+
     let mut visited_even = HashSet::new();
     let mut visited_odd = HashSet::new();
-    visited_even.insert(input.start);
+    visited_even.insert(start);
 
     let mut current = HashSet::new();
-    current.insert(input.start);
+    current.insert(start);
 
     let mut targetidx = 0;
     let mut results = [0; N];
@@ -79,8 +58,8 @@ fn solve_naive<const N: usize>(input: &Input, targets: [usize; N]) -> [usize; N]
         let mut next = HashSet::new();
         for point in current {
             for neighbor in point.neighbours_ortho() {
-                let wrapped = wrap_point(&neighbor, &input.bounds);
-                if input.tiles[wrapped.y][wrapped.x] == Tile::Rock {
+                let wrapped = wrap_point(&neighbor, &bounds);
+                if grid[wrapped] == Tile::Rock {
                     continue;
                 }
                 if visited.insert(neighbor) {
@@ -101,21 +80,20 @@ fn solve_naive<const N: usize>(input: &Input, targets: [usize; N]) -> [usize; N]
     results
 }
 
-fn solve(input: &Input, steps: usize) -> usize {
-    if steps < input.bounds.x * 6 {
-        return solve_naive(input, [steps])[0];
+fn solve(grid: &Grid, start: &Point, steps: usize) -> usize {
+    let bounds = grid.area().1;
+
+    if steps < bounds.x * 6 {
+        return solve_naive(grid, start, [steps])[0];
     }
 
     // There is a consistent growth pattern we can use to calculate the result. To find this pattern we need the first 3 points.
-    let remainder = steps % input.bounds.x;
-    let times = steps / input.bounds.x;
+    let remainder = steps % bounds.x;
+    let times = steps / bounds.x;
     let sequence = solve_naive(
-        input,
-        [
-            remainder,
-            remainder + input.bounds.x,
-            remainder + input.bounds.x * 2,
-        ],
+        grid,
+        start,
+        [remainder, remainder + bounds.x, remainder + bounds.x * 2],
     );
 
     // The difference between two results are not consistent, but the difference between these differences are, so calculate this.
@@ -130,13 +108,13 @@ fn solve(input: &Input, steps: usize) -> usize {
 }
 
 pub fn part1(input: &str) -> usize {
-    let input = parse_input(input);
-    solve(&input, 64)
+    let (grid, start) = parse_input(input);
+    solve(&grid, &start, 64)
 }
 
 pub fn part2(input: &str) -> usize {
-    let input = parse_input(input);
-    solve(&input, 26_501_365)
+    let (grid, start) = parse_input(input);
+    solve(&grid, &start, 26_501_365)
 }
 
 #[cfg(test)]
@@ -165,11 +143,9 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
-        let expected = Input {
-            start: PointUnbound::new(5, 5),
-            bounds: PointBound::new(11, 11),
-            tiles: vec![
-                vec![
+        let expected = (
+            Grid::from([
+                [
                     Tile::Plot,
                     Tile::Plot,
                     Tile::Plot,
@@ -182,7 +158,7 @@ mod tests {
                     Tile::Plot,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Plot,
                     Tile::Plot,
@@ -195,7 +171,7 @@ mod tests {
                     Tile::Rock,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Rock,
                     Tile::Rock,
@@ -208,7 +184,7 @@ mod tests {
                     Tile::Rock,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Plot,
                     Tile::Rock,
@@ -221,7 +197,7 @@ mod tests {
                     Tile::Plot,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Plot,
                     Tile::Plot,
@@ -234,7 +210,7 @@ mod tests {
                     Tile::Plot,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Rock,
                     Tile::Rock,
@@ -247,7 +223,7 @@ mod tests {
                     Tile::Rock,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Rock,
                     Tile::Rock,
@@ -260,7 +236,7 @@ mod tests {
                     Tile::Rock,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Plot,
                     Tile::Plot,
@@ -273,7 +249,7 @@ mod tests {
                     Tile::Plot,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Rock,
                     Tile::Rock,
@@ -286,7 +262,7 @@ mod tests {
                     Tile::Rock,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Rock,
                     Tile::Rock,
@@ -299,7 +275,7 @@ mod tests {
                     Tile::Rock,
                     Tile::Plot,
                 ],
-                vec![
+                [
                     Tile::Plot,
                     Tile::Plot,
                     Tile::Plot,
@@ -312,69 +288,70 @@ mod tests {
                     Tile::Plot,
                     Tile::Plot,
                 ],
-            ],
-        };
+            ]),
+            Point::new(5, 5),
+        );
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn example_solve_naive_6() {
-        let map = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(solve_naive(&map, [6]), [16]);
+        let (grid, start) = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&grid, &start, [6]), [16]);
     }
 
     #[test]
     fn example_solve_naive_10() {
-        let map = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(solve_naive(&map, [10]), [50]);
+        let (grid, start) = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&grid, &start, [10]), [50]);
     }
 
     #[test]
     fn example_solve_naive_50() {
-        let map = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(solve_naive(&map, [50]), [1594]);
+        let (grid, start) = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&grid, &start, [50]), [1594]);
     }
 
     #[test]
     fn example_solve_naive_100() {
-        let map = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(solve_naive(&map, [100]), [6536]);
+        let (grid, start) = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&grid, &start, [100]), [6536]);
     }
 
     #[test]
     #[ignore = "slow"]
     fn example_solve_naive_500() {
-        let map = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(solve_naive(&map, [500]), [167_004]);
+        let (grid, start) = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&grid, &start, [500]), [167_004]);
     }
 
     #[test]
     #[ignore = "slow"]
     fn example_solve_naive_1000() {
-        let map = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(solve_naive(&map, [1000]), [668_697]);
+        let (grid, start) = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&grid, &start, [1000]), [668_697]);
     }
 
     #[test]
     #[ignore = "slow"]
     fn example_solve_naive_5000() {
-        let map = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(solve_naive(&map, [5000]), [16_733_044]);
+        let (grid, start) = parse_input(&EXAMPLE_INPUT);
+        assert_eq!(solve_naive(&grid, &start, [5000]), [16_733_044]);
     }
 
     #[test]
     fn wrap_point() {
         assert_eq!(
-            super::wrap_point(&PointUnbound::new(-2, -616), &PointBound::new(10, 10)),
-            PointBound::new(8, 4)
+            super::wrap_point(&PointUnbound::new(-2, -616), &Point::new(10, 10)),
+            Point::new(8, 4)
         );
         assert_eq!(
-            super::wrap_point(&PointUnbound::new(4, 8), &PointBound::new(10, 10)),
-            PointBound::new(4, 8)
+            super::wrap_point(&PointUnbound::new(4, 8), &Point::new(10, 10)),
+            Point::new(4, 8)
         );
         assert_eq!(
-            super::wrap_point(&PointUnbound::new(492, 812), &PointBound::new(10, 10)),
-            PointBound::new(2, 2)
+            super::wrap_point(&PointUnbound::new(492, 812), &Point::new(10, 10)),
+            Point::new(2, 2)
         );
     }
 }

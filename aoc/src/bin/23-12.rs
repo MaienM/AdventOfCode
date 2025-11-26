@@ -8,16 +8,6 @@ enum Condition {
     Damaged,
     Unknown,
 }
-impl From<char> for Condition {
-    fn from(value: char) -> Self {
-        match value {
-            '.' => Condition::Operational,
-            '#' => Condition::Damaged,
-            '?' => Condition::Unknown,
-            _ => panic!("Unknown condition {value:?}."),
-        }
-    }
-}
 
 #[derive(Clone, Debug, PartialEq)]
 struct Record {
@@ -25,15 +15,21 @@ struct Record {
     damaged_groups: Vec<usize>,
 }
 
-fn parse_record(line: &str) -> Record {
-    parse!(line => {
-        [conditions chars as Condition] " " [damaged_groups split on ',' as usize]
-    } => Record { conditions, damaged_groups })
-}
-
 fn parse_input(input: &str) -> Vec<Record> {
-    parse!(input => [records split on '\n' with (parse_record)]);
-    records
+    parse!(input => {
+        [records split on '\n' with
+            {
+                [conditions chars match {
+                    '.' => Condition::Operational,
+                    '#' => Condition::Damaged,
+                    '?' => Condition::Unknown,
+                }]
+                ' '
+                [damaged_groups split on ',' as usize]
+            }
+            => Record { conditions, damaged_groups }
+        ]
+    } => records)
 }
 
 fn find_valid_options(

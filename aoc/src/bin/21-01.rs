@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 puzzle_lib::setup!(title = "Sonar Sweep");
 
 fn parse_input(input: &str) -> Vec<u16> {
@@ -8,9 +10,8 @@ fn parse_input(input: &str) -> Vec<u16> {
 
 fn count_incrementing(nums: &[u16]) -> usize {
     nums.iter()
-        .skip(1)
-        .zip(nums.iter())
-        .filter(|(depth, prev_depth)| depth > prev_depth)
+        .tuple_windows()
+        .filter(|(prev_depth, depth)| depth > prev_depth)
         .count()
 }
 

@@ -113,18 +113,14 @@ enum Move {
     Right,
     Down,
 }
-impl From<char> for Move {
-    fn from(value: char) -> Self {
-        match value {
-            '<' => Move::Left,
-            '>' => Move::Right,
-            _ => panic!(),
-        }
-    }
-}
 
 fn parse_input(input: &str) -> Vec<Move> {
-    parse!(input => { [moves chars as Move] } => moves)
+    parse!(input => {
+        [moves chars match {
+            '<' => Move::Left,
+            '>' => Move::Right,
+        }]
+    } => moves)
 }
 
 #[allow(dead_code)]

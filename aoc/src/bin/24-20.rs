@@ -1,80 +1,56 @@
 puzzle_lib::setup!(title = "Race Condition");
 
-use std::collections::{BinaryHeap, HashSet};
+use std::collections::BinaryHeap;
 
-use puzzle_lib::point::Point2;
+use puzzle_lib::{grid::FullGrid, point::Point2};
 
-type Map = Vec<Vec<bool>>;
+type Grid = FullGrid<bool>;
+type StepGrid = FullGrid<usize>;
 
-fn parse_input(input: &str) -> (Map, Point2, Point2) {
-    let mut start = None;
-    let mut end = None;
-    let map = input
-        .split('\n')
-        .enumerate()
-        .map(|(y, line)| {
-            line.char_indices()
-                .map(|(x, c)| match c {
-                    '#' => false,
-                    '.' => true,
-                    'S' => {
-                        start = Some(Point2::new(x, y));
-                        true
-                    }
-                    'E' => {
-                        end = Some(Point2::new(x, y));
-                        true
-                    }
-                    _ => panic!(),
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect();
-
-    (map, start.unwrap(), end.unwrap())
+fn parse_input(input: &str) -> (Grid, Point2, Point2) {
+    parse!(input => {
+        [grid cells match {
+            '#' => (false),
+            '.' => (true),
+            'S' => index into start => (true),
+            'E' => index into end => (true),
+        }]
+    } => (grid, start, end))
 }
 
-fn make_step_map(map: &Map, start: &Point2) -> Vec<Vec<usize>> {
+fn calculate_step_grid(grid: &Grid, start: &Point2) -> StepGrid {
     let mut paths = BinaryHeap::new();
-    let mut visited = HashSet::new();
     paths.push((0, *start));
-    let mut result: Vec<Vec<usize>> = map
-        .iter()
-        .map(|row| row.iter().map(|_| 0).collect())
-        .collect();
+    let mut result = grid.map(|_| 0);
     while let Some((steps, point)) = paths.pop() {
-        if !map[point.y][point.x] || !visited.insert(point) {
+        if !grid[point] || result[point] > 0 {
             continue;
         }
 
-        result[point.y][point.x] = -steps as usize;
+        result[point] = -steps as usize;
 
         for neigh in point.neighbours_ortho() {
             paths.push((steps - 1, neigh));
         }
     }
+    result[*start] = 0;
     result
 }
 
 fn find_cheat_paths(
-    map: &Map,
+    grid: &Grid,
     start: &Point2,
     end: &Point2,
     cheat: usize,
     min_save: usize,
 ) -> usize {
-    let bounds = Point2::new(map[0].len(), map.len());
-    let non_wall_points: Vec<_> = (1..(bounds.x - 1))
-        .flat_map(|x| {
-            (1..(bounds.y - 1))
-                .filter(|y| map[*y][x])
-                .map(|y| Point2::new(x, y))
-                .collect::<Vec<_>>()
-        })
+    let non_wall_points: Vec<_> = grid
+        .iter_pairs()
+        .filter_map(|(point, cell)| if *cell { Some(*point) } else { None })
         .collect();
-    let from_start = make_step_map(map, start);
-    let from_end = make_step_map(map, end);
-    let threshold = from_start[end.y][end.x] - min_save;
+    let from_start = calculate_step_grid(grid, start);
+    let from_end = calculate_step_grid(grid, end);
+    let threshold = from_start[*end] - min_save;
     non_wall_points
         .par_iter()
         .map(|point1| {
@@ -83,8 +59,7 @@ fn find_cheat_paths(
                 .filter(|point2| {
                     let distance = point1.abs_diff(point2).sum();
                     distance <= cheat
-                        && from_start[point1.y][point1.x] + distance + from_end[point2.y][point2.x]
-                            <= threshold
+                        && from_start[*point1] + distance + from_end[**point2] <= threshold
                 })
                 .count()
         })
@@ -92,8 +67,8 @@ fn find_cheat_paths(
 }
 
 fn part1impl(input: &str, min_save: usize) -> usize {
-    let (map, start, end) = parse_input(input);
-    find_cheat_paths(&map, &start, &end, 2, min_save)
+    let (grid, start, end) = parse_input(input);
+    find_cheat_paths(&grid, &start, &end, 2, min_save)
 }
 
 pub fn part1(input: &str) -> usize {
@@ -101,8 +76,8 @@ pub fn part1(input: &str) -> usize {
 }
 
 fn part2impl(input: &str, min_save: usize) -> usize {
-    let (map, start, end) = parse_input(input);
-    find_cheat_paths(&map, &start, &end, 20, min_save)
+    let (grid, start, end) = parse_input(input);
+    find_cheat_paths(&grid, &start, &end, 20, min_save)
 }
 
 pub fn part2(input: &str) -> usize {
@@ -139,68 +114,69 @@ mod tests {
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
         let expected = (
-            vec![
-                vec![
+            [
+                [
                     false, false, false, false, false, false, false, false, false, false, false,
                     false, false, false, false,
                 ],
-                vec![
+                [
                     false, true, true, true, false, true, true, true, false, true, true, true,
                     true, true, false,
                 ],
-                vec![
+                [
                     false, true, false, true, false, true, false, true, false, true, false, false,
                     false, true, false,
                 ],
-                vec![
+                [
                     false, true, false, true, true, true, false, true, false, true, false, true,
                     true, true, false,
                 ],
-                vec![
+                [
                     false, false, false, false, false, false, false, true, false, true, false,
                     true, false, false, false,
                 ],
-                vec![
+                [
                     false, false, false, false, false, false, false, true, false, true, false,
                     true, true, true, false,
                 ],
-                vec![
+                [
                     false, false, false, false, false, false, false, true, false, true, false,
                     false, false, true, false,
                 ],
-                vec![
+                [
                     false, false, false, true, true, true, false, true, true, true, false, true,
                     true, true, false,
                 ],
-                vec![
+                [
                     false, false, false, true, false, false, false, false, false, false, false,
                     true, false, false, false,
                 ],
-                vec![
+                [
                     false, true, true, true, false, false, false, true, true, true, false, true,
                     true, true, false,
                 ],
-                vec![
+                [
                     false, true, false, false, false, false, false, true, false, true, false,
                     false, false, true, false,
                 ],
-                vec![
+                [
                     false, true, false, true, true, true, false, true, false, true, false, true,
                     true, true, false,
                 ],
-                vec![
+                [
                     false, true, false, true, false, true, false, true, false, true, false, true,
                     false, false, false,
                 ],
-                vec![
+                [
                     false, true, true, true, false, true, true, true, false, true, true, true,
                     false, false, false,
                 ],
-                vec![
+                [
                     false, false, false, false, false, false, false, false, false, false, false,
                     false, false, false, false,
                 ],
-            ],
+            ]
+            .into(),
             Point2::new(1, 3),
             Point2::new(5, 7),
         );

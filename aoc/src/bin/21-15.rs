@@ -2,34 +2,34 @@ puzzle_lib::setup!(title = "Chiton");
 
 use std::collections::BinaryHeap;
 
-use puzzle_lib::point::Point2;
+use puzzle_lib::{
+    grid::FullGrid,
+    point::{Direction2, Point2},
+};
 
-type Grid = Vec<Vec<u8>>;
+type Grid = FullGrid<u8>;
 
 fn parse_input(input: &str) -> Grid {
-    parse!(input => { [grid split on '\n' with [chars as u8]] } => grid)
+    parse!(input => { [grid cells as u8] } => grid)
 }
 
 fn calculate_path(grid: &Grid) -> i16 {
-    let mut visited: Vec<Vec<bool>> = grid
-        .iter()
-        .map(|row| row.iter().map(|_| false).collect())
-        .collect();
+    let mut visited: FullGrid<bool> = FullGrid::new_default(grid.width(), grid.height());
     let mut paths = BinaryHeap::new();
-    paths.push((0, Point2::new(0, 0)));
-    let target = Point2::new(grid[0].len() - 1, grid.len() - 1);
+    paths.push((0, grid.area().0));
+    let target = Point2::new(grid.width() - 1, grid.height() - 1);
     while let Some((risk, point)) = paths.pop() {
         if point == target {
             return -risk;
         }
 
-        if visited[point.y][point.x] {
+        if visited[point] {
             continue;
         }
-        visited[point.y][point.x] = true;
+        visited[point] = true;
 
         for neighbour in point.neighbours_ortho() {
-            if let Some(nrisk) = grid.get(neighbour.y).and_then(|row| row.get(neighbour.x)) {
+            if let Some(nrisk) = grid.get(&neighbour) {
                 paths.push((risk - i16::from(*nrisk), neighbour));
             }
         }
@@ -38,41 +38,25 @@ fn calculate_path(grid: &Grid) -> i16 {
 }
 
 fn grow_grid(grid: Grid) -> Grid {
-    let grid: Grid = grid
-        .into_iter()
-        .map(|row| {
-            row.iter()
-                .copied()
-                .chain(row.iter().map(|v| v % 9 + 1))
-                .chain(row.iter().map(|v| (v + 1) % 9 + 1))
-                .chain(row.iter().map(|v| (v + 2) % 9 + 1))
-                .chain(row.iter().map(|v| (v + 3) % 9 + 1))
-                .collect::<Vec<_>>()
-        })
-        .collect();
-    grid.iter()
-        .cloned()
-        .chain(
-            grid.iter()
-                .map(|row| row.iter().map(|v| v % 9 + 1).collect::<Vec<u8>>())
-                .collect::<Vec<Vec<_>>>(),
-        )
-        .chain(
-            grid.iter()
-                .map(|row| row.iter().map(|v| (v + 1) % 9 + 1).collect::<Vec<u8>>())
-                .collect::<Vec<Vec<_>>>(),
-        )
-        .chain(
-            grid.iter()
-                .map(|row| row.iter().map(|v| (v + 2) % 9 + 1).collect::<Vec<u8>>())
-                .collect::<Vec<Vec<_>>>(),
-        )
-        .chain(
-            grid.iter()
-                .map(|row| row.iter().map(|v| (v + 3) % 9 + 1).collect::<Vec<u8>>())
-                .collect::<Vec<Vec<_>>>(),
-        )
-        .collect()
+    let bounds = Point2::new(grid.width(), grid.height());
+    let mut new_grid = Grid::new_default(bounds.x * 5, bounds.y * 5);
+    for (point, value) in grid.into_iter_pairs() {
+        for x_offset in 0..5usize {
+            for y_offset in 0..5usize {
+                let offset = (x_offset + y_offset) as u8;
+                let value = if offset > 0 {
+                    (value + offset - 1) % 9 + 1
+                } else {
+                    value
+                };
+                let point = point
+                    + Direction2::East * (x_offset * bounds.x)
+                    + Direction2::South * (y_offset * bounds.y);
+                new_grid[point] = value;
+            }
+        }
+    }
+    new_grid
 }
 
 pub fn part1(input: &str) -> i16 {
@@ -110,18 +94,19 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
-        let expected = vec![
-            vec![1, 1, 6, 3, 7, 5, 1, 7, 4, 2],
-            vec![1, 3, 8, 1, 3, 7, 3, 6, 7, 2],
-            vec![2, 1, 3, 6, 5, 1, 1, 3, 2, 8],
-            vec![3, 6, 9, 4, 9, 3, 1, 5, 6, 9],
-            vec![7, 4, 6, 3, 4, 1, 7, 1, 1, 1],
-            vec![1, 3, 1, 9, 1, 2, 8, 1, 3, 7],
-            vec![1, 3, 5, 9, 9, 1, 2, 4, 2, 1],
-            vec![3, 1, 2, 5, 4, 2, 1, 6, 3, 9],
-            vec![1, 2, 9, 3, 1, 3, 8, 5, 2, 1],
-            vec![2, 3, 1, 1, 9, 4, 4, 5, 8, 1],
-        ];
+        let expected = [
+            [1, 1, 6, 3, 7, 5, 1, 7, 4, 2],
+            [1, 3, 8, 1, 3, 7, 3, 6, 7, 2],
+            [2, 1, 3, 6, 5, 1, 1, 3, 2, 8],
+            [3, 6, 9, 4, 9, 3, 1, 5, 6, 9],
+            [7, 4, 6, 3, 4, 1, 7, 1, 1, 1],
+            [1, 3, 1, 9, 1, 2, 8, 1, 3, 7],
+            [1, 3, 5, 9, 9, 1, 2, 4, 2, 1],
+            [3, 1, 2, 5, 4, 2, 1, 6, 3, 9],
+            [1, 2, 9, 3, 1, 3, 8, 5, 2, 1],
+            [2, 3, 1, 1, 9, 4, 4, 5, 8, 1],
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 

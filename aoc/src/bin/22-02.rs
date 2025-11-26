@@ -8,16 +8,6 @@ enum Shape {
     Paper = 2,
     Scissors = 3,
 }
-impl From<&str> for Shape {
-    fn from(value: &str) -> Self {
-        match value {
-            "A" => Shape::Rock,
-            "B" => Shape::Paper,
-            "C" => Shape::Scissors,
-            _ => panic!("Unknown shape {value:?}."),
-        }
-    }
-}
 
 #[derive(Debug, Eq, PartialEq, new)]
 struct Round {
@@ -45,16 +35,20 @@ impl Round {
 fn parse_input_part1(input: &str) -> Vec<Round> {
     parse!(input => {
         [rounds split on '\n' with
-            { [opponent as Shape] " " p }
-            => {
-                let player = match p {
+            {
+                [opponent match {
+                    "A" => Shape::Rock,
+                    "B" => Shape::Paper,
+                    "C" => Shape::Scissors,
+                }]
+                " "
+                [player match {
                     "X" => Shape::Rock,
                     "Y" => Shape::Paper,
                     "Z" => Shape::Scissors,
-                    v => panic!("Invalid player choice {v:?}."),
-                };
-                Round { player, opponent }
+                }]
             }
+            => Round { player, opponent }
         ]
     } => rounds)
 }
@@ -62,16 +56,20 @@ fn parse_input_part1(input: &str) -> Vec<Round> {
 fn parse_input_part2(input: &str) -> Vec<Round> {
     parse!(input => {
         [rounds split on '\n' with
-            { [opponent as Shape] " " p }
-            => {
-                let player = match p {
+            {
+                [opponent match {
+                    "A" => Shape::Rock,
+                    "B" => Shape::Paper,
+                    "C" => Shape::Scissors,
+                }]
+                " "
+                [player match {
                     "X" => [Shape::Scissors, Shape::Rock, Shape::Paper][opponent as usize - 1], // lose
                     "Y" => [Shape::Rock, Shape::Paper, Shape::Scissors][opponent as usize - 1], // draw
                     "Z" => [Shape::Paper, Shape::Scissors, Shape::Rock][opponent as usize - 1], // win
-                    v => panic!("Invalid round outcome {v:?}."),
-                };
-                Round { player, opponent }
+                }]
             }
+            => Round { player, opponent }
         ]
     } => rounds)
 }

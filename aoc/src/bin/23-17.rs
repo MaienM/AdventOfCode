@@ -5,16 +5,17 @@ use std::{
     collections::{BinaryHeap, HashSet},
 };
 
-use puzzle_lib::point::{Direction2, Point2};
+use puzzle_lib::{
+    grid::FullGrid,
+    point::{Direction2, Point2},
+};
 
 type Point = Point2;
 type Direction = Direction2;
-type Map = Vec<Vec<u8>>;
+type Grid = FullGrid<u8>;
 
-fn parse_input(input: &str) -> Map {
-    parse!(input => {
-        [map split on '\n' with [chars as u8]]
-    } => map)
+fn parse_input(input: &str) -> Grid {
+    parse!(input => { [grid cells as u8] } => grid)
 }
 
 #[derive(Eq, PartialEq, Clone)]
@@ -37,8 +38,8 @@ impl Ord for State {
     }
 }
 
-fn find_path(map: &Map, min_before_turn: u8, max_before_turn: u8) -> usize {
-    let bounds = Point::new(map[0].len(), map.len());
+fn find_path(grid: &Grid, min_before_turn: u8, max_before_turn: u8) -> usize {
+    let bounds = Point::new(grid.width(), grid.height());
     let end = Point::new(bounds.x - 1, bounds.y - 1);
     let mut visited: HashSet<(Point, Direction, u8)> = HashSet::new();
     let mut next: BinaryHeap<State> = BinaryHeap::new();
@@ -103,7 +104,7 @@ fn find_path(map: &Map, min_before_turn: u8, max_before_turn: u8) -> usize {
 
             let position = state.position + *direction;
             next.push(State {
-                cost: state.cost + (map[position.y][position.x] as usize),
+                cost: state.cost + (grid[position] as usize),
                 position,
                 direction: *direction,
                 moved_straight,
@@ -120,13 +121,13 @@ fn find_path(map: &Map, min_before_turn: u8, max_before_turn: u8) -> usize {
 }
 
 pub fn part1(input: &str) -> usize {
-    let map = parse_input(input);
-    find_path(&map, 0, 3)
+    let grid = parse_input(input);
+    find_path(&grid, 0, 3)
 }
 
 pub fn part2(input: &str) -> usize {
-    let map = parse_input(input);
-    find_path(&map, 4, 10)
+    let grid = parse_input(input);
+    find_path(&grid, 4, 10)
 }
 
 #[cfg(test)]
@@ -156,21 +157,22 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
-        let expected = vec![
-            vec![2, 4, 1, 3, 4, 3, 2, 3, 1, 1, 3, 2, 3],
-            vec![3, 2, 1, 5, 4, 5, 3, 5, 3, 5, 6, 2, 3],
-            vec![3, 2, 5, 5, 2, 4, 5, 6, 5, 4, 2, 5, 4],
-            vec![3, 4, 4, 6, 5, 8, 5, 8, 4, 5, 4, 5, 2],
-            vec![4, 5, 4, 6, 6, 5, 7, 8, 6, 7, 5, 3, 6],
-            vec![1, 4, 3, 8, 5, 9, 8, 7, 9, 8, 4, 5, 4],
-            vec![4, 4, 5, 7, 8, 7, 6, 9, 8, 7, 7, 6, 6],
-            vec![3, 6, 3, 7, 8, 7, 7, 9, 7, 9, 6, 5, 3],
-            vec![4, 6, 5, 4, 9, 6, 7, 9, 8, 6, 8, 8, 7],
-            vec![4, 5, 6, 4, 6, 7, 9, 9, 8, 6, 4, 5, 3],
-            vec![1, 2, 2, 4, 6, 8, 6, 8, 6, 5, 5, 6, 3],
-            vec![2, 5, 4, 6, 5, 4, 8, 8, 8, 7, 7, 3, 5],
-            vec![4, 3, 2, 2, 6, 7, 4, 6, 5, 5, 5, 3, 3],
-        ];
+        let expected = [
+            [2, 4, 1, 3, 4, 3, 2, 3, 1, 1, 3, 2, 3],
+            [3, 2, 1, 5, 4, 5, 3, 5, 3, 5, 6, 2, 3],
+            [3, 2, 5, 5, 2, 4, 5, 6, 5, 4, 2, 5, 4],
+            [3, 4, 4, 6, 5, 8, 5, 8, 4, 5, 4, 5, 2],
+            [4, 5, 4, 6, 6, 5, 7, 8, 6, 7, 5, 3, 6],
+            [1, 4, 3, 8, 5, 9, 8, 7, 9, 8, 4, 5, 4],
+            [4, 4, 5, 7, 8, 7, 6, 9, 8, 7, 7, 6, 6],
+            [3, 6, 3, 7, 8, 7, 7, 9, 7, 9, 6, 5, 3],
+            [4, 6, 5, 4, 9, 6, 7, 9, 8, 6, 8, 8, 7],
+            [4, 5, 6, 4, 6, 7, 9, 9, 8, 6, 4, 5, 3],
+            [1, 2, 2, 4, 6, 8, 6, 8, 6, 5, 5, 6, 3],
+            [2, 5, 4, 6, 5, 4, 8, 8, 8, 7, 7, 3, 5],
+            [4, 3, 2, 2, 6, 7, 4, 6, 5, 5, 5, 3, 3],
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 }
@@ -198,7 +200,7 @@ pub mod visual {
     #[derive(ToRenderable)]
     struct Renderer {
         config: RenderConfig,
-        map: Vec<Vec<Tile>>,
+        grid: Vec<Vec<Tile>>,
         result: Option<Vec<super::Point>>,
     }
     impl Visual for Renderer {
@@ -265,13 +267,13 @@ pub mod visual {
     }
     impl Renderer {
         fn new(input: &str, config: RenderConfig) -> Self {
-            let map = super::parse_input(input)
+            let grid = super::parse_input(input)
                 .into_iter()
                 .map(|row| row.into_iter().map(|_| Tile { strength: 0 }).collect())
                 .collect();
             Self {
                 config,
-                map,
+                grid,
                 result: None,
             }
         }

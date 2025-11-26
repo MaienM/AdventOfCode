@@ -4,7 +4,7 @@ use std::{collections::HashSet, ops::RangeInclusive};
 
 use puzzle_lib::point::{Direction2, Point2};
 
-type Point = Point2<isize>;
+type Point = Point2<usize>;
 type Direction = Direction2;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -60,7 +60,7 @@ fn parse_input(input: &str) -> Vec<Instruction<'_>> {
     } => instructions)
 }
 
-fn verticals_to_ranges(verticals: &HashSet<isize>) -> Vec<RangeInclusive<isize>> {
+fn verticals_to_ranges(verticals: &HashSet<usize>) -> Vec<RangeInclusive<usize>> {
     let mut iter = verticals.iter().sort_unstable();
     let mut ranges = Vec::new();
     while let (Some(start), Some(end)) = (iter.next(), iter.next()) {
@@ -69,14 +69,14 @@ fn verticals_to_ranges(verticals: &HashSet<isize>) -> Vec<RangeInclusive<isize>>
     ranges
 }
 
-fn count_inside(verticals: &HashSet<isize>) -> usize {
+fn count_inside(verticals: &HashSet<usize>) -> usize {
     verticals_to_ranges(verticals)
         .into_iter()
-        .map(|r| (r.end() - r.start() + 1) as usize)
+        .map(|r| r.end() - r.start() + 1)
         .sum()
 }
 
-fn count_overlap(old_verticals: &HashSet<isize>, new_verticals: &HashSet<isize>) -> usize {
+fn count_overlap(old_verticals: &HashSet<usize>, new_verticals: &HashSet<usize>) -> usize {
     let mut count = 0;
     for old_range in verticals_to_ranges(old_verticals) {
         for new_range in verticals_to_ranges(new_verticals) {
@@ -87,7 +87,7 @@ fn count_overlap(old_verticals: &HashSet<isize>, new_verticals: &HashSet<isize>)
             {
                 let start = old_range.start().max(new_range.start());
                 let end = old_range.end().min(new_range.end());
-                count += (end - start + 1) as usize;
+                count += end - start + 1;
             }
         }
     }
@@ -95,49 +95,24 @@ fn count_overlap(old_verticals: &HashSet<isize>, new_verticals: &HashSet<isize>)
 }
 
 fn solve(instructions: &[Instruction]) -> usize {
-    let mut map = Vec::new();
-    let mut current = Point::new(0, 0);
+    let mut grid = Vec::new();
+    let mut current = Point::new(usize::MAX / 2, usize::MAX / 2);
 
     let mut last_direction = instructions.last().unwrap().direction;
     for instruction in instructions {
         let tile: Tile = (last_direction, instruction.direction).into();
-        map.push((tile, current));
+        grid.push((tile, current));
 
         last_direction = instruction.direction;
-        match instruction.direction {
-            Direction::North => {
-                current.y = current
-                    .y
-                    .checked_sub(instruction.distance as isize)
-                    .unwrap();
-            }
-            Direction::South => {
-                current.y = current
-                    .y
-                    .checked_add(instruction.distance as isize)
-                    .unwrap();
-            }
-            Direction::East => {
-                current.x = current
-                    .x
-                    .checked_add(instruction.distance as isize)
-                    .unwrap();
-            }
-            Direction::West => {
-                current.x = current
-                    .x
-                    .checked_sub(instruction.distance as isize)
-                    .unwrap();
-            }
-        }
+        current += instruction.direction * instruction.distance;
     }
 
-    let mut by_row: Vec<(isize, Vec<(Tile, Point)>)> = map
+    let mut by_row: Vec<(usize, Vec<(Tile, Point)>)> = grid
         .iter()
         .map(|(_, p)| p.y)
         .count_occurences()
         .into_keys()
-        .map(|y| (y, map.iter().filter(|(_, p)| p.y == y).copied().collect()))
+        .map(|y| (y, grid.iter().filter(|(_, p)| p.y == y).copied().collect()))
         .collect();
     by_row.sort_unstable_by_key(|(y, _)| *y);
 
@@ -146,7 +121,7 @@ fn solve(instructions: &[Instruction]) -> usize {
     let mut verticals = HashSet::new();
     for (y, row) in by_row {
         // Add size of rectangles formed until this point.
-        sum += count_inside(&verticals) * (y - last_y + 1) as usize;
+        sum += count_inside(&verticals) * (y - last_y + 1);
 
         // Update verticals.
         let mut new_verticals = verticals.clone();

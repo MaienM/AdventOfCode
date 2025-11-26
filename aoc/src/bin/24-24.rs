@@ -8,16 +8,6 @@ enum Operand {
     Or,
     Xor,
 }
-impl From<&str> for Operand {
-    fn from(value: &str) -> Self {
-        match value {
-            "AND" => Operand::And,
-            "OR" => Operand::Or,
-            "XOR" => Operand::Xor,
-            _ => panic!(),
-        }
-    }
-}
 impl Operand {
     fn calc(&self, lhs: bool, rhs: bool) -> bool {
         match self {
@@ -39,7 +29,19 @@ fn parse_input(input: &str) -> (Wires<'_>, Gates<'_>) {
         ]
         "\n\n"
         [gates split on '\n' into (HashMap<_, _>) with
-            { lhs ' ' [op as Operand] ' ' rhs " -> " name }
+            {
+                lhs
+                ' '
+                [op match {
+                    "AND" => Operand::And,
+                    "OR" => Operand::Or,
+                    "XOR" => Operand::Xor,
+                }]
+                ' '
+                rhs
+                " -> "
+                name
+            }
             => (name, (lhs, op, rhs))
         ]
     } => (wires, gates))

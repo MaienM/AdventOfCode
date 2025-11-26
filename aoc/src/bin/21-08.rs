@@ -75,8 +75,8 @@ const CHAR_OFFSET: usize = 'a' as usize;
 fn parse_input(input: &str) -> Vec<Line<'_>> {
     parse!(input => {
         [lines split on '\n' with
-            { [signals split] " | " [digits split] }
-            => (signals.try_into().unwrap(), digits.try_into().unwrap())
+            { [signals split try into (Signals)] " | " [digits split try into (Digits)] }
+            => (signals, digits)
         ]
     } => lines)
 }

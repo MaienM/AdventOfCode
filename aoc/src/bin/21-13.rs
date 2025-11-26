@@ -1,88 +1,77 @@
 puzzle_lib::setup!(title = "Transparent Origami");
 
-use puzzle_lib::point::Point2;
+use puzzle_lib::{grid::SparsePointSet, point::Point2};
 
-type Grid = Vec<Vec<bool>>;
+type Grid = SparsePointSet<u16>;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 enum Axis {
     X,
     Y,
 }
-impl From<&str> for Axis {
-    fn from(value: &str) -> Self {
-        match value {
-            "x" => Axis::X,
-            "y" => Axis::Y,
-            _ => {
-                panic!("Invalid fold axis {value:?}.");
-            }
-        }
-    }
-}
 
-fn parse_input(input: &str) -> (Grid, Vec<Axis>) {
-    // The numeric portion of the fold instruction doesn't actually matter since the instruction is
-    // always fold in half over axis, so we just ignore this and only store what axis to fold on.
+type Fold = (Axis, u16);
 
-    parse!(input =>
-        [points split on '\n' with
-            { [x as usize] ',' [y as usize] }
+fn parse_input(input: &str) -> (Grid, Vec<Fold>) {
+    parse!(input => {
+        [grid split on '\n' into (Grid) with
+            { [x as u16] ',' [y as u16] }
             => Point2::new(x, y)
         ]
         "\n\n"
         [folds split on '\n' with
-            { "fold along " [axis as Axis] "=" _ }
-            => axis
+            {
+                "fold along "
+                [axis match {
+                    "x" => Axis::X,
+                    "y" => Axis::Y,
+                }]
+                "="
+                [num as u16]
+            }
+            => (axis, num)
         ]
-    );
-
-    let width = points.iter().max_by_key(|point| point.x).unwrap().x + 1;
-    let height = points.iter().max_by_key(|point| point.y).unwrap().y + 1;
-    let mut grid = (0..height)
-        .map(|_| (0..width).map(|_| false).collect::<Vec<bool>>())
-        .collect::<Grid>();
-    for point in points {
-        grid[point.y][point.x] = true;
-    }
-
-    (grid, folds)
+    } => (grid, folds))
 }
 
-fn do_fold(grid: Grid, axis: Axis) -> Grid {
-    if axis == Axis::X {
-        let mid = grid[0].len() / 2 + 1;
-        grid.into_iter()
-            .map(|row| {
-                let left = &row[..mid - 1];
-                let right = &row[mid..];
-                left.iter()
-                    .zip(right.iter().rev())
-                    .map(|(l, r)| *l || *r)
-                    .collect::<Vec<bool>>()
+fn do_fold(grid: Grid, fold: Fold) -> Grid {
+    match fold {
+        (Axis::X, fold) => grid
+            .into_iter_points()
+            .map(|p| {
+                if p.x > fold {
+                    Point2::new(fold - (p.x - fold), p.y)
+                } else {
+                    p
+                }
             })
-            .collect()
-    } else {
-        let chunk_height = grid.len() / 2;
-        let top = grid.iter().take(chunk_height);
-        let bottom = grid.iter().skip(chunk_height + 1).take(chunk_height);
-        top.zip(bottom.rev())
-            .map::<Vec<bool>, _>(|(t_row, b_row)| {
-                t_row
-                    .iter()
-                    .zip(b_row.iter())
-                    .map(|(t, b)| *t || *b)
-                    .collect()
+            .collect(),
+        (Axis::Y, fold) => grid
+            .into_iter_points()
+            .map(|p| {
+                if p.y > fold {
+                    Point2::new(p.x, fold - (p.y - fold))
+                } else {
+                    p
+                }
             })
-            .collect()
+            .collect(),
     }
 }
 
 fn format_grid(grid: &Grid) -> String {
     let mut result = String::new();
-    for line in grid {
-        for cell in line {
-            result += if *cell { "█" } else { " " };
+    let bounds = Point2::new(
+        grid.iter_points().max_by_key(|p| p.x).unwrap().x,
+        grid.iter_points().max_by_key(|p| p.y).unwrap().y,
+    );
+    for y in 0..=bounds.y {
+        for x in 0..=bounds.x {
+            result += if grid.contains_point(&Point2::new(x, y)) {
+                "█"
+            } else {
+                " "
+            };
         }
         result += "\n";
     }
@@ -93,7 +82,7 @@ fn format_grid(grid: &Grid) -> String {
 pub fn part1(input: &str) -> usize {
     let (mut grid, instructions) = parse_input(input);
     grid = do_fold(grid, instructions.into_iter().next().unwrap());
-    grid.into_iter().flatten().filter(|v| *v).count()
+    grid.into_iter_points().count()
 }
 
 pub fn part2(input: &str) -> String {
@@ -106,6 +95,9 @@ pub fn part2(input: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
+    use common_macros::hash_set;
     use pretty_assertions::assert_eq;
     use puzzle_runner::example_input;
 
@@ -119,8 +111,6 @@ mod tests {
             █   █
             █   █
             █████
-                 
-                 
         "
     )]
     static EXAMPLE_INPUT: &str = "
@@ -149,56 +139,32 @@ mod tests {
 
     #[test]
     fn example_parse() {
-        let expected_grid = vec![
-            vec![
-                false, false, false, true, false, false, true, false, false, true, false,
-            ],
-            vec![
-                false, false, false, false, true, false, false, false, false, false, false,
-            ],
-            vec![
-                false, false, false, false, false, false, false, false, false, false, false,
-            ],
-            vec![
-                true, false, false, false, false, false, false, false, false, false, false,
-            ],
-            vec![
-                false, false, false, true, false, false, false, false, true, false, true,
-            ],
-            vec![
-                false, false, false, false, false, false, false, false, false, false, false,
-            ],
-            vec![
-                false, false, false, false, false, false, false, false, false, false, false,
-            ],
-            vec![
-                false, false, false, false, false, false, false, false, false, false, false,
-            ],
-            vec![
-                false, false, false, false, false, false, false, false, false, false, false,
-            ],
-            vec![
-                false, false, false, false, false, false, false, false, false, false, false,
-            ],
-            vec![
-                false, true, false, false, false, false, true, false, true, true, false,
-            ],
-            vec![
-                false, false, false, false, true, false, false, false, false, false, false,
-            ],
-            vec![
-                false, false, false, false, false, false, true, false, false, false, true,
-            ],
-            vec![
-                true, false, false, false, false, false, false, false, false, false, false,
-            ],
-            vec![
-                true, false, true, false, false, false, false, false, false, false, false,
-            ],
+        let expected_grid = hash_set![
+            Point2::new(6, 10),
+            Point2::new(0, 14),
+            Point2::new(9, 10),
+            Point2::new(0, 3),
+            Point2::new(10, 4),
+            Point2::new(4, 11),
+            Point2::new(6, 0),
+            Point2::new(6, 12),
+            Point2::new(4, 1),
+            Point2::new(0, 13),
+            Point2::new(10, 12),
+            Point2::new(3, 4),
+            Point2::new(3, 0),
+            Point2::new(8, 4),
+            Point2::new(1, 10),
+            Point2::new(2, 14),
+            Point2::new(8, 10),
+            Point2::new(9, 0),
         ];
-        let expected_instructions = vec![Axis::Y, Axis::X];
+        let expected_instructions = vec![(Axis::Y, 7), (Axis::X, 5)];
         let (actual_grid, actual_instructions) = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(actual_grid, expected_grid);
+        assert_eq!(
+            actual_grid.into_iter_points().collect::<HashSet<_>>(),
+            expected_grid
+        );
         assert_eq!(actual_instructions, expected_instructions);
     }
 }

@@ -5,8 +5,9 @@ use std::{collections::HashSet, ops::RangeInclusive};
 use puzzle_lib::point::{Point2, Point3};
 
 type Point = Point3<usize>;
+type Brick = (Point, Point);
 
-fn parse_input(input: &str) -> Vec<(Point, Point)> {
+fn parse_input(input: &str) -> Vec<Brick> {
     parse!(input => {
         [bricks split on '\n' with
             { [x1 as usize] ',' [y1 as usize] ',' [z1 as usize] '~' [x2 as usize] ',' [y2 as usize] ',' [z2 as usize] }
@@ -19,8 +20,9 @@ fn range(a: usize, b: usize) -> RangeInclusive<usize> {
     if a > b { b..=a } else { a..=b }
 }
 
-pub fn part1(input: &str) -> usize {
-    let mut bricks = parse_input(input);
+/// Drop all the bricks, returning a set for each brick containing the IDs of the bricks that it's
+/// resting on.
+fn drop_all(mut bricks: Vec<Brick>) -> impl Iterator<Item = HashSet<usize>> {
     bricks.sort_by_key(|b| usize::min(b.0.z, b.1.z));
     let bounds = Point2::new(
         bricks
@@ -36,11 +38,10 @@ pub fn part1(input: &str) -> usize {
             .unwrap()
             + 1,
     );
-    let mut can_be_disintegrated: Vec<_> = (0..=bricks.len()).map(|_| true).collect();
     let mut map: Vec<Vec<_>> = (0..bounds.y)
         .map(|_| (0..bounds.x).map(|_| (0, 0)).collect())
         .collect();
-    for (idx, (p1, p2)) in bricks.into_iter().enumerate() {
+    bricks.into_iter().enumerate().map(move |(idx, (p1, p2))| {
         // We'll treat the ground as brick ID 0, and offset the rest by one to compensate.
         let id = idx + 1;
 
@@ -57,15 +58,22 @@ pub fn part1(input: &str) -> usize {
         let mut resting_on = HashSet::new();
         for x in range(p1.x, p2.x) {
             for y in range(p1.y, p2.y) {
-                let (base_z, base_id) = &map[y][x];
+                let cell = &mut map[y][x];
+                let (base_z, base_id) = cell;
                 if *base_z == resting_z {
                     resting_on.insert(*base_id);
                 }
-
-                map[y][x] = (top_z, id);
+                *cell = (top_z, id);
             }
         }
+        resting_on
+    })
+}
 
+pub fn part1(input: &str) -> usize {
+    let bricks = parse_input(input);
+    let mut can_be_disintegrated: Vec<_> = (0..=bricks.len()).map(|_| true).collect();
+    for resting_on in drop_all(bricks) {
         // Mark the brick we're resting on as cannot-be-disintegrated if there's only a single one.
         if resting_on.len() == 1 {
             for id in resting_on {
@@ -73,58 +81,14 @@ pub fn part1(input: &str) -> usize {
             }
         }
     }
-
     can_be_disintegrated.into_iter().filter(|v| *v).count()
 }
 
 pub fn part2(input: &str) -> usize {
-    let mut bricks = parse_input(input);
-    bricks.sort_by_key(|b| usize::min(b.0.z, b.1.z));
-    let bounds = Point2::new(
-        bricks
-            .iter()
-            .map(|b| usize::max(b.0.x, b.1.x))
-            .max()
-            .unwrap()
-            + 1,
-        bricks
-            .iter()
-            .map(|b| usize::max(b.0.y, b.1.y))
-            .max()
-            .unwrap()
-            + 1,
-    );
-    let mut map: Vec<Vec<_>> = (0..bounds.y)
-        .map(|_| (0..bounds.x).map(|_| (0, 0)).collect())
-        .collect();
+    let bricks = parse_input(input);
     let mut foundations: Vec<HashSet<usize>> = Vec::new();
     foundations.push(HashSet::new());
-    for (idx, (p1, p2)) in bricks.into_iter().enumerate() {
-        // We'll treat the ground as brick ID 0, and offset the rest by one to compensate.
-        let id = idx + 1;
-
-        // Find resting z level.
-        let mut resting_z = 0;
-        for x in range(p1.x, p2.x) {
-            for y in range(p1.y, p2.y) {
-                resting_z = usize::max(resting_z, map[y][x].0);
-            }
-        }
-        let top_z = resting_z + usize::abs_diff(p1.z, p2.z) + 1;
-
-        // Update map & find out what brick(s) we're resting on.
-        let mut resting_on = HashSet::new();
-        for x in range(p1.x, p2.x) {
-            for y in range(p1.y, p2.y) {
-                let (base_z, base_id) = &map[y][x];
-                if *base_z == resting_z {
-                    resting_on.insert(*base_id);
-                }
-
-                map[y][x] = (top_z, id);
-            }
-        }
-
+    for resting_on in drop_all(bricks) {
         // Mark the bricks we're resting on as foundations.
         foundations.push(resting_on);
     }

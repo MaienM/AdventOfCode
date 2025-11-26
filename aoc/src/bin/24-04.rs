@@ -1,62 +1,67 @@
 puzzle_lib::setup!(title = "Ceres Search");
 
-use puzzle_lib::point::Point2;
+use puzzle_lib::{
+    grid::FullGrid,
+    point::{Direction2X, Point2},
+};
 
-type Point = Point2<isize>;
+type Grid = FullGrid<char>;
 
-fn parse_input(input: &str) -> Vec<Vec<char>> {
-    parse!(input => {
-        [chars split on '\n' with [chars]]
-    } => chars)
+fn parse_input(input: &str) -> Grid {
+    parse!(input => { [grid cells] } => grid)
 }
 
-fn test_mas_from(chars: &[Vec<char>], start: Point, offset: Point) -> bool {
-    test_mas(chars, start + offset, offset)
+#[inline]
+fn test_mas_from(grid: &Grid, start: Point2, direction: Direction2X) -> bool {
+    test_mas(grid, start + direction, direction)
 }
 
-fn test_mas(chars: &[Vec<char>], start: Point, offset: Point) -> bool {
-    chars[start.y as usize][start.x as usize] == 'M'
-        && chars[(start.y + offset.y) as usize][(start.x + offset.x) as usize] == 'A'
-        && chars[(start.y + offset.y * 2) as usize][(start.x + offset.x * 2) as usize] == 'S'
+fn test_mas(grid: &Grid, start: Point2, direction: Direction2X) -> bool {
+    grid[start] == 'M' && grid[start + direction] == 'A' && grid[start + direction * 2] == 'S'
 }
 
-fn test_xmas_all_directions(chars: &[Vec<char>], dimensions: &Point, start: Point) -> usize {
+fn test_xmas_all_directions(grid: &Grid, dimensions: &Point2, start: Point2) -> usize {
     [
-        start.x >= 3 && test_mas_from(chars, start, Point::new(-1, 0)),
-        start.x >= 3 && start.y >= 3 && test_mas_from(chars, start, Point::new(-1, -1)),
+        start.x >= 3 && test_mas_from(grid, start, Direction2X::West),
+        start.x >= 3 && start.y >= 3 && test_mas_from(grid, start, Direction2X::NorthWest),
         start.x >= 3
             && dimensions.y - start.y >= 4
-            && test_mas_from(chars, start, Point::new(-1, 1)),
-        (dimensions.x - start.x) >= 4 && test_mas_from(chars, start, Point::new(1, 0)),
+            && test_mas_from(grid, start, Direction2X::SouthWest),
+        (dimensions.x - start.x) >= 4 && test_mas_from(grid, start, Direction2X::East),
         (dimensions.x - start.x) >= 4
             && start.y >= 3
-            && test_mas_from(chars, start, Point::new(1, -1)),
+            && test_mas_from(grid, start, Direction2X::NorthEast),
         (dimensions.x - start.x) >= 4
             && dimensions.y - start.y >= 4
-            && test_mas_from(chars, start, Point::new(1, 1)),
-        start.y >= 3 && test_mas_from(chars, start, Point::new(0, -1)),
-        dimensions.y - start.y >= 4 && test_mas_from(chars, start, Point::new(0, 1)),
+            && test_mas_from(grid, start, Direction2X::SouthEast),
+        start.y >= 3 && test_mas_from(grid, start, Direction2X::North),
+        dimensions.y - start.y >= 4 && test_mas_from(grid, start, Direction2X::South),
     ]
     .into_iter()
     .filter(|v| *v)
     .count()
 }
 
-fn test_x_mas(chars: &[Vec<char>], tl: Point) -> bool {
-    (test_mas(chars, tl, Point::new(1, 1))
-        || test_mas(chars, Point::new(tl.x + 2, tl.y + 2), Point::new(-1, -1)))
-        && (test_mas(chars, Point::new(tl.x + 2, tl.y), Point::new(-1, 1))
-            || test_mas(chars, Point::new(tl.x, tl.y + 2), Point::new(1, -1)))
+fn test_x_mas(grid: &Grid, tl: Point2) -> bool {
+    (test_mas(grid, tl, Direction2X::SouthEast)
+        || test_mas(
+            grid,
+            Point2::new(tl.x + 2, tl.y + 2),
+            Direction2X::NorthWest,
+        ))
+        && (test_mas(grid, Point2::new(tl.x + 2, tl.y), Direction2X::SouthWest)
+            || test_mas(grid, Point2::new(tl.x, tl.y + 2), Direction2X::NorthEast))
 }
 
 pub fn part1(input: &str) -> usize {
-    let chars = parse_input(input);
-    let dimensions = Point::new(chars[0].len() as isize, chars[0].len() as isize);
+    let grid = parse_input(input);
+    let dimensions = Point2::new(grid.width(), grid.height());
     let mut result = 0;
     for y in 0..dimensions.y {
         for x in 0..dimensions.x {
-            if chars[y as usize][x as usize] == 'X' {
-                result += test_xmas_all_directions(&chars, &dimensions, Point::new(x, y));
+            let point = Point2::new(x, y);
+            if grid[point] == 'X' {
+                result += test_xmas_all_directions(&grid, &dimensions, point);
             }
         }
     }
@@ -64,12 +69,12 @@ pub fn part1(input: &str) -> usize {
 }
 
 pub fn part2(input: &str) -> usize {
-    let chars = parse_input(input);
-    let dimensions = Point::new(chars[0].len() as isize, chars[0].len() as isize);
+    let grid = parse_input(input);
+    let dimensions = Point2::new(grid.width(), grid.height());
     let mut result = 0;
     for y in 0..(dimensions.y - 2) {
         for x in 0..(dimensions.x - 2) {
-            if test_x_mas(&chars, Point::new(x, y)) {
+            if test_x_mas(&grid, Point2::new(x, y)) {
                 result += 1;
             }
         }
@@ -101,18 +106,19 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
-        let expected = vec![
-            vec!['M', 'M', 'M', 'S', 'X', 'X', 'M', 'A', 'S', 'M'],
-            vec!['M', 'S', 'A', 'M', 'X', 'M', 'S', 'M', 'S', 'A'],
-            vec!['A', 'M', 'X', 'S', 'X', 'M', 'A', 'A', 'M', 'M'],
-            vec!['M', 'S', 'A', 'M', 'A', 'S', 'M', 'S', 'M', 'X'],
-            vec!['X', 'M', 'A', 'S', 'A', 'M', 'X', 'A', 'M', 'M'],
-            vec!['X', 'X', 'A', 'M', 'M', 'X', 'X', 'A', 'M', 'A'],
-            vec!['S', 'M', 'S', 'M', 'S', 'A', 'S', 'X', 'S', 'S'],
-            vec!['S', 'A', 'X', 'A', 'M', 'A', 'S', 'A', 'A', 'A'],
-            vec!['M', 'A', 'M', 'M', 'M', 'X', 'M', 'M', 'M', 'M'],
-            vec!['M', 'X', 'M', 'X', 'A', 'X', 'M', 'A', 'S', 'X'],
-        ];
+        let expected = [
+            ['M', 'M', 'M', 'S', 'X', 'X', 'M', 'A', 'S', 'M'],
+            ['M', 'S', 'A', 'M', 'X', 'M', 'S', 'M', 'S', 'A'],
+            ['A', 'M', 'X', 'S', 'X', 'M', 'A', 'A', 'M', 'M'],
+            ['M', 'S', 'A', 'M', 'A', 'S', 'M', 'S', 'M', 'X'],
+            ['X', 'M', 'A', 'S', 'A', 'M', 'X', 'A', 'M', 'M'],
+            ['X', 'X', 'A', 'M', 'M', 'X', 'X', 'A', 'M', 'A'],
+            ['S', 'M', 'S', 'M', 'S', 'A', 'S', 'X', 'S', 'S'],
+            ['S', 'A', 'X', 'A', 'M', 'A', 'S', 'A', 'A', 'A'],
+            ['M', 'A', 'M', 'M', 'M', 'X', 'M', 'M', 'M', 'M'],
+            ['M', 'X', 'M', 'X', 'A', 'X', 'M', 'A', 'S', 'X'],
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 }

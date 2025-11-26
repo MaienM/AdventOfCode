@@ -2,12 +2,13 @@ puzzle_lib::setup!(title = "The Floor Will Be Lava");
 
 use std::{collections::HashSet, sync::Arc};
 
-use puzzle_lib::point::{Direction2, Point2};
+use puzzle_lib::{
+    grid::FullGrid,
+    point::{Direction2, Point2},
+};
 
 type Point = Point2;
 type Direction = Direction2;
-
-type Map<T> = Vec<Vec<T>>;
 
 #[derive(Debug, PartialEq)]
 enum Tile {
@@ -17,29 +18,23 @@ enum Tile {
     SplitterVertical,
     None,
 }
-impl From<char> for Tile {
-    fn from(value: char) -> Self {
-        match value {
-            '|' => Self::SplitterVertical,
-            '-' => Self::SplitterHorizontal,
-            '/' => Self::MirrorUpRight,
-            '\\' => Self::MirrorUpLeft,
-            '.' => Self::None,
-            _ => panic!("Invalid tile {value:?}."),
-        }
-    }
-}
 
-fn parse_input(input: &str) -> Map<Tile> {
+fn parse_input(input: &str) -> FullGrid<Tile> {
     parse!(input => {
-        [map split on '\n' with [chars as Tile]]
-    } => map)
+        [grid cells match {
+            '|' => Tile::SplitterVertical,
+            '-' => Tile::SplitterHorizontal,
+            '/' => Tile::MirrorUpRight,
+            '\\' => Tile::MirrorUpLeft,
+            '.' => Tile::None,
+        }]
+    } => grid)
 }
 
 fn track_beams(
-    map: &Map<Tile>,
+    grid: &FullGrid<Tile>,
     bounds: &Point,
-    energized: &mut Map<bool>,
+    energized: &mut FullGrid<bool>,
     processed: &mut HashSet<(Point, Direction)>,
     start: Point,
     direction: Direction,
@@ -51,9 +46,9 @@ fn track_beams(
 
     let mut point = start;
     while point.x < bounds.x && point.y < bounds.y {
-        energized[point.y][point.x] = true;
+        energized[point] = true;
 
-        match map[point.y][point.x] {
+        match grid[point] {
             Tile::MirrorUpRight => {
                 let direction = match direction {
                     Direction::North => Direction::East,
@@ -62,7 +57,7 @@ fn track_beams(
                     Direction::West => Direction::South,
                 };
                 track_beams(
-                    map,
+                    grid,
                     bounds,
                     energized,
                     processed,
@@ -79,7 +74,7 @@ fn track_beams(
                     Direction::East => Direction::South,
                 };
                 track_beams(
-                    map,
+                    grid,
                     bounds,
                     energized,
                     processed,
@@ -91,13 +86,13 @@ fn track_beams(
             Tile::SplitterHorizontal
                 if matches!(direction, Direction::North | Direction::South) =>
             {
-                track_beams(map, bounds, energized, processed, point, Direction::East);
-                track_beams(map, bounds, energized, processed, point, Direction::West);
+                track_beams(grid, bounds, energized, processed, point, Direction::East);
+                track_beams(grid, bounds, energized, processed, point, Direction::West);
                 return;
             }
             Tile::SplitterVertical if matches!(direction, Direction::East | Direction::West) => {
-                track_beams(map, bounds, energized, processed, point, Direction::North);
-                track_beams(map, bounds, energized, processed, point, Direction::South);
+                track_beams(grid, bounds, energized, processed, point, Direction::North);
+                track_beams(grid, bounds, energized, processed, point, Direction::South);
                 return;
             }
             _ => {}
@@ -108,37 +103,34 @@ fn track_beams(
 }
 
 fn solve_from_position(
-    map: &Map<Tile>,
+    grid: &FullGrid<Tile>,
     bounds: &Point,
     start: Point,
     direction: Direction,
 ) -> usize {
-    let mut results: Map<bool> = (0..bounds.y)
-        .map(|_| (0..bounds.x).map(|_| false).collect())
+    let mut results: FullGrid<bool> = (0..bounds.y)
+        .map(|_| (0..bounds.x).map(|_| false))
         .collect();
     track_beams(
-        map,
+        grid,
         bounds,
         &mut results,
         &mut HashSet::new(),
         start,
         direction,
     );
-    results
-        .into_iter()
-        .map(|row| row.into_iter().filter(|v| *v).count())
-        .sum()
+    results.into_iter_data().filter(|v| *v).count()
 }
 
 pub fn part1(input: &str) -> usize {
-    let map = parse_input(input);
-    let bounds = Point::new(map[0].len(), map.len());
-    solve_from_position(&map, &bounds, Point::new(0, 0), Direction::East)
+    let grid = parse_input(input);
+    let bounds = Point::new(grid.width(), grid.height());
+    solve_from_position(&grid, &bounds, Point::new(0, 0), Direction::East)
 }
 
 pub fn part2(input: &str) -> usize {
-    let map = Arc::new(parse_input(input));
-    let bounds = Arc::new(Point::new(map[0].len(), map.len()));
+    let grid = Arc::new(parse_input(input));
+    let bounds = Arc::new(Point::new(grid.width(), grid.height()));
 
     let mut options = Vec::new();
     options.extend((0..bounds.x).map(|x| (Point::new(x, 0), Direction::South)));
@@ -147,7 +139,7 @@ pub fn part2(input: &str) -> usize {
     options.extend((0..bounds.y).map(|y| (Point::new(bounds.x, y), Direction::West)));
     options
         .into_par_iter()
-        .map(|(point, direction)| solve_from_position(&map, &bounds, point, direction))
+        .map(|(point, direction)| solve_from_position(&grid, &bounds, point, direction))
         .max()
         .unwrap()
 }
@@ -177,8 +169,8 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
-        let expected = vec![
-            vec![
+        let expected = [
+            [
                 Tile::None,
                 Tile::SplitterVertical,
                 Tile::None,
@@ -190,7 +182,7 @@ mod tests {
                 Tile::None,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::SplitterVertical,
                 Tile::None,
                 Tile::SplitterHorizontal,
@@ -202,7 +194,7 @@ mod tests {
                 Tile::None,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::None,
                 Tile::None,
@@ -214,7 +206,7 @@ mod tests {
                 Tile::None,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::None,
                 Tile::None,
@@ -226,7 +218,7 @@ mod tests {
                 Tile::SplitterVertical,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::None,
                 Tile::None,
@@ -238,7 +230,7 @@ mod tests {
                 Tile::None,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::None,
                 Tile::None,
@@ -250,7 +242,7 @@ mod tests {
                 Tile::None,
                 Tile::MirrorUpLeft,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::None,
                 Tile::None,
@@ -262,7 +254,7 @@ mod tests {
                 Tile::None,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::SplitterHorizontal,
                 Tile::None,
@@ -274,7 +266,7 @@ mod tests {
                 Tile::None,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::SplitterVertical,
                 Tile::None,
@@ -286,7 +278,7 @@ mod tests {
                 Tile::None,
                 Tile::MirrorUpLeft,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::None,
                 Tile::MirrorUpRight,
@@ -298,7 +290,8 @@ mod tests {
                 Tile::None,
                 Tile::None,
             ],
-        ];
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 }

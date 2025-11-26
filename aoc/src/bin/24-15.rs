@@ -1,6 +1,9 @@
 puzzle_lib::setup!(title = "Warehouse Woes");
 
-use puzzle_lib::point::{Direction2, Point2};
+use puzzle_lib::{
+    grid::FullGrid,
+    point::{Direction2, Point2},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 enum TileSingle {
@@ -17,69 +20,46 @@ enum TileDouble {
     Empty,
 }
 
-type MapSingle = Vec<Vec<TileSingle>>;
-type MapDouble = Vec<Vec<TileDouble>>;
+type GridSingle = FullGrid<TileSingle>;
+type GridDouble = FullGrid<TileDouble>;
 type Moves = Vec<Direction2>;
 
-fn parse_move(chr: char) -> Option<Direction2> {
-    match chr {
-        '^' => Some(Direction2::North),
-        '>' => Some(Direction2::East),
-        'v' => Some(Direction2::South),
-        '<' => Some(Direction2::West),
-        _ => None,
-    }
-}
-
-fn parse_input(input: &str) -> (MapSingle, Moves, Point2) {
-    parse!(input =>
-        map
+fn parse_input(input: &str) -> (GridSingle, Moves, Point2) {
+    parse!(input => {
+        [grid cells match {
+            '#' => TileSingle::Wall,
+            'O' => TileSingle::Box,
+            '.' => TileSingle::Empty,
+            '@' => index into start => TileSingle::Empty,
+        }]
         "\n\n"
-        moves
-    );
-
-    let mut start = None;
-    let map = map
-        .split('\n')
-        .enumerate()
-        .map(|(y, line)| {
-            line.char_indices()
-                .map(|(x, c)| match c {
-                    '#' => TileSingle::Wall,
-                    'O' => TileSingle::Box,
-                    '.' => TileSingle::Empty,
-                    '@' => {
-                        start = Some(Point2::new(x, y));
-                        TileSingle::Empty
-                    }
-                    _ => panic!(),
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect();
-
-    let moves = moves.chars().filter_map(parse_move).collect();
-
-    (map, moves, start.unwrap())
+        [moves chars try match {
+            '^' => Some(Direction2::North),
+            '>' => Some(Direction2::East),
+            'v' => Some(Direction2::South),
+            '<' => Some(Direction2::West),
+            '\n' => None,
+        }]
+    } => (grid, moves, start))
 }
 
 pub fn part1(input: &str) -> usize {
-    let (mut map, moves, mut current) = parse_input(input);
+    let (mut grid, moves, mut current) = parse_input(input);
     for mov in moves {
         let next = current + mov;
-        match map[next.y][next.x] {
+        match grid[next] {
             TileSingle::Wall => {}
             TileSingle::Box => {
                 let mut check = next + mov;
                 loop {
-                    match map[check.y][check.x] {
+                    match grid[check] {
                         TileSingle::Wall => break,
                         TileSingle::Box => {
                             check += mov;
                         }
                         TileSingle::Empty => {
-                            map[check.y][check.x] = TileSingle::Box;
-                            map[next.y][next.x] = TileSingle::Empty;
+                            grid[check] = TileSingle::Box;
+                            grid[next] = TileSingle::Empty;
                             current = next;
                             break;
                         }
@@ -91,27 +71,21 @@ pub fn part1(input: &str) -> usize {
             }
         }
     }
-    map.into_iter()
-        .enumerate()
-        .map(|(y, row)| {
-            row.into_iter()
-                .enumerate()
-                .map(|(x, tile)| {
-                    if tile == TileSingle::Box {
-                        y * 100 + x
-                    } else {
-                        0
-                    }
-                })
-                .sum::<usize>()
+    grid.into_iter_pairs()
+        .map(|(point, tile)| {
+            if tile == TileSingle::Box {
+                point.x + point.y * 100
+            } else {
+                0
+            }
         })
         .sum()
 }
 
 #[allow(unused)]
-fn print(map: &MapDouble, current: &Point2) {
-    for (y, row) in map.iter().enumerate() {
-        for (x, tile) in row.iter().enumerate() {
+fn print(grid: &GridDouble, current: &Point2) {
+    for (y, row) in grid.iter_rows().enumerate() {
+        for (x, tile) in row.enumerate() {
             print!(
                 "{}",
                 match tile {
@@ -134,27 +108,25 @@ fn print(map: &MapDouble, current: &Point2) {
 
 #[allow(clippy::too_many_lines)]
 pub fn part2(input: &str) -> usize {
-    let (map, moves, mut current) = parse_input(input);
-    let mut map = map
-        .into_iter()
-        .map(|line| {
-            line.into_iter()
-                .flat_map(|tile| match tile {
-                    TileSingle::Wall => [TileDouble::Wall, TileDouble::Wall],
-                    TileSingle::Box => [TileDouble::BoxLeft, TileDouble::BoxRight],
-                    TileSingle::Empty => [TileDouble::Empty, TileDouble::Empty],
-                })
-                .collect::<Vec<_>>()
+    let (grid, moves, mut current) = parse_input(input);
+    let mut grid: GridDouble = grid
+        .into_iter_rows()
+        .map(|row| {
+            row.into_iter().flat_map(|tile| match tile {
+                TileSingle::Wall => [TileDouble::Wall, TileDouble::Wall],
+                TileSingle::Box => [TileDouble::BoxLeft, TileDouble::BoxRight],
+                TileSingle::Empty => [TileDouble::Empty, TileDouble::Empty],
+            })
         })
-        .collect::<Vec<_>>();
+        .collect();
     current = Point2::new(current.x * 2, current.y);
     'main: for mov in moves {
         let next = current + mov;
-        match map[next.y][next.x] {
+        match grid[next] {
             TileDouble::Wall => {}
             TileDouble::BoxLeft | TileDouble::BoxRight => match mov {
                 Direction2::North | Direction2::South => {
-                    let mut checks = vec![if map[next.y][next.x] == TileDouble::BoxLeft {
+                    let mut checks = vec![if grid[next] == TileDouble::BoxLeft {
                         next
                     } else {
                         next + Direction2::West
@@ -166,10 +138,10 @@ pub fn part2(input: &str) -> usize {
                             boxes.reverse();
                             for point in boxes {
                                 let next = point + mov;
-                                map[point.y][point.x] = TileDouble::Empty;
-                                map[point.y][point.x + 1] = TileDouble::Empty;
-                                map[next.y][next.x] = TileDouble::BoxLeft;
-                                map[next.y][next.x + 1] = TileDouble::BoxRight;
+                                grid[point] = TileDouble::Empty;
+                                grid[point + Direction2::East] = TileDouble::Empty;
+                                grid[next] = TileDouble::BoxLeft;
+                                grid[next + Direction2::East] = TileDouble::BoxRight;
                             }
                             current = next;
                             continue 'main;
@@ -178,7 +150,7 @@ pub fn part2(input: &str) -> usize {
                         let mut nextchecks = Vec::new();
                         'checks: for check in checks {
                             let next = check + mov;
-                            match map[next.y][next.x] {
+                            match grid[next] {
                                 TileDouble::Empty => {}
                                 TileDouble::BoxLeft => {
                                     nextchecks.push(next);
@@ -191,7 +163,7 @@ pub fn part2(input: &str) -> usize {
                                     continue 'main;
                                 }
                             }
-                            match map[next.y][next.x + 1] {
+                            match grid[next + Direction2::East] {
                                 TileDouble::BoxLeft => {
                                     nextchecks.push(next + Direction2::East);
                                 }
@@ -208,19 +180,19 @@ pub fn part2(input: &str) -> usize {
                 Direction2::East | Direction2::West => {
                     let mut check = next + mov;
                     loop {
-                        match map[check.y][check.x] {
+                        match grid[check] {
                             TileDouble::Wall => break,
                             TileDouble::BoxLeft | TileDouble::BoxRight => {
                                 check += mov;
                             }
                             TileDouble::Empty => {
-                                if mov == Direction2::West {
-                                    map[check.y].insert(next.x + 1, TileDouble::Empty);
-                                    map[check.y].remove(check.x);
-                                } else {
-                                    map[check.y].insert(next.x, TileDouble::Empty);
-                                    map[check.y].remove(check.x + 1);
+                                let mut idx = next;
+                                while idx != check {
+                                    idx += mov;
+                                    grid.swap(&idx, &next);
                                 }
+                                grid[next] = TileDouble::Empty;
+
                                 current = next;
                                 break;
                             }
@@ -233,19 +205,13 @@ pub fn part2(input: &str) -> usize {
             }
         }
     }
-    map.into_iter()
-        .enumerate()
-        .map(|(y, row)| {
-            row.into_iter()
-                .enumerate()
-                .map(|(x, tile)| {
-                    if tile == TileDouble::BoxLeft {
-                        y * 100 + x
-                    } else {
-                        0
-                    }
-                })
-                .sum::<usize>()
+    grid.into_iter_pairs()
+        .map(|(point, tile)| {
+            if tile == TileDouble::BoxLeft {
+                point.x + point.y * 100
+            } else {
+                0
+            }
         })
         .sum()
 }
@@ -301,8 +267,8 @@ mod tests {
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT_2);
         let expected = (
-            vec![
-                vec![
+            [
+                [
                     TileSingle::Wall,
                     TileSingle::Wall,
                     TileSingle::Wall,
@@ -312,7 +278,7 @@ mod tests {
                     TileSingle::Wall,
                     TileSingle::Wall,
                 ],
-                vec![
+                [
                     TileSingle::Wall,
                     TileSingle::Empty,
                     TileSingle::Empty,
@@ -322,7 +288,7 @@ mod tests {
                     TileSingle::Empty,
                     TileSingle::Wall,
                 ],
-                vec![
+                [
                     TileSingle::Wall,
                     TileSingle::Wall,
                     TileSingle::Empty,
@@ -332,7 +298,7 @@ mod tests {
                     TileSingle::Empty,
                     TileSingle::Wall,
                 ],
-                vec![
+                [
                     TileSingle::Wall,
                     TileSingle::Empty,
                     TileSingle::Empty,
@@ -342,7 +308,7 @@ mod tests {
                     TileSingle::Empty,
                     TileSingle::Wall,
                 ],
-                vec![
+                [
                     TileSingle::Wall,
                     TileSingle::Empty,
                     TileSingle::Wall,
@@ -352,7 +318,7 @@ mod tests {
                     TileSingle::Empty,
                     TileSingle::Wall,
                 ],
-                vec![
+                [
                     TileSingle::Wall,
                     TileSingle::Empty,
                     TileSingle::Empty,
@@ -362,7 +328,7 @@ mod tests {
                     TileSingle::Empty,
                     TileSingle::Wall,
                 ],
-                vec![
+                [
                     TileSingle::Wall,
                     TileSingle::Empty,
                     TileSingle::Empty,
@@ -372,7 +338,7 @@ mod tests {
                     TileSingle::Empty,
                     TileSingle::Wall,
                 ],
-                vec![
+                [
                     TileSingle::Wall,
                     TileSingle::Wall,
                     TileSingle::Wall,
@@ -382,7 +348,8 @@ mod tests {
                     TileSingle::Wall,
                     TileSingle::Wall,
                 ],
-            ],
+            ]
+            .into(),
             vec![
                 Direction2::West,
                 Direction2::North,

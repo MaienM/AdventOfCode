@@ -2,13 +2,16 @@ puzzle_lib::setup!(title = "Treetop Tree House");
 
 use std::collections::HashSet;
 
-use puzzle_lib::point::{Direction2, Point2};
+use puzzle_lib::{
+    grid::FullGrid,
+    point::{Direction2, Point2},
+};
 
-type Grid = Vec<Vec<u8>>;
+type Grid = FullGrid<u8>;
 type Point = Point2<u8>;
 
 fn parse_input(input: &str) -> Grid {
-    parse!(input => { [rows split on '\n' with [chars as u8]] } => rows)
+    parse!(input => { [grid cells as u8] } => grid)
 }
 
 fn for_line_until(
@@ -24,10 +27,7 @@ fn for_line_until(
         };
         current = next;
 
-        match grid
-            .get(current.y as usize)
-            .and_then(|r| r.get(current.x as usize))
-        {
+        match grid.get(&current.cast()) {
             Some(height) => {
                 if !predicate(current, height) {
                     return;
@@ -44,7 +44,7 @@ fn find_visible_from_edge(
     start: Point,
     direction: Direction2,
 ) {
-    let mut highest = grid[start.y as usize][start.x as usize];
+    let mut highest = grid[start.cast()];
     for_line_until(grid, start, direction, &mut |point, height| {
         if height > &highest {
             points.insert(point);
@@ -55,7 +55,7 @@ fn find_visible_from_edge(
 }
 
 fn count_visible_from_treehouse(grid: &Grid, start: Point, direction: Direction2) -> usize {
-    let treehouse_height = &grid[start.y as usize][start.x as usize];
+    let treehouse_height = &grid[start.cast()];
     let mut count = 0;
     for_line_until(grid, start, direction, &mut |_, height| {
         count += 1;
@@ -68,7 +68,7 @@ pub fn part1(input: &str) -> usize {
     let grid = parse_input(input);
 
     let mut visible = HashSet::new();
-    let dimensions = Point::new(grid[0].len() as u8, grid.len() as u8);
+    let dimensions = Point::new(grid.width() as u8, grid.height() as u8);
     visible.insert(Point::new(0, 0));
     visible.insert(Point::new(0, dimensions.y - 1));
     visible.insert(Point::new(dimensions.x - 1, 0));
@@ -99,7 +99,7 @@ pub fn part1(input: &str) -> usize {
 
 pub fn part2(input: &str) -> usize {
     let grid = parse_input(input);
-    let dimensions = Point::new(grid[0].len() as u8, grid.len() as u8);
+    let dimensions = Point::new(grid.width() as u8, grid.height() as u8);
     (0..dimensions.x)
         .map(|x| {
             (0..dimensions.y)
@@ -143,13 +143,14 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
-        let expected = vec![
-            vec![3, 0, 3, 7, 3],
-            vec![2, 5, 5, 1, 2],
-            vec![6, 5, 3, 3, 2],
-            vec![3, 3, 5, 4, 9],
-            vec![3, 5, 3, 9, 0],
-        ];
+        let expected = [
+            [3, 0, 3, 7, 3],
+            [2, 5, 5, 1, 2],
+            [6, 5, 3, 3, 2],
+            [3, 3, 5, 4, 9],
+            [3, 5, 3, 9, 0],
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 }

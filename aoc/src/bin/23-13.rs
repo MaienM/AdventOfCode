@@ -1,26 +1,28 @@
 puzzle_lib::setup!(title = "Point of Incidence");
 
-type Map = Vec<Vec<bool>>;
+type Grid = Vec<Vec<bool>>;
 
-fn parse_input(input: &str) -> Vec<Map> {
+fn parse_input(input: &str) -> Vec<Grid> {
     parse!(input => {
-        [maps split on "\n\n" with [split on '\n' with [chars with |c| c == '#']]]
-    } => maps)
+        [grids split on "\n\n" with [
+            split on '\n' with [chars with |c| c == '#']]
+        ]
+    } => grids)
 }
 
-fn rotate(map: &Map) -> Map {
-    (0..map[0].len())
-        .map(|i| map.iter().map(|row| row[i]).collect())
+fn rotate(grid: &Grid) -> Grid {
+    (0..grid[0].len())
+        .map(|i| grid.iter().map(|row| row[i]).collect())
         .collect()
 }
 
-fn find_reflection_row(map: &Map, with_smudge: bool) -> Option<usize> {
-    let len = map.len();
+fn find_reflection_row(grid: &Grid, with_smudge: bool) -> Option<usize> {
+    let len = grid.len();
     'row: for i in 0..(len - 1) {
         let mut found_smudge = !with_smudge;
         for o in 0..=i.min(len - i - 2) {
-            let left = &map[i - o];
-            let right = &map[i + o + 1];
+            let left = &grid[i - o];
+            let right = &grid[i + o + 1];
             let diff = (0..left.len()).find(|i| left[*i] != right[*i]);
             match diff {
                 None => {}
@@ -41,14 +43,15 @@ fn find_reflection_row(map: &Map, with_smudge: bool) -> Option<usize> {
 }
 
 fn solve(input: &str, with_smudge: bool) -> usize {
-    let maps = parse_input(input);
-    maps.into_iter()
-        .map(|map| {
-            if let Some(row) = find_reflection_row(&map, with_smudge) {
+    let grids = parse_input(input);
+    grids
+        .into_iter()
+        .map(|grid| {
+            if let Some(row) = find_reflection_row(&grid, with_smudge) {
                 (row + 1) * 100
             } else {
-                let map = rotate(&map);
-                let column = find_reflection_row(&map, with_smudge).unwrap();
+                let grid = rotate(&grid);
+                let column = find_reflection_row(&grid, with_smudge).unwrap();
                 column + 1
             }
         })

@@ -2,30 +2,34 @@ puzzle_lib::setup!(title = "Garden Groups");
 
 use std::collections::HashSet;
 
-use puzzle_lib::point::{Direction2, Point2};
+use puzzle_lib::{
+    grid::FullGrid,
+    point::{Direction2X, Point2},
+};
 
+type Grid = FullGrid<char>;
 type Region = HashSet<Point2>;
 
-fn parse_input(input: &str) -> Vec<Vec<char>> {
-    parse!(input => { [tiles split on '\n' with [chars]] } => tiles)
+fn parse_input(input: &str) -> Grid {
+    parse!(input => { [grid cells] } => grid)
 }
 
-fn find_region(tiles: &[Vec<char>], members: &mut HashSet<Point2>, current: &Point2, chr: char) {
+fn find_region(grid: &Grid, members: &mut HashSet<Point2>, current: &Point2, chr: char) {
     for neighbour in current.neighbours_ortho() {
         if members.contains(&neighbour) {
             continue;
         }
-        if let Some(c) = tiles.get(neighbour.y).and_then(|row| row.get(neighbour.x))
+        if let Some(c) = grid.get(&neighbour)
             && *c == chr
         {
             members.insert(neighbour);
-            find_region(tiles, members, &neighbour, chr);
+            find_region(grid, members, &neighbour, chr);
         }
     }
 }
 
-fn find_regions(tiles: &[Vec<char>]) -> Vec<Region> {
-    let bounds = Point2::new(tiles[0].len(), tiles.len());
+fn find_regions(grid: &Grid) -> Vec<Region> {
+    let bounds = Point2::new(grid.width(), grid.height());
     let mut visited = HashSet::new();
     let mut regions = Vec::new();
     for x in 0..bounds.x {
@@ -34,7 +38,7 @@ fn find_regions(tiles: &[Vec<char>]) -> Vec<Region> {
             if !visited.contains(&point) {
                 let mut members = HashSet::new();
                 members.insert(point);
-                find_region(tiles, &mut members, &point, tiles[point.y][point.x]);
+                find_region(grid, &mut members, &point, grid[point]);
                 visited.extend(members.clone());
                 regions.push(members);
             }
@@ -57,16 +61,9 @@ fn price_normal(region: &Region) -> usize {
     perimeter * region.len()
 }
 
-fn has_neighbour_ortho(region: &Region, point: &Point2, direction: Direction2) -> bool {
+fn has_neighbour(region: &Region, point: &Point2, direction: Direction2X) -> bool {
     point
-        .checked_add_direction2(direction)
-        .is_some_and(|p| region.contains(&p))
-}
-
-fn has_neighbour_diag(region: &Region, point: &Point2, direction: [Direction2; 2]) -> bool {
-    point
-        .checked_add_direction2(direction[0])
-        .and_then(|p| p.checked_add_direction2(direction[1]))
+        .checked_add_direction2x(direction)
         .is_some_and(|p| region.contains(&p))
 }
 
@@ -75,14 +72,14 @@ fn price_bulk(region: &Region) -> usize {
     let sides: usize = region
         .iter()
         .map(|member| {
-            let n = has_neighbour_ortho(region, member, Direction2::North);
-            let e = has_neighbour_ortho(region, member, Direction2::East);
-            let s = has_neighbour_ortho(region, member, Direction2::South);
-            let w = has_neighbour_ortho(region, member, Direction2::West);
-            let ne = has_neighbour_diag(region, member, [Direction2::North, Direction2::East]);
-            let nw = has_neighbour_diag(region, member, [Direction2::North, Direction2::West]);
-            let se = has_neighbour_diag(region, member, [Direction2::South, Direction2::East]);
-            let sw = has_neighbour_diag(region, member, [Direction2::South, Direction2::West]);
+            let n = has_neighbour(region, member, Direction2X::North);
+            let e = has_neighbour(region, member, Direction2X::East);
+            let s = has_neighbour(region, member, Direction2X::South);
+            let w = has_neighbour(region, member, Direction2X::West);
+            let ne = has_neighbour(region, member, Direction2X::NorthEast);
+            let nw = has_neighbour(region, member, Direction2X::NorthWest);
+            let se = has_neighbour(region, member, Direction2X::SouthEast);
+            let sw = has_neighbour(region, member, Direction2X::SouthWest);
             // Outside corner.
             usize::from(!n && !e)
                 + usize::from(!e && !s)
@@ -99,14 +96,14 @@ fn price_bulk(region: &Region) -> usize {
 }
 
 pub fn part1(input: &str) -> usize {
-    let tiles = parse_input(input);
-    let regions = find_regions(&tiles);
+    let grid = parse_input(input);
+    let regions = find_regions(&grid);
     regions.iter().map(price_normal).sum()
 }
 
 pub fn part2(input: &str) -> usize {
-    let tiles = parse_input(input);
-    let regions = find_regions(&tiles);
+    let grid = parse_input(input);
+    let regions = find_regions(&grid);
     regions.iter().map(price_bulk).sum()
 }
 

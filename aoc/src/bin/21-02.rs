@@ -6,23 +6,21 @@ enum Direction {
     Down,
     Up,
 }
-impl From<&str> for Direction {
-    fn from(value: &str) -> Self {
-        match value {
-            "forward" => Direction::Forward,
-            "down" => Direction::Down,
-            "up" => Direction::Up,
-            _ => panic!("Invalid direction {value}"),
-        }
-    }
-}
 
 type Instruction = (Direction, u32);
 
 fn parse_input(input: &str) -> Vec<Instruction> {
     parse!(input => {
         [instructions split on '\n' with
-            { [direction as Direction] ' ' [distance as u32] }
+            {
+                [direction match {
+                    "forward" => Direction::Forward,
+                    "down" => Direction::Down,
+                    "up" => Direction::Up,
+                }]
+                ' '
+                [distance as u32]
+            }
             => (direction, distance)
         ]
     } => instructions)

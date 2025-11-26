@@ -34,7 +34,7 @@ fn find_wincondition(game: &Game) -> Option<u64> {
         [game.button_a.x, game.button_b.x, game.prize.x],
         [game.button_a.y, game.button_b.y, game.prize.y],
     ]);
-    let result = matrix.gauss_jordan_elimination().unwrap();
+    let result = matrix.gauss_jordan_elimination()?;
     let a = result[0].round() as u64;
     let b = result[1].round() as u64;
     if game.button_a.x * a + game.button_b.x * b == game.prize.x

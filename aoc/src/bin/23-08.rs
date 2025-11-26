@@ -9,15 +9,6 @@ enum Direction {
     Left = 0,
     Right = 1,
 }
-impl From<char> for Direction {
-    fn from(value: char) -> Self {
-        match value {
-            'L' => Direction::Left,
-            'R' => Direction::Right,
-            _ => panic!("Invalid direction {value:?}."),
-        }
-    }
-}
 
 #[derive(Debug, PartialEq, Clone)]
 struct Instructions {
@@ -25,16 +16,17 @@ struct Instructions {
     maps: HashMap<String, [String; 2]>,
 }
 
-fn parse_map(line: &str) -> (String, [String; 2]) {
-    parse!(line => [source as String] " = (" [left as String]", " [right as String] ")");
-    (source, [left, right])
-}
-
 fn parse_input(input: &str) -> Instructions {
     parse!(input => {
-        [directions chars as Direction]
+        [directions chars match {
+            'L' => Direction::Left,
+            'R' => Direction::Right,
+        }]
         "\n\n"
-        [maps split on '\n' into (HashMap<_, _>) with parse_map]
+        [maps split on '\n' into (HashMap<_, _>) with 
+            { [source as String] " = (" [left as String]", " [right as String] ")" }
+            => (source, [left, right])
+        ]
     } => Instructions { directions, maps })
 }
 

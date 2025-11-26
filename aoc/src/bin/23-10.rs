@@ -2,10 +2,10 @@ puzzle_lib::setup!(title = "Pipe Maze");
 
 use std::collections::HashSet;
 
-use puzzle_lib::point::{Direction2, Point2};
-
-type Point = Point2<usize>;
-type Direction = Direction2;
+use puzzle_lib::{
+    grid::FullGrid,
+    point::{Direction2, Point2},
+};
 
 #[derive(Debug, PartialEq)]
 enum Tile {
@@ -18,9 +18,12 @@ enum Tile {
     Start,
     None,
 }
-impl From<char> for Tile {
-    fn from(value: char) -> Self {
-        match value {
+
+type Grid = FullGrid<Tile>;
+
+fn parse_input(input: &str) -> Grid {
+    parse!(input => {
+        [grid cells match {
             '|' => Tile::Vertical,
             '-' => Tile::Horizontal,
             'L' => Tile::NorthEast,
@@ -29,36 +32,27 @@ impl From<char> for Tile {
             'F' => Tile::SouthEast,
             'S' => Tile::Start,
             '.' => Tile::None,
-            _ => panic!("Unknown character {value:?}."),
-        }
-    }
+        }]
+    } => grid)
 }
 
-fn parse_input(input: &str) -> Vec<Vec<Tile>> {
-    parse!(input => {
-        [lines split on '\n' with [chars as Tile]]
-    } => lines)
-}
-
-fn extract_start(map: &mut [Vec<Tile>]) -> Point {
-    let start = map
-        .iter()
-        .enumerate()
-        .find_map(|(y, row)| {
-            row.iter().enumerate().find_map(|(x, tile)| {
-                if tile == &Tile::Start {
-                    Some(Point::new(x, y))
-                } else {
-                    None
-                }
-            })
+fn extract_start(grid: &mut Grid) -> Point2 {
+    let start = grid
+        .iter_pairs()
+        .find_map(|(point, tile)| {
+            if tile == &Tile::Start {
+                Some(point)
+            } else {
+                None
+            }
         })
         .unwrap();
+    let start = *start;
     let connections: Vec<_> = start
         .neighbours_ortho()
         .into_iter()
         .filter(|point| {
-            let tile = &map[point.y][point.x];
+            let tile = &grid[*point];
             match tile {
                 Tile::Vertical if point.y != start.y => true,
                 Tile::Horizontal if point.x != start.x => true,
@@ -71,17 +65,17 @@ fn extract_start(map: &mut [Vec<Tile>]) -> Point {
         })
         .collect();
 
-    map[start.y][start.x] = {
-        if connections.contains(&start.wrapping_add_direction2(Direction::North)) {
-            if connections.contains(&start.wrapping_add_direction2(Direction::West)) {
+    grid[start] = {
+        if connections.contains(&start.wrapping_add_direction2(Direction2::North)) {
+            if connections.contains(&start.wrapping_add_direction2(Direction2::West)) {
                 Tile::NorthWest
-            } else if connections.contains(&start.wrapping_add_direction2(Direction::East)) {
+            } else if connections.contains(&start.wrapping_add_direction2(Direction2::East)) {
                 Tile::NorthEast
             } else {
                 Tile::Vertical
             }
-        } else if connections.contains(&start.wrapping_add_direction2(Direction::South)) {
-            if connections.contains(&start.wrapping_add_direction2(Direction::West)) {
+        } else if connections.contains(&start.wrapping_add_direction2(Direction2::South)) {
+            if connections.contains(&start.wrapping_add_direction2(Direction2::West)) {
                 Tile::SouthWest
             } else {
                 Tile::SouthEast
@@ -94,60 +88,60 @@ fn extract_start(map: &mut [Vec<Tile>]) -> Point {
     start
 }
 
-fn find_loop(map: &[Vec<Tile>], start: Point) -> Vec<Point> {
+fn find_loop(map: &Grid, start: Point2) -> Vec<Point2> {
     let mut mainloop = Vec::new();
     let mut prev = start;
-    let mut curr = (start, &map[start.y][start.x]);
+    let mut curr = (start, &map[start]);
     loop {
         let (point, tile) = curr;
         let direction = match tile {
             Tile::Vertical => {
                 if prev.y < point.y {
-                    Direction::South
+                    Direction2::South
                 } else {
-                    Direction::North
+                    Direction2::North
                 }
             }
             Tile::Horizontal => {
                 if prev.x < point.x {
-                    Direction::East
+                    Direction2::East
                 } else {
-                    Direction::West
+                    Direction2::West
                 }
             }
             Tile::NorthEast => {
                 if prev.x == point.x {
-                    Direction::East
+                    Direction2::East
                 } else {
-                    Direction::North
+                    Direction2::North
                 }
             }
             Tile::NorthWest => {
                 if prev.x == point.x {
-                    Direction::West
+                    Direction2::West
                 } else {
-                    Direction::North
+                    Direction2::North
                 }
             }
             Tile::SouthEast => {
                 if prev.x == point.x {
-                    Direction::East
+                    Direction2::East
                 } else {
-                    Direction::South
+                    Direction2::South
                 }
             }
             Tile::SouthWest => {
                 if prev.x == point.x {
-                    Direction::West
+                    Direction2::West
                 } else {
-                    Direction::South
+                    Direction2::South
                 }
             }
             _ => panic!("Ended up on {tile:?} at {point:?}, cannot proceed."),
         };
         let next = point + direction;
         prev = point;
-        curr = (next, &map[next.y][next.x]);
+        curr = (next, &map[next]);
 
         mainloop.push(next);
         if next == start {
@@ -169,22 +163,21 @@ pub fn part2(input: &str) -> usize {
     let start = extract_start(&mut map);
     let mainloop: HashSet<_> = find_loop(&map, start).into_iter().collect();
 
-    map.into_iter()
+    map.into_iter_rows()
         .enumerate()
         .map(|(y, row)| {
             let mut count = 0;
             let mut inside = false;
             for (x, tile) in row.into_iter().enumerate() {
-                match tile {
-                    _ if !mainloop.contains(&Point::new(x, y)) => {
-                        if inside {
-                            count += 1;
+                if mainloop.contains(&Point2::new(x, y)) {
+                    match tile {
+                        Tile::Vertical | Tile::NorthEast | Tile::NorthWest => {
+                            inside = !inside;
                         }
+                        _ => {}
                     }
-                    Tile::Vertical | Tile::NorthEast | Tile::NorthWest => {
-                        inside = !inside;
-                    }
-                    _ => {}
+                } else if inside {
+                    count += 1;
                 }
             }
             count
@@ -261,74 +254,76 @@ mod tests {
     #[test]
     fn example_parse_1() {
         let actual = parse_input(&EXAMPLE_INPUT_1);
-        let expected = vec![
-            vec![Tile::None, Tile::None, Tile::None, Tile::None, Tile::None],
-            vec![
+        let expected = [
+            [Tile::None, Tile::None, Tile::None, Tile::None, Tile::None],
+            [
                 Tile::None,
                 Tile::Start,
                 Tile::Horizontal,
                 Tile::SouthWest,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::Vertical,
                 Tile::None,
                 Tile::Vertical,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::NorthEast,
                 Tile::Horizontal,
                 Tile::NorthWest,
                 Tile::None,
             ],
-            vec![Tile::None, Tile::None, Tile::None, Tile::None, Tile::None],
-        ];
+            [Tile::None, Tile::None, Tile::None, Tile::None, Tile::None],
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn example_parse_2() {
         let actual = parse_input(&EXAMPLE_INPUT_2);
-        let expected = vec![
-            vec![
+        let expected = [
+            [
                 Tile::None,
                 Tile::None,
                 Tile::SouthEast,
                 Tile::SouthWest,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::None,
                 Tile::SouthEast,
                 Tile::NorthWest,
                 Tile::Vertical,
                 Tile::None,
             ],
-            vec![
+            [
                 Tile::Start,
                 Tile::NorthWest,
                 Tile::None,
                 Tile::NorthEast,
                 Tile::SouthWest,
             ],
-            vec![
+            [
                 Tile::Vertical,
                 Tile::SouthEast,
                 Tile::Horizontal,
                 Tile::Horizontal,
                 Tile::NorthWest,
             ],
-            vec![
+            [
                 Tile::NorthEast,
                 Tile::NorthWest,
                 Tile::None,
                 Tile::None,
                 Tile::None,
             ],
-        ];
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 }

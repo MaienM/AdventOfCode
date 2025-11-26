@@ -66,21 +66,19 @@ enum ModuleType<'a> {
     FlipFlop(bool),
     Conjunction(HashMap<&'a str, bool>),
 }
-impl From<char> for ModuleType<'_> {
-    fn from(value: char) -> Self {
-        match value {
-            '%' | 'b' => ModuleType::FlipFlop(false),
-            '&' => ModuleType::Conjunction(HashMap::new()),
-            _ => panic!("Invalid prefix {value:?}."),
-        }
-    }
-}
 
 fn parse_input(input: &str) -> Input<'_> {
     parse!(input =>
         [modules split on '\n' into (HashMap<_, _>) with
-            { [ty take 1 as char with ModuleType::from] name " -> " [outputs split on ", "] }
-            => {
+            {
+                [ty take 1 match {
+                    "%" | "b" => ModuleType::FlipFlop(false),
+                    "&" => ModuleType::Conjunction(HashMap::new()),
+                }]
+                name
+                " -> "
+                [outputs split on ", "]
+            } => {
                 (
                     name,
                     Module {

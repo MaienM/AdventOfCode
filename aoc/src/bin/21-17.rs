@@ -19,6 +19,9 @@ impl TargetArea {
 
 fn parse_input(input: &str) -> TargetArea {
     // Safety? Trim? Split? Parse? Bah, who needs that nonsense. This is faster and therefore _clearly_ superior.
+    // parse!(input => {
+    //     "target area: x=" [x1 as i16] ".." [x2 as i16] ", y=" [y1 as i16] ".." [y2 as i16]
+    // } => TargetArea::new((x1, x2), (y1, y2)))
     unsafe {
         let mut bytes = input.bytes().chain([b' ']);
         let mut nums = [0i16; 4];

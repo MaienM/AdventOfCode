@@ -2,26 +2,21 @@ puzzle_lib::setup!(title = "Hoof It");
 
 use std::collections::HashSet;
 
-use puzzle_lib::point::Point2;
+use puzzle_lib::{grid::FullGrid, point::Point2};
 
-type Map = Vec<Vec<u8>>;
+type Grid = FullGrid<u8>;
 
-fn parse_height(input: char) -> u8 {
-    if input == '.' {
-        10
-    } else {
-        input.to_digit(10).unwrap() as u8
-    }
-}
-
-fn parse_input(input: &str) -> (Map, Point2) {
-    parse!(input => [map split on '\n' with [chars with parse_height]]);
-    let bounds = Point2::new(map[0].len(), map.len());
-    (map, bounds)
+fn parse_input(input: &str) -> Grid {
+    parse!(input => {
+        [grid cells match {
+            '.' => 10,
+            _ => as u8,
+        }]
+    } => grid)
 }
 
 fn find_reachable_summits(
-    map: &Map,
+    grid: &Grid,
     current: &Point2,
     target_height: u8,
     found: &mut HashSet<Point2>,
@@ -32,16 +27,16 @@ fn find_reachable_summits(
     }
 
     for point in current.neighbours_ortho() {
-        let Some(height) = map.get(point.y).and_then(|r| r.get(point.x)) else {
+        let Some(height) = grid.get(&point) else {
             continue;
         };
         if *height == target_height {
-            find_reachable_summits(map, &point, target_height + 1, found);
+            find_reachable_summits(grid, &point, target_height + 1, found);
         }
     }
 }
 
-fn find_trails_to_summits(map: &Map, current: &Point2, target_height: u8) -> usize {
+fn find_trails_to_summits(grid: &Grid, current: &Point2, target_height: u8) -> usize {
     if target_height == 10 {
         return 1;
     }
@@ -50,11 +45,11 @@ fn find_trails_to_summits(map: &Map, current: &Point2, target_height: u8) -> usi
         .neighbours_ortho()
         .iter()
         .map(|point| {
-            let Some(height) = map.get(point.y).and_then(|r| r.get(point.x)) else {
+            let Some(height) = grid.get(point) else {
                 return 0;
             };
             if *height == target_height {
-                find_trails_to_summits(map, point, target_height + 1)
+                find_trails_to_summits(grid, point, target_height + 1)
             } else {
                 0
             }
@@ -63,26 +58,24 @@ fn find_trails_to_summits(map: &Map, current: &Point2, target_height: u8) -> usi
 }
 
 pub fn part1(input: &str) -> usize {
-    let (map, bounds) = parse_input(input);
-    (0..bounds.y)
-        .flat_map(|y| (0..bounds.x).map(|x| Point2::new(x, y)).collect::<Vec<_>>())
-        .filter(|start| map[start.y][start.x] == 0)
+    let grid = parse_input(input);
+    grid.iter_pairs()
+        .filter(|(_, height)| **height == 0)
         .par_bridge()
-        .map(|start| {
+        .map(|(point, _)| {
             let mut found = HashSet::new();
-            find_reachable_summits(&map, &start, 1, &mut found);
+            find_reachable_summits(&grid, point, 1, &mut found);
             found.len()
         })
         .sum()
 }
 
 pub fn part2(input: &str) -> usize {
-    let (map, bounds) = parse_input(input);
-    (0..bounds.y)
-        .flat_map(|y| (0..bounds.x).map(|x| Point2::new(x, y)).collect::<Vec<_>>())
-        .filter(|start| map[start.y][start.x] == 0)
+    let grid = parse_input(input);
+    grid.iter_pairs()
+        .filter(|(_, height)| **height == 0)
         .par_bridge()
-        .map(|start| find_trails_to_summits(&map, &start, 1))
+        .map(|(point, _)| find_trails_to_summits(&grid, point, 1))
         .sum()
 }
 
@@ -173,19 +166,17 @@ mod tests {
     #[test]
     fn example_parse() {
         let actual = parse_input(&EXAMPLE_INPUT);
-        let expected = (
-            vec![
-                vec![8, 9, 0, 1, 0, 1, 2, 3],
-                vec![7, 8, 1, 2, 1, 8, 7, 4],
-                vec![8, 7, 4, 3, 0, 9, 6, 5],
-                vec![9, 6, 5, 4, 9, 8, 7, 4],
-                vec![4, 5, 6, 7, 8, 9, 0, 3],
-                vec![3, 2, 0, 1, 9, 0, 1, 2],
-                vec![0, 1, 3, 2, 9, 8, 0, 1],
-                vec![1, 0, 4, 5, 6, 7, 3, 2],
-            ],
-            Point2::new(8, 8),
-        );
+        let expected = [
+            [8, 9, 0, 1, 0, 1, 2, 3],
+            [7, 8, 1, 2, 1, 8, 7, 4],
+            [8, 7, 4, 3, 0, 9, 6, 5],
+            [9, 6, 5, 4, 9, 8, 7, 4],
+            [4, 5, 6, 7, 8, 9, 0, 3],
+            [3, 2, 0, 1, 9, 0, 1, 2],
+            [0, 1, 3, 2, 9, 8, 0, 1],
+            [1, 0, 4, 5, 6, 7, 3, 2],
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 }
