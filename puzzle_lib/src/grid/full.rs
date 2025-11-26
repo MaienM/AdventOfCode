@@ -4,11 +4,11 @@ use std::{
     iter::IntoIterator,
     mem::{self},
     ops::{Index, IndexMut, Range},
-    sync::OnceLock,
+    sync::{Arc, OnceLock},
 };
 
 use itertools::Itertools;
-use rayon::iter::{IntoParallelIterator as _, ParallelIterator as _};
+use rayon::prelude::*;
 
 use super::{PointBoundaries, PointCollection, PointCollectionInsertResult, PointDataCollection};
 use crate::{
@@ -21,7 +21,7 @@ type Boundaries = Point2Range<Range<usize>, Range<usize>>;
 /// A 2-dimensional grid with all points present & some arbitrary data stored for each point.
 #[derive(Debug, Eq, Clone)]
 pub struct FullGrid<D> {
-    points: OnceLock<Vec<Point2<usize>>>,
+    points: Arc<OnceLock<Vec<Point2<usize>>>>,
     cells: Vec<D>,
     width: usize,
     height: usize,
@@ -273,7 +273,7 @@ where
         cells.resize_with(width * height, D::default);
 
         Self {
-            points: OnceLock::new(),
+            points: Arc::new(OnceLock::new()),
             cells,
             width,
             height,
@@ -315,7 +315,7 @@ where
         let height = cells.len() / width;
 
         Self {
-            points: OnceLock::new(),
+            points: Arc::new(OnceLock::new()),
             cells,
             width,
             height,
@@ -331,7 +331,7 @@ impl<D> From<Vec<Vec<D>>> for FullGrid<D> {
 impl<D, const R: usize, const C: usize> From<[[D; R]; C]> for FullGrid<D> {
     fn from(cells: [[D; R]; C]) -> Self {
         Self {
-            points: OnceLock::new(),
+            points: Arc::new(OnceLock::new()),
             cells: cells.into_iter().flatten().collect(),
             width: R,
             height: C,
@@ -449,16 +449,41 @@ where
     /// let grid = grid.map(|v| v * 2);
     /// assert_eq!(grid.get(&Point2::new(0, 1)), Some(&6));
     /// ```
-    pub fn map<F, ND>(self, f: F) -> FullGrid<ND>
+    pub fn into_map<F, ND>(self, f: F) -> FullGrid<ND>
     where
         F: FnMut(D) -> ND,
     {
         FullGrid {
-            points: self.points,
+            points: self.points.clone(),
             cells: self.cells.into_iter().map(f).collect(),
             width: self.width,
             height: self.height,
             boundaries: self.boundaries,
+        }
+    }
+
+    /// Return a grid with the same dimensions as `self`, with function `f` applied to a reference
+    /// to each cell in order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use puzzle_lib::grid::*;
+    /// # use puzzle_lib::point::Point2;
+    /// let grid: FullGrid<u8> = [[1, 2], [3, 4], [5, 6]].into();
+    /// let grid = grid.map(|v| v * 2);
+    /// assert_eq!(grid.get(&Point2::new(0, 1)), Some(&6));
+    /// ```
+    pub fn map<F, ND>(&self, f: F) -> FullGrid<ND>
+    where
+        F: FnMut(&D) -> ND,
+    {
+        FullGrid {
+            points: self.points.clone(),
+            cells: self.cells.iter().map(f).collect(),
+            width: self.width,
+            height: self.height,
+            boundaries: self.boundaries.clone(),
         }
     }
 
@@ -474,9 +499,10 @@ where
     /// let grid = grid.map(|v| v * 2);
     /// assert_eq!(grid.get(&Point2::new(0, 1)), Some(&6));
     /// ```
-    pub fn par_map<F, ND>(self, f: F) -> FullGrid<ND>
+    pub fn into_par_map<F, ND>(self, f: F) -> FullGrid<ND>
     where
-        F: (Fn(D) -> ND) + Sync + Send,
+        Vec<D>: IntoParallelIterator,
+        F: (Fn(<Vec<D> as IntoParallelIterator>::Item) -> ND) + Sync + Send,
         D: Send,
         ND: Send,
     {
@@ -486,6 +512,34 @@ where
             width: self.width,
             height: self.height,
             boundaries: self.boundaries,
+        }
+    }
+
+    /// Return a grid with the same dimensions as `self`, with function `f` applied to a reference
+    /// to each cell in parallel.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use puzzle_lib::grid::*;
+    /// # use puzzle_lib::point::Point2;
+    /// let grid: FullGrid<u8> = [[1, 2], [3, 4], [5, 6]].into();
+    /// let grid = grid.map(|v| v * 2);
+    /// assert_eq!(grid.get(&Point2::new(0, 1)), Some(&6));
+    /// ```
+    pub fn par_map<'a, F, ND>(&'a self, f: F) -> FullGrid<ND>
+    where
+        Vec<D>: IntoParallelRefIterator<'a>,
+        F: (Fn(<Vec<D> as IntoParallelRefIterator>::Item) -> ND) + Sync + Send,
+        D: Send,
+        ND: Send,
+    {
+        FullGrid {
+            points: self.points.clone(),
+            cells: self.cells.par_iter().map(f).collect(),
+            width: self.width,
+            height: self.height,
+            boundaries: self.boundaries.clone(),
         }
     }
 }
@@ -736,8 +790,17 @@ mod tests {
     }
 
     #[test]
+    fn into_map() {
+        let grid: FullGrid<u8> = [[1, 2, 3], [4, 5, 6]].into();
+        let grid = grid.into_map(|v| v * 2);
+        assert_eq!(grid.width(), 3);
+        assert_eq!(grid.height(), 2);
+        assert_eq!(grid.get(&Point2::new(1, 1)), Some(&10));
+    }
+
+    #[test]
     fn map() {
-        let grid: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
+        let grid: FullGrid<u8> = [[1, 2, 3], [4, 5, 6]].into();
         let grid = grid.map(|v| v * 2);
         assert_eq!(grid.width(), 3);
         assert_eq!(grid.height(), 2);
@@ -745,8 +808,17 @@ mod tests {
     }
 
     #[test]
+    fn into_par_map() {
+        let grid: FullGrid<u8> = [[1, 2, 3], [4, 5, 6]].into();
+        let grid = grid.into_par_map(|v| v * 2);
+        assert_eq!(grid.width(), 3);
+        assert_eq!(grid.height(), 2);
+        assert_eq!(grid.get(&Point2::new(1, 1)), Some(&10));
+    }
+
+    #[test]
     fn par_map() {
-        let grid: FullGrid<_> = [[1, 2, 3], [4, 5, 6]].into();
+        let grid: FullGrid<u8> = [[1, 2, 3], [4, 5, 6]].into();
         let grid = grid.par_map(|v| v * 2);
         assert_eq!(grid.width(), 3);
         assert_eq!(grid.height(), 2);
