@@ -1,4 +1,4 @@
-//! Helpers for 2-dimensional collections of points & associated data.
+//! 2-dimensional collections of points & associated data.
 
 mod full;
 mod internal;

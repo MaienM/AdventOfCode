@@ -1,4 +1,4 @@
-//! Helpers for the multi-day CLI entrypoint (`aoc`).
+//! The multi-day CLI entrypoints.
 
 use std::{collections::HashSet, sync::OnceLock, time::Duration};
 
@@ -222,7 +222,7 @@ struct MainArgs {
     show_results: bool,
 }
 
-/// The entrypoint for the multi-day CLI.
+#[doc(hidden)]
 pub fn main() {
     let args = MainArgs::parse();
 

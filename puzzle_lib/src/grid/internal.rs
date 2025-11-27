@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use crate::{grid::GridPoint};
+use crate::grid::GridPoint;
 
 pub trait PointOrRef<P>: Copy + Eq + Hash
 where
@@ -42,9 +42,8 @@ where
 mod tests {
     use pretty_assertions::assert_eq;
 
-    use crate::point::Point2;
-
     use super::*;
+    use crate::point::Point2;
 
     #[test]
     fn point_or_ref() {

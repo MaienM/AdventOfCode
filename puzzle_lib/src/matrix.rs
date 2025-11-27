@@ -1,4 +1,4 @@
-//! Helpers for mathematical matrices.
+//! Mathematical matrices.
 
 use std::{
     fmt::{self, Debug},

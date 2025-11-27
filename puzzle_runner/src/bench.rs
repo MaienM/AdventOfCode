@@ -1,4 +1,4 @@
-//! Helpers for the benchmarking CLI features.
+//! The benchmarking CLI features.
 
 #![cfg(feature = "bench")]
 

@@ -1,4 +1,4 @@
-//! Helpers to run solutions & collect the results & runtimes.
+//! Runs solutions while collecting their results & runtimes.
 
 use std::{
     sync::LazyLock,

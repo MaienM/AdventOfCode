@@ -1,4 +1,4 @@
-//! Helpers for the single-day CLI entrypoints (e.g. `22-01`).
+//! The single-day CLI entrypoints.
 
 use std::time::Duration;
 

@@ -1,5 +1,4 @@
-//! Helpers for parsing text into structures
-#![doc(hidden)]
+//! A macro ([`parse!`]) to parse text into structures.
 
 /// Things that can be used with the `try` construct in [`parse!`].
 pub trait Tryable<T> {

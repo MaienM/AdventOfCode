@@ -240,6 +240,7 @@ pub fn register_crate(input: TokenStream) -> TokenStream {
     }
 
     quote! {
+        /// The solutions.
         #[cfg(not(test))]
         pub mod bins {
             // Store list of binaries in a static. This is used in the main methods below, but it's

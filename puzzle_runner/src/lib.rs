@@ -1,8 +1,9 @@
 //! Scaffolding to run/test/benchmark solutions for programming puzzles/challenges.
 //!
-//! Each day is solved in a separate source file (in `aoc/bin`). The [`register`] macro generates a
-//! [`Bin`](puzzle_runner::derived::Bin) for each of these, and the [`register_crate`] macro generates
-//! a static & the entrypoints needed to run multiple at the same time.
+//! Each group of puzzles is solved in a separate source file in the `bin` folder of the crate. The
+//! [`register`] macro generates a [`Bin`](puzzle_runner::derived::Bin) for each of these, and the
+//! [`register_crate`] macro generates a static & the entrypoints needed to run multiple at the
+//! same time.
 
 #[doc(hidden)]
 extern crate self as puzzle_runner;

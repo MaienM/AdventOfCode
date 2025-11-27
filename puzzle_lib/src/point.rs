@@ -1,4 +1,4 @@
-//! Helpers for points in n-dimensional space & related concepts.
+//! Points, regions, and movement in n-dimensional space.
 
 use std::{
     collections::HashSet,
