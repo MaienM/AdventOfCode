@@ -10,13 +10,13 @@
 //! these programs into rust code we have only two forms, as displayed below. `w` is the input
 //! digit and `a` and `b` are constants in the range `-15..=15`.
 //!
-//! ```rust
+//! ```rust,ignore
 //! if (z % 26) + a != w {
 //!    z = z * 26 + w + b
 //! }
 //! ```
 //!
-//! ```rust
+//! ```rust,ignore
 //! if (z % 26) + a != w {
 //!    z = z / 26
 //!    z = z * 26 + w + b
@@ -274,6 +274,30 @@ pub fn part1(input: &str) -> String {
     for nums in pairs
         .iter()
         .map(|pair| pair.range_first.clone().rev())
+        .multi_cartesian_product()
+    {
+        let mut inputs = [0; 14];
+        for (i, pair) in pairs.iter().enumerate() {
+            inputs[pair.indexes[0]] = nums[i];
+            inputs[pair.indexes[1]] = nums[i] + pair.offset;
+        }
+
+        let mut memory = Memory::default();
+        run(&instructions, &mut memory, &inputs);
+        if memory[Registry::Z as usize] == 0 {
+            return inputs.iter().join("");
+        }
+    }
+    panic!("Failed to find solution.");
+}
+
+pub fn part2(input: &str) -> String {
+    let instructions = parse_input(input);
+    let pairs = get_pairs(&instructions);
+
+    for nums in pairs
+        .iter()
+        .map(|pair| pair.range_first.clone())
         .multi_cartesian_product()
     {
         let mut inputs = [0; 14];
