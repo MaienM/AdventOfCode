@@ -8,6 +8,7 @@ mod factorize;
 mod midpoint;
 mod partition_point;
 mod primes;
+mod wrap;
 
 pub use abs_diff::*;
 pub use chain_sort::*;
@@ -17,3 +18,4 @@ pub use factorize::*;
 pub use midpoint::*;
 pub use partition_point::*;
 pub use primes::*;
+pub use wrap::*;
