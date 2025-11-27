@@ -44,6 +44,19 @@ pub trait PointRange<P>: Debug {
     /// ```
     fn contains(&self, point: &P) -> bool;
 }
+pub trait WrappablePointRange<P>: PointRange<P> {
+    /// Wrap the point to fall within the range.
+    ///
+    /// # Examples.
+    ///
+    /// ```
+    /// # use puzzle_lib::point::{Point2,Point2Range,WrappablePointRange};
+    /// let range: Point2Range<_, _> = (Point2::new(1, 2)..Point2::new(4, 5)).into();
+    /// assert_eq!(range.wrap(Point2::new(1, 7)), Point2::new(1, 4));
+    /// assert_eq!(range.wrap(Point2::new(0, 2)), Point2::new(3, 2));
+    /// ```
+    fn wrap(&self, point: P) -> P;
+}
 
 // Implements an operator (add/sub/mul/div) for a point type, including the assign, checked, saturating, and wrapping variants.
 macro_rules! impl_point_operator {
@@ -364,6 +377,17 @@ macro_rules! create_point {
             {
                 fn contains(&self, point: &$name<T>) -> bool {
                     and_chain!($(self.$var.contains(&point.$var)),+)
+                }
+            }
+            impl<T, $([<R $var:upper>]),+> WrappablePointRange<$name<T>> for [<$name Range>]<$([<R $var:upper>]),+>
+            where
+                Self: PointRange<$name<T>>,
+                T: PartialOrd<T>,
+                $([<R $var:upper>]: WrapRange<T> + Debug),+
+            {
+                fn wrap(&self, mut point: $name<T>) -> $name<T> {
+                    $(point.$var = self.$var.wrap(point.$var);)+
+                    point
                 }
             }
 
@@ -1774,6 +1798,7 @@ mod tests {
         assert!(range.contains(&Point2::new(2, 1)));
         assert!(!range.contains(&Point2::new(5, 2)));
         assert!(!range.contains(&Point2::new(6, 3)));
+        assert_eq!(range.wrap(Point2::new(0, 7)), Point2::new(4, 3));
     }
 
     #[test]
@@ -1783,6 +1808,7 @@ mod tests {
         assert!(range.contains(&Point2::new(2, 1)));
         assert!(range.contains(&Point2::new(5, 2)));
         assert!(!range.contains(&Point2::new(6, 3)));
+        assert_eq!(range.wrap(Point2::new(0, 7)), Point2::new(5, 2));
     }
 
     #[test]

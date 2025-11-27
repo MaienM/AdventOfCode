@@ -160,7 +160,7 @@ where
 /// A collection of points with associated data.
 pub trait PointDataCollection<P, D>
 where
-    Self: PointCollection<P> + Index<P> + IndexMut<P> + Extend<(P, D)>,
+    Self: PointCollection<P> + Index<P, Output = D> + IndexMut<P> + Extend<(P, D)>,
     P: GridPoint + 'static,
     D: 'static,
 {
