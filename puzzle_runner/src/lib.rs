@@ -13,9 +13,8 @@ pub mod multi;
 pub mod runner;
 pub mod single;
 mod source;
-pub mod visual;
 
-pub use puzzle_runner_derive::{example_input, register, register_crate, visual};
+pub use puzzle_runner_derive::{example_input, register, register_crate};
 
 #[cfg(not(target_arch = "wasm32"))]
 #[global_allocator]

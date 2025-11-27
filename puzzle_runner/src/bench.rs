@@ -85,11 +85,6 @@ impl CProfiler for Profiler<'_> {
 }
 
 pub fn main() {
-    assert!(
-        !cfg!(feature = "visual"),
-        "this entrypoint doesn't support feature 'visual'."
-    );
-
     let args = BenchArgs::parse();
 
     let mut criterion = Criterion::default();

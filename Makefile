@@ -4,7 +4,7 @@ setaf1 = $(shell tput setaf 1)
 setaf6 = $(shell tput setaf 6)
 sgr0 = $(shell tput sgr0)
 
-.PHONY: run-all test-libs benchmark-all test-and-run-% visualize-% benchmark-% web-dev docs
+.PHONY: run-all test-libs benchmark-all test-and-run-% benchmark-% web-dev docs
 .SECONDARY:
 
 #
@@ -82,15 +82,6 @@ test-and-run-%: inputs/%.txt
 	@echo "$(setaf6)>>>>> Running ${bin} <<<<<$(sgr0)"
 	@cargo build --bin ${bin} --release --quiet
 	@cargo run --bin ${bin} --release --quiet
-
-visualize-%: bin = $(subst visualize-,,$@)
-visualize-%: inputs/%.txt
-	@if ! grep -qxF '#[puzzle_runner::visual]' "aoc/src/bin/${bin}.rs"; then \
-		>&2 echo "$(setaf1)${bin} doesn't have any visualizations.$(sgr0)"; \
-		exit 1; \
-	fi
-	@echo "$(setaf6)>>>>> Visualizing ${bin} <<<<<$(sgr0)"
-	@cargo run --bin ${bin} --release --quiet --features visual
 
 #
 # Documentation.

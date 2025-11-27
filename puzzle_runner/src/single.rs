@@ -95,45 +95,14 @@ pub fn main(bin: &Bin) {
     // Initialize the thread pool now. This will happen automatically when it's first needed, but if this is inside a solution this will add to the runtime of that solution, unfairly penalizing it for being the first to use rayon while the other solutions that also do so get a free pass.
     ThreadPoolBuilder::new().build_global().unwrap();
 
-    for (i, part, visual, solution_path) in [
-        (
-            1,
-            &bin.part1,
-            #[cfg(feature = "visual")]
-            bin.visual1,
-            #[cfg(not(feature = "visual"))]
-            None::<()>,
-            part1_path,
-        ),
-        (
-            2,
-            &bin.part2,
-            #[cfg(feature = "visual")]
-            bin.visual2,
-            #[cfg(not(feature = "visual"))]
-            None::<()>,
-            part2_path,
-        ),
+    for (i, part, solution_path) in [
+        (1, &bin.part1, part1_path),
+        (2, &bin.part2, part2_path),
     ] {
-        #[cfg(not(feature = "visual"))]
-        let _ = visual;
-
         let solution = solution_path.read_maybe();
         let result = match solution {
             Ok(solution) => {
-                #[cfg(feature = "visual")]
-                let vis_handle = visual.map(|f| {
-                    let input = input.clone();
-                    crate::visual::spawn_window(move || f(&input))
-                });
-
-                let result = part.run::<InstantTimer>(&input, solution);
-
-                #[cfg(feature = "visual")]
-                vis_handle.map(::std::thread::JoinHandle::join);
-
-                #[cfg_attr(not(feature = "visual"), allow(clippy::let_and_return))]
-                result
+                part.run::<InstantTimer>(&input, solution)
             }
             Err(err) => SolverResult::Error(err),
         };

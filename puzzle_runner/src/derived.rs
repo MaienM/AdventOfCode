@@ -26,14 +26,6 @@ pub struct Bin {
     /// The runnable for part 2, with the result cast to a string.
     pub part2: Solver<String>,
 
-    /// The visualizer for part 1.
-    #[cfg(feature = "visual")]
-    pub visual1: Solver<Box<dyn crate::visual::Renderable>>,
-
-    /// The visualizer for part 2.
-    #[cfg(feature = "visual")]
-    pub visual2: Solver<Box<dyn crate::visual::Renderable>>,
-
     /// The examples.
     pub examples: Vec<Example>,
 }

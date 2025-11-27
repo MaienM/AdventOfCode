@@ -26,15 +26,12 @@ macro_rules! return_err {
 
 struct BinScanner {
     mod_root_path: Punctuated<PathSegment, Token![::]>,
-    mod_visual_path: Punctuated<PathSegment, Token![::]>,
     current_path: Punctuated<PathSegment, Token![::]>,
     pub(crate) path: String,
     pub(crate) name: String,
     pub(crate) title: Option<String>,
     pub(crate) part1: Expr,
     pub(crate) part2: Expr,
-    pub(crate) visual1: Expr,
-    pub(crate) visual2: Expr,
     pub(crate) examples: Vec<Expr>,
 }
 impl BinScanner {
@@ -45,16 +42,9 @@ impl BinScanner {
             name: path.split('/').next_back().unwrap().replace(".rs", ""),
             title: None,
             mod_root_path: modpath.path.segments.clone(),
-            mod_visual_path: {
-                let mut p = modpath.path.segments.clone();
-                p.push(parse_quote!(does_not_exist));
-                p
-            },
             current_path: modpath.path.segments,
             part1: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
             part2: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
-            visual1: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
-            visual2: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
             examples: Vec::new(),
         };
 
@@ -70,8 +60,6 @@ impl BinScanner {
             name,
             part1,
             part2,
-            visual1,
-            visual2,
             examples,
             ..
         } = self;
@@ -107,10 +95,6 @@ impl BinScanner {
                 day: #day,
                 part1: #part1,
                 part2: #part2,
-                #[cfg(feature = "visual")]
-                visual1: #visual1,
-                #[cfg(feature = "visual")]
-                visual2: #visual2,
                 examples: vec![ #(#examples),* ],
             }
         }
@@ -119,13 +103,6 @@ impl BinScanner {
 impl<'ast> Visit<'ast> for BinScanner {
     fn visit_item_mod(&mut self, node: &'ast ItemMod) {
         self.current_path.push(node.ident.clone().into());
-
-        if node.attrs.iter().any(|a| {
-            a.meta == Meta::Path(parse_quote!(visual))
-                || a.meta == Meta::Path(parse_quote!(puzzle_runner::visual))
-        }) {
-            self.mod_visual_path = self.current_path.clone();
-        }
 
         visit::visit_item_mod(self, node);
         self.current_path.pop();
@@ -140,16 +117,6 @@ impl<'ast> Visit<'ast> for BinScanner {
                 }
                 "part2" => {
                     self.part2 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part2(i).to_string()));
-                }
-                _ => {}
-            }
-        } else if cp == &self.mod_visual_path {
-            match node.sig.ident.to_string().as_str() {
-                "part1" => {
-                    self.visual1 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part1(i).into()));
-                }
-                "part2" => {
-                    self.visual2 = parse_quote!(::puzzle_runner::derived::Solver::Implemented(|i| #cp::part2(i).into()));
                 }
                 _ => {}
             }

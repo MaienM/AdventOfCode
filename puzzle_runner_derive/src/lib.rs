@@ -4,7 +4,6 @@
 
 mod examples;
 mod scanner;
-mod visual;
 
 use proc_macro::TokenStream;
 
@@ -24,16 +23,4 @@ pub fn register(input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     examples::example_input(input, annotated_item)
-}
-
-#[doc = include_str!("../docs/visual.md")]
-#[proc_macro_attribute]
-pub fn visual(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    visual::visual(input, annotated_item)
-}
-
-#[doc = include_str!("../docs/derive_to_renderable.md")]
-#[proc_macro_derive(ToRenderable)]
-pub fn derive_to_renderable(item: TokenStream) -> TokenStream {
-    visual::derive_to_renderable(item)
 }
