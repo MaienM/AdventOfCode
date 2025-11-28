@@ -78,11 +78,9 @@ pub fn part2(input: &str) -> usize {
     let robots = parse_input(input);
     let bounds = Point::new(101, 103);
     (0..isize::MAX)
-        .find_map(|i| {
-            ((i * 1024)..((i + 1) * 1024))
-                .into_par_iter()
-                .find_first(|seconds| is_drawing(&robots, &bounds, *seconds))
-        })
+        .into_par_iter()
+        .by_exponential_blocks()
+        .find_first(|seconds| is_drawing(&robots, &bounds, *seconds))
         .unwrap() as usize
 }
 
