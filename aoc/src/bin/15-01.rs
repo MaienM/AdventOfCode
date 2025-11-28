@@ -11,6 +11,18 @@ pub fn part1(input: &str) -> i16 {
     moves.into_iter().sum()
 }
 
+pub fn part2(input: &str) -> usize {
+    let moves = parse_input(input);
+    let mut floor = 0;
+    for (i, mov) in moves.into_iter().enumerate() {
+        floor += mov;
+        if floor < 0 {
+            return i + 1;
+        }
+    }
+    panic!("Should never happen.");
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -24,7 +36,7 @@ mod tests {
     #[example_input(part1 = 3)]
     static EXAMPLE_INPUT_2: &str = "(()(()(";
 
-    #[example_input(part1 = "-3")]
+    #[example_input(part1 = "-3", part2 = 1)]
     static EXAMPLE_INPUT_3: &str = ")())())";
 
     #[test]
