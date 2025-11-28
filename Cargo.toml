@@ -21,6 +21,7 @@ missing_panics_doc = "allow"
 must_use_candidate = "allow"
 
 # There's a lot of casting between different numeric types in this project. In most cases the possible ranges of these are pretty well understood, and as such most of these concerns are unfounded and just add clutter.
+cast_lossless = "allow"
 cast_possible_truncation = "allow"
 cast_possible_wrap = "allow"
 cast_precision_loss = "allow"
