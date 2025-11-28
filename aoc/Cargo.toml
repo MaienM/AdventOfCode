@@ -30,6 +30,7 @@ paste = "=1.0.15"
 num = "=0.4.3"
 memoize = { git = "https://github.com/MaienM/memoize", version = "0.4.2" }
 itertools = "=0.14.0"
+md-5 = "0.10.6"
 
 [dev-dependencies]
 pretty_assertions = "=1.4.1"
