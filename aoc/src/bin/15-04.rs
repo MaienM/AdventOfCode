@@ -8,7 +8,8 @@ pub fn part1(input: &str) -> usize {
         .by_exponential_blocks()
         .find_first(|n| {
             let mut hasher = Md5::new();
-            hasher.update(format!("{input}{n}"));
+            hasher.update(input);
+            hasher.update(n.to_string());
             let hash = hasher.finalize();
             hash[0] == 0 && hash[1] == 0 && hash[2] < 16
         })
@@ -21,7 +22,8 @@ pub fn part2(input: &str) -> usize {
         .by_exponential_blocks()
         .find_first(|n| {
             let mut hasher = Md5::new();
-            hasher.update(format!("{input}{n}"));
+            hasher.update(input);
+            hasher.update(n.to_string());
             let hash = hasher.finalize();
             hash[0] == 0 && hash[1] == 0 && hash[2] == 0
         })
