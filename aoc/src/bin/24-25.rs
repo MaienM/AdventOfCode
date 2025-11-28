@@ -39,6 +39,10 @@ pub fn part1(input: &str) -> usize {
     result
 }
 
+pub fn part2(_input: &str) -> &'static str {
+    "I did it!"
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
