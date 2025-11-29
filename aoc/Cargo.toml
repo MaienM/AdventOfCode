@@ -8,19 +8,8 @@ default = []
 bench = [
 	"puzzle_runner/bench",
 ]
-leaderboard = [
-	"dep:chrono",
-	"dep:serde",
-	"dep:serde_json",
-]
 
 [dependencies]
-# for leaderboard
-ansi_term = { version = "=0.12.1", optional = true }
-chrono = { version = "=0.4.42", optional = true }
-serde = { version = "=1.0.228", optional = true, features = ["derive"] }
-serde_json = { version = "=1.0.145", optional = true }
-
 # main
 puzzle_runner = { path = "../puzzle_runner" }
 puzzle_lib = { path = "../puzzle_lib" }
@@ -37,10 +26,6 @@ pretty_assertions = "=1.4.1"
 
 [lints]
 workspace = true
-
-[[bin]]
-name = "leaderboard"
-required-features = ["leaderboard"]
 
 [[bench]]
 name = "main"
