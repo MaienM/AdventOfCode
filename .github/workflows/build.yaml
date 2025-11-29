@@ -42,6 +42,8 @@ jobs:
 
       - name: Check for unused dependencies
         uses: bnjbvr/cargo-machete@main
+        with:
+          args: --with-metadata
 
       - name: Build docs
         run: RUSTDOCFLAGS='-D warnings' cargo doc --lib
