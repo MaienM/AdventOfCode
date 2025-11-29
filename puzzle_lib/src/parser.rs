@@ -1,5 +1,7 @@
 //! A macro ([`parse!`]) to parse text into structures.
 
+pub use regex::{Captures, Regex};
+
 /// Things that can be used with the `try` construct in [`parse!`].
 pub trait Tryable<T> {
     fn to_option(self) -> Option<T>;
@@ -115,26 +117,14 @@ macro_rules! __parse__ {
         let _ = $input;
     };
 
-    // Fixed-length item.
-    (@parse; [ input=$input:tt tmp=($($tmp:ident)+) ]; [$name:ident take $num:literal $($restinner:tt)*] $($rest:tt)*) => {
-        ::paste::paste!{
-            let [< $($tmp)+ _input >] = $input;
-            let [< $($tmp)+ >] = [< $($tmp)+ _input >].split_at_checked($num).ok_or_else(|| {
-                format!(
-                    "couldn't take {} bytes from {:?}",
-                    $num,
-                    ::paste::paste!([< $($tmp)+ _input >]),
-                )
-            }).unwrap();
-        };
-        $crate::parser::__parse__!(@parse; [ input=(::paste::paste!([< $($tmp)+ >]).0) tmp=($($tmp)+ _1) ]; [$name $($restinner)*]);
-        $crate::parser::__parse__!(@parse; [ input=(::paste::paste!([< $($tmp)+ >]).1) tmp=($($tmp)+ _2) ]; $($rest)*);
-    };
-
     // Store element as identifier.
     // [
     //   $name
-    //   (take $num)?
+    //   (
+    //      take $num ||
+    //      matching /$pattern/ ||
+    //      capturing /$pattern/
+    //   )?
     //   (
     //      as $type ||
     //      with $transformer ||
@@ -144,26 +134,83 @@ macro_rules! __parse__ {
     // ]
     // name; $type will be &str
 
-    (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident as $type:tt ]) => {
-        let $ident = $crate::parser::__parse_type__!($input => str => $type);
+    // $name
+    (@parse; $args:tt; $ident:ident) => {
+        $crate::parser::__parse__!(@parse; $args; [ $ident ]);
     };
+    // [$name]
+    (@parse; [ input=$input:tt tmp=$tmp:tt $(itype=$itype:tt)? ]; [$ident:ident]) => {
+        let $ident = $input;
+    };
+    // [$name take $num ...]
+    (@parse; [ input=$input:tt tmp=($($tmp:ident)+) ]; [$name:ident take $num:literal $($restinner:tt)*] $($rest:tt)*) => {
+        ::paste::paste!{
+            let [< $($tmp)+ _input >] = $input;
+            let [< $($tmp)+ >] = [< $($tmp)+ _input >].split_at_checked($num).ok_or_else(|| {
+                format!("couldn't take {} bytes from {:?}", $num, [< $($tmp)+ _input >])
+            }).unwrap();
+        };
+        $crate::parser::__parse__!(@parse; [ input=(::paste::paste!([< $($tmp)+ >]).0) tmp=($($tmp)+ _1) ]; [$name $($restinner)*]);
+        $crate::parser::__parse__!(@parse; [ input=(::paste::paste!([< $($tmp)+ >]).1) tmp=($($tmp)+ _2) ]; $($rest)*);
+    };
+    // [$name matching /$pattern/ ...]
+    (@parse; [ input=$input:tt tmp=($($tmp:ident)+) ]; [$name:ident matching /$pattern:literal/ $($restinner:tt)*] $($rest:tt)*) => {
+        ::paste::paste!{
+            let [< $($tmp)+ _input >] = $input;
+            let [< $($tmp)+ _regex >] = $crate::parser::Regex::new($pattern).unwrap();
+            let [< $($tmp)+ _match >] = [< $($tmp)+ _regex >].find([< $($tmp)+ _input >]).ok_or_else(|| {
+                format!("couldn't match {} at start of {:?}", stringify!($pattern), [< $($tmp)+ _input >])
+            }).unwrap();
+            assert!(
+                [< $($tmp)+ _match >].start() == 0,
+                "couldn't match {} at start of {:?}", stringify!($pattern), [< $($tmp)+ _input >],
+            );
+            $crate::parser::__parse__!(@parse; [ input=([< $($tmp)+ _match >].as_str()) tmp=($($tmp)+ _1) ]; [$name $($restinner)*]);
+            $crate::parser::__parse__!(@parse; [ input=([< $($tmp)+ _input >].get([< $($tmp)+ _match >].end()..).unwrap()) tmp=($($tmp)+ _2) ]; $($rest)*);
+        };
+    };
+    // [$name capturing /$pattern/ ...]
+    (@parse; [ input=$input:tt tmp=($($tmp:ident)+) ]; [$name:ident capturing /$pattern:literal/ $($restinner:tt)*] $($rest:tt)*) => {
+        ::paste::paste!{
+            let [< $($tmp)+ _input >] = $input;
+            let [< $($tmp)+ _regex >] = $crate::parser::Regex::new($pattern).unwrap();
+            let [< $($tmp)+ _capture >] = [< $($tmp)+ _regex >].captures([< $($tmp)+ _input >]).ok_or_else(|| {
+                format!("couldn't capture {} at start of {:?}", stringify!($pattern), [< $($tmp)+ _input >])
+            }).unwrap();
+            let [< $($tmp)+ _match >] = [< $($tmp)+ _capture >].get_match();
+            assert!(
+                [< $($tmp)+ _match >].start() == 0,
+                "couldn't capture {} at start of {:?}", stringify!($pattern), [< $($tmp)+ _input >],
+            );
+            $crate::parser::__parse__!(@parse; [ input=([< $($tmp)+ _capture >]) tmp=($($tmp)+ _1) itype=($crate::parser::Captures) ]; [$name $($restinner)*]);
+            $crate::parser::__parse__!(@parse; [ input=([< $($tmp)+ _input >].get([< $($tmp)+ _match >].end()..).unwrap()) tmp=($($tmp)+ _2) ]; $($rest)*);
+        };
+    };
+    // if input type unspecified -> str
+    (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident as $type:tt $($rest:tt)* ]) => {
+        $crate::parser::__parse__!(@parse; [ input=$input tmp=$tmp itype=(str) ]; [ $ident as $type $($rest)* ]);
+    };
+    // [... as $type]
+    (@parse; [ input=$input:tt tmp=$tmp:tt itype=($($itype:tt)+) ]; [ $ident:ident as $type:tt ]) => {
+        let $ident = $crate::parser::__parse_type__!($input => $($itype)+ => $type);
+    };
+    // [... with $transformer]
     (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident with $transformer:expr ]) => {
         let $ident = $transformer($input);
     };
-    (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident as $type:tt with $transformer:expr ]) => {
-        let $ident = $transformer($crate::parser::__parse_type__!($input => str => $type));
+    // [... as $type with $transformer]
+    (@parse; [ input=$input:tt tmp=$tmp:tt itype=($($itype:tt)+) ]; [ $ident:ident as $type:tt with $transformer:expr ]) => {
+        let $ident = $transformer($crate::parser::__parse_type__!($input => $($itype)+ => $type));
     };
+    // [... with { nested } => result]
     (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident with { $($nested:tt)+ } => $result:expr ]) => {
         let $ident = $crate::parser::parse!($input => { $($nested)+ } => $result);
     };
-    (@parse; $args:tt; $ident:ident) => {
-        $crate::parser::__parse__!(@parse; $args; [ $ident as str ]);
-    };
-
+    // match
     (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident match $match:tt ]) => {
-        let $ident = $crate::parser::__parse__!(@matchp; [ next=parsem input=$input matchflag=() ]; match $match);
+        let $ident = $crate::parser::__parse__!(@matchp; [ next=parse input=$input matchflag=() ]; match $match);
     };
-    (@parsem; [ match=$match:tt indexes=() input=$input:tt matchflag=() ];) => {
+    (@parse; [ match=$match:tt indexes=() input=$input:tt matchflag=() ];) => {
         $crate::parser::__parse__!(@match_body; [ match=$match indexing=none type=((), (&str)) input=$input matchflag=() ];)
     };
 
@@ -207,13 +254,13 @@ macro_rules! __parse__ {
     (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident chars $($rest:tt)* ]) => {
         $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(char) sel=(chars) ]; $($rest)*);
     };
-    // find /"regex"/
-    (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident find /$pattern:literal/ $($rest:tt)* ]) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(str) sel=(find $pattern) ]; $($rest)*);
+    // find matches /"regex"/
+    (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident find matches /$pattern:literal/ $($rest:tt)* ]) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(str) sel=(match $pattern) ]; $($rest)*);
     };
-    // capture /"regex"/
-    (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident capture /$pattern:literal/ $($rest:tt)* ]) => {
-        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=(str) sel=(capture $pattern) ]; $($rest)*);
+    // find captures /"regex"/
+    (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident find captures /$pattern:literal/ $($rest:tt)* ]) => {
+        $crate::parser::__parse__!(@splitp; [ input=$input ident=$ident item=($crate::parser::Captures) sel=(capture $pattern) ]; $($rest)*);
     };
     // split
     (@parse; [ input=$input:tt tmp=$tmp:tt ]; [ $ident:ident split $($rest:tt)* ]) => {
@@ -381,11 +428,11 @@ macro_rules! __parse__ {
             sep=$crate::parser::__parse_literal__!(kind=$sepkind action=create value=$sep)
         )
     };
-    (@splitf; [ input=$input:tt sel=(find $pattern:literal) ];) => {
-        ::regex::Regex::new($pattern).unwrap().find_iter($input).map(|m| m.as_str())
+    (@splitf; [ input=$input:tt sel=(match $pattern:literal) ];) => {
+        $crate::parser::Regex::new($pattern).unwrap().find_iter($input).map(|m| m.as_str())
     };
     (@splitf; [ input=$input:tt sel=(capture $pattern:literal) ];) => {
-        ::regex::Regex::new($pattern).unwrap().captures_iter($input)
+        $crate::parser::Regex::new($pattern).unwrap().captures_iter($input)
     };
 
     // Parse element into a grid.
@@ -737,12 +784,10 @@ macro_rules! __parse_type__ {
     ($var:expr => char => try f64) => ($crate::parser::__parse_type__!($var => char to digit).map(|v| v as f64));
     ($var:expr => char => try f32) => ($crate::parser::__parse_type__!($var => char to digit).map(|v| v as f32));
 
-    ($var:expr => $from:tt => $to:tt) => {
-        $crate::parser::__parse_type__!($var => $from => try $to).unwrap()
+    ($var:expr => $from:tt => $type:tt) => {
+        $crate::parser::__parse_type__!($var => $from => try $type).unwrap()
     };
-
     ($var:expr => $from:tt => try $type:tt) => (<$type>::try_from($var));
-    ($var:expr => $from:tt => $type:tt) => (<$type>::from($var));
 }
 #[doc(hidden)]
 pub use __parse_type__;
@@ -757,7 +802,7 @@ macro_rules! __parse_literal__ {
     (kind=literal action=split_once input=$input:tt sep=$sep:expr) => ($input.splitn(2, $sep));
     (kind=literal action=strip_prefix input=$input:tt prefix=$prefix:expr) => ($input.strip_prefix($prefix));
 
-    (kind=regex action=create value=$value:literal) => (::regex::Regex::new($value).unwrap());
+    (kind=regex action=create value=$value:literal) => ($crate::parser::Regex::new($value).unwrap());
     (kind=regex action=split input=$input:tt sep=$sep:expr) => ($sep.split($input));
     (kind=regex action=split_once input=$input:tt sep=$sep:expr) => ($sep.splitn($input, 2));
     (kind=regex action=strip_prefix input=$input:tt prefix=$prefix:expr) => {
@@ -811,6 +856,46 @@ mod tests {
     #[should_panic = "couldn't take 10 bytes"]
     fn parse_take_err() {
         parse!("hello" => [_name take 10 as char]);
+    }
+
+    #[test]
+    fn parse_matching() {
+        parse!("example8" => [prefix matching /r"\D*"/] [num as u8]);
+        assert_eq!(prefix, "example");
+        assert_eq!(num, 8);
+    }
+
+    // This error message is mangled by being escaped an additional time by Result::unwrap.
+    #[test]
+    #[should_panic] // = r#"couldn't match r"\d+" at start of "foo""#]
+    fn parse_matching_mismatch() {
+        parse!("foo" => [_num matching /r"\d+"/] _rest);
+    }
+
+    #[test]
+    #[should_panic = r#"couldn't match r"\d+" at start of "foo8""#]
+    fn parse_matching_non_start() {
+        parse!("foo8" => [_num matching /r"\d+"/] _rest);
+    }
+
+    #[test]
+    fn parse_capturing() {
+        parse!("foo-8" => [prefix capturing /r"(\w+)\D*"/] [num as u8]);
+        assert_eq!(prefix.get(1).unwrap().as_str(), "foo");
+        assert_eq!(num, 8);
+    }
+
+    // This error message is mangled by being escaped an additional time by Result::unwrap.
+    #[test]
+    #[should_panic] // = r#"couldn't capture r"\d+" at start of "foo""#]
+    fn parse_capturing_mismatch() {
+        parse!("foo" => [_num capturing /r"\d+"/] _rest);
+    }
+
+    #[test]
+    #[should_panic = r#"couldn't capture r"\d+" at start of "foo8""#]
+    fn parse_capturing_non_start() {
+        parse!("foo8" => [_num capturing /r"\d+"/] _rest);
     }
 
     #[test]
@@ -931,13 +1016,13 @@ mod tests {
 
     #[test]
     fn parse_list_find() {
-        parse!("1-2,3" => [items find /r"\d"/]);
+        parse!("1-2,3" => [items find matches /r"\d"/]);
         assert_eq!(items, vec!["1", "2", "3"]);
     }
 
     #[test]
     fn parse_list_capture() {
-        parse!("a1,b2!!!c3" => [items capture /r"\w(\d)"/]);
+        parse!("a1,b2!!!c3" => [items find captures /r"\w(\d)"/]);
         assert_eq!(
             items
                 .into_iter()

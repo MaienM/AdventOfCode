@@ -18,8 +18,13 @@ The following sections are supported:
 - An identifier (`name`). This is a shorthand for `[name]`.
 - An assignment (`[name]`). This will take the value that is matched at the given location and store it in a variable
   with that name. This supports [transformations](#transformations) (e.g., `[name as type]`).
-- An assignment of a fixed size (`[name take num]`). Like the previous item, but instead of taking all the text matched
-  at the given location it only takes the specified number of bytes and leaves the rest for the next section.
+- An assignment of a fixed size (`[name take num]`). Like `[name]`, but instead of taking all the text matched at the
+  given location it only takes the specified number of bytes and leaves the rest for the next section.
+- An assignment of a section matching a regular expression (`[name matching /"pattern"/]`). Like `[name]`, but instead
+  of taking all the text matched at the given location it only takes the portion matched by the provided regular
+  expression and leaves the rest for the next section. See [`regex#syntax`] for the supported syntax.
+- An assignment of a section matching a regular expression with captures (`[name capturing /"pattern"/]`). Like `[name
+  matching /"pattern"/]`, but instead of the matched string the result will be the [`Captures`](Captures).
 
 # Literals
 
@@ -27,7 +32,7 @@ The following types of literals are supported:
 
 - A literal string (`"foo"`).
 - A literal character (`'a'`).
-- A regular expression. (`/"pattern/"`). You can also use a [raw string
+- A regular expression (`/"pattern/"`). See [`regex#syntax`] for the supported syntax. You can also use a [raw string
   literal](https://doc.rust-lang.org/reference/tokens.html#raw-string-literals) between the slashes if convenient
   (`/r#"\w+"#/`).
 
@@ -61,10 +66,10 @@ Here are all the options in the order they must appear in:
   - `split on literal`. This will split the string on the given [literal](#literal), discarding the separators and
     keeping the elements between the separators.
   - `chars`. This will iterate over the individual [`char`]acters of the string.
-  - `find /"pattern"/`. This will look for all matches of the given regular expression and keep the entire matched
-    string, ignoring any capture groups.
-  - `capture /"pattern"/`. This will look for all matches of the given regular expression and keep the
-    [`Captures`](regex::Captures).
+  - `find matches /"pattern"/`. This will look for all matches of the given regular expression and keep the entire
+    matched string, ignoring any capture groups.
+  - `find captures /"pattern"/`. This will look for all matches of the given regular expression and keep the
+    [`Captures`](Captures).
 - `indexed` (optional). This will chain [`enumerate`](Iterator::enumerate) on the iterator.
 - The collection to transform the iterator into (optional, default `into (Vec<_>)`):
   - `into iterator`. This will keep the result as a [`Iterator`] (the exact type of which depends on the other options).
@@ -165,6 +170,13 @@ assert_eq!(num, 12);
 
 ```rust
 # use puzzle_lib::parser::parse;
+parse!("example8" => [prefix matching /r"\D*"/] [num as u8]);
+assert_eq!(prefix, "example");
+assert_eq!(num, 8);
+```
+
+```rust
+# use puzzle_lib::parser::parse;
 parse!("boo" => [word with str::to_uppercase]);
 assert_eq!(word, "BOO");
 ```
@@ -212,7 +224,7 @@ assert_eq!(nums, [128, 64, 32, 16]);
 
 ```rust
 # use puzzle_lib::parser::parse;
-parse!("2 fast 2 furious" => [words find /"[a-z]+"/]);
+parse!("2 fast 2 furious" => [words find matches /"[a-z]+"/]);
 assert_eq!(words, vec!["fast", "furious"]);
 ```
 
@@ -253,15 +265,14 @@ parse!("1 2" => [items split into iterator match { "1" => index into idx, _ } ])
 
 ```rust
 # use std::collections::HashMap;
-# use regex::Captures;
-# use puzzle_lib::parser::parse;
+# use puzzle_lib::parser::{parse, Captures};
 fn to_pair(capture: Captures) -> (&str, u8) {
     (
         capture.get(1).unwrap().as_str(),
         capture.get(2).unwrap().as_str().parse().unwrap(),
     )
 }
-parse!("foo=1 bar baz=2" => [map capture /r#"(\w+)=(\d+)"#/ into (HashMap<_, _>) with to_pair]);
+parse!("foo=1 bar baz=2" => [map find captures /r#"(\w+)=(\d+)"#/ into (HashMap<_, _>) with to_pair]);
 assert_eq!(map.len(), 2);
 assert_eq!(map.get(&"foo"), Some(&1));
 assert_eq!(map.get(&"baz"), Some(&2));
