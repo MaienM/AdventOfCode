@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 puzzle_lib::setup!(title = "Doesn't He Have Intern-Elves For This?");
 
 fn parse_input(input: &str) -> Vec<&str> {
@@ -5,7 +7,7 @@ fn parse_input(input: &str) -> Vec<&str> {
 }
 
 #[inline]
-fn is_nice(string: &str) -> bool {
+fn is_nice_1(string: &str) -> bool {
     let mut prev = '_';
     let mut has_double = false;
     let mut vowels = 0u8;
@@ -30,7 +32,42 @@ fn is_nice(string: &str) -> bool {
 
 pub fn part1(input: &str) -> usize {
     let strings = parse_input(input);
-    strings.into_iter().filter(|s| is_nice(s)).count()
+    strings.into_iter().filter(|s| is_nice_1(s)).count()
+}
+
+#[inline]
+fn is_nice_2(string: &str) -> bool {
+    let mut prevprev = '_';
+    let mut prev = '_';
+    let mut hasrepeat = false;
+    for c in string.chars() {
+        if c == prevprev {
+            hasrepeat = true;
+            break;
+        }
+        prevprev = prev;
+        prev = c;
+    }
+    if !hasrepeat {
+        return false;
+    }
+
+    let mut pair_indexes: HashMap<(char, char), usize> = HashMap::new();
+    for (idx, pair) in string.chars().tuple_windows().enumerate() {
+        if let Some(prev_idx) = pair_indexes.get(&pair) {
+            if idx - prev_idx > 1 {
+                return true;
+            }
+        } else {
+            pair_indexes.insert(pair, idx);
+        }
+    }
+    false
+}
+
+pub fn part2(input: &str) -> usize {
+    let strings = parse_input(input);
+    strings.into_iter().filter(|s| is_nice_2(s)).count()
 }
 
 #[cfg(test)]
@@ -41,7 +78,7 @@ mod tests {
     use super::*;
 
     #[example_input(part1 = 2)]
-    static EXAMPLE_INPUT: &str = "
+    static EXAMPLE_INPUT_1: &str = "
         ugknbfddgicrmopn
         aaa
         jchzalrnumimnmhp
@@ -49,12 +86,29 @@ mod tests {
         dvszwmarrgswjxmb
     ";
 
+    #[example_input(part2 = 2)]
+    static EXAMPLE_INPUT_2: &str = "
+        qjhvhtzxzqqjkmpb
+        xxyxx
+        uurcxstgmygtbstg
+        ieodomkazucvgmuy
+    ";
+
     #[test]
-    fn example_is_nice() {
-        let strings = parse_input(&EXAMPLE_INPUT);
+    fn example_is_nice_1() {
+        let strings = parse_input(&EXAMPLE_INPUT_1);
         assert_eq!(
-            strings.into_iter().map(|s| is_nice(s)).collect::<Vec<_>>(),
+            strings.into_iter().map(is_nice_1).collect::<Vec<_>>(),
             vec![true, true, false, false, false]
+        );
+    }
+
+    #[test]
+    fn example_is_nice_2() {
+        let strings = parse_input(&EXAMPLE_INPUT_2);
+        assert_eq!(
+            strings.into_iter().map(is_nice_2).collect::<Vec<_>>(),
+            vec![true, true, false, false]
         );
     }
 }
