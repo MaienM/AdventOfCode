@@ -2,7 +2,10 @@ puzzle_lib::setup!(title = "A Long Walk");
 
 use std::{collections::HashMap, mem};
 
-use puzzle_lib::{grid::FullGrid, point::{Direction2, Point2}};
+use puzzle_lib::{
+    grid::FullGrid,
+    point::{Direction2, Point2},
+};
 
 #[derive(Debug, PartialEq)]
 enum Tile {
@@ -61,7 +64,14 @@ impl Graph {
     }
 }
 
-fn to_graph_inner(grid: &Grid, graph: &mut Graph, from_node: Point2, from: Point2, to: Point2, mut steps: usize) {
+fn to_graph_inner(
+    grid: &Grid,
+    graph: &mut Graph,
+    from_node: Point2,
+    from: Point2,
+    to: Point2,
+    mut steps: usize,
+) {
     let mut prev = from;
     let mut curr = from;
 
@@ -809,7 +819,8 @@ mod tests {
                 Tile::Open,
                 Tile::Wall,
             ],
-        ].into();
+        ]
+        .into();
         assert_eq!(actual, expected);
     }
 

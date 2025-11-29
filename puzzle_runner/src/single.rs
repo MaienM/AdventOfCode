@@ -95,15 +95,10 @@ pub fn main(bin: &Bin) {
     // Initialize the thread pool now. This will happen automatically when it's first needed, but if this is inside a solution this will add to the runtime of that solution, unfairly penalizing it for being the first to use rayon while the other solutions that also do so get a free pass.
     ThreadPoolBuilder::new().build_global().unwrap();
 
-    for (i, part, solution_path) in [
-        (1, &bin.part1, part1_path),
-        (2, &bin.part2, part2_path),
-    ] {
+    for (i, part, solution_path) in [(1, &bin.part1, part1_path), (2, &bin.part2, part2_path)] {
         let solution = solution_path.read_maybe();
         let result = match solution {
-            Ok(solution) => {
-                part.run::<InstantTimer>(&input, solution)
-            }
+            Ok(solution) => part.run::<InstantTimer>(&input, solution),
             Err(err) => SolverResult::Error(err),
         };
         result.print(&format!("Part {i}"), &THRESHOLDS, true);
