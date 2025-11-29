@@ -97,8 +97,9 @@
                 nodePackages.typescript-language-server
 
                 cmake
-                pkg-config
                 fontconfig
+                pkg-config
+                expect # unbuffer
               ];
 
               shellHook = ''

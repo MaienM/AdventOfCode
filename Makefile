@@ -49,18 +49,16 @@ inputs/%.txt: .session
 #
 
 run-all:
-	@cargo build --release --bin aoc
-	@cargo run --release --bin aoc --quiet
+	@./cargo-semiquiet.sh run --release --bin aoc
 
 run-%:
-	@cargo build --release --bin aoc
-	@cargo run --release --bin aoc --quiet -- --only $(subst run-,,$@)
+	@./cargo-semiquiet.sh run --release --bin ${bin}
 
 test-libs: ignore=nix/store|puzzle_runner|puzzle_wasm
 test-libs: ignore_puzzles=aoc
 test-libs:
 	@cargo llvm-cov clean --workspace
-	@cargo llvm-cov --no-report nextest --lib --no-fail-fast --cargo-quiet
+	@./cargo-semiquiet.sh llvm-cov --no-report nextest --lib --no-fail-fast
 	@cargo llvm-cov --no-report --doc --no-fail-fast
 
 	@cmd="$$( \
@@ -77,11 +75,10 @@ test-libs:
 test-and-run-%: bin = $(subst test-and-run-,,$@)
 test-and-run-%: inputs/%.txt
 	@echo "$(setaf6)>>>>> Testing ${bin} <<<<<$(sgr0)"
-	@cargo nextest run --lib --bin ${bin} --no-fail-fast --cargo-quiet --status-level fail
+	@./cargo-semiquiet.sh nextest run --lib --bin ${bin} --no-fail-fast --status-level fail
 
 	@echo "$(setaf6)>>>>> Running ${bin} <<<<<$(sgr0)"
-	@cargo build --bin ${bin} --release --quiet
-	@cargo run --bin ${bin} --release --quiet
+	@./cargo-semiquiet.sh run --release --bin ${bin}
 
 #
 # Documentation.
@@ -128,18 +125,18 @@ docs: ${STDLIB_TARGETS} ${DEP_TARGETS} katex.html
 benchmark-%: bin = $(subst benchmark-,,$@)
 benchmark-%: test-and-run-% inputs/%.txt
 	@echo "$(setaf6)>>>>> Benchmarking ${bin} <<<<<$(sgr0)"
-	@cargo bench --bench main --features bench --quiet -- --only ${bin} --save-baseline current
+	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --save-baseline current
 	@critcmp baseline current --filter ${bin}
 
 benchmark-set-baseline-%: bin = $(subst benchmark-set-baseline-,,$@)
 benchmark-set-baseline-%: test-and-run-% inputs/%.txt
 	@echo "$(setaf6)>>>>> Updating benchmark baseline for ${bin} <<<<<$(sgr0)"
-	@cargo bench --bench main --features bench --quiet -- --only ${bin} --save-baseline baseline
+	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --save-baseline baseline
 
 profile-%: bin = $(subst profile-,,$@)
 profile-%: test-and-run-% inputs/%.txt
 	@echo "$(setaf6)>>>>> Profileing ${bin} <<<<<$(sgr0)"
-	@cargo bench --bench main --features bench --quiet -- --only ${bin} --profile-time 15 --profile-name current
+	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name current
 	@for f in target/criterion/${bin}_*/profile/current.pb; do \
 		name="$${f%/profile/current.pb}"; \
 		name="$${name##*/}"; \
@@ -150,7 +147,7 @@ profile-%: test-and-run-% inputs/%.txt
 profile-set-baseline-%: bin = $(subst profile-set-baseline-,,$@)
 profile-set-baseline-%: test-and-run-% inputs/%.txt
 	@echo "$(setaf6)>>>>> Updating profile baseline for ${bin} <<<<<$(sgr0)"
-	@cargo bench --bench main --features bench --quiet -- --only ${bin} --profile-time 15 --profile-name baseline
+	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name baseline
 	@for f in target/criterion/${bin}_*/profile/baseline.pb; do \
 		name="$${f%/profile/baseline.pb}"; \
 		name="$${name##*/}"; \
@@ -165,7 +162,7 @@ profile-set-baseline-%: test-and-run-% inputs/%.txt
 leaderboard: year = $(shell echo $$(( $$(date +'%Y') - $$([ $$(date +'%m') -eq 12 ] && echo 0 || echo 1) )))
 leaderboard: .leaderboard.json
 	@echo "$(setaf6)>>>>> Processing leaderboard json for ${year} <<<<<$(sgr0)"
-	@cargo run --quiet --bin leaderboard --features leaderboard -- .leaderboard.json
+	@./cargo-semiquiet.sh run --bin leaderboard --features leaderboard -- .leaderboard.json
 
 #
 # Web version.
