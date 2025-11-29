@@ -2,9 +2,9 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 
-mod asserts;
 mod ext;
 pub mod grid;
+mod macros;
 pub mod matrix;
 pub mod parser;
 pub mod point;
