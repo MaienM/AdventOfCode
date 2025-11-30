@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-
 puzzle_lib::setup!(title = "Doesn't He Have Intern-Elves For This?");
+
+use std::collections::HashMap;
 
 fn parse_input(input: &str) -> Vec<&str> {
     input.lines().collect()

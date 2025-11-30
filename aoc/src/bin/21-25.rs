@@ -1,11 +1,11 @@
+puzzle_lib::setup!(title = "Sea Cucumber");
+
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use puzzle_lib::{
     grid::{FullGrid, WrappingGrid},
     point::{Direction2, Point2},
 };
-
-puzzle_lib::setup!(title = "Sea Cucumber");
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 enum Tile {

@@ -1,6 +1,6 @@
-use itertools::Itertools;
-
 puzzle_lib::setup!(title = "Sonar Sweep");
+
+use itertools::Itertools;
 
 fn parse_input(input: &str) -> Vec<u16> {
     parse!(input => {

@@ -59,9 +59,9 @@
 //! this, the above observations yield a small enough problem space that we can simply run the
 //! instructions for the candidate inputs until we get one that works.
 
-use std::ops::Range;
-
 puzzle_lib::setup!(title = "Arithmetic Logic Unit");
+
+use std::ops::Range;
 
 type Memory = [isize; 4];
 
