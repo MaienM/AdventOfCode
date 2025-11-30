@@ -241,10 +241,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        hash::{DefaultHasher, Hasher},
-        ops::{Range, RangeInclusive},
-    };
+    use std::hash::{DefaultHasher, Hasher};
 
     use pretty_assertions::assert_eq;
 
@@ -255,8 +252,7 @@ mod tests {
     };
 
     #[allow(clippy::type_complexity)]
-    fn create_grid()
-    -> WrappingGrid<Point2<usize>, Point2Range<Range<usize>, Range<usize>>, FullGrid<usize>> {
+    fn create_grid() -> WrappingGrid<Point2<usize>, Point2Range<usize>, FullGrid<usize>> {
         let grid: FullGrid<_> = [[1, 2], [3, 4], [5, 6]].into();
         WrappingGrid::from(grid)
     }
@@ -264,8 +260,8 @@ mod tests {
     #[allow(clippy::type_complexity)]
     fn create_point_grid() -> WrappingGrid<
         Point2<usize>,
-        Point2Range<RangeInclusive<usize>, RangeInclusive<usize>>,
-        BoundedSparsePointSet<usize, Point2Range<RangeInclusive<usize>, RangeInclusive<usize>>>,
+        Point2Range<usize>,
+        BoundedSparsePointSet<usize, Point2Range<usize>>,
     > {
         let grid: SparsePointSet<usize> =
             [Point2::new(1, 1), Point2::new(3, 4)].into_iter().collect();

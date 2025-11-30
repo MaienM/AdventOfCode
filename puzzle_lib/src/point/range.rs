@@ -1,10 +1,11 @@
 use std::{
     fmt::Debug,
     hash::Hash,
-    ops::{Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
+    ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
 };
 
 use derive_new::new;
+use num::Bounded;
 
 use crate::{
     point::{Point2, Point3, Point4},
@@ -17,7 +18,7 @@ pub trait PointRange<P>: Debug {
     /// # Examples.
     /// ```
     /// # use puzzle_lib::point::{Point2,Point2Range,PointRange};
-    /// let range: Point2Range<_, _> = (Point2::new(1, 2)..Point2::new(4, 5)).into();
+    /// let range: Point2Range<_> = (Point2::new(1, 2)..Point2::new(4, 5)).into();
     /// assert!(range.contains(&Point2::new(1, 3)));
     /// assert!(!range.contains(&Point2::new(4, 3)));
     /// ```
@@ -30,11 +31,65 @@ pub trait WrappablePointRange<P>: PointRange<P> {
     ///
     /// ```
     /// # use puzzle_lib::point::{Point2,Point2Range,WrappablePointRange};
-    /// let range: Point2Range<_, _> = (Point2::new(1, 2)..Point2::new(4, 5)).into();
+    /// let range: Point2Range<_> = (Point2::new(1, 2)..Point2::new(4, 5)).into();
     /// assert_eq!(range.wrap(Point2::new(1, 7)), Point2::new(1, 4));
     /// assert_eq!(range.wrap(Point2::new(0, 2)), Point2::new(3, 2));
     /// ```
     fn wrap(&self, point: P) -> P;
+}
+
+trait NormalizeRange<T> {
+    /// Convert the range to a [`Range`].
+    ///
+    /// Note that since the resulting type exludes the top of the range any range that would
+    /// normally include that value will exclude it after conversion. This is fine for our
+    /// purposes, but it's not technically equivalent to the input.
+    fn to_range(self) -> Range<T>;
+}
+impl<T> NormalizeRange<T> for Range<T> {
+    fn to_range(self) -> Range<T> {
+        self
+    }
+}
+impl<T> NormalizeRange<T> for RangeInclusive<T>
+where
+    T: Copy + SaturatingAdd + One,
+{
+    fn to_range(self) -> Range<T> {
+        *self.start()..self.end().saturating_add(&T::one())
+    }
+}
+impl<T> NormalizeRange<T> for RangeFrom<T>
+where
+    T: Bounded,
+{
+    fn to_range(self) -> Range<T> {
+        self.start..T::max_value()
+    }
+}
+impl<T> NormalizeRange<T> for RangeTo<T>
+where
+    T: Bounded,
+{
+    fn to_range(self) -> Range<T> {
+        T::min_value()..self.end
+    }
+}
+impl<T> NormalizeRange<T> for RangeToInclusive<T>
+where
+    T: Bounded + SaturatingAdd + One,
+{
+    fn to_range(self) -> Range<T> {
+        T::min_value()..self.end.saturating_add(&T::one())
+    }
+}
+impl<T> NormalizeRange<T> for RangeFull
+where
+    T: Bounded + SaturatingAdd + One,
+{
+    fn to_range(self) -> Range<T> {
+        T::min_value()..T::max_value()
+    }
 }
 
 macro_rules! create_point_range {
@@ -48,85 +103,110 @@ macro_rules! create_point_range {
             $(,)?
         }
     ) => {
-        paste::paste! {
-            $(#[$structmeta])*
-            #[allow(clippy::redundant_field_names)]
-            #[derive(Debug, Clone, Copy, Eq, Hash, Ord, PartialEq, PartialOrd, new)]
-            pub struct $name<$([<R $var:upper>]),+> {
-                $(
-                    $(#[$varmeta])*
-                    pub $var: [<R $var:upper>]
-                ),+
-            }
-            impl<T, $([<R $var:upper>]),+> PointRange<$pname<T>> for $name<$([<R $var:upper>]),+>
-            where
-                T: PartialOrd<T>,
-                $([<R $var:upper>]: RangeBounds<T> + Debug),+
-            {
-                fn contains(&self, point: &$pname<T>) -> bool {
-                    $crate::op_chain!(&&, $(self.$var.contains(&point.$var)),+)
-                }
-            }
-            impl<T, $([<R $var:upper>]),+> WrappablePointRange<$pname<T>> for $name<$([<R $var:upper>]),+>
-            where
-                Self: PointRange<$pname<T>>,
-                T: PartialOrd<T>,
-                $([<R $var:upper>]: WrapRange<T> + Debug),+
-            {
-                fn wrap(&self, mut point: $pname<T>) -> $pname<T> {
-                    $(point.$var = self.$var.wrap(point.$var);)+
-                    point
-                }
-            }
+        $(#[$structmeta])*
+        #[allow(clippy::redundant_field_names)]
+        #[derive(Debug, Clone, Eq, Hash, PartialEq, new)]
+        pub struct $name<T> {
+            $(
+                $(#[$varmeta])*
+                pub $var: Range<T>
+            ),+
+        }
 
-            impl<T> From<Range<$pname<T>>> for $name<$($crate::static_!($var, Range<T>)),+> {
-                fn from(range: Range<$pname<T>>) -> Self {
-                    Self {
-                        $($var: (range.start.$var)..(range.end.$var)),+
-                    }
-                }
+        impl<T> PointRange<$pname<T>> for $name<T>
+        where
+            T: PartialOrd<T> + Debug,
+        {
+            fn contains(&self, point: &$pname<T>) -> bool {
+                $crate::op_chain!(&&, $(self.$var.contains(&point.$var)),+)
             }
-            impl<T> From<RangeInclusive<$pname<T>>> for $name<$($crate::static_!($var, RangeInclusive<T>)),+>
-            where
-                T: Copy,
-            {
-                fn from(range: RangeInclusive<$pname<T>>) -> Self {
-                    let start = range.start();
-                    let end = range.end();
-                    Self {
-                        $($var: (start.$var)..=(end.$var)),+
-                    }
-                }
+        }
+
+        impl<T> WrappablePointRange<$pname<T>> for $name<T>
+        where
+            Self: PointRange<$pname<T>>,
+            T: PartialOrd<T>,
+            Range<T>: WrapRange<T> + Debug,
+        {
+            fn wrap(&self, mut point: $pname<T>) -> $pname<T> {
+                $(point.$var = self.$var.wrap(point.$var);)+
+                point
             }
-            impl<T> From<RangeFrom<$pname<T>>> for $name<$($crate::static_!($var, RangeFrom<T>)),+> {
-                fn from(range: RangeFrom<$pname<T>>) -> Self {
-                    Self {
-                        $($var: (range.start.$var)..),+
-                    }
-                }
-            }
-            impl<T> From<RangeTo<$pname<T>>> for $name<$($crate::static_!($var, RangeTo<T>)),+> {
-                fn from(range: RangeTo<$pname<T>>) -> Self {
-                    Self {
-                        $($var: ..(range.end.$var)),+
-                    }
-                }
-            }
-            impl<T> From<RangeToInclusive<$pname<T>>> for $name<$($crate::static_!($var, RangeToInclusive<T>)),+> {
-                fn from(range: RangeToInclusive<$pname<T>>) -> Self {
-                    Self {
-                        $($var: ..=(range.end.$var)),+
-                    }
-                }
-            }
-            impl From<RangeFull> for $name<$($crate::static_!($var, RangeFull)),+> {
-                fn from(_: RangeFull) -> Self {
-                    Self {
-                        $($var: ..),+
-                    }
+        }
+
+        impl<T> From<Range<$pname<T>>> for $name<T> {
+            fn from(range: Range<$pname<T>>) -> Self {
+                Self {
+                    $($var: range.start.$var..range.end.$var),+
                 }
             }
         }
+        impl<T> From<RangeInclusive<$pname<T>>> for $name<T>
+        where
+            T: Copy,
+            RangeInclusive<T>: NormalizeRange<T>,
+        {
+            fn from(range: RangeInclusive<$pname<T>>) -> Self {
+                let start = range.start();
+                let end = range.end();
+                Self {
+                    $($var: (start.$var..=end.$var).to_range()),+
+                }
+            }
+        }
+        impl<T> From<RangeFrom<$pname<T>>> for $name<T>
+        where
+            RangeFrom<T>: NormalizeRange<T>,
+        {
+            fn from(range: RangeFrom<$pname<T>>) -> Self {
+                Self {
+                    $($var: (range.start.$var..).to_range()),+
+                }
+            }
+        }
+        impl<T> From<RangeTo<$pname<T>>> for $name<T>
+        where
+            RangeTo<T>: NormalizeRange<T>,
+        {
+            fn from(range: RangeTo<$pname<T>>) -> Self {
+                Self {
+                    $($var: (..range.end.$var).to_range()),+
+                }
+            }
+        }
+        impl<T> From<RangeToInclusive<$pname<T>>> for $name<T>
+        where
+            RangeToInclusive<T>: NormalizeRange<T>,
+        {
+            fn from(range: RangeToInclusive<$pname<T>>) -> Self {
+                Self {
+                    $($var: (..=range.end.$var).to_range()),+
+                }
+            }
+        }
+        impl<T> From<RangeFull> for $name<T>
+        where
+            RangeFull: NormalizeRange<T>,
+        {
+            fn from(_: RangeFull) -> Self {
+                Self {
+                    $($var: (..).to_range()),+
+                }
+            }
+        }
+        paste::paste! {
+            impl<T, $([<R $var:upper>]),+> From<($([<R $var:upper>]),+)> for $name<T>
+            where
+                $([<R $var:upper>]: NormalizeRange<T>),+
+            {
+                fn from(value: ($([<R $var:upper>]),+)) -> Self {
+                    let ($($var),+) = value;
+                    Self {
+                        $($var: $var.to_range()),+
+                    }
+                }
+            }
+    }
     };
 }
 
@@ -185,7 +265,7 @@ mod tests {
 
     #[test]
     fn range() {
-        let range: Point2Range<_, _> = (Point2::new(1, 1)..Point2::new(5, 5)).into();
+        let range: Point2Range<_> = (Point2::new(1, 1)..Point2::new(5, 5)).into();
         assert!(!range.contains(&Point2::new(0, 0)));
         assert!(range.contains(&Point2::new(2, 1)));
         assert!(!range.contains(&Point2::new(5, 2)));
@@ -195,7 +275,7 @@ mod tests {
 
     #[test]
     fn range_inclusive() {
-        let range: Point2Range<_, _> = (Point2::new(1, 1)..=Point2::new(5, 5)).into();
+        let range: Point2Range<_> = (Point2::new(1, 1)..=Point2::new(5, 5)).into();
         assert!(!range.contains(&Point2::new(0, 0)));
         assert!(range.contains(&Point2::new(2, 1)));
         assert!(range.contains(&Point2::new(5, 2)));
@@ -205,7 +285,7 @@ mod tests {
 
     #[test]
     fn range_from() {
-        let range: Point2Range<_, _> = (Point2::new(1, 1)..).into();
+        let range: Point2Range<_> = (Point2::new(1, 1)..).into();
         assert!(!range.contains(&Point2::new(0, 0)));
         assert!(range.contains(&Point2::new(2, 1)));
         assert!(range.contains(&Point2::new(5, 2)));
@@ -214,7 +294,7 @@ mod tests {
 
     #[test]
     fn range_to() {
-        let range: Point2Range<_, _> = (..Point2::new(5, 5)).into();
+        let range: Point2Range<_> = (..Point2::new(5, 5)).into();
         assert!(range.contains(&Point2::new(0, 0)));
         assert!(range.contains(&Point2::new(2, 1)));
         assert!(!range.contains(&Point2::new(5, 2)));
@@ -223,10 +303,19 @@ mod tests {
 
     #[test]
     fn range_to_inclusive() {
-        let range: Point2Range<_, _> = (..=Point2::new(5, 5)).into();
+        let range: Point2Range<_> = (..=Point2::new(5, 5)).into();
         assert!(range.contains(&Point2::new(0, 0)));
         assert!(range.contains(&Point2::new(2, 1)));
         assert!(range.contains(&Point2::new(5, 2)));
         assert!(!range.contains(&Point2::new(6, 3)));
+    }
+
+    #[test]
+    fn range_mixed() {
+        let range: Point2Range<_> = (0..5, 0..=5).into();
+        assert!(range.contains(&Point2::new(0, 0)));
+        assert!(range.contains(&Point2::new(2, 1)));
+        assert!(!range.contains(&Point2::new(5, 2)));
+        assert!(range.contains(&Point2::new(4, 5)));
     }
 }

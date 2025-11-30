@@ -3,7 +3,7 @@ use std::{
     hash::Hash,
     iter::IntoIterator,
     mem::{self},
-    ops::{Index, IndexMut, Range},
+    ops::{Index, IndexMut},
     sync::{Arc, OnceLock},
 };
 
@@ -16,8 +16,6 @@ use crate::{
     point::{Point2, Point2Range, PointRange},
 };
 
-type Boundaries = Point2Range<Range<usize>, Range<usize>>;
-
 /// A 2-dimensional grid with all points present & some arbitrary data stored for each point.
 #[derive(Debug, Eq, Clone)]
 pub struct FullGrid<D> {
@@ -25,7 +23,7 @@ pub struct FullGrid<D> {
     cells: Vec<D>,
     width: usize,
     height: usize,
-    boundaries: Boundaries,
+    boundaries: Point2Range<usize>,
 }
 
 impl<D> PartialEq for FullGrid<D>
@@ -242,8 +240,8 @@ impl<D: 'static> PointDataCollection<Point2<usize>, D> for FullGrid<D> {
         self.points.get().unwrap().iter().zip(self.cells.iter_mut())
     }
 }
-impl<D> PointBoundaries<Point2<usize>, Boundaries> for FullGrid<D> {
-    fn boundaries(&self) -> &Boundaries {
+impl<D> PointBoundaries<Point2<usize>, Point2Range<usize>> for FullGrid<D> {
+    fn boundaries(&self) -> &Point2Range<usize> {
         &self.boundaries
     }
 }

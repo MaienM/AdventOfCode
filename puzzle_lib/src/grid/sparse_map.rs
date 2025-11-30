@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     fmt::Debug,
-    ops::{Index, IndexMut, RangeBounds},
+    ops::{Index, IndexMut, RangeFull},
 };
 
 use inherit_methods_macro::inherit_methods;
@@ -333,14 +333,10 @@ where
     /// # Errors
     ///
     /// Will return `Err` if any of the points are outside the new boundaries.
-    pub fn with_boundaries<RX, RY>(
+    pub fn with_boundaries(
         self,
-        boundaries: Point2Range<RX, RY>,
-    ) -> Result<BoundedSparsePointMap<PT, D, Point2Range<RX, RY>>, String>
-    where
-        RX: RangeBounds<PT> + Debug,
-        RY: RangeBounds<PT> + Debug,
-    {
+        boundaries: Point2Range<PT>,
+    ) -> Result<BoundedSparsePointMap<PT, D, Point2Range<PT>>, String> {
         if let Some(invalid) = self.grid.iter_points().find(|p| !boundaries.contains(p)) {
             Err(format!("{invalid:?} not within in bounds {boundaries:?}"))
         } else {
@@ -360,13 +356,12 @@ where
     /// # Errors
     ///
     /// Will return `Err` if any of the points are outside the boundaries.
-    pub fn with_boundaries<RX, RY>(
+    pub fn with_boundaries(
         self,
-        boundaries: Point2Range<RX, RY>,
-    ) -> Result<BoundedSparsePointMap<PT, D, Point2Range<RX, RY>>, String>
+        boundaries: Point2Range<PT>,
+    ) -> Result<BoundedSparsePointMap<PT, D, Point2Range<PT>>, String>
     where
-        RX: RangeBounds<PT> + Debug,
-        RY: RangeBounds<PT> + Debug,
+        Point2Range<PT>: From<RangeFull>,
     {
         let bounded = BoundedSparsePointMap {
             grid: self,
