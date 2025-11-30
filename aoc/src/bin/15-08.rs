@@ -1,6 +1,6 @@
 puzzle_lib::setup!(title = "Matchsticks");
 
-fn count_characters(input: &str) -> usize {
+fn count_unescape(input: &str) -> usize {
     let mut iter = input.chars();
     let mut len = 0;
     while let Some(chr) = iter.next() {
@@ -21,10 +21,27 @@ fn count_characters(input: &str) -> usize {
     len - 2
 }
 
+fn count_escape(input: &str) -> usize {
+    2 + input
+        .chars()
+        .map(|chr| match chr {
+            '\\' | '"' => 2,
+            _ => 1,
+        })
+        .sum::<usize>()
+}
+
 pub fn part1(input: &str) -> usize {
     input
         .lines()
-        .map(|line| line.len() - count_characters(line))
+        .map(|line| line.len() - count_unescape(line))
+        .sum()
+}
+
+pub fn part2(input: &str) -> usize {
+    input
+        .lines()
+        .map(|line| count_escape(line) - line.len())
         .sum()
 }
 
@@ -35,7 +52,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 12)]
+    #[example_input(part1 = 12, part2 = 19)]
     static EXAMPLE_INPUT: &str = r#"
         ""
         "abc"
