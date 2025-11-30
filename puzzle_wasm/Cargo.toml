@@ -10,8 +10,8 @@ debug = []
 aoc = { path = "../aoc", default-features = false }
 puzzle_runner = { path = "../puzzle_runner" }
 console_error_panic_hook = { git = "https://github.com/Chase-Silk/console_error_panic_hook", rev = "13ebf32810ceb0a874fdda725c4d0c9fb7fd0910" }
-wasm-bindgen = "=0.2.105"
-web-sys = { version = "=0.3.82", features = ["Performance"] }
+wasm-bindgen = "=0.2.106"
+web-sys = { version = "=0.3.83", features = ["Performance"] }
 
 [target.wasm32-unknown-unknown.dependencies]
 wasm-bindgen-rayon = "=1.3.0"
