@@ -31,6 +31,14 @@ pub fn part1(input: &str) -> usize {
     nums.len()
 }
 
+pub fn part2(input: &str) -> usize {
+    let mut nums = parse_input(input);
+    for _ in 0..50 {
+        nums = look_and_say(nums);
+    }
+    nums.len()
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
