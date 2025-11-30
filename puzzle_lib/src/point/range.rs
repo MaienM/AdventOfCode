@@ -5,6 +5,7 @@ use std::{
 };
 
 use derive_new::new;
+use itertools::{ConsTuples, MapInto, Product, iproduct};
 use num::Bounded;
 
 use crate::{
@@ -92,6 +93,25 @@ where
     }
 }
 
+/// Generate the type that will be returned by the [`iproduct!`] macro.
+macro_rules! iproduct_type {
+    ([ $second:ty, $first:ty ];) => (Product<$first, $second>);
+    ([ $last:ty, $($items:ty),+ ];) => {
+        ConsTuples<
+            Product<
+                iproduct_type!([ $($items),+ ];),
+                $last,
+            >
+        >
+    };
+    ([ $($items:ty),+ ]; $next:ty $(, $($rest:ty),+)?) => {
+        iproduct_type!([ $next, $($items),+ ]; $($($rest),+)?)
+    };
+    ($first:ty, $($rest:ty),+ $(,)?) => {
+        iproduct_type!([ $first ]; $($rest),+)
+    };
+}
+
 macro_rules! create_point_range {
     (
         $(#[$structmeta:meta])*
@@ -131,6 +151,24 @@ macro_rules! create_point_range {
             fn wrap(&self, mut point: $pname<T>) -> $pname<T> {
                 $(point.$var = self.$var.wrap(point.$var);)+
                 point
+            }
+        }
+
+        impl<T> IntoIterator for $name<T>
+        where
+            Self: PointRange<$pname<T>>,
+            T: Clone,
+            Range<T>: WrapRange<T> + IntoIterator<Item = T> + Debug,
+            <Range<T> as IntoIterator>::IntoIter: Clone,
+        {
+            type Item = $pname<T>;
+            type IntoIter = MapInto<
+                iproduct_type!($($crate::static_!($var, <Range<T> as IntoIterator>::IntoIter)),+),
+                $pname<T>,
+            >;
+
+            fn into_iter(self) -> Self::IntoIter {
+                iproduct!($(self.$var),+).map_into::<$pname<T>>()
             }
         }
 
@@ -317,5 +355,36 @@ mod tests {
         assert!(range.contains(&Point2::new(2, 1)));
         assert!(!range.contains(&Point2::new(5, 2)));
         assert!(range.contains(&Point2::new(4, 5)));
+    }
+
+    #[test]
+    fn into_iter() {
+        let range: Point2Range<_> = (Point2::new(0, 10)..Point2::new(2, 12)).into();
+        let points = range.into_iter().collect::<Vec<_>>();
+        assert_eq!(
+            points,
+            vec![
+                Point2::new(0, 10),
+                Point2::new(0, 11),
+                Point2::new(1, 10),
+                Point2::new(1, 11),
+            ]
+        );
+
+        let range: Point3Range<_> = (Point3::new(0, 10, 20)..Point3::new(2, 12, 22)).into();
+        let points = range.into_iter().collect::<Vec<_>>();
+        assert_eq!(
+            points,
+            vec![
+                Point3::new(0, 10, 20),
+                Point3::new(0, 10, 21),
+                Point3::new(0, 11, 20),
+                Point3::new(0, 11, 21),
+                Point3::new(1, 10, 20),
+                Point3::new(1, 10, 21),
+                Point3::new(1, 11, 20),
+                Point3::new(1, 11, 21),
+            ]
+        );
     }
 }
