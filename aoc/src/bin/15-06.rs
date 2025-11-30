@@ -61,6 +61,31 @@ pub fn part1(input: &str) -> usize {
     grid.into_iter_data().filter(|v| *v).count()
 }
 
+pub fn part2(input: &str) -> usize {
+    let instructions = parse_input(input);
+    let mut grid = FullGrid::<u8>::new_default(1000, 1000);
+    for (action, range) in instructions {
+        match action {
+            Action::TurnOn => {
+                for point in range {
+                    grid[point] += 1;
+                }
+            }
+            Action::TurnOff => {
+                for point in range {
+                    grid[point] = grid[point].saturating_sub(1);
+                }
+            }
+            Action::Toggle => {
+                for point in range {
+                    grid[point] += 2;
+                }
+            }
+        }
+    }
+    grid.into_iter_data().map_into::<usize>().sum()
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -68,7 +93,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 998_996)]
+    #[example_input(part1 = 998_996, part2 = 1_001_996)]
     static EXAMPLE_INPUT: &str = "
         turn on 0,0 through 999,999
         toggle 0,0 through 999,0
