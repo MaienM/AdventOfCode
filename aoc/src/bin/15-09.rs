@@ -2,7 +2,7 @@ puzzle_lib::setup!(title = "All in a Single Night");
 
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
+    collections::{BinaryHeap, HashMap, VecDeque},
 };
 
 fn parse_input(input: &str) -> Vec<(&str, &str, usize)> {
@@ -75,6 +75,32 @@ pub fn part1(input: &str) -> usize {
     panic!("Should never happen");
 }
 
+pub fn part2(input: &str) -> usize {
+    let edges = parse_input(input);
+    let Graph {
+        edges,
+        locations,
+        mask,
+    } = optimize_locations(edges);
+
+    let mut paths = locations
+        .iter()
+        .map(|l| (0usize, *l, *l))
+        .collect::<VecDeque<_>>();
+    let mut max = 0;
+    while let Some((distance, visited, current)) = paths.pop_front() {
+        if visited == mask {
+            max = usize::max(max, distance);
+        }
+        for next in &locations {
+            if visited & next == 0 {
+                paths.push_back((distance + edges[current + next], visited | next, *next));
+            }
+        }
+    }
+    max
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -82,7 +108,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 605)]
+    #[example_input(part1 = 605, part2 = 982)]
     static EXAMPLE_INPUT: &str = "
         London to Dublin = 464
         London to Belfast = 518
