@@ -2,7 +2,7 @@ puzzle_lib::setup!(title = "Some Assembly Required");
 
 use std::collections::{HashMap, VecDeque};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 enum Value<'a> {
     Static(u16),
     Gate(&'a str),
@@ -25,7 +25,7 @@ impl<'a> Value<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 enum Gate<'a> {
     Static(Value<'a>),
     Not(&'a str),
@@ -90,6 +90,19 @@ fn solve(mut instructions: VecDeque<Instruction<'_>>) -> HashMap<&str, u16> {
 pub fn part1(input: &str) -> u16 {
     let instructions = parse_input(input);
     let wires = solve(instructions);
+    wires["a"]
+}
+
+pub fn part2(input: &str) -> u16 {
+    let instructions = parse_input(input);
+    let mut instructions_without_b: VecDeque<Instruction> = instructions
+        .iter()
+        .filter(|(_, w)| w != &"b")
+        .copied()
+        .collect();
+    let wires = solve(instructions);
+    instructions_without_b.push_back((Gate::Static(Value::Static(wires["a"])), "b"));
+    let wires = solve(instructions_without_b);
     wires["a"]
 }
 
