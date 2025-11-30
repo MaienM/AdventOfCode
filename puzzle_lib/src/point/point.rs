@@ -49,6 +49,13 @@ macro_rules! create_point {
         create_point!(@op; $name, mul, $($var),+);
         create_point!(@op; $name, div, $($var),+);
 
+        impl<T> From<($($crate::static_!($var, T)),+)> for $name<T> {
+            fn from(value: ($($crate::static_!($var, T)),+) ) -> Self {
+                let ($($var),+) = value;
+                Self { $($var),+ }
+            }
+        }
+
         impl<T> $name<T>
         where
             T: Copy
@@ -401,6 +408,12 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
+
+    #[test]
+    fn from_tuple() {
+        assert_eq!(Point2::from((10, 5)), Point2::new(10, 5));
+        assert_eq!(Point3::from((10, 5, 8)), Point3::new(10, 5, 8));
+    }
 
     #[test]
     fn add() {
