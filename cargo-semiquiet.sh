@@ -9,18 +9,19 @@ set -o errexit -o pipefail -o nounset
 
 cols="${COLUMNS:-$(tput cols)}"
 
-line=
-while read -r -N1 char; do
-	if [ "$char" = $'\n' ]; then
-		last_line="$line"
-		line=
-		if [[ "$last_line" = *'Compiling'* ]]; then
-			printf "\r%${cols}s\r" ''
-			continue
+unbuffer cargo "$@" \
+	| (
+	line=
+	while read -r -N1 char; do
+		if [ "$char" = $'\n' ]; then
+			last_line="$line"
+			line=
+			if [[ "$last_line" = *'Compiling'* ]]; then
+				printf "\r%${cols}s\r" ''
+				continue
+			fi
 		fi
-	fi
-	printf '%s' "$char"
-	line+="$char"
-done < <(
-	unbuffer cargo "$@"
+		printf '%s' "$char"
+		line+="$char"
+	done 
 )
