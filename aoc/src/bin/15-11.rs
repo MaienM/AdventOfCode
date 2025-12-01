@@ -48,7 +48,7 @@ fn is_valid(password: &Password) -> bool {
     chain && pairs >= 2
 }
 
-pub fn part1(input: &str) -> String {
+fn next_valid_password(input: &str, times: u8) -> String {
     let mut password: Vec<_> = input.chars().collect();
 
     // If there are currently forbidden characters we can increment those & set everything after
@@ -63,11 +63,22 @@ pub fn part1(input: &str) -> String {
         }
     }
 
-    while !is_valid(&password) {
+    for _ in 0..times {
         increment(&mut password);
+        while !is_valid(&password) {
+            increment(&mut password);
+        }
     }
 
     password.iter().join("")
+}
+
+pub fn part1(input: &str) -> String {
+    next_valid_password(input, 1)
+}
+
+pub fn part2(input: &str) -> String {
+    next_valid_password(input, 2)
 }
 
 #[cfg(test)]
