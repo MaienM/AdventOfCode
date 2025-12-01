@@ -2,7 +2,9 @@ puzzle_lib::setup!(title = "Knights of the Dinner Table");
 
 use std::collections::HashMap;
 
-fn parse_input(input: &str) -> Vec<(&str, &str, i16)> {
+type Rule<'a> = (&'a str, &'a str, i16);
+
+fn parse_input(input: &str) -> Vec<Rule<'_>> {
     parse!(input => {
         [rules split on '\n' with
             {
@@ -23,8 +25,7 @@ fn parse_input(input: &str) -> Vec<(&str, &str, i16)> {
     } => rules)
 }
 
-pub fn part1(input: &str) -> i16 {
-    let rules = parse_input(input);
+fn solve(rules: Vec<Rule>) -> i16 {
     let mut names: Vec<_> = rules.iter().map(|r| r.0).unique().collect();
     let edges: HashMap<_, _> = rules.into_iter().map(|(l, r, d)| ((l, r), d)).collect();
 
@@ -37,14 +38,27 @@ pub fn part1(input: &str) -> i16 {
             let mut score = 0;
             let mut prev = first;
             for next in rest {
-                score += edges[&(prev, next)] + edges[&(next, prev)];
+                score +=
+                    edges.get(&(prev, next)).unwrap_or(&0) + edges.get(&(next, prev)).unwrap_or(&0);
                 prev = next;
             }
-            score += edges[&(first, prev)] + edges[&(prev, first)];
+            score +=
+                edges.get(&(first, prev)).unwrap_or(&0) + edges.get(&(prev, first)).unwrap_or(&0);
             score
         })
         .max()
         .unwrap()
+}
+
+pub fn part1(input: &str) -> i16 {
+    let rules = parse_input(input);
+    solve(rules)
+}
+
+pub fn part2(input: &str) -> i16 {
+    let mut rules = parse_input(input);
+    rules.push(("Me", rules.first().unwrap().0, 0));
+    solve(rules)
 }
 
 #[cfg(test)]
