@@ -5,8 +5,8 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, format_ident, quote};
 use regex::Regex;
 use syn::{
-    Error, Expr, ExprPath, ItemFn, ItemMod, ItemStatic, Lit, Meta, PathSegment, Token, parse_file,
-    parse_macro_input, parse_quote,
+    Error, Expr, ExprPath, Item, ItemFn, ItemMod, ItemStatic, Lit, Meta, PathSegment, Token,
+    parse_file, parse_macro_input, parse_quote,
     punctuated::Punctuated,
     visit::{self, Visit},
 };
@@ -24,6 +24,13 @@ macro_rules! return_err {
     };
 }
 
+#[derive(Debug, Eq, PartialEq)]
+enum FirstItem {
+    Unknown,
+    Setup,
+    Other,
+}
+
 struct BinScanner {
     mod_root_path: Punctuated<PathSegment, Token![::]>,
     current_path: Punctuated<PathSegment, Token![::]>,
@@ -33,6 +40,7 @@ struct BinScanner {
     pub(crate) part1: Expr,
     pub(crate) part2: Expr,
     pub(crate) examples: Vec<Expr>,
+    pub(crate) first_item: FirstItem,
 }
 impl BinScanner {
     pub(crate) fn scan_file(path: &str) -> Self {
@@ -46,11 +54,20 @@ impl BinScanner {
             part1: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
             part2: parse_quote!(::puzzle_runner::derived::Solver::NotImplemented),
             examples: Vec::new(),
+            first_item: FirstItem::Unknown,
         };
 
         let contents = read_to_string(path).unwrap();
         let file = parse_file(&contents).unwrap();
         scanner.visit_file(&file);
+
+        scanner.first_item = match file.items.first() {
+            Some(Item::Macro(item)) if item.mac.path == parse_quote!(puzzle_lib::setup) => {
+                FirstItem::Setup
+            }
+            Some(_) => FirstItem::Other,
+            None => FirstItem::Unknown,
+        };
 
         scanner
     }
@@ -154,16 +171,17 @@ impl<'ast> Visit<'ast> for BinScanner {
     }
 }
 
-fn get_source_path() -> Result<PathBuf, &'static str> {
+fn get_span() -> Span {
     let mut span = Span::call_site();
     while let Some(parent) = span.parent() {
         span = parent;
     }
-    if let Some(path) = span.local_file() {
-        Ok(path)
-    } else {
-        Err("path of source file is empty")
-    }
+    span
+}
+
+fn get_source_path() -> Result<PathBuf, &'static str> {
+    let span = get_span();
+    span.local_file().ok_or("path of source file is empty")
 }
 
 fn find_binaries() -> Result<Vec<String>, String> {
@@ -284,6 +302,15 @@ pub fn register(input: TokenStream) -> TokenStream {
     let expr = match get_source_path() {
         Ok(path) => {
             let mut scanner = BinScanner::scan_file(path.to_str().unwrap());
+
+            if scanner.first_item != FirstItem::Setup {
+                return Error::new(
+                    get_span().into(),
+                    "setup must be the first statement in the file",
+                )
+                .to_compile_error()
+                .into();
+            }
 
             let args_parser = syn::meta::parser(|meta| {
                 if meta.path.is_ident("title") {
