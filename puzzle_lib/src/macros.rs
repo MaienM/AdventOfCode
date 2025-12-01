@@ -28,7 +28,7 @@ macro_rules! op_chain {
 /// ```rust,ignore
 /// call_chain!(sub, first, second, third)
 /// first.sub(second).sub(third)
-/// ```)
+/// ```
 #[macro_export]
 macro_rules! call_chain {
     ($fn:ident, $expr:expr $(,)?) => ($expr);
