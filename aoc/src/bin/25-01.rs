@@ -41,6 +41,33 @@ pub fn part1(input: &str) -> usize {
     hits
 }
 
+pub fn part2(input: &str) -> usize {
+    let instructions = parse_input(input);
+    let mut location = 50;
+    let mut hits = 0;
+    for (direction, steps) in instructions {
+        match direction {
+            Direction::Left => {
+                for _ in 0..steps {
+                    location = (location + 99) % 100;
+                    if location == 0 {
+                        hits += 1;
+                    }
+                }
+            }
+            Direction::Right => {
+                for _ in 0..steps {
+                    location = (location + 1) % 100;
+                    if location == 0 {
+                        hits += 1;
+                    }
+                }
+            }
+        }
+    }
+    hits
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -48,7 +75,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 3)]
+    #[example_input(part1 = 3, part2 = 6)]
     static EXAMPLE_INPUT: &str = "
         L68
         L30
