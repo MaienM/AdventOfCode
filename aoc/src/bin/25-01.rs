@@ -6,7 +6,7 @@ enum Direction {
     Right,
 }
 
-fn parse_input(input: &str) -> Vec<(Direction, usize)> {
+fn parse_input(input: &str) -> Vec<(Direction, u16)> {
     parse!(input => {
         [rotations split on '\n' with
             {
@@ -14,14 +14,14 @@ fn parse_input(input: &str) -> Vec<(Direction, usize)> {
                     "L" => Direction::Left,
                     "R" => Direction::Right,
                 }]
-                [steps as usize]
+                [steps as u16]
             }
             => (direction, steps)
         ]
     } => rotations)
 }
 
-pub fn part1(input: &str) -> usize {
+pub fn part1(input: &str) -> u16 {
     let instructions = parse_input(input);
     let mut location = 50;
     let mut hits = 0;
@@ -41,26 +41,28 @@ pub fn part1(input: &str) -> usize {
     hits
 }
 
-pub fn part2(input: &str) -> usize {
+pub fn part2(input: &str) -> u16 {
     let instructions = parse_input(input);
     let mut location = 50;
     let mut hits = 0;
     for (direction, steps) in instructions {
         match direction {
             Direction::Left => {
-                for _ in 0..steps {
-                    location = (location + 99) % 100;
-                    if location == 0 {
-                        hits += 1;
-                    }
+                if location == 0 {
+                    hits -= 1;
                 }
+                location += 1000 - steps;
+                while location <= 1000 {
+                    location += 100;
+                    hits += 1;
+                }
+                location %= 100;
             }
             Direction::Right => {
-                for _ in 0..steps {
-                    location = (location + 1) % 100;
-                    if location == 0 {
-                        hits += 1;
-                    }
+                location += steps;
+                while location >= 100 {
+                    location -= 100;
+                    hits += 1;
                 }
             }
         }
