@@ -7,21 +7,25 @@
 
 set -o errexit -o pipefail -o nounset
 
+if [ -n "${CI:-}" ]; then
+	exec cargo "$@"
+fi
+
 cols="${COLUMNS:-$(tput cols)}"
 
 unbuffer cargo "$@" \
 	| (
-	line=
-	while read -r -N1 char; do
-		if [ "$char" = $'\n' ]; then
-			last_line="$line"
-			line=
-			if [[ "$last_line" = *'Compiling'* ]]; then
-				printf "\r%${cols}s\r" ''
-				continue
+		line=
+		while read -r -N1 char; do
+			if [ "$char" = $'\n' ]; then
+				last_line="$line"
+				line=
+				if [[ "$last_line" = *'Compiling'* ]]; then
+					printf "\r%${cols}s\r" ''
+					continue
+				fi
 			fi
-		fi
-		printf '%s' "$char"
-		line+="$char"
-	done 
-)
+			printf '%s' "$char"
+			line+="$char"
+		done
+	)
