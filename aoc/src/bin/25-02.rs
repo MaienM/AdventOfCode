@@ -11,7 +11,7 @@ fn parse_input(input: &str) -> Vec<RangeInclusive<usize>> {
     } => ranges)
 }
 
-fn valid_id(id: usize) -> bool {
+fn valid_id_1(id: usize) -> bool {
     let string = id.to_string();
     let len = string.len();
     if len % 2 == 1 {
@@ -24,7 +24,33 @@ pub fn part1(input: &str) -> usize {
     let ranges = parse_input(input);
     ranges
         .into_iter()
-        .map(|range| range.filter(|r| !valid_id(*r)).sum::<usize>())
+        .map(|range| range.filter(|r| !valid_id_1(*r)).sum::<usize>())
+        .sum()
+}
+
+fn valid_id_2(id: usize) -> bool {
+    let string = id.to_string();
+    let len = string.len();
+    'top: for i in 1..=(len / 2) {
+        if !len.is_multiple_of(i) {
+            continue;
+        }
+        let end = &string[(len - i)..];
+        for j in 0..(len / i) {
+            if &string[(i * j)..(i * (j + 1))] != end {
+                continue 'top;
+            }
+        }
+        return false;
+    }
+    true
+}
+
+pub fn part2(input: &str) -> usize {
+    let ranges = parse_input(input);
+    ranges
+        .into_iter()
+        .map(|range| range.filter(|r| !valid_id_2(*r)).sum::<usize>())
         .sum()
 }
 
@@ -35,7 +61,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 1_227_775_554)]
+    #[example_input(part1 = 1_227_775_554, part2 = 4_174_379_265)]
     static EXAMPLE_INPUT: &str = "
         11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124
     ";
