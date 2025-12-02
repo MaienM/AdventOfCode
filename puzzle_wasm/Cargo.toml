@@ -7,7 +7,7 @@ edition.workspace = true
 debug = []
 
 [dependencies]
-aoc = { path = "../aoc", default-features = false }
+aoc = { path = "../aoc", default-features = false, features = ["export_bins"] }
 puzzle_runner = { path = "../puzzle_runner" }
 console_error_panic_hook = { git = "https://github.com/Chase-Silk/console_error_panic_hook", rev = "13ebf32810ceb0a874fdda725c4d0c9fb7fd0910" }
 wasm-bindgen = "=0.2.106"

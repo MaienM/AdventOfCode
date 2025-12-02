@@ -8,17 +8,18 @@ default = []
 bench = [
 	"puzzle_runner/bench",
 ]
+export_bins = []
 
 [dependencies]
 # main
 puzzle_runner = { path = "../puzzle_runner" }
 puzzle_lib = { path = "../puzzle_lib" }
 common_macros = "=0.1.1"
-derive-new = "=0.7.0"
-paste = "=1.0.15"
-num = "=0.4.3"
+derive-new.workspace = true
+paste.workspace = true
+num.workspace = true
 memoize = { git = "https://github.com/MaienM/memoize", version = "0.4.2" }
-itertools = "=0.14.0"
+itertools.workspace = true
 md-5 = "=0.10.6"
 
 [dev-dependencies]
