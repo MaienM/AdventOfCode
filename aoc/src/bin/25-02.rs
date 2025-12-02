@@ -12,12 +12,12 @@ fn parse_input(input: &str) -> Vec<RangeInclusive<usize>> {
 }
 
 fn valid_id_1(id: usize) -> bool {
-    let string = id.to_string();
-    let len = string.len();
+    let len = id.ilog10() + 1;
     if len % 2 == 1 {
         return true;
     }
-    string[0..(len / 2)] != string[(len / 2)..]
+    let mul = 10usize.pow(len / 2);
+    id / mul != id % mul
 }
 
 pub fn part1(input: &str) -> usize {
@@ -29,17 +29,19 @@ pub fn part1(input: &str) -> usize {
 }
 
 fn valid_id_2(id: usize) -> bool {
-    let string = id.to_string();
-    let len = string.len();
+    let len = id.ilog10() + 1;
     'top: for i in 1..=(len / 2) {
         if !len.is_multiple_of(i) {
             continue;
         }
-        let end = &string[(len - i)..];
-        for j in 0..(len / i) {
-            if &string[(i * j)..(i * (j + 1))] != end {
+        let mul = 10usize.pow(i);
+        let end = id % mul;
+        let mut num = id / mul;
+        while num > 0 {
+            if num % mul != end {
                 continue 'top;
             }
+            num /= mul;
         }
         return false;
     }
