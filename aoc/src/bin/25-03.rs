@@ -21,6 +21,39 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
+pub fn part2(input: &str) -> usize {
+    let banks = parse_input(input);
+    banks
+        .into_iter()
+        .map(|mut bank| {
+            let len = bank.len();
+            // Figure out what the largest + earliest (in that order of importance) possible starting number is.
+            let idx = bank.iter().rev().skip(11).position_max().unwrap();
+            let idx = len - idx - 12;
+            for _ in 0..idx {
+                bank.remove(0);
+            }
+            // Shrink to the target size by removing either the first number that's smaller than
+            // the one that follows it, or the last number.
+            'top: while bank.len() > 12 {
+                let mut last = 9;
+                for (idx, num) in bank.iter().enumerate() {
+                    if *num > last {
+                        bank.remove(idx - 1);
+                        continue 'top;
+                    }
+                    last = *num;
+                }
+                bank.pop();
+            }
+            bank.into_iter()
+                .map_into::<usize>()
+                .reduce(|a, b| a * 10 + b)
+                .unwrap()
+        })
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -28,7 +61,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 357)]
+    #[example_input(part1 = 357, part2 = 3_121_910_778_619)]
     static EXAMPLE_INPUT: &str = "
         987654321111111
         811111111111119
