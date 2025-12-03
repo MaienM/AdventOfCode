@@ -2,12 +2,12 @@ puzzle_lib::setup!(title = "PLACEHOLDER");
 
 fn parse_input(input: &str) -> Vec<usize> {
     parse!(input => {
-        [num split on '\n' as usize]
-    } => num)
+        [_nums split on '\n' as usize]
+    } => _nums)
 }
 
 pub fn part1(input: &str) -> usize {
-    let _ = parse_input(input);
+    let _nums = parse_input(input);
     1
 }
 
