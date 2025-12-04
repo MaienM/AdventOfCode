@@ -8,10 +8,8 @@ default = []
 bench = [
 	"puzzle_runner/bench",
 ]
-export_bins = []
 
 [dependencies]
-# main
 puzzle_runner = { path = "../puzzle_runner" }
 puzzle_lib = { path = "../puzzle_lib" }
 common_macros = "=0.1.1"

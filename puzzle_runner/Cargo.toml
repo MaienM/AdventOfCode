@@ -9,16 +9,26 @@ bench = [
 	"dep:criterion",
 	"dep:pprof",
 ]
+wasm = [
+	"dep:serde",
+	"dep:tsify",
+	"dep:wasm-bindgen",
+]
 
 [dependencies]
-# for bench
-criterion = { workspace = true, optional = true }
-pprof = { version = "=0.15.0", optional = true, features = ["criterion", "protobuf-codec"] }
-
 ansi_term = "=0.12.1"
 puzzle_runner_derive = { path = "../puzzle_runner_derive" }
 clap = { version = "=4.5.53", features = ["derive", "string"] }
 rayon.workspace = true
+
+# for bench
+criterion = { workspace = true, optional = true }
+pprof = { version = "=0.15.0", optional = true, features = ["criterion", "protobuf-codec"] }
+
+# for wasm
+serde = { workspace = true, optional = true }
+tsify = { version = "0.5.6", optional = true, features = ["js"] }
+wasm-bindgen = { workspace = true, optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tikv-jemallocator = "=0.6.1"

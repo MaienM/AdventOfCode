@@ -8,7 +8,7 @@ use rayon::ThreadPoolBuilder;
 
 use crate::{
     derived::Chapter,
-    runner::{DurationThresholds, InstantTimer, PartResult},
+    runner::{DurationThresholds, InstantTimer, PrintPartResult as _},
     source::{ChapterSources, ChapterSourcesValueParser, source_path_fill_tokens},
 };
 
@@ -87,10 +87,7 @@ pub fn main(chapter: &Chapter) {
 
     for part in &chapter.parts {
         let solution = folder_path.part(part.num).and_then(|s| s.read_maybe());
-        let result = match solution {
-            Ok(solution) => part.run::<InstantTimer>(&input, solution),
-            Err(err) => PartResult::Error(err),
-        };
+        let result = solution.and_then(|solution| part.run::<InstantTimer>(&input, solution));
         result.print(&format!("Part {}", part.num), &THRESHOLDS, true);
     }
 }

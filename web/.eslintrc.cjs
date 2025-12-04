@@ -3,6 +3,7 @@ module.exports = {
 		'@maienm/eslint-config',
 	],
 	rules: {
+		'no-restricted-syntax': 'off',
 		'object-curly-newline': 'off',
 		'@typescript-eslint/no-shadow': 'off',
 		'react/function-component-definition': ['warn', {

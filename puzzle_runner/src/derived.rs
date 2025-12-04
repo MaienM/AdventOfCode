@@ -4,6 +4,11 @@ use std::{collections::HashMap, ops::Deref};
 
 /// A single puzzle series. See [`puzzle_runner#Chapter`].
 #[derive(Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(serde::Serialize, tsify::Tsify),
+    tsify(into_wasm_abi, missing_as_null)
+)]
 pub struct Series {
     /// The name of crate containing the series.
     pub name: &'static str,
@@ -17,6 +22,11 @@ pub struct Series {
 
 /// A single chapter in a [`Series`]. See [`puzzle_runner#Series`].
 #[derive(Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(serde::Serialize, tsify::Tsify),
+    tsify(into_wasm_abi, missing_as_null)
+)]
 pub struct Chapter {
     /// The name of the binary containing the chapter.
     pub name: &'static str,
@@ -39,16 +49,27 @@ pub struct Chapter {
 
 /// A single part in a [`Chapter`]. See [`puzzle_runner#Part`].
 #[derive(Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(serde::Serialize, tsify::Tsify),
+    tsify(into_wasm_abi, missing_as_null)
+)]
 pub struct Part {
     /// The number of the part.
     pub num: u8,
 
     /// The implementation for this part, with the result converted to a string.
+    #[cfg_attr(feature = "wasm", serde(skip_serializing))]
     pub implementation: fn(&str) -> String,
 }
 
 /// An example input for a chapter.
 #[derive(Clone)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(serde::Serialize, tsify::Tsify),
+    tsify(into_wasm_abi, missing_as_null)
+)]
 pub struct Example {
     /// The name of the example.
     pub name: &'static str,

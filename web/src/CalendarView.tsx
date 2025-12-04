@@ -1,10 +1,9 @@
 import { Typography } from '@mui/material';
 import { DateCalendar, PickersCalendarHeaderProps, PickersDay, PickersDayProps } from '@mui/x-date-pickers';
 import { differenceInCalendarISOWeeks, isSameISOWeek } from 'date-fns';
-import type { Bin } from 'puzzle_wasm';
+import type { Chapter } from 'puzzle_wasm';
 import * as React from 'react';
 import { Link } from 'react-router';
-import Context from './context';
 
 const Header = ({ currentMonth }: PickersCalendarHeaderProps): React.ReactNode => (
 	<Typography variant="h5">
@@ -13,13 +12,13 @@ const Header = ({ currentMonth }: PickersCalendarHeaderProps): React.ReactNode =
 );
 
 interface DayProps extends PickersDayProps {
-	bins: Record<number, Bin>;
+	chapters: Record<number, Chapter>;
 	firstDay: Date;
 	lastDay: Date;
 }
 
 const Day = (props: DayProps) => {
-	const { day, bins, firstDay, lastDay, ...rest } = props;
+	const { day, chapters, firstDay, lastDay, ...rest } = props;
 	const inRange = firstDay <= day && day <= lastDay;
 
 	const childProps: Omit<PickersDayProps, 'sx'> & { sx: Record<string, string> } = {
@@ -40,20 +39,24 @@ const Day = (props: DayProps) => {
 		}
 	}
 
-	// Get bin info.
-	const bin = inRange ? bins[day.getDate()] : undefined;
-	childProps.disabled = !bin;
-	childProps.title = bin?.title;
+	// Get chapter info.
+	const chapter = inRange ? chapters[day.getDate()] : undefined;
+	childProps.disabled = !chapter;
+	childProps.title = chapter?.title;
 
 	// Color based on completion.
-	if (bin?.parts >= 2) {
-		childProps.sx.bgcolor = 'color-mix(in srgb, gold 10%, transparent)';
-	} else if (bin?.parts === 1) {
-		childProps.sx.bgcolor = 'color-mix(in srgb, silver 15%, transparent)';
+	switch (chapter?.parts.length) {
+		case 2:
+			childProps.sx.bgcolor = 'color-mix(in srgb, gold 10%, transparent)';
+			break;
+		case 1:
+			childProps.sx.bgcolor = 'color-mix(in srgb, silver 15%, transparent)';
+			break;
+		default:
 	}
 
 	return (
-		<Link to={bin?.name}>
+		<Link to={chapter?.name}>
 			<PickersDay {...childProps} />
 		</Link>
 	);
@@ -61,16 +64,16 @@ const Day = (props: DayProps) => {
 
 interface Props {
 	year: number;
+	chapters: Chapter[];
 }
 
 /**
  * A calendar to show the solutions for a single year.
  */
-export default ({ year }: Props) => {
-	const context = React.useContext(Context);
+export default ({ year, chapters }: Props) => {
 	const byDay = React.useMemo(
-		() => Object.fromEntries(context.bins.filter((bin) => bin.year === year).map((bin) => [bin.day, bin] as const)),
-		[context.bins],
+		() => Object.fromEntries(chapters.map((chapter) => [parseInt(chapter.name.slice(3), 10), chapter] as const)),
+		[chapters],
 	);
 	const firstDay = new Date(year, 11, 1); // months are zero-indexed
 	const lastDay = new Date(year, 11, year < 2025 ? 25 : 12);
@@ -92,7 +95,7 @@ export default ({ year }: Props) => {
 			}}
 			slotProps={{
 				day: {
-					bins: byDay,
+					chapters: byDay,
 					firstDay,
 					lastDay,
 				} as unknown,

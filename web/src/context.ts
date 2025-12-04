@@ -1,14 +1,14 @@
 import type GitHost from 'hosted-git-info';
 import { createContext } from 'react';
-import type { Bin } from './worker';
-import { AOCWorkerWrapper } from './worker-wrapper';
+import type { Series } from './worker';
+import { WorkerWrapper } from './worker-wrapper';
 
 interface Context {
 	/// The worker.
-	worker: AOCWorkerWrapper;
+	worker: WorkerWrapper;
 
-	/// The bins.
-	bins: Bin[];
+	/// The series.
+	series: Map<string, Series>;
 
 	/// The minimum timer resolution in the current environment.
 	minTimerResolution: number;

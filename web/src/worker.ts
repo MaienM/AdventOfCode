@@ -1,8 +1,10 @@
 import * as Comlink from 'comlink';
-import initWASM, * as aoc from 'puzzle_wasm';
+import initWASM, * as puzzles from 'puzzle_wasm';
 
-export type Bin = Omit<aoc.Bin, 'free'>;
-export type Example = Omit<aoc.Example, 'free'>;
+export type Series = puzzles.Series;
+export type Chapter = puzzles.Chapter;
+export type Part = puzzles.Part;
+export type Example = puzzles.Example;
 
 export interface Result {
 	success: boolean;
@@ -11,7 +13,7 @@ export interface Result {
 	duration: number;
 }
 
-class Worker {
+class WorkerImpl {
 	private initWASMPromise;
 
 	constructor() {
@@ -20,43 +22,31 @@ class Worker {
 
 	private async initWASM() {
 		await initWASM();
-		await aoc.init_panic_handler();
-		await aoc.initThreadPool(navigator.hardwareConcurrency);
+		puzzles.init_panic_handler();
+		await puzzles.initThreadPool(navigator.hardwareConcurrency);
 	}
 
 	async getTimerResolution(): Promise<number> {
 		await this.initWASMPromise;
-		return +aoc.get_timer_resolution();
+		return +puzzles.get_timer_resolution();
 	}
 
-	async list(): Promise<Bin[]> {
+	async all(): Promise<Map<string, Series>> {
 		await this.initWASMPromise;
-		return aoc.list().map((bin) => ({
-			name: bin.name,
-			title: bin.title,
-			source_path: bin.source_path,
-			year: 2000 + +(bin.year),
-			day: bin.day,
-			parts: bin.parts,
-			examples: bin.examples.map((example) => ({
-				name: example.name,
-				input: example.input,
-				part1: example.part1,
-				part2: example.part2,
-			})),
-		} as Bin));
+		return puzzles.all();
 	}
 
-	async run(name: string, part: number, input: string): Promise<Result> {
+	async run(series: string, chapter: string, part: number, input: string, expected?: string): Promise<Result> {
 		await this.initWASMPromise;
 		try {
-			const result = aoc.run(name, part, input);
+			const result = puzzles.run(series, chapter, part, input, expected);
+			console.log(result.duration);
 			const transformed = {
 				success: true,
 				message: result.result,
-				duration: +result.duration,
+				expected: result.solution ?? undefined,
+				duration: result.duration.secs * 1_000_000_000 + result.duration.nanos,
 			};
-			result.free();
 			return transformed;
 		} catch (e) {
 			return {
@@ -68,6 +58,6 @@ class Worker {
 	}
 }
 
-export type AOCWorker = Omit<Worker, 'initWASM' | 'initWASMPromise'>;
+export type Worker = Omit<WorkerImpl, 'initWASM' | 'initWASMPromise'>;
 
-Comlink.expose(new Worker());
+Comlink.expose(new WorkerImpl());

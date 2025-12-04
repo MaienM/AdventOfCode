@@ -1,18 +1,18 @@
 import * as Comlink from 'comlink';
-import type { AOCWorker, Bin, Result } from './worker';
+import type { Result, Series, Worker } from './worker';
 
 /**
- * Wrapper around {@link AOCWorker} that handles resetting the worker after a panic (as this leaves it in undefined
+ * Wrapper around {@link Worker} that handles resetting the worker after a panic (as this leaves it in undefined
  * state internally).
  */
 // eslint-disable-next-line import/prefer-default-export
-export class AOCWorkerWrapper implements AOCWorker {
-	private worker: AOCWorker;
+export class WorkerWrapper implements Worker {
+	private worker: Worker;
 
-	private getWorker(): AOCWorker {
+	private getWorker(): Worker {
 		if (this.worker === undefined) {
 			const worker = new Worker(new URL('./worker', import.meta.url));
-			this.worker = Comlink.wrap<AOCWorker>(worker);
+			this.worker = Comlink.wrap<Worker>(worker);
 		}
 
 		return this.worker;
@@ -28,13 +28,13 @@ export class AOCWorkerWrapper implements AOCWorker {
 	}
 
 	/** @inheritdoc */
-	list(): Promise<Bin[]> {
-		return this.getWorker().list();
+	all(): Promise<Map<string, Series>> {
+		return this.getWorker().all();
 	}
 
 	/** @inheritdoc */
-	async run(name: string, part: number, input: string): Promise<Result> {
-		const result = await this.getWorker().run(name, part, input);
+	async run(series: string, chapter: string, part: number, input: string, expected?: string): Promise<Result> {
+		const result = await this.getWorker().run(series, chapter, part, input, expected);
 		if (!result.success) {
 			this.resetWorker();
 		}

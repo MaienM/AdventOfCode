@@ -12,7 +12,7 @@ use rayon::ThreadPoolBuilder;
 use super::source::source_path_fill_tokens;
 use crate::{
     derived::{Chapter, Part, Series},
-    runner::{DurationThresholds, InstantTimer, PartResult},
+    runner::{DurationThresholds, InstantTimer, PartResult, PrintPartResult as _, RunResults},
     source::{ChapterSources, ChapterSourcesValueParser, Source},
 };
 
@@ -213,28 +213,21 @@ pub fn main(series: &Series) {
                 name = format!("{name} {source}");
             }
 
-            let input = match target.input.read() {
-                Ok(input) => input,
-                Err(err) => {
-                    return (name, PartResult::Error(err));
-                }
-            };
+            let result = (|| {
+                target
+                    .part
+                    .run::<InstantTimer>(&target.input.read()?, target.solution.read_maybe()?)
+            })();
 
-            (
-                name,
-                match target.solution.read_maybe() {
-                    Ok(solution) => target.part.run::<InstantTimer>(&input, solution),
-                    Err(err) => PartResult::Error(err),
-                },
-            )
+            (name, result)
         })
         .collect();
 
     let durations = runs
         .iter()
         .filter_map(|(_, r)| match r {
-            PartResult::Success { duration, .. } => Some(*duration),
-            PartResult::Error(_) => None,
+            Ok(RunResults { duration, .. }) => Some(*duration),
+            Err(_) => None,
         })
         .collect::<Vec<_>>();
     let duration_total = durations.iter().sum::<Duration>();

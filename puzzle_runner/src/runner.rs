@@ -40,30 +40,37 @@ static SYMBOL_OK: LazyLock<String> = LazyLock::new(|| Green.paint("✔").to_stri
 static SYMBOL_INCORRECT: LazyLock<String> = LazyLock::new(|| Red.paint("✘").to_string());
 static SYMBOL_ERROR: LazyLock<String> = LazyLock::new(|| Red.paint("⚠").to_string());
 
-/// The result of running a [`Part`].
+/// The result of successfully running a [`Part`].
 #[derive(Clone)]
-pub enum PartResult {
-    /// A successful run.
-    Success {
-        /// The result of the part, converted to a string.
-        result: String,
-        /// The expected result of the part, if known.
-        solution: Option<String>,
-        /// The duration of the part run.
-        duration: Duration,
-    },
-    /// An attempted run that was aborted for some reason.
-    Error(String),
+#[cfg_attr(
+    feature = "wasm",
+    derive(serde::Serialize, tsify::Tsify),
+    tsify(into_wasm_abi, missing_as_null)
+)]
+pub struct RunResults {
+    /// The result of the part, converted to a string.
+    pub result: String,
+    /// The expected result of the part, if known.
+    pub solution: Option<String>,
+    /// The duration of the part run.
+    pub duration: Duration,
 }
-impl PartResult {
-    pub fn print(&self, name: &str, thresholds: &DurationThresholds, show_result: bool) {
+
+/// The result of running a [`Part`].
+pub type PartResult = Result<RunResults, String>;
+
+pub trait PrintPartResult {
+    fn print(&self, name: &str, thresholds: &DurationThresholds, show_result: bool);
+}
+impl PrintPartResult for PartResult {
+    fn print(&self, name: &str, thresholds: &DurationThresholds, show_result: bool) {
         let name = Purple.paint(name);
         match self {
-            PartResult::Success {
+            Ok(RunResults {
                 result,
                 solution,
                 duration,
-            } => {
+            }) => {
                 let duration_colour = if duration < &thresholds.good {
                     Green
                 } else if duration < &thresholds.acceptable {
@@ -119,15 +126,20 @@ impl PartResult {
                     println!("{symbol} {name}: {result} [{duration_formatted}]");
                 }
             }
-            PartResult::Error(err) => {
+            Err(err) => {
                 let symbol = SYMBOL_ERROR.clone().clone();
                 println!("{symbol} {}: {}", name, Red.paint(err));
             }
         }
     }
 }
+
 impl Part {
     /// Run and time solution.
+    ///
+    /// # Errors
+    ///
+    /// This variant never results in an error.
     pub fn run<Ti>(&self, input: &str, solution: Option<String>) -> PartResult
     where
         Ti: Timer,
@@ -136,11 +148,11 @@ impl Part {
         let result = (self.implementation)(input);
         let duration = start.elapsed();
 
-        PartResult::Success {
+        Ok(RunResults {
             result,
             solution,
             duration,
-        }
+        })
     }
 }
 

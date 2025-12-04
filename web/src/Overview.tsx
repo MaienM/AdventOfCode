@@ -1,8 +1,18 @@
 import { GitHub } from '@mui/icons-material';
-import { AppBar, Container, Grid, IconButton, Toolbar, Typography } from '@mui/material';
-import { uniq } from 'lodash-es';
+import {
+	AppBar,
+	Card,
+	CardActionArea,
+	CardContent,
+	CardHeader,
+	Container,
+	IconButton,
+	Stack,
+	Toolbar,
+	Typography,
+} from '@mui/material';
 import * as React from 'react';
-import BinCalendar from './BinCalendar';
+import { Link } from 'react-router';
 import Context from './context';
 
 /**
@@ -10,17 +20,13 @@ import Context from './context';
  */
 export default () => {
 	const context = React.useContext(Context);
-	const years = React.useMemo(
-		() => uniq(context.bins.map((bin) => bin.year)),
-		[context.bins],
-	);
 
 	return (
 		<>
 			<AppBar position="static">
 				<Toolbar>
 					<Typography variant="h6" sx={{ flexGrow: 1 }}>
-						Advent of Code
+						Puzzles
 					</Typography>
 					<IconButton
 						color="inherit"
@@ -33,13 +39,22 @@ export default () => {
 				</Toolbar>
 			</AppBar>
 			<Container component="main" sx={{ p: 2 }} maxWidth={false}>
-				<Grid container>
-					{years.map((year) => (
-						<Grid key={year} size={{ xs: 12, sm: 6, xl: 4 }}>
-							<BinCalendar year={+year} />
-						</Grid>
+				<Stack>
+					{Array.from(context.series.values()).map((series) => (
+						<Card key={series.name}>
+							<CardActionArea
+								component={Link}
+								to={`/${series.name}`}
+							>
+								<CardContent>
+									<Typography variant="h4">
+										{series.title}
+									</Typography>
+								</CardContent>
+							</CardActionArea>
+						</Card>
 					))}
-				</Grid>
+				</Stack>
 			</Container>
 		</>
 	);

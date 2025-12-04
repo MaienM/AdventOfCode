@@ -1,16 +1,30 @@
 //! A WebAssembly package bundling all puzzles for use in a browser.
 
-use std::time::Duration;
+use std::{collections::HashMap, sync::LazyLock, time::Duration};
 
-use aoc::bins::BINS;
-use puzzle_runner::{derived::Solver, runner::Timer};
+use puzzle_runner::{
+    derived::Series,
+    runner::{PartResult, Timer},
+};
 use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;
 
 mod r#extern;
-use r#extern::{Number, performance};
+use r#extern::performance;
 use web_sys::Performance;
+
+use crate::r#extern::Number;
+
+static SERIES: LazyLock<HashMap<&'static str, &Series>> = LazyLock::new(|| {
+    let series = [&*aoc::generated::SERIES];
+
+    let mut map = HashMap::new();
+    for series in series {
+        map.insert(series.name, series);
+    }
+    map
+});
 
 mod time {
     use std::time::Duration;
@@ -67,146 +81,39 @@ pub fn get_timer_resolution() -> Number {
     time::duration_to_js(&duration)
 }
 
-/// WASM wrapper for [`puzzle_runner::derived::Bin`].
-#[wasm_bindgen]
-pub struct Bin(&'static puzzle_runner::derived::Bin);
-#[wasm_bindgen]
-impl Bin {
-    /// The name of the binary.
-    #[wasm_bindgen(getter)]
-    pub fn name(&self) -> String {
-        self.0.name.to_owned()
-    }
-
-    /// The title of the puzzle.
-    #[wasm_bindgen(getter)]
-    pub fn title(&self) -> Option<String> {
-        self.0.title.map(str::to_owned)
-    }
-
-    /// The path of the source file, relative to the root of the repository.
-    #[wasm_bindgen(getter)]
-    pub fn source_path(&self) -> String {
-        self.0.source_path.to_owned()
-    }
-
-    /// The year that the binary is for (last 2 digits only).
-    #[wasm_bindgen(getter)]
-    pub fn year(&self) -> u8 {
-        self.0.year
-    }
-
-    /// The day that the binary is for.
-    #[wasm_bindgen(getter)]
-    pub fn day(&self) -> u8 {
-        self.0.day
-    }
-
-    // How many parts are implemented in this binary.
-    #[wasm_bindgen(getter)]
-    pub fn parts(&self) -> u8 {
-        u8::from(self.0.part1.is_implemented()) + u8::from(self.0.part2.is_implemented())
-    }
-
-    /// The examples
-    #[wasm_bindgen(getter)]
-    pub fn examples(&self) -> Vec<Example> {
-        self.0.examples.iter().map(Example).collect()
-    }
+/// Get all implemented [`Series`]s.
+#[wasm_bindgen(unchecked_return_type = "Map<string, Series>")]
+pub fn all() -> JsValue {
+    serde_wasm_bindgen::to_value(&*SERIES).unwrap()
 }
 
-/// WASM wrapper for [`puzzle_runner::derived::Example`].
-#[wasm_bindgen]
-pub struct Example(&'static puzzle_runner::derived::Example);
-#[wasm_bindgen]
-impl Example {
-    /// The name of the example.
-    #[wasm_bindgen(getter)]
-    pub fn name(&self) -> String {
-        self.0.name.to_owned()
-    }
-
-    /// The example input.
-    #[wasm_bindgen(getter)]
-    pub fn input(&self) -> String {
-        self.0.input.to_owned()
-    }
-
-    /// The expected result of part 1, cast to a string.
-    #[wasm_bindgen(getter)]
-    pub fn part1(&self) -> Option<String> {
-        self.0.part1.map(str::to_owned)
-    }
-
-    /// The expected result of part 2, cast to a string.
-    #[wasm_bindgen(getter)]
-    pub fn part2(&self) -> Option<String> {
-        self.0.part2.map(str::to_owned)
-    }
-}
-
-/// WASM wrapper for [`puzzle_runner::runner::SolverResult::Success`].
-#[wasm_bindgen]
-pub struct SolverResult {
-    result: String,
-    duration: Duration,
-}
-#[wasm_bindgen]
-impl SolverResult {
-    /// The result of the solver, converted to a string.
-    #[wasm_bindgen(getter)]
-    pub fn result(&self) -> String {
-        self.result.clone()
-    }
-
-    /// The duration of the solver run, in nanoseconds.
-    #[wasm_bindgen(getter)]
-    pub fn duration(&self) -> Number {
-        time::duration_to_js(&self.duration)
-    }
-}
-impl TryFrom<puzzle_runner::runner::SolverResult> for SolverResult {
-    type Error = String;
-
-    fn try_from(value: puzzle_runner::runner::SolverResult) -> Result<Self, Self::Error> {
-        match value {
-            puzzle_runner::runner::SolverResult::Success {
-                result, duration, ..
-            } => Ok(SolverResult { result, duration }),
-            puzzle_runner::runner::SolverResult::Error(err) => Err(err),
-        }
-    }
-}
-
-/// Get a list of all implemented [`Bin`]s.
-#[wasm_bindgen]
-pub fn list() -> Vec<Bin> {
-    BINS.iter().map(Bin).collect()
-}
-
-/// Run a single part of a single [`Bin`].
+/// Run a single [`Part`](puzzle_runner::derived::Part).
 ///
-/// This is just a wrapper around [`Solver::run`], mostly present because [`Solver`] doesn't
-/// translate into a web-compatible format easily.
+/// This is just a wrapper around [`Part::run`](puzzle_runner::derived::Part::run).
 ///
 /// # Errors
 ///
-/// Will return `Err` if there is no `Bin` wih the requested name, if the requested part is not
-/// implemented, or if running the part causes a panic.
+/// Will return `Err` if the [`Series`], [`Chapter`](puzzle_runner::derived::Chapter) or
+/// [`Part`](puzzle_runner::derived::Part) cannot be found, or if running it causes a panic.
 #[wasm_bindgen]
-pub fn run(name: &str, part: u8, input: &str) -> Result<SolverResult, String> {
-    let bin = BINS
-        .iter()
-        .find(|d| d.name == name)
-        .ok_or(format!("Cannot find implementation for {name}."))?;
-    let solver: Solver<String> = match part {
-        1 => bin.part1.clone(),
-        2 => bin.part2.clone(),
-        _ => return Err(format!("Invalid part {part}.")),
+pub fn run(
+    series: &str,
+    chapter: &str,
+    part: u8,
+    input: &str,
+    solution: Option<String>,
+) -> PartResult {
+    let part = if let Some(series) = SERIES.get(series)
+        && let Some(chapter) = series.chapters.iter().find(|c| c.name == chapter)
+        && let Some(part) = chapter.parts.iter().find(|p| p.num == part)
+    {
+        part
+    } else {
+        return Err(format!(
+            "Cannot find implementation for {series}/{chapter}/part{part}."
+        ));
     };
-
-    console_error_panic_hook::set_once();
-    solver.run::<PerformanceTimer>(input, None).try_into()
+    part.run::<PerformanceTimer>(input, solution)
 }
 
 /// Setup the panic handler.

@@ -7,10 +7,11 @@ import GitHost from 'hosted-git-info';
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Route, Routes } from 'react-router';
-import BinDetails from './BinDetails';
+import ChapterView from './ChapterView';
 import Context from './context';
 import Overview from './Overview';
-import { AOCWorkerWrapper } from './worker-wrapper';
+import SeriesView from './SeriesVies';
+import { WorkerWrapper } from './worker-wrapper';
 
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
@@ -25,7 +26,7 @@ interface PackageInfo {
 	};
 }
 
-const aocWorker = new AOCWorkerWrapper();
+const worker = new WorkerWrapper();
 
 const repository = await (async () => {
 	const [commitHash, packageInfo] = await Promise.all([
@@ -48,7 +49,8 @@ const Router = () => (
 	<HashRouter>
 		<Routes>
 			<Route path="/" element={<Overview />} />
-			<Route path="/:bin" element={<BinDetails />} />
+			<Route path="/:series" element={<SeriesView />} />
+			<Route path="/:series/:chapter" element={<ChapterView />} />
 		</Routes>
 	</HashRouter>
 );
@@ -58,9 +60,9 @@ root.render(
 	(
 		<Context.Provider
 			value={{
-				worker: aocWorker,
-				bins: await aocWorker.list(),
-				minTimerResolution: await aocWorker.getTimerResolution(),
+				worker,
+				series: await worker.all(),
+				minTimerResolution: await worker.getTimerResolution(),
 				repository,
 			}}
 		>
