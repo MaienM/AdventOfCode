@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Resonant Collinearity");
+puzzle_runner::register_chapter!(book = "2024", title = "Resonant Collinearity");
 
 use std::collections::HashMap;
 

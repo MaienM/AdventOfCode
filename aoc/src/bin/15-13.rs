@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Knights of the Dinner Table");
+puzzle_runner::register_chapter!(book = "2015", title = "Knights of the Dinner Table");
 
 use std::collections::HashMap;
 

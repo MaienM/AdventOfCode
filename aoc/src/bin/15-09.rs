@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "All in a Single Night");
+puzzle_runner::register_chapter!(book = "2015", title = "All in a Single Night");
 
 use std::{
     cmp::Reverse,

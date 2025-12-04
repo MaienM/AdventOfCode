@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Race Condition");
+puzzle_runner::register_chapter!(book = "2024", title = "Race Condition");
 
 use std::collections::BinaryHeap;
 
@@ -187,12 +187,12 @@ mod tests {
     #[test]
     fn example_test_1() {
         let actual = part1impl(&EXAMPLE_INPUT, 1).to_string();
-        assert_eq!(actual, EXAMPLE_INPUT.part1.unwrap());
+        assert_eq!(actual, EXAMPLE_INPUT.parts[&1]);
     }
 
     #[test]
     fn example_test_2() {
         let actual = part2impl(&EXAMPLE_INPUT, 50).to_string();
-        assert_eq!(actual, EXAMPLE_INPUT.part2.unwrap());
+        assert_eq!(actual, EXAMPLE_INPUT.parts[&2]);
     }
 }

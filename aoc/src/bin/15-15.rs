@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Science for Hungry People");
+puzzle_runner::register_chapter!(book = "2015", title = "Science for Hungry People");
 
 use std::collections::HashMap;
 

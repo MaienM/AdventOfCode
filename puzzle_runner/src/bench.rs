@@ -13,7 +13,8 @@ use clap::{Parser, builder::ArgPredicate, value_parser};
 use criterion::{Criterion, profiler::Profiler as CProfiler};
 use pprof::{ProfilerGuard, protos::Message};
 
-use super::{derived::Solver, multi::TargetArgs};
+use super::multi::TargetArgs;
+use crate::{derived::Series, multi::SERIES};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -84,7 +85,8 @@ impl CProfiler for Profiler<'_> {
     }
 }
 
-pub fn main() {
+pub fn main(series: &Series) {
+    SERIES.get_or_init(|| series.clone());
     let args = BenchArgs::parse();
 
     let mut criterion = Criterion::default();
@@ -105,13 +107,9 @@ pub fn main() {
             .profile_time(Some(Duration::from_secs_f64(time)));
     }
 
-    let bins = args.targets.filtered_binaries();
-    for target in args.targets.get_targets(&bins) {
-        let Solver::Implemented(runnable) = target.solver else {
-            continue;
-        };
-
-        let mut name = format!("{}/part{}", target.bin, target.part);
+    let chapters = args.targets.filtered_chapters();
+    for target in args.targets.get_targets(&chapters) {
+        let mut name = format!("{}/part{}", target.chapter, target.part.num);
         if let Some(source) = target.source_name {
             name = format!("{name}/{source}");
         }
@@ -125,7 +123,7 @@ pub fn main() {
             .unwrap();
 
         criterion.bench_function(&name, |b| {
-            b.iter(|| runnable(&input));
+            b.iter(|| (target.part.implementation)(&input));
         });
     }
 

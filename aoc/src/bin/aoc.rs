@@ -1,1 +1,1 @@
-use aoc::bins::multi as main;
+use aoc::generated::multi as main;

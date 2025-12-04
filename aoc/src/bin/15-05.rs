@@ -1,4 +1,7 @@
-puzzle_lib::setup!(title = "Doesn't He Have Intern-Elves For This?");
+puzzle_runner::register_chapter!(
+    book = "2015",
+    title = "Doesn't He Have Intern-Elves For This?",
+);
 
 use std::collections::HashMap;
 

@@ -7,37 +7,25 @@ use clap::{CommandFactory, FromArgMatches, Parser, ValueHint};
 use rayon::ThreadPoolBuilder;
 
 use crate::{
-    derived::Bin,
-    runner::{DurationThresholds, InstantTimer, SolverResult},
-    source::{Source, SourceValueParser, source_path_fill_tokens},
+    derived::Chapter,
+    runner::{DurationThresholds, InstantTimer, PartResult},
+    source::{ChapterSources, ChapterSourcesValueParser, source_path_fill_tokens},
 };
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct SingleArgs {
-    /// Path to a file containing the input.
+    /// Path to a folder containing the input (`input.txt`) and expected outputs (`partN.txt`).
+    ///
+    /// The following tokens will be replaced:
+    /// - `{series}`: the name of the crate for the series (e.g., `aoc`).
+    /// - `{chapter}`: the name of the chapter (e.g., `21-01`).
     #[arg(
-        value_hint = ValueHint::FilePath,
-        default_value = "inputs/{name}.txt",
-        value_parser = SourceValueParser,
+        value_hint = ValueHint::DirPath,
+        default_value = "inputs/{series}/{chapter}",
+        value_parser = ChapterSourcesValueParser,
     )]
-    input: Source,
-
-    /// Path to a file containing the expected result of part 1.
-    #[arg(
-        value_hint = ValueHint::FilePath,
-        default_value = "inputs/{name}-{part}.txt",
-        value_parser = SourceValueParser,
-    )]
-    part1: Source,
-
-    /// Path to a file containing the expected result of part 2.
-    #[arg(
-        value_hint = ValueHint::FilePath,
-        default_value = "inputs/{name}-{part}.txt",
-        value_parser = SourceValueParser,
-    )]
-    part2: Source,
+    folder: ChapterSources,
 }
 
 const THRESHOLDS: DurationThresholds = DurationThresholds {
@@ -46,40 +34,42 @@ const THRESHOLDS: DurationThresholds = DurationThresholds {
 };
 
 macro_rules! arg_default_value_fill_tokens {
-    (replace; $chain:expr, $(,)?) => {
-        $chain
-    };
-    (replace; $chain:expr, $name:ident = $value:expr $(, $($restname:ident = $restvalue:expr),*)?) => {
-        arg_default_value_fill_tokens!(replace; $chain.replace(&format!("{{{}}}", stringify!($name)), &$value.to_string()), $($($restname = $restvalue),*)?)
-    };
     ($cmd:ident, $arg:expr, $($name:ident = $value:expr),+ $(,)?) => {
         $cmd.mut_arg($arg, |a| {
             let value = a.get_default_values()[0].to_str().unwrap();
-            let value = arg_default_value_fill_tokens!(replace; value, $($name = $value),+);
+            let value = arg_default_value_fill_tokens!(@replace; value, $($name = $value),+);
             a.default_value(value)
         })
-    }
+    };
+    (@replace; $chain:expr, $name:ident = $value:expr $(, $($restname:ident = $restvalue:expr),*)?) => {
+        arg_default_value_fill_tokens!(@replace; $chain.replace(&format!("{{{}}}", stringify!($name)), &$value.to_string()), $($($restname = $restvalue),*)?)
+    };
+    (@replace; $chain:expr, $(,)?) => {
+        $chain
+    };
 }
 
 #[doc(hidden)]
-pub fn main(bin: &Bin) {
+pub fn main(chapter: &Chapter) {
+    let series = std::env::var("CARGO_PKG_NAME").unwrap();
+
     // Replace the placeholders in the default values.
     let mut cmd = SingleArgs::command_for_update();
-    cmd = arg_default_value_fill_tokens!(cmd, "input", name = bin.name);
-    cmd = arg_default_value_fill_tokens!(cmd, "part1", name = bin.name, part = 1);
-    cmd = arg_default_value_fill_tokens!(cmd, "part2", name = bin.name, part = 2);
+    cmd = arg_default_value_fill_tokens!(cmd, "folder", series = series, name = chapter.name);
 
+    // Parse & replace the placeholders in the actual values.
     let mut matches = cmd.get_matches();
     let args = SingleArgs::from_arg_matches_mut(&mut matches).unwrap();
 
-    let input_path = source_path_fill_tokens!(args.input, bin = bin);
-    let part1_path = source_path_fill_tokens!(args.part1, bin = bin, part = 1);
-    let part2_path = source_path_fill_tokens!(args.part2, bin = bin, part = 2);
+    let folder_path =
+        source_path_fill_tokens!(args.folder, series = series, chapter = chapter.name);
+    let input_path = folder_path.input().unwrap();
 
     println!(
         "Running {}{} using input {}...",
-        Cyan.paint(bin.name),
-        bin.title
+        Cyan.paint(chapter.name),
+        chapter
+            .title
             .map_or(String::new(), |t| format!(": {}", Purple.paint(t))),
         Cyan.paint(input_path.source().unwrap()),
     );
@@ -95,12 +85,12 @@ pub fn main(bin: &Bin) {
     // Initialize the thread pool now. This will happen automatically when it's first needed, but if this is inside a solution this will add to the runtime of that solution, unfairly penalizing it for being the first to use rayon while the other solutions that also do so get a free pass.
     ThreadPoolBuilder::new().build_global().unwrap();
 
-    for (i, part, solution_path) in [(1, &bin.part1, part1_path), (2, &bin.part2, part2_path)] {
-        let solution = solution_path.read_maybe();
+    for part in &chapter.parts {
+        let solution = folder_path.part(part.num).and_then(|s| s.read_maybe());
         let result = match solution {
             Ok(solution) => part.run::<InstantTimer>(&input, solution),
-            Err(err) => SolverResult::Error(err),
+            Err(err) => PartResult::Error(err),
         };
-        result.print(&format!("Part {i}"), &THRESHOLDS, true);
+        result.print(&format!("Part {}", part.num), &THRESHOLDS, true);
     }
 }

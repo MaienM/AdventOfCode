@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Never Tell Me The Odds");
+puzzle_runner::register_chapter!(book = "2023", title = "Never Tell Me The Odds");
 
 use std::ops::Range;
 

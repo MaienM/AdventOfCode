@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Not Quite Lisp");
+puzzle_runner::register_chapter!(book = "2015", title = "Not Quite Lisp");
 
 fn parse_input(input: &str) -> Vec<i16> {
     parse!(input => {

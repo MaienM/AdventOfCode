@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Disk Fragmenter");
+puzzle_runner::register_chapter!(book = "2024", title = "Disk Fragmenter");
 
 use std::cmp::Ordering;
 

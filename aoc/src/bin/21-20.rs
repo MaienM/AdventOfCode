@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Trench Map");
+puzzle_runner::register_chapter!(book = "2021", title = "Trench Map");
 
 use std::{fmt::Debug, ops::RangeInclusive};
 

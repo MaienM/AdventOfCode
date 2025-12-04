@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Trebuchet?!");
+puzzle_runner::register_chapter!(book = "2023", title = "Trebuchet?!");
 
 fn parse_input(input: &str) -> Vec<u32> {
     parse!(input => {

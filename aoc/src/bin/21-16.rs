@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Packet Decoder");
+puzzle_runner::register_chapter!(book = "2021", title = "Packet Decoder");
 
 use std::collections::VecDeque;
 

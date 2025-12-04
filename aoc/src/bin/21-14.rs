@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Extended Polymerization");
+puzzle_runner::register_chapter!(book = "2021", title = "Extended Polymerization");
 
 use std::collections::HashMap;
 

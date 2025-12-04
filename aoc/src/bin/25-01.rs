@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Secret Entrance");
+puzzle_runner::register_chapter!(book = "2025", title = "Secret Entrance");
 
 #[derive(Debug, Eq, PartialEq)]
 enum Direction {

@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Scratchcards");
+puzzle_runner::register_chapter!(book = "2023", title = "Scratchcards");
 
 use std::collections::{HashMap, HashSet};
 

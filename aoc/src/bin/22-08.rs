@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Treetop Tree House");
+puzzle_runner::register_chapter!(book = "2022", title = "Treetop Tree House");
 
 use std::collections::HashSet;
 

@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Beacon Exclusion Zone");
+puzzle_runner::register_chapter!(book = "2022", title = "Beacon Exclusion Zone");
 
 use std::{iter, ops::Range};
 

@@ -15,11 +15,11 @@ sgr0 = $(shell tput sgr0)
 	@echo "Please create a file named .session containing your session cookie." >&2
 	@exit 1
 
-inputs/%.txt: bin = $(subst inputs/,,$(subst .txt,,$@))
-inputs/%.txt: nameparts = $(subst -, ,${bin})
-inputs/%.txt: year = $(word 1,${nameparts})
-inputs/%.txt: day = $(patsubst 0%,%,$(word 2,${nameparts}))
-inputs/%.txt: .session
+inputs/aoc/%/input.txt: bin = $(subst inputs/,,$(subst .txt,,$@))
+inputs/aoc/%/input.txt: nameparts = $(subst -, ,${bin})
+inputs/aoc/%/input.txt: year = $(word 1,${nameparts})
+inputs/aoc/%/input.txt: day = $(patsubst 0%,%,$(word 2,${nameparts}))
+inputs/aoc/%/input.txt: .session
 	@echo "$(setaf6)>>>>> Downloading input for ${bin} <<<<<$(sgr0)"
 	@mkdir -p inputs
 	@curl \
@@ -57,7 +57,7 @@ test-libs:
 	@cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --lcov --output-path target/llvm-cov/lcov
 
 test-and-run-%: bin = $(subst test-and-run-,,$@)
-test-and-run-%: inputs/%.txt
+test-and-run-%: inputs/aoc/%/input.txt
 	@echo "$(setaf6)>>>>> Testing ${bin} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh nextest run --lib --bin ${bin} --no-fail-fast --status-level fail
 
@@ -107,18 +107,18 @@ docs: ${STDLIB_TARGETS} ${DEP_TARGETS} katex.html
 #
 
 benchmark-%: bin = $(subst benchmark-,,$@)
-benchmark-%: test-and-run-% inputs/%.txt
+benchmark-%: test-and-run-% inputs/aoc/%/input.txt
 	@echo "$(setaf6)>>>>> Benchmarking ${bin} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --save-baseline current
 	@critcmp baseline current --filter ${bin}
 
 benchmark-set-baseline-%: bin = $(subst benchmark-set-baseline-,,$@)
-benchmark-set-baseline-%: test-and-run-% inputs/%.txt
+benchmark-set-baseline-%: test-and-run-% inputs/aoc/%/input.txt
 	@echo "$(setaf6)>>>>> Updating benchmark baseline for ${bin} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --save-baseline baseline
 
 profile-%: bin = $(subst profile-,,$@)
-profile-%: test-and-run-% inputs/%.txt
+profile-%: test-and-run-% inputs/aoc/%/input.txt
 	@echo "$(setaf6)>>>>> Profileing ${bin} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name current
 	@for f in target/criterion/${bin}_*/profile/current.pb; do \
@@ -129,7 +129,7 @@ profile-%: test-and-run-% inputs/%.txt
 	done
 
 profile-set-baseline-%: bin = $(subst profile-set-baseline-,,$@)
-profile-set-baseline-%: test-and-run-% inputs/%.txt
+profile-set-baseline-%: test-and-run-% inputs/aoc/%/input.txt
 	@echo "$(setaf6)>>>>> Updating profile baseline for ${bin} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name baseline
 	@for f in target/criterion/${bin}_*/profile/baseline.pb; do \

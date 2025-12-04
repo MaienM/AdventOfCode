@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Dumbo Octopus");
+puzzle_runner::register_chapter!(book = "2021", title = "Dumbo Octopus");
 
 use std::collections::HashSet;
 

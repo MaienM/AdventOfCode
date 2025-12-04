@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Cube Conundrum");
+puzzle_runner::register_chapter!(book = "2023", title = "Cube Conundrum");
 
 #[derive(Debug, PartialEq)]
 struct Game {

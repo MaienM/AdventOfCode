@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Lens Library");
+puzzle_runner::register_chapter!(book = "2023", title = "Lens Library");
 
 use std::vec::Vec;
 

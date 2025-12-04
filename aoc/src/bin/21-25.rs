@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Sea Cucumber");
+puzzle_runner::register_chapter!(book = "2021", title = "Sea Cucumber");
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 

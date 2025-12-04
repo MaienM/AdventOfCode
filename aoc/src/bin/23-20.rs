@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Pulse Propagation");
+puzzle_runner::register_chapter!(book = "2023", title = "Pulse Propagation");
 
 use std::collections::{HashMap, HashSet, VecDeque};
 

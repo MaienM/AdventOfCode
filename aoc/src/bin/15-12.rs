@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "JSAbacusFramework.io");
+puzzle_runner::register_chapter!(book = "2015", title = "JSAbacusFramework.io");
 
 use std::iter::Peekable;
 

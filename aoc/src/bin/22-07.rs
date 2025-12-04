@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "No Space Left On Device");
+puzzle_runner::register_chapter!(book = "2022", title = "No Space Left On Device");
 
 use std::{collections::HashMap, iter::Peekable, vec::IntoIter};
 

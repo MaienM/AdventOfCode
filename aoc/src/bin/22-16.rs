@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Proboscidea Volcanium");
+puzzle_runner::register_chapter!(book = "2022", title = "Proboscidea Volcanium");
 
 use std::collections::{BinaryHeap, HashMap, HashSet};
 

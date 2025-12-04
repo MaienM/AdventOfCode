@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Distress Signal");
+puzzle_runner::register_chapter!(book = "2022", title = "Distress Signal");
 
 use std::cmp::Ordering;
 

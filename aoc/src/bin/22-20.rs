@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Grove Positioning System");
+puzzle_runner::register_chapter!(book = "2022", title = "Grove Positioning System");
 
 use std::collections::VecDeque;
 

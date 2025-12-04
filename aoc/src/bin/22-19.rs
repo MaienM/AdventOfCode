@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Not Enough Minerals");
+puzzle_runner::register_chapter!(book = "2022", title = "Not Enough Minerals");
 
 use std::ops::{AddAssign, SubAssign};
 

@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Pyroclastic Flow");
+puzzle_runner::register_chapter!(book = "2022", title = "Pyroclastic Flow");
 
 use std::collections::HashSet;
 

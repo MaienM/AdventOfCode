@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "RAM Run");
+puzzle_runner::register_chapter!(book = "2024", title = "RAM Run");
 
 use std::collections::{BinaryHeap, HashSet};
 
@@ -94,12 +94,12 @@ mod tests {
     #[test]
     fn example_test_1() {
         let actual = part1impl(&EXAMPLE_INPUT, 12, Point2::new(6, 6)).to_string();
-        assert_eq!(actual, EXAMPLE_INPUT.part1.unwrap());
+        assert_eq!(actual, EXAMPLE_INPUT.parts[&1]);
     }
 
     #[test]
     fn example_test_2() {
         let actual = part2impl(&EXAMPLE_INPUT, Point2::new(6, 6));
-        assert_eq!(actual, EXAMPLE_INPUT.part2.unwrap());
+        assert_eq!(actual, EXAMPLE_INPUT.parts[&2]);
     }
 }

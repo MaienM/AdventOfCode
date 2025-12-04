@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Giant Squid");
+puzzle_runner::register_chapter!(book = "2021", title = "Giant Squid");
 
 type BaseBoard<T> = [[T; 5]; 5];
 type Board = BaseBoard<u16>;

@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Blizzard Basin");
+puzzle_runner::register_chapter!(book = "2022", title = "Blizzard Basin");
 
 use std::{collections::HashSet, ops::Range};
 

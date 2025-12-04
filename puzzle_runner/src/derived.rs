@@ -1,51 +1,53 @@
 //! Structures used for the data that is injected by the macros in `puzzle_runner_derive`.
 
-use std::ops::Deref;
+use std::{collections::HashMap, ops::Deref};
 
-/// The main components of the implementation of a single day.
+/// A single puzzle series. See [`puzzle_runner#Chapter`].
 #[derive(Clone)]
-pub struct Bin {
-    /// The name of the binary.
+pub struct Series {
+    /// The name of crate containing the series.
     pub name: &'static str,
 
-    /// The title of the puzzle.
+    /// The title of the series.
+    pub title: &'static str,
+
+    /// The chapters in the series.
+    pub chapters: Vec<Chapter>,
+}
+
+/// A single chapter in a [`Series`]. See [`puzzle_runner#Series`].
+#[derive(Clone)]
+pub struct Chapter {
+    /// The name of the binary containing the chapter.
+    pub name: &'static str,
+
+    /// The book this chapter is part of.
+    pub book: Option<&'static str>,
+
+    /// The title of the chapter.
     pub title: Option<&'static str>,
 
     /// The path of the source file, relative to the root of the repository.
     pub source_path: &'static str,
 
-    /// The year that the binary is for (last 2 digits only).
-    pub year: u8,
-
-    /// The day that the binary is for.
-    pub day: u8,
-
-    /// The runnable for part 1, with the result cast to a string.
-    pub part1: Solver<String>,
-
-    /// The runnable for part 2, with the result cast to a string.
-    pub part2: Solver<String>,
+    /// The parts for this chapter.
+    pub parts: Vec<Part>,
 
     /// The examples.
     pub examples: Vec<Example>,
 }
 
-/// The implementation (or lack thereof) for a single puzzle within a [`Bin`].
+/// A single part in a [`Chapter`]. See [`puzzle_runner#Part`].
 #[derive(Clone)]
-pub enum Solver<T> {
-    Implemented(fn(&str) -> T),
-    NotImplemented,
-}
-impl<T> Solver<T> {
-    pub fn is_implemented(&self) -> bool {
-        match self {
-            Solver::Implemented(_) => true,
-            Solver::NotImplemented => false,
-        }
-    }
+pub struct Part {
+    /// The number of the part.
+    pub num: u8,
+
+    /// The implementation for this part, with the result converted to a string.
+    pub implementation: fn(&str) -> String,
 }
 
-/// An example input.
+/// An example input for a chapter.
 #[derive(Clone)]
 pub struct Example {
     /// The name of the example.
@@ -54,11 +56,8 @@ pub struct Example {
     /// The example input.
     pub input: &'static str,
 
-    /// The expected result of part 1, cast to a string.
-    pub part1: Option<&'static str>,
-
-    /// The expected result of part 2, cast to a string.
-    pub part2: Option<&'static str>,
+    /// The expected results for the parts, cast to strings.
+    pub parts: HashMap<u8, &'static str>,
 }
 impl Deref for Example {
     type Target = &'static str;

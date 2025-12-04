@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Bridge Repair");
+puzzle_runner::register_chapter!(book = "2024", title = "Bridge Repair");
 
 type Equation = (usize, Vec<usize>);
 

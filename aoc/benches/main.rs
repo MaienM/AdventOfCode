@@ -1,1 +1,1 @@
-use aoc::bins::bench as main;
+use aoc::generated::bench as main;

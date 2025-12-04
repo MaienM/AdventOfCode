@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Unstable Diffusion");
+puzzle_runner::register_chapter!(book = "2022", title = "Unstable Diffusion");
 
 use std::collections::HashSet;
 

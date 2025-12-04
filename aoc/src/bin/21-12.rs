@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Passage Pathing");
+puzzle_runner::register_chapter!(book = "2021", title = "Passage Pathing");
 
 use std::collections::HashMap;
 

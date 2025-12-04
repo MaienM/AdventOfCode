@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Camel Cards");
+puzzle_runner::register_chapter!(book = "2023", title = "Camel Cards");
 
 type Card = char;
 

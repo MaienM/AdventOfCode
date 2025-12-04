@@ -11,7 +11,7 @@ use ansi_term::{
     unstyle,
 };
 
-use crate::derived::Solver;
+use crate::derived::Part;
 
 /// Trait to track elapsed time.
 pub trait Timer {
@@ -40,26 +40,26 @@ static SYMBOL_OK: LazyLock<String> = LazyLock::new(|| Green.paint("✔").to_stri
 static SYMBOL_INCORRECT: LazyLock<String> = LazyLock::new(|| Red.paint("✘").to_string());
 static SYMBOL_ERROR: LazyLock<String> = LazyLock::new(|| Red.paint("⚠").to_string());
 
-/// The result of running a [`Solver`].
+/// The result of running a [`Part`].
 #[derive(Clone)]
-pub enum SolverResult {
+pub enum PartResult {
     /// A successful run.
     Success {
-        /// The result of the solver, converted to a string.
+        /// The result of the part, converted to a string.
         result: String,
-        /// The expected result of the solver, if known.
+        /// The expected result of the part, if known.
         solution: Option<String>,
-        /// The duration of the solver run.
+        /// The duration of the part run.
         duration: Duration,
     },
     /// An attempted run that was aborted for some reason.
     Error(String),
 }
-impl SolverResult {
+impl PartResult {
     pub fn print(&self, name: &str, thresholds: &DurationThresholds, show_result: bool) {
         let name = Purple.paint(name);
         match self {
-            SolverResult::Success {
+            PartResult::Success {
                 result,
                 solution,
                 duration,
@@ -119,32 +119,25 @@ impl SolverResult {
                     println!("{symbol} {name}: {result} [{duration_formatted}]");
                 }
             }
-            SolverResult::Error(err) => {
+            PartResult::Error(err) => {
                 let symbol = SYMBOL_ERROR.clone().clone();
                 println!("{symbol} {}: {}", name, Red.paint(err));
             }
         }
     }
 }
-impl<T> Solver<T>
-where
-    T: ToString,
-{
+impl Part {
     /// Run and time solution.
-    pub fn run<Ti>(&self, input: &str, solution: Option<String>) -> SolverResult
+    pub fn run<Ti>(&self, input: &str, solution: Option<String>) -> PartResult
     where
         Ti: Timer,
     {
-        let Solver::Implemented(runnable) = self else {
-            return SolverResult::Error("Not implemented.".to_string());
-        };
-
         let start = Ti::start();
-        let result = runnable(input);
+        let result = (self.implementation)(input);
         let duration = start.elapsed();
 
-        SolverResult::Success {
-            result: result.to_string(),
+        PartResult::Success {
+            result,
             solution,
             duration,
         }

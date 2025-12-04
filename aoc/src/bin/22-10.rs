@@ -1,4 +1,4 @@
-puzzle_lib::setup!(title = "Cathode-Ray Tube");
+puzzle_runner::register_chapter!(book = "2022", title = "Cathode-Ray Tube");
 
 use std::convert::TryInto;
 
