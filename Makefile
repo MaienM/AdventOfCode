@@ -59,7 +59,7 @@ test-libs:
 test-and-run-%: bin = $(subst test-and-run-,,$@)
 test-and-run-%: inputs/aoc/%/input.txt
 	@echo "$(setaf6)>>>>> Testing ${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh nextest run --lib --bin ${bin} --no-fail-fast --status-level fail
+	@./cargo-semiquiet.sh nextest run --workspace --exclude puzzle_wasm --lib --bin ${bin} --no-fail-fast --status-level fail
 
 	@echo "$(setaf6)>>>>> Running ${bin} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh run --release --bin ${bin}
