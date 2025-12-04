@@ -1,6 +1,6 @@
 puzzle_lib::setup!(title = "Printing Department");
 
-use puzzle_lib::grid::FullGrid;
+use puzzle_lib::{grid::FullGrid, point::Point2};
 
 type Grid = FullGrid<bool>;
 
@@ -10,18 +10,46 @@ fn parse_input(input: &str) -> Grid {
     } => grid)
 }
 
+#[inline]
+fn can_remove(grid: &Grid, (p, v): (&Point2, &bool)) -> bool {
+    *v && p
+        .neighbours_diag()
+        .into_iter()
+        .filter(|n| grid.get(n).is_some_and(|nv| *nv))
+        .count()
+        < 4
+}
+
 pub fn part1(input: &str) -> usize {
     let grid = parse_input(input);
     grid.iter_pairs()
-        .filter(|(p, v)| {
-            **v && p
-                .neighbours_diag()
-                .into_iter()
-                .filter(|n| grid.get(n).is_some_and(|nv| *nv))
-                .count()
-                < 4
-        })
+        .filter(|(p, v)| can_remove(&grid, (*p, *v)))
         .count()
+}
+
+pub fn part2(input: &str) -> usize {
+    let mut grid = parse_input(input);
+    let mut removed = 0;
+    loop {
+        let to_remove: Vec<_> = grid
+            .iter_pairs()
+            .filter_map(|(p, v)| {
+                if can_remove(&grid, (p, v)) {
+                    Some(*p)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        if to_remove.is_empty() {
+            break;
+        }
+        removed += to_remove.len();
+        for point in to_remove {
+            grid[point] = false;
+        }
+    }
+    removed
 }
 
 #[cfg(test)]
@@ -31,7 +59,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 13)]
+    #[example_input(part1 = 13, part2 = 43)]
     static EXAMPLE_INPUT: &str = "
         ..@@.@@@@.
         @@@.@.@.@@
