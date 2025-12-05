@@ -4,8 +4,9 @@ setaf1 = $(shell tput setaf 1)
 setaf6 = $(shell tput setaf 6)
 sgr0 = $(shell tput sgr0)
 
-.PHONY: run-all test-libs benchmark-all test-and-run-% benchmark-% web-dev docs
-.SECONDARY:
+.PHONY: test-libs web-dev docs FORCE
+
+targets=$(foreach path,$(wildcard */src/bin/*),$(let crate bin,$(subst /src/bin/, ,${path}),$(subst -${crate},,$(subst .rs,,${crate}-${bin}))))
 
 #
 # Files downloaded from the AoC website.
@@ -15,7 +16,7 @@ sgr0 = $(shell tput sgr0)
 	@echo "Please create a file named .session containing your session cookie." >&2
 	@exit 1
 
-inputs/aoc/%/input.txt: bin = $(subst inputs/,,$(subst .txt,,$@))
+inputs/aoc/%/input.txt: bin = $(patsubst inputs/aoc/%/input.txt,%,$@)
 inputs/aoc/%/input.txt: nameparts = $(subst -, ,${bin})
 inputs/aoc/%/input.txt: year = $(word 1,${nameparts})
 inputs/aoc/%/input.txt: day = $(patsubst 0%,%,$(word 2,${nameparts}))
@@ -32,11 +33,28 @@ inputs/aoc/%/input.txt: .session
 # Basic run/test commands.
 #
 
-run-all:
-	@./cargo-semiquiet.sh run --release --bin aoc
+run-all: run-aoc
+	@true
 
-run-%:
-	@./cargo-semiquiet.sh run --release --bin ${bin}
+run-%: target = $(subst run-,,$@)
+run-%: crate = $(word 1,$(subst -, ,${target}))
+run-%: bin = $(subst ${crate}-,,${target})
+run-%: input = inputs/${crate}/${bin}/input.txt
+run-%: FORCE ${input}
+	@./cargo-semiquiet.sh run --release --package ${crate} --bin ${bin}
+
+test-and-run-%: target = $(subst test-and-run-,,$@)
+test-and-run-%: crate = $(word 1,$(subst -, ,${target}))
+test-and-run-%: bin = $(subst ${crate}-,,${target})
+test-and-run-%: input = inputs/${crate}/${bin}/input.txt
+test-and-run-%: name = $(subst /${crate},,${crate}/${bin})
+test-and-run-%: FORCE ${input}
+	@echo "$(setaf6)>>>>> Testing ${name} <<<<<$(sgr0)"
+	@./cargo-semiquiet.sh nextest run --workspace --exclude puzzle_wasm --lib --no-fail-fast --status-level fail
+	@./cargo-semiquiet.sh nextest run --package ${crate} --lib --bin ${bin} --no-fail-fast --status-level fail --no-tests pass
+
+	@echo "$(setaf6)>>>>> Running ${name} <<<<<$(sgr0)"
+	@make --no-print-directory run-${target}
 
 test-libs: ignore=nix/store|puzzle_runner|puzzle_wasm
 test-libs: ignore_puzzles=aoc
@@ -55,14 +73,6 @@ test-libs:
 	@LLVM_COV_FLAGS='--show-directory-coverage' \
 	 cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --html
 	@cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --lcov --output-path target/llvm-cov/lcov
-
-test-and-run-%: bin = $(subst test-and-run-,,$@)
-test-and-run-%: inputs/aoc/%/input.txt
-	@echo "$(setaf6)>>>>> Testing ${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh nextest run --workspace --exclude puzzle_wasm --lib --bin ${bin} --no-fail-fast --status-level fail
-
-	@echo "$(setaf6)>>>>> Running ${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh run --release --bin ${bin}
 
 #
 # Documentation.
@@ -106,21 +116,27 @@ docs: ${STDLIB_TARGETS} ${DEP_TARGETS} katex.html
 # Benchmarking & profiling.
 #
 
-benchmark-%: bin = $(subst benchmark-,,$@)
-benchmark-%: test-and-run-% inputs/aoc/%/input.txt
-	@echo "$(setaf6)>>>>> Benchmarking ${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --save-baseline current
+benchmark-%: target = $(subst benchmark-,,$@)
+benchmark-%: crate = $(word 1,$(subst -, ,${target}))
+benchmark-%: bin = $(subst ${crate}-,,${target})
+benchmark-%: test-and-run-%
+	@echo "$(setaf6)>>>>> Benchmarking ${crate}/${bin} <<<<<$(sgr0)"
+	@./cargo-semiquiet.sh bench --package ${crate} --bench main --features bench -- --only ${bin} --save-baseline current
 	@critcmp baseline current --filter ${bin}
 
-benchmark-set-baseline-%: bin = $(subst benchmark-set-baseline-,,$@)
-benchmark-set-baseline-%: test-and-run-% inputs/aoc/%/input.txt
-	@echo "$(setaf6)>>>>> Updating benchmark baseline for ${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --save-baseline baseline
+benchmark-set-baseline-%: target = $(subst benchmark-set-baseline-,,$@)
+benchmark-set-baseline-%: crate = $(word 1,$(subst -, ,${target}))
+benchmark-set-baseline-%: bin = $(subst ${crate}-,,${target})
+benchmark-set-baseline-%: test-and-run-%
+	@echo "$(setaf6)>>>>> Updating benchmark baseline for ${crate}/${bin} <<<<<$(sgr0)"
+	@./cargo-semiquiet.sh bench --package ${crate} --bench main --features bench -- --only ${bin} --save-baseline baseline
 
-profile-%: bin = $(subst profile-,,$@)
-profile-%: test-and-run-% inputs/aoc/%/input.txt
-	@echo "$(setaf6)>>>>> Profileing ${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name current
+profile-%: target = $(subst profile-,,$@)
+profile-%: crate = $(word 1,$(subst -, ,${target}))
+profile-%: bin = $(subst ${crate}-,,${target})
+profile-%: test-and-run-%
+	@echo "$(setaf6)>>>>> Profileing ${crate}/${bin} <<<<<$(sgr0)"
+	@./cargo-semiquiet.sh bench --package ${crate} --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name current
 	@for f in target/criterion/${bin}_*/profile/current.pb; do \
 		name="$${f%/profile/current.pb}"; \
 		name="$${name##*/}"; \
@@ -128,10 +144,12 @@ profile-%: test-and-run-% inputs/aoc/%/input.txt
 		pprofme upload "$$f" --description="$$name @ $$(stat --format '%y' "$$f")"; \
 	done
 
-profile-set-baseline-%: bin = $(subst profile-set-baseline-,,$@)
-profile-set-baseline-%: test-and-run-% inputs/aoc/%/input.txt
+profile-set-baseline-%: target = $(subst profile-set-baseline-,,$@)
+profile-set-baseline-%: crate = $(word 1,$(subst -, ,${target}))
+profile-set-baseline-%: bin = $(subst ${crate}-,,${target})
+profile-set-baseline-%: test-and-run-%
 	@echo "$(setaf6)>>>>> Updating profile baseline for ${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name baseline
+	@./cargo-semiquiet.sh bench --package ${crate} --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name baseline
 	@for f in target/criterion/${bin}_*/profile/baseline.pb; do \
 		name="$${f%/profile/baseline.pb}"; \
 		name="$${name##*/}"; \

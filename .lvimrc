@@ -1,30 +1,55 @@
-function! s:TestRun()
+function! s:GetFileInfo()
 	let l:fn = expand("%")
-	if l:fn =~ ".*/bin/.*\.rs"
-		let l:day = expand("%:t:r")
-		call VimuxRunCommand("clear; make test-and-run-" . l:day)
+	let l:parts = matchlist(l:fn, "\\([^/]\\+\\)/src/\\([^/]\\+\\)/\\(.*\\)\\.rs")
+	if l:parts == []
+		echo "Action not available for this file."
+		return v:false
+	end
+	let s:crate = l:parts[1]
+	let s:type = l:parts[2]
+	let s:name = l:parts[3]
+	if s:type == "bin"
+		if s:crate == s:name
+			let s:scope = "series"
+			let s:target = s:crate
+		else
+			let s:scope = "chapter"
+			let s:target = s:crate . "-" . s:name
+		end
+	end
+	return v:true
+endfunction
+
+function! s:TestRun()
+	if !s:GetFileInfo()
+		return
+	end
+	if s:type == "bin"
+		call VimuxRunCommand("clear; make test-and-run-" . s:target)
 	else
 		call VimuxRunCommand("clear; make test-libs")
 	endif
 endfunction
 
 function! s:Bench(baseline)
-	let l:fn = expand("%")
-	if l:fn =~ ".*/bin/.*\.rs"
-		let l:day = expand("%:t:r")
-		call VimuxRunCommand("clear; make benchmark-" . (a:baseline ? "set-baseline-" : "") . l:day)
+	if !s:GetFileInfo()
+		return
+	end
+	if s:type == "bin" && s:scope == "chapter"
+		call VimuxRunCommand("clear; make benchmark-" . (a:baseline ? "set-baseline-" : "") . s:target)
 	else
-		echo "No benchmarks for libs (yet)."
+		echo "No benchmarks for this file."
 	endif
 endfunction
 
 function! s:Profile(baseline)
-	let l:fn = expand("%")
-	if l:fn =~ ".*/bin/.*\.rs"
-		let l:day = expand("%:t:r")
-		call VimuxRunCommand("clear; make profile-" . (a:baseline ? "set-baseline-" : "") . l:day)
+	if !s:GetFileInfo()
+		return
+	end
+	if s:type == "bin" && s:scope == "chapter"
+		call VimuxRunCommand("clear; make profile-" . (a:baseline ? "set-baseline-" : "") . s:target)
 	else
-		echo "No benchmarks for libs (yet)."
+		echo "No benchmarks for this file."
 	endif
 endfunction
 
@@ -32,21 +57,46 @@ function! s:RunAll()
 	call VimuxRunCommand("clear; make run-all")
 endfunction
 
+function! s:FindInput()
+	if !s:GetFileInfo()
+		return v:false
+	end
+	if s:type == "bin" && s:scope == "chapter"
+		return "inputs/" . s:crate . "/" . s:name . "/input.txt"
+	else
+		echo "No input for this file."
+		return v:false
+	fi
+endfunction
+
 function! s:OpenInput()
-	let l:fn = expand("%:t:r")
-	exe "e inputs/" . l:fn . ".txt"
+	let l:input = s:FindInput()
+	if l:input == v:false
+		return
+	end
+	exe "e " . l:input
 endfunction
 
 function! s:ShowInput()
-	let l:fn = expand("%:t:r")
-	call VimuxRunCommand("cat inputs/" . l:fn . ".txt")
+	let l:input = s:FindInput()
+	if l:input == v:false
+		return
+	end
+	call VimuxRunCommand("cat " . l:input)
 endfunction
 
 function! s:OpenWebsite()
-	let l:fn = expand("%:t:r")
-	let l:year = substitute(l:fn, "^\\v(\\d{2})-\\d{2}$", "\\1", "")
-	let l:day = substitute(l:fn, "^\\v\\d{2}-0?(\\d{1,2})$", "\\1", "")
-	call system("xdg-open https://adventofcode.com/20" . l:year . "/day/" . l:day)
+	if !s:GetFileInfo()
+		return
+	end
+	if s:crate != "aoc" || s:type != "bin" || s:scope != "chapter"
+		echo "No URL available for this file."
+		return
+	end
+	let l:parts = split(s:name, "-")
+	let l:year = "20" . l:parts[0]
+	let l:day = substitute(l:parts[1], "^0", "", "")
+	call system("xdg-open https://adventofcode.com/" . l:year . "/day/" . l:day)
 endfunction
 
 augroup LVIMRC
