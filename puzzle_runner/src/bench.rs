@@ -1,5 +1,4 @@
 //! The benchmarking CLI features.
-
 #![cfg(feature = "bench")]
 
 use std::{

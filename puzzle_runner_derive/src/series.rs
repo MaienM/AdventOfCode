@@ -130,13 +130,19 @@ pub fn register_series(input: TokenStream) -> TokenStream {
         });
     }
 
+    #[cfg(not(feature = "inline-chapters"))]
+    {
+        mods.clear();
+        chapters.clear();
+    }
+
     quote! {
         #[cfg(not(test))]
         pub mod generated {
             // Series info. This is used in the entrypoints below, but it's also imported by the WASM
             // create.
             pub static SERIES: ::std::sync::LazyLock<::puzzle_runner::derived::Series> = ::std::sync::LazyLock::new(|| {
-                // Get chapters & validate that their names are unique.
+                // Get the chapters & validate that the titles are unique.
                 let chapters: Vec<::puzzle_runner::derived::Chapter> = vec![ #(#chapters),* ];
                 let mut seen = ::std::collections::HashMap::new();
                 for chapter in &chapters {
@@ -158,6 +164,7 @@ pub fn register_series(input: TokenStream) -> TokenStream {
             });
 
             /// Entrypoint for the combined binary.
+            #[cfg(feature = "multi")]
             pub fn multi() {
                 puzzle_runner::multi::main(&SERIES);
             }

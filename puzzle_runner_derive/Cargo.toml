@@ -6,6 +6,15 @@ edition.workspace = true
 [lib]
 proc-macro = true
 
+[features]
+default = []
+# When this feature is present the `register_series!` macro will produce a `Series` object that includes all the
+# `Chapter`s in that crate, otherwise it will produce one with an empty list instead. Inlining all `Chapter`s in this
+# manner is required for some uses (e.g., the multi-run entrypoint, WASM builds), but it also slows the build down
+# substantially (since the `Series` is in the lib of the crate it will be built for every binary), so we want to avoid
+# it for other uses.
+inline-chapters = []
+
 [dependencies]
 proc-macro2 = "=1.0.103"
 quote = "=1.0.42"

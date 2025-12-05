@@ -5,16 +5,26 @@ edition.workspace = true
 
 [features]
 default = []
+# Enable multi-run entrypoint.
+multi = [
+	"inline-chapters",
+]
 # Enable benchmarking.
 bench = [
+	"multi",
 	"dep:criterion",
 	"dep:pprof",
 ]
 # Enable elements needed to support puzzle_wasm.
 wasm = [
+	"inline-chapters",
 	"dep:serde",
 	"dep:tsify",
 	"dep:wasm-bindgen",
+]
+# See feature with this name in puzzle_runner_derive.
+inline-chapters = [
+	"puzzle_runner_derive/inline-chapters",
 ]
 
 [dependencies]
