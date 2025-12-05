@@ -5,6 +5,7 @@ edition.workspace = true
 
 [features]
 default = []
+# Enable benchmarking.
 bench = [
 	"puzzle_runner/bench",
 ]

@@ -5,10 +5,12 @@ edition.workspace = true
 
 [features]
 default = []
+# Enable benchmarking.
 bench = [
 	"dep:criterion",
 	"dep:pprof",
 ]
+# Enable elements needed to support puzzle_wasm.
 wasm = [
 	"dep:serde",
 	"dep:tsify",

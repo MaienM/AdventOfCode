@@ -5,15 +5,12 @@ edition.workspace = true
 
 [features]
 default = []
+# Enable benchmarking.
 bench = [
 	"dep:criterion",
 ]
 
 [dependencies]
-# for bench
-criterion = { workspace = true, optional = true }
-
-# main
 derive-new.workspace = true
 paste.workspace = true
 rayon.workspace = true
@@ -22,6 +19,9 @@ num.workspace = true
 regex.workspace = true
 itertools.workspace = true
 inherit-methods-macro = "=0.1.0"
+
+# for bench
+criterion = { workspace = true, optional = true }
 
 [dev-dependencies]
 common_macros = "=0.1.1"
