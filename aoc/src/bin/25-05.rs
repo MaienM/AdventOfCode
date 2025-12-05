@@ -18,6 +18,27 @@ pub fn part1(input: &str) -> usize {
         .count()
 }
 
+pub fn part2(input: &str) -> usize {
+    let (ranges, _) = parse_input(input);
+    let mut ranges = ranges
+        .into_iter()
+        .map(|r| (*r.start(), *r.end()))
+        .sorted_unstable()
+        .chain([(usize::MAX, 0)]);
+    let mut count = 0;
+    let (mut start, mut end) = ranges.next().unwrap();
+    for (nstart, nend) in ranges {
+        if nstart <= end + 1 {
+            end = usize::max(end, nend);
+        } else {
+            count += end - start + 1;
+            start = nstart;
+            end = nend;
+        }
+    }
+    count
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -25,7 +46,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 3)]
+    #[example_input(part1 = 3, part2 = 14)]
     static EXAMPLE_INPUT: &str = "
         3-5
         10-14
