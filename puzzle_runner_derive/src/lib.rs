@@ -5,6 +5,7 @@
 mod chapters;
 mod examples;
 mod series;
+mod utils;
 
 use proc_macro::TokenStream;
 

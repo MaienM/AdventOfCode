@@ -4,7 +4,18 @@ use proc_macro::{Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use regex::Regex;
-use syn::{Error, Lit, parse_macro_input};
+use syn::{Error, parse_macro_input};
+
+use crate::utils::{ParseNestedMetaExt as _, args_struct, finalize_args};
+
+args_struct! {
+    struct Args {
+        /// The name of the series.
+        name: String,
+        /// The title of the series.
+        title: String,
+    }
+}
 
 macro_rules! return_err {
     ($value:expr, $span:expr) => {
@@ -68,46 +79,19 @@ fn find_chapters() -> Result<Vec<String>, String> {
 }
 
 pub fn register_series(input: TokenStream) -> TokenStream {
-    let mut name: Option<String> = None;
-    let mut title: Option<String> = None;
+    let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("name") {
-            match meta.value()?.parse::<Lit>()? {
-                Lit::Str(value) => {
-                    if value.value().is_empty() {
-                        return Err(meta.error("cannot be empty"));
-                    }
-                    name = Some(value.value());
-                }
-                _ => return Err(meta.error("unsupported value, must be a string")),
-            }
+            meta.set_empty_option(&mut builder.name, meta.parse_nonempty_string()?)?;
         } else if meta.path.is_ident("title") {
-            match meta.value()?.parse::<Lit>()? {
-                Lit::Str(value) => {
-                    if value.value().is_empty() {
-                        return Err(meta.error("cannot be empty"));
-                    }
-                    title = Some(value.value());
-                }
-                _ => return Err(meta.error("unsupported value, must be a string")),
-            }
+            meta.set_empty_option(&mut builder.title, meta.parse_nonempty_string()?)?;
         } else {
             return Err(meta.error("unsupported property"));
         }
         Ok(())
     });
     parse_macro_input!(input with args_parser);
-
-    let Some(name) = name else {
-        return Error::new(Span::call_site().into(), "name must be set")
-            .to_compile_error()
-            .into();
-    };
-    let Some(title) = title else {
-        return Error::new(Span::call_site().into(), "title must be set")
-            .to_compile_error()
-            .into();
-    };
+    let Args { name, title } = finalize_args!(builder);
 
     let mut mods: Vec<TokenStream2> = Vec::new();
     let mut chapters: Vec<TokenStream2> = Vec::new();

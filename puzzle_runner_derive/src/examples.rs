@@ -8,21 +8,16 @@ use syn::{
     spanned::Spanned,
 };
 
-struct Args {
-    /// The indentation that should be stripped from the start of each line.
-    indent: String,
-    /// The expected results for the parts.
-    parts: HashMap<u8, Expr>,
-    /// Whether to generate tests for the example.
-    test: bool,
-}
-impl Default for Args {
-    fn default() -> Self {
-        Self {
-            indent: " ".repeat(8),
-            parts: HashMap::new(),
-            test: true,
-        }
+use crate::utils::{ParseNestedMetaExt as _, args_struct, finalize_args};
+
+args_struct! {
+    struct Args {
+        /// The indentation that should be stripped from the start of each line.
+        indent: String = " ".repeat(8),
+        /// The expected results for the parts.
+        parts: HashMap<u8, Expr> = HashMap::new(),
+        /// Whether to generate tests for the example.
+        test: bool = true,
     }
 }
 
@@ -105,31 +100,36 @@ macro_rules! parse_part_arg {
 }
 
 pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    let mut args = Args::default();
+    let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("indent") {
-            match meta.value()?.parse::<Lit>()? {
-                Lit::Str(indent) => args.indent = indent.value(),
-                Lit::Int(n) => args.indent = " ".repeat(n.base10_parse()?),
-                _ => {
-                    return Err(
-                        meta.error("unsupported value, must be either a string or an integer")
-                    );
-                }
-            }
+            let value = match meta.value()?.parse::<Lit>()? {
+                Lit::Str(indent) => Ok(indent.value()),
+                Lit::Int(n) => Ok(" ".repeat(n.base10_parse()?)),
+                _ => Err(meta.error("unsupported value, must be either a string or an integer")),
+            }?;
+            meta.set_empty_option(&mut builder.indent, value)?;
         } else if meta.path.is_ident("notest") {
-            args.test = false;
+            meta.set_empty_option(&mut builder.test, false)?;
         } else if let Some(ident) = meta.path.get_ident()
             && let Some(num) = ident.to_string().strip_prefix("part")
             && let Ok(num) = num.parse()
         {
-            args.parts.insert(num, meta.value()?.parse()?);
+            if builder.parts.is_none() {
+                builder.parts = Some(HashMap::new());
+            }
+            builder
+                .parts
+                .as_mut()
+                .unwrap()
+                .insert(num, meta.value()?.parse()?);
         } else {
             return Err(meta.error("unsupported property"));
         }
         Ok(())
     });
     parse_macro_input!(input with args_parser);
+    let args = finalize_args!(builder);
 
     let mut example = parse_macro_input!(annotated_item as ItemStatic);
     if example.ty != parse_quote!(&str) {

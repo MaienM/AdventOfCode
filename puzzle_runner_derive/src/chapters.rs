@@ -3,13 +3,25 @@ use std::{env, fs::read_to_string};
 use proc_macro::{Span, TokenStream};
 use quote::{ToTokens, quote};
 use syn::{
-    Error, Expr, ExprCall, ExprClosure, ExprPath, Item, ItemFn, ItemMod, ItemStatic, Lit, Meta,
+    Error, Expr, ExprCall, ExprClosure, ExprPath, Item, ItemFn, ItemMod, ItemStatic, Meta,
     PathSegment, Token, parse_file, parse_macro_input, parse_quote,
     punctuated::Punctuated,
     visit::{self, Visit},
 };
 
-use crate::examples;
+use crate::{
+    examples,
+    utils::{ParseNestedMetaExt, args_struct, finalize_args},
+};
+
+args_struct! {
+    struct Args {
+        /// The book that the chapter is in.
+        book: Option<String> = None,
+        /// The title of the chapter.
+        title: Option<String> = None,
+    }
+}
 
 #[derive(Debug, Eq, PartialEq)]
 enum FirstItem {
@@ -24,8 +36,6 @@ struct ChapterScanner {
     pub(crate) first_item: FirstItem,
     pub(crate) source_path: String,
     pub(crate) name: String,
-    pub(crate) book: Option<String>,
-    pub(crate) title: Option<String>,
     pub(crate) parts: Vec<Expr>,
     pub(crate) examples: Vec<Expr>,
 }
@@ -38,8 +48,6 @@ impl ChapterScanner {
             first_item: FirstItem::Unknown,
             source_path: path.to_owned(),
             name: path.split('/').next_back().unwrap().replace(".rs", ""),
-            book: None,
-            title: None,
             parts: Vec::new(),
             examples: Vec::new(),
         };
@@ -61,20 +69,21 @@ impl ChapterScanner {
         scanner
     }
 
-    pub(crate) fn to_expr(&self) -> Expr {
+    pub(crate) fn to_expr(&self, args: Args) -> Expr {
         let ChapterScanner {
             name,
             parts,
             examples,
             ..
         } = self;
+        let Args { book, title } = args;
 
-        let book: Expr = match &self.book {
+        let book: Expr = match book {
             Some(book) => parse_quote!(Some(#book)),
             None => parse_quote!(None),
         };
 
-        let title: Expr = match &self.title {
+        let title: Expr = match title {
             Some(title) => parse_quote!(Some(#title)),
             None => parse_quote!(None),
         };
@@ -165,10 +174,23 @@ impl<'ast> Visit<'ast> for ChapterScanner {
 }
 
 pub fn register_chapter(input: TokenStream) -> TokenStream {
+    let mut builder = Args::build();
+    let args_parser = syn::meta::parser(|meta| {
+        if meta.path.is_ident("book") {
+            meta.set_empty_option(&mut builder.book, Some(meta.parse_nonempty_string()?))?;
+        } else if meta.path.is_ident("title") {
+            meta.set_empty_option(&mut builder.title, Some(meta.parse_nonempty_string()?))?;
+        } else {
+            return Err(meta.error("unsupported property"));
+        }
+        Ok(())
+    });
+    parse_macro_input!(input with args_parser);
+    let args = finalize_args!(builder);
+
     let expr = match Span::call_site().local_file() {
         Some(path) => {
-            let mut scanner = ChapterScanner::scan_file(path.to_str().unwrap());
-
+            let scanner = ChapterScanner::scan_file(path.to_str().unwrap());
             if scanner.first_item != FirstItem::Register {
                 return Error::new(
                     Span::call_site().into(),
@@ -177,36 +199,7 @@ pub fn register_chapter(input: TokenStream) -> TokenStream {
                 .to_compile_error()
                 .into();
             }
-
-            let args_parser = syn::meta::parser(|meta| {
-                if meta.path.is_ident("book") {
-                    match meta.value()?.parse::<Lit>()? {
-                        Lit::Str(book) => {
-                            if book.value().is_empty() {
-                                return Err(meta.error("cannot be empty"));
-                            }
-                            scanner.book = Some(book.value());
-                        }
-                        _ => return Err(meta.error("unsupported value, must be a string")),
-                    }
-                } else if meta.path.is_ident("title") {
-                    match meta.value()?.parse::<Lit>()? {
-                        Lit::Str(title) => {
-                            if title.value().is_empty() {
-                                return Err(meta.error("cannot be empty"));
-                            }
-                            scanner.title = Some(title.value());
-                        }
-                        _ => return Err(meta.error("unsupported value, must be a string")),
-                    }
-                } else {
-                    return Err(meta.error("unsupported property"));
-                }
-                Ok(())
-            });
-            parse_macro_input!(input with args_parser);
-
-            scanner.to_expr()
+            scanner.to_expr(args)
         }
         None => {
             parse_quote! { ::core::todo!() }
