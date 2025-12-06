@@ -13,7 +13,7 @@ args_struct! {
     }
 }
 
-pub fn register_series(input: TokenStream) -> TokenStream {
+pub fn main(input: TokenStream) -> TokenStream {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("name") {

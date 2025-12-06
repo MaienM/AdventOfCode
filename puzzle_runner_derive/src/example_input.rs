@@ -99,7 +99,7 @@ macro_rules! parse_part_arg {
     };
 }
 
-pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("indent") {

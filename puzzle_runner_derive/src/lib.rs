@@ -2,9 +2,10 @@
 // The macros & docs will be re-exported in `puzzle_runner`, and the links will work there.
 #![allow(rustdoc::broken_intra_doc_links)]
 
-mod chapters;
-mod examples;
-mod series;
+mod example_input;
+mod include_chapters;
+mod register_chapter;
+mod register_series;
 mod utils;
 
 use proc_macro::TokenStream;
@@ -17,7 +18,7 @@ use proc_macro::TokenStream;
 /// expose it as a static (`SERIES`).
 #[proc_macro]
 pub fn register_series(input: TokenStream) -> TokenStream {
-    series::register_series(input)
+    register_series::main(input)
 }
 
 /// Include all [`Chapter`](puzzle_runner::derived::Chapter)s in this crate.
@@ -28,7 +29,7 @@ pub fn register_series(input: TokenStream) -> TokenStream {
 /// as a static (`CHAPTERS`).
 #[proc_macro]
 pub fn include_chapters(input: TokenStream) -> TokenStream {
-    chapters::include_chapters(input)
+    include_chapters::main(input)
 }
 
 /// Register the binary crate as a puzzle chapter.
@@ -40,7 +41,7 @@ pub fn include_chapters(input: TokenStream) -> TokenStream {
 /// entrypoint.
 #[proc_macro]
 pub fn register_chapter(input: TokenStream) -> TokenStream {
-    chapters::register_chapter(input)
+    register_chapter::main(input)
 }
 
 /// Mark an attribute as an example input.
@@ -52,5 +53,5 @@ pub fn register_chapter(input: TokenStream) -> TokenStream {
 /// A test will be generated for each part that has an expected output defined.
 #[proc_macro_attribute]
 pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    examples::example_input(input, annotated_item)
+    example_input::main(input, annotated_item)
 }
