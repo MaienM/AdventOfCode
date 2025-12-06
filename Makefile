@@ -40,20 +40,18 @@ run-%: target = $(subst run-,,$@)
 run-%: crate = $(word 1,$(subst -, ,${target}))
 run-%: bin = $(subst ${crate}-,,${target})
 run-%: input = inputs/${crate}/${bin}/input.txt
-run-%: flags = $(if $(subst ${crate},,${bin}),,--features multi)
 run-%: FORCE ${input}
-	@./cargo-semiquiet.sh run --release --package ${crate} --bin ${bin} ${flags}
+	@./cargo-semiquiet.sh run --release --package ${crate} --bin ${bin}
 
 test-and-run-%: target = $(subst test-and-run-,,$@)
 test-and-run-%: crate = $(word 1,$(subst -, ,${target}))
 test-and-run-%: bin = $(subst ${crate}-,,${target})
 test-and-run-%: input = inputs/${crate}/${bin}/input.txt
-test-and-run-%: flags = $(if $(subst ${crate},,${bin}),,--features multi)
 test-and-run-%: name = $(subst /${crate},,${crate}/${bin})
 test-and-run-%: FORCE ${input}
 	@echo "$(setaf6)>>>>> Testing ${name} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh nextest run --workspace --exclude puzzle_wasm --lib --no-fail-fast --status-level fail
-	@./cargo-semiquiet.sh nextest run --package ${crate} --lib --bin ${bin} ${flags} --no-fail-fast --status-level fail --no-tests pass
+	@./cargo-semiquiet.sh nextest run --package ${crate} --lib --bin ${bin} --no-fail-fast --status-level fail --no-tests pass
 
 	@echo "$(setaf6)>>>>> Running ${name} <<<<<$(sgr0)"
 	@make --no-print-directory run-${target}

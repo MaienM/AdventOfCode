@@ -2,6 +2,20 @@ use std::fmt::Debug;
 
 use syn::{Error, Lit, meta::ParseNestedMeta};
 
+/// Wrap a Result<T, String> to return on error in a function that returns a [`proc_macro::TokenStream`].
+macro_rules! return_err {
+    ($value:expr) => {
+        match $value {
+            Ok(value) => value,
+            Err(err) => {
+                return ::syn::Error::new(::proc_macro::Span::call_site().into(), err)
+                    .to_compile_error()
+                    .into();
+            }
+        }
+    };
+}
+
 pub(crate) trait ParseNestedMetaExt {
     /// Store the parsed value into an option, erroring if it is already set.
     fn set_empty_option<T>(&self, target: &mut Option<T>, value: T) -> Result<(), Error>
@@ -89,18 +103,5 @@ macro_rules! args_struct {
     }
 }
 
-macro_rules! finalize_args {
-    ($builder:ident) => {
-        match $builder.finalize() {
-            Ok(value) => value,
-            Err(err) => {
-                return ::syn::Error::new(::proc_macro::Span::call_site().into(), err)
-                    .to_compile_error()
-                    .into()
-            }
-        }
-    };
-}
-
 #[allow(unused_imports)]
-pub(crate) use {args_struct, finalize_args};
+pub(crate) use {args_struct, return_err};

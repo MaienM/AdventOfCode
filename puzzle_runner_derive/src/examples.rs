@@ -8,7 +8,7 @@ use syn::{
     spanned::Spanned,
 };
 
-use crate::utils::{ParseNestedMetaExt as _, args_struct, finalize_args};
+use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err};
 
 args_struct! {
     struct Args {
@@ -129,7 +129,7 @@ pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenSt
         Ok(())
     });
     parse_macro_input!(input with args_parser);
-    let args = finalize_args!(builder);
+    let args = return_err!(builder.finalize());
 
     let mut example = parse_macro_input!(annotated_item as ItemStatic);
     if example.ty != parse_quote!(&str) {

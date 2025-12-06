@@ -17,7 +17,7 @@ use web_sys::Performance;
 use crate::r#extern::Number;
 
 static SERIES: LazyLock<HashMap<&'static str, &Series>> = LazyLock::new(|| {
-    let series = [&*aoc::generated::SERIES];
+    let series = [&*aoc::SERIES];
 
     let mut map = HashMap::new();
     for series in series {

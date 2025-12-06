@@ -13,7 +13,7 @@ default = []
 # manner is required for some uses (e.g., the multi-run entrypoint, WASM builds), but it also slows the build down
 # substantially (since the `Series` is in the lib of the crate it will be built for every binary), so we want to avoid
 # it for other uses.
-inline-chapters = []
+include-chapters = []
 
 [dependencies]
 paste.workspace = true

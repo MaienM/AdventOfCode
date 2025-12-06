@@ -10,26 +10,21 @@ ignored = [
 
 [features]
 default = []
-# Enable multi-run entrypoint.
-multi = [
-	"inline-chapters",
-]
 # Enable benchmarking.
 bench = [
-	"multi",
 	"dep:criterion",
 	"dep:pprof",
 ]
 # Enable elements needed to support puzzle_wasm.
 wasm = [
-	"inline-chapters",
+	"include-chapters",
 	"dep:serde",
 	"dep:tsify",
 	"dep:wasm-bindgen",
 ]
 # See feature with this name in puzzle_runner_derive.
-inline-chapters = [
-	"puzzle_runner_derive/inline-chapters",
+include-chapters = [
+	"puzzle_runner_derive/include-chapters",
 ]
 
 [dependencies]

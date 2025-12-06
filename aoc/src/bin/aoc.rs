@@ -1,1 +1,1 @@
-use aoc::generated::multi as main;
+puzzle_runner::setup_multi!(aoc);

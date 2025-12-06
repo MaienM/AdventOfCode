@@ -1,1 +1,1 @@
-use aoc::generated::bench as main;
+puzzle_runner::setup_bench!(aoc);

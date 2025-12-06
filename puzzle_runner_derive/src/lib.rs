@@ -20,6 +20,17 @@ pub fn register_series(input: TokenStream) -> TokenStream {
     series::register_series(input)
 }
 
+/// Include all [`Chapter`](puzzle_runner::derived::Chapter)s in this crate.
+///
+/// This will collect all binaries containing a (generated)
+/// [`Chapter`](puzzle_runner::derived::Chapter)s in the crate, inline them as modules, create a
+/// `Vec` that references the [`Chapter`](puzzle_runner::derived::Chapter) instances, and expose it
+/// as a static (`CHAPTERS`).
+#[proc_macro]
+pub fn include_chapters(input: TokenStream) -> TokenStream {
+    chapters::include_chapters(input)
+}
+
 /// Register the binary crate as a puzzle chapter.
 ///
 /// Must be applied to a binary (in the `bin` folder).

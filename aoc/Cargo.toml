@@ -5,10 +5,6 @@ edition.workspace = true
 
 [features]
 default = []
-# Enable multi-run entrypoint.
-multi = [
-	"puzzle_runner/multi",
-]
 # Enable benchmarking.
 bench = [
 	"puzzle_runner/bench",
@@ -30,10 +26,6 @@ pretty_assertions = "=1.4.1"
 
 [lints]
 workspace = true
-
-[[bin]]
-name = "aoc"
-required-features = ["multi"]
 
 [[bench]]
 name = "main"
