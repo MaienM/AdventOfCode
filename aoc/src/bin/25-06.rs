@@ -106,4 +106,16 @@ mod tests {
           6 98  215 314
         *   +   *   +  
     ";
+
+    #[test]
+    fn example_parse() {
+        let actual = parse_input(&EXAMPLE_INPUT);
+        let expected = vec![
+            (vec!["64 ", "23 ", "314"], Operator::Add),
+            (vec![" 51", "387", "215"], Operator::Mul),
+            (vec!["328", "64 ", "98 "], Operator::Add),
+            (vec!["123", " 45", "  6"], Operator::Mul),
+        ];
+        assert_eq!(actual, expected);
+    }
 }
