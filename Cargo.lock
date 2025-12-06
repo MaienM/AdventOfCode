@@ -1162,7 +1162,6 @@ dependencies = [
  "aoc",
  "console_error_panic_hook",
  "puzzle_runner",
- "serde",
  "serde-wasm-bindgen",
  "wasm-bindgen",
  "wasm-bindgen-rayon",

@@ -12,7 +12,6 @@ puzzle_runner = { path = "../puzzle_runner", features = ["wasm"] }
 console_error_panic_hook = { git = "https://github.com/Chase-Silk/console_error_panic_hook", rev = "13ebf32810ceb0a874fdda725c4d0c9fb7fd0910" }
 wasm-bindgen.workspace = true
 web-sys = { version = "=0.3.83", features = ["Performance"] }
-serde = { workspace = true, optional = true }
 serde-wasm-bindgen = "0.6.5"
 
 [target.wasm32-unknown-unknown.dependencies]
