@@ -22,7 +22,7 @@ inputs/aoc/%/input.txt: year = $(word 1,${nameparts})
 inputs/aoc/%/input.txt: day = $(patsubst 0%,%,$(word 2,${nameparts}))
 inputs/aoc/%/input.txt: .session
 	@echo "$(setaf6)>>>>> Downloading input for ${bin} <<<<<$(sgr0)"
-	@mkdir -p inputs
+	@mkdir -p $(dir $@)
 	@curl \
 		-H "Cookie: session=$$(cat .session)" \
 		--fail \
@@ -41,19 +41,20 @@ run-%: crate = $(word 1,$(subst -, ,${target}))
 run-%: bin = $(subst ${crate}-,,${target})
 run-%: input = inputs/${crate}/${bin}/input.txt
 run-%: FORCE ${input}
+	@make --silent ${input}
+
+	@echo "$(setaf6)>>>>> Running ${name} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh run --release --package ${crate} --bin ${bin}
 
 test-and-run-%: target = $(subst test-and-run-,,$@)
 test-and-run-%: crate = $(word 1,$(subst -, ,${target}))
 test-and-run-%: bin = $(subst ${crate}-,,${target})
-test-and-run-%: input = inputs/${crate}/${bin}/input.txt
 test-and-run-%: name = $(subst /${crate},,${crate}/${bin})
-test-and-run-%: FORCE ${input}
+test-and-run-%: FORCE
 	@echo "$(setaf6)>>>>> Testing ${name} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh nextest run --workspace --exclude puzzle_wasm --lib --no-fail-fast --status-level fail
 	@./cargo-semiquiet.sh nextest run --package ${crate} --lib --bin ${bin} --no-fail-fast --status-level fail --no-tests pass
 
-	@echo "$(setaf6)>>>>> Running ${name} <<<<<$(sgr0)"
 	@make --no-print-directory run-${target}
 
 test-libs: ignore=nix/store|puzzle_runner|puzzle_wasm
