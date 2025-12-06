@@ -113,65 +113,64 @@
               hardeningDisable = [ "fortify" ];
             };
 
-            checks = {
-              pre-commit.settings = {
-                src = ./.;
-                hooks = rec {
-                  # Github workflows.
-                  github-workflows = {
-                    enable = true;
-                    name = "github-workflows";
-                    files = "^\\.github/workflows/.*\\.yaml$";
-                    entry =
-                      let
-                        check-jsonschema = pkgs.check-jsonschema.overrideAttrs (old: {
-                          propagatedBuildInputs = old.propagatedBuildInputs ++ [
-                            pkgs.python3.pkgs.json5
-                          ];
-                        });
-                      in
-                      "${check-jsonschema}/bin/check-jsonschema --builtin-schema vendor.github-workflows";
-                    pass_filenames = true;
-                  };
+            pre-commit.settings = {
+              src = ./.;
+              hooks = rec {
+                # Github workflows.
+                github-workflows = {
+                  enable = true;
+                  name = "github-workflows";
+                  files = "^\\.github/workflows/.*\\.yaml$";
+                  entry =
+                    let
+                      check-jsonschema = pkgs.check-jsonschema.overrideAttrs (old: {
+                        propagatedBuildInputs = old.propagatedBuildInputs ++ [
+                          pkgs.python3.pkgs.json5
+                        ];
+                      });
+                    in
+                    "${check-jsonschema}/bin/check-jsonschema --builtin-schema vendor.github-workflows";
+                  pass_filenames = true;
+                };
 
-                  # Nix.
-                  nixfmt-rfc-style.enable = true;
+                # Nix.
+                nixfmt-rfc-style.enable = true;
 
-                  # Rust.
-                  cargo-check = {
-                    enable = true;
-                    package = rust;
-                  };
-                  cargo-machete = {
-                    enable = true;
-                    entry = "cargo machete";
-                    pass_filenames = false;
-                    files = "Cargo\\.toml$|.*\\.rs$";
-                  };
-                  clippy = {
-                    enable = true;
-                    packageOverrides.cargo = rust;
-                    packageOverrides.clippy = rust;
-                  };
-                  rustfmt = {
-                    enable = true;
-                    packageOverrides.cargo = rust;
-                    packageOverrides.rustfmt = rust;
-                  };
+                # Rust.
+                cargo-check = {
+                  enable = true;
+                  package = rust;
+                };
+                cargo-machete = {
+                  enable = true;
+                  entry = "cargo machete";
+                  pass_filenames = false;
+                  args = [ "--with-metadata" ];
+                  files = "Cargo\\.toml$|.*\\.rs$";
+                };
+                clippy = {
+                  enable = true;
+                  packageOverrides.cargo = rust;
+                  packageOverrides.clippy = rust;
+                };
+                rustfmt = {
+                  enable = true;
+                  packageOverrides.cargo = rust;
+                  packageOverrides.rustfmt = rust;
+                };
 
-                  # Typescript.
-                  eslint-custom = {
-                    enable = true;
-                    name = "eslint";
-                    entry = "sh -c 'cd web && ./node_modules/.bin/eslint --fix'";
-                    files = "web/.*\\.(tsx?|jsx?|mjs|cjs)$";
-                  };
-                  dprint = {
-                    enable = true;
-                    name = "dprint";
-                    entry = "sh -c 'cd web && dprint check'";
-                    inherit (eslint-custom) files;
-                  };
+                # Typescript.
+                eslint-custom = {
+                  enable = true;
+                  name = "eslint";
+                  entry = "sh -c 'cd web && ./node_modules/.bin/eslint --fix'";
+                  files = "web/.*\\.(tsx?|jsx?|mjs|cjs)$";
+                };
+                dprint = {
+                  enable = true;
+                  name = "dprint";
+                  entry = "sh -c 'cd web && dprint check'";
+                  inherit (eslint-custom) files;
                 };
               };
             };
