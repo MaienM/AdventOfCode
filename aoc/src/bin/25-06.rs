@@ -31,7 +31,7 @@ fn parse_input(input: &str) -> Vec<Problem<'_>> {
 
     let mut problems = Vec::new();
     loop {
-        let mut problem: Vec<_> = rows.iter_mut().filter_map(|row| row.pop()).collect();
+        let mut problem: Vec<_> = rows.iter_mut().filter_map(Vec::pop).collect();
         if problem.is_empty() {
             break;
         }
