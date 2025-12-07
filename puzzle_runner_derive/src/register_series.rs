@@ -2,7 +2,10 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::parse_macro_input;
 
-use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err, source_crate};
+use crate::{
+    include_chapters::include_chapters,
+    utils::{ParseNestedMetaExt as _, args_struct, return_err, source_crate},
+};
 
 args_struct! {
     struct Args {
@@ -24,25 +27,18 @@ pub fn main(input: TokenStream) -> TokenStream {
     parse_macro_input!(input with args_parser);
     let Args { title } = return_err!(builder.finalize());
 
-    #[cfg(feature = "include-chapters")]
-    let (pre, chapters) = (
-        quote!(::puzzle_runner::include_chapters!();),
-        quote!(CHAPTERS.clone()),
-    );
-    #[cfg(not(feature = "include-chapters"))]
-    let (pre, chapters) = (quote!(), quote!(Vec::new()));
-
+    let chapters = include_chapters(false);
     let name = return_err!(source_crate());
     let crateident = format_ident!("{}", name);
 
     quote! {
-        #pre
+        #chapters
 
         pub static SERIES: ::std::sync::LazyLock<::puzzle_runner::derived::Series> = ::std::sync::LazyLock::new(|| {
             ::puzzle_runner::derived::Series {
                 name: #name,
                 title: #title,
-                chapters: #chapters,
+                chapters: CHAPTERS.clone(),
             }
         });
 

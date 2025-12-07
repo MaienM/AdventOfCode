@@ -1,1 +1,1 @@
-puzzle_runner::setup_multi!(aoc);
+puzzle_runner::setup_main!();

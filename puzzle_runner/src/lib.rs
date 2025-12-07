@@ -36,26 +36,8 @@ pub mod runner;
 pub mod single;
 mod source;
 
-pub use puzzle_runner_derive::{
-    example_input, include_chapters, register_chapter, register_series,
-};
+pub use puzzle_runner_derive::{example_input, register_chapter, register_series, setup_main};
 
 #[cfg(not(target_arch = "wasm32"))]
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
-
-/// Setup the multi-runner entrypoint.
-#[macro_export]
-macro_rules! setup_multi {
-    ($lib:ident) => {
-        $crate::include_chapters!();
-
-        pub fn main() {
-            let series = $crate::derived::Series {
-                chapters: CHAPTERS.clone(),
-                ..*$lib::SERIES
-            };
-            $crate::multi::main(&series);
-        }
-    };
-}

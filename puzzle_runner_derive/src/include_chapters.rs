@@ -1,8 +1,6 @@
-use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use regex::Regex;
-use syn::parse_macro_input;
 
 use crate::utils::{find_crate_root, return_err, source_call_site};
 
@@ -51,29 +49,35 @@ fn find_chapters() -> Result<Vec<String>, String> {
     Ok(files)
 }
 
-pub fn main(input: TokenStream) -> TokenStream {
-    let args_parser = syn::meta::parser(|meta| Err(meta.error("unsupported property")));
-    parse_macro_input!(input with args_parser);
+pub fn include_chapters(force: bool) -> TokenStream2 {
+    #[allow(unused)]
+    let mut include_chapters = force;
+    #[cfg(feature = "include-chapters")]
+    {
+        include_chapters = true;
+    }
 
     let mut mods: Vec<TokenStream2> = Vec::new();
     let mut chapters: Vec<TokenStream2> = Vec::new();
 
-    let files = return_err!(find_chapters());
-    for file in files {
-        let modident = file
-            .split('/')
-            .next_back()
-            .unwrap()
-            .replace('-', "_")
-            .strip_suffix(".rs")
-            .unwrap()
-            .to_owned();
-        let modident = format_ident!("_{}", modident);
-        chapters.push(quote!(crate::chapters::#modident::CHAPTER.clone()));
-        mods.push(quote! {
-            #[path = #file]
-            pub mod #modident;
-        });
+    if include_chapters {
+        let files = return_err!(find_chapters());
+        for file in files {
+            let modident = file
+                .split('/')
+                .next_back()
+                .unwrap()
+                .replace('-', "_")
+                .strip_suffix(".rs")
+                .unwrap()
+                .to_owned();
+            let modident = format_ident!("_{}", modident);
+            chapters.push(quote!(crate::chapters::#modident::CHAPTER.clone()));
+            mods.push(quote! {
+                #[path = #file]
+                pub mod #modident;
+            });
+        }
     }
 
     quote! {
@@ -107,5 +111,4 @@ pub fn main(input: TokenStream) -> TokenStream {
             #(#mods)*
         }
     }
-    .into()
 }

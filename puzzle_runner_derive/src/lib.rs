@@ -6,13 +6,14 @@ mod example_input;
 mod include_chapters;
 mod register_chapter;
 mod register_series;
+mod setup_main;
 mod utils;
 
 use proc_macro::TokenStream;
 
 /// Register the crate as a puzzle series.
 ///
-/// Must be applied on the crate root (`lib.rs`).
+/// Must be used in the crate root (`lib.rs`).
 ///
 /// This will collect all [`puzzle_runner::derived::Chapter`]s in the crate + other metadata &
 /// expose it as a static (`SERIES`).
@@ -21,20 +22,17 @@ pub fn register_series(input: TokenStream) -> TokenStream {
     register_series::main(input)
 }
 
-/// Include all [`Chapter`](puzzle_runner::derived::Chapter)s in this crate.
+/// Setup the main (multi) entrypoint for the crate.
 ///
-/// This will collect all binaries containing a (generated)
-/// [`Chapter`](puzzle_runner::derived::Chapter)s in the crate, inline them as modules, create a
-/// `Vec` that references the [`Chapter`](puzzle_runner::derived::Chapter) instances, and expose it
-/// as a static (`CHAPTERS`).
+/// Must be used in the main binary for the crate (which should be `bin/{crate-name}.rs`).
 #[proc_macro]
-pub fn include_chapters(input: TokenStream) -> TokenStream {
-    include_chapters::main(input)
+pub fn setup_main(input: TokenStream) -> TokenStream {
+    setup_main::main(input)
 }
 
 /// Register the binary crate as a puzzle chapter.
 ///
-/// Must be applied to a binary (in the `bin` folder).
+/// Must used in a binary crate in the `bin` folder.
 ///
 /// This will collect all parts/examples/metadata from that file into a
 /// [`puzzle_runner::derived::Chapter`], expose it as a static (`CHAPTER`), and generate a main
