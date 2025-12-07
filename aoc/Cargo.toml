@@ -27,7 +27,7 @@ pretty_assertions = "=1.4.1"
 [lints]
 workspace = true
 
-[[bench]]
-name = "main"
+[[bin]]
+name = "bench"
 harness = false
 required-features = ["bench"]

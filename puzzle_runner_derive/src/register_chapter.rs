@@ -217,7 +217,10 @@ pub fn main(input: TokenStream) -> TokenStream {
 
         // Generate entrypoint that just runs this chapter.
         pub fn main() {
+            #[cfg(not(feature = "bench"))]
             ::puzzle_runner::single::main(&*CHAPTER);
+            #[cfg(feature = "bench")]
+            ::puzzle_runner::bench::main(&*CHAPTER);
         }
     }
     .into_token_stream()

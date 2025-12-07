@@ -2,6 +2,7 @@
 #![cfg(feature = "bench")]
 
 use std::{
+    env,
     fs::{File, create_dir_all},
     io::Write,
     path::Path,
@@ -12,14 +13,16 @@ use clap::{Parser, builder::ArgPredicate, value_parser};
 use criterion::{Criterion, profiler::Profiler as CProfiler};
 use pprof::{ProfilerGuard, protos::Message};
 
-use super::multi::TargetArgs;
-use crate::{derived::Series, multi::SERIES};
+use crate::{
+    derived::{Chapter, Part},
+    single::{SingleArgs, SingleRunner, run_single},
+};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-struct BenchArgs {
+pub(super) struct BenchArgs {
     #[command(flatten)]
-    targets: TargetArgs,
+    pub(super) single: SingleArgs,
 
     /// For compatibility with criterion CLI.
     #[arg(long, num_args = 0, hide = true)]
@@ -53,6 +56,29 @@ struct BenchArgs {
     #[arg(long)]
     profile_name: Option<String>,
 }
+impl BenchArgs {
+    pub(super) fn build_criterion(&self) -> Criterion {
+        let mut criterion = Criterion::default();
+        criterion = criterion.sample_size(self.samples as usize);
+
+        if let Some(name) = &self.save_baseline {
+            criterion = criterion.save_baseline(name.clone());
+        } else if let Some(name) = &self.baseline {
+            criterion = criterion.retain_baseline(name.clone(), true);
+        }
+
+        if let Some(time) = self.profile_time {
+            criterion = criterion
+                .with_profiler(Profiler {
+                    name: self.profile_name.clone().unwrap_or("default".to_owned()),
+                    ..Profiler::default()
+                })
+                .profile_time(Some(Duration::from_secs_f64(time)));
+        }
+
+        criterion
+    }
+}
 
 #[derive(Default)]
 struct Profiler<'a> {
@@ -84,47 +110,41 @@ impl CProfiler for Profiler<'_> {
     }
 }
 
-pub fn main(series: &Series) {
-    SERIES.get_or_init(|| series.clone());
-    let args = BenchArgs::parse();
+pub(super) struct BenchRunner(String, Criterion);
+impl SingleRunner for BenchRunner {
+    type Args = BenchArgs;
 
-    let mut criterion = Criterion::default();
-    criterion = criterion.sample_size(args.samples as usize);
-
-    if let Some(name) = args.save_baseline {
-        criterion = criterion.save_baseline(name);
-    } else if let Some(name) = args.baseline {
-        criterion = criterion.retain_baseline(name, true);
+    fn verb() -> &'static str {
+        "Benchmarking"
     }
 
-    if let Some(time) = args.profile_time {
-        criterion = criterion
-            .with_profiler(Profiler {
-                name: args.profile_name.unwrap_or("default".to_owned()),
-                ..Profiler::default()
-            })
-            .profile_time(Some(Duration::from_secs_f64(time)));
+    fn get_sources_arg(args: &mut Self::Args) -> &mut crate::source::ChapterSources {
+        &mut args.single.folder
     }
 
-    let chapters = args.targets.filtered_chapters();
-    for target in args.targets.get_targets(&chapters) {
-        let mut name = format!("{}/part{}", target.chapter, target.part.num);
-        if let Some(source) = target.source_name {
-            name = format!("{name}/{source}");
-        }
+    fn setup(args: &Self::Args, series: String, chapter: &Chapter) -> Self {
+        println!(); // space between the "benchmarking ..." line and the result blocks
+        BenchRunner(format!("{series}/{}", chapter.name), args.build_criterion())
+    }
 
-        // For some reason this entrypoint is run from inside the crate dir instead of from the
-        // root (like the others are), so we need to adjust for that.
-        let input = target
-            .input
-            .mutate_path(|p| Path::new("..").join(p).to_str().unwrap().to_owned())
-            .read()
-            .unwrap();
-
-        criterion.bench_function(&name, |b| {
-            b.iter(|| (target.part.implementation)(&input));
+    fn run(&mut self, part: &Part, input: &str, _solution: Result<Option<String>, String>) {
+        let name = format!("{}/{}", self.0, part.num);
+        self.1.bench_function(&name, |b| {
+            b.iter(|| (part.implementation)(input));
         });
     }
 
-    criterion.final_summary();
+    fn finish(&mut self) {
+        self.1.final_summary();
+    }
+}
+
+#[doc(hidden)]
+pub fn main(chapter: &Chapter) {
+    // Benchmarks are ran with the directory set to the crate root instead of repository root. This
+    // breaks loading inputs (which uses relative paths by default), so we change back to the
+    // repository root here.
+    env::set_current_dir(env::current_dir().unwrap().parent().unwrap()).unwrap();
+
+    run_single::<BenchRunner>(chapter);
 }

@@ -117,28 +117,35 @@ docs: ${STDLIB_TARGETS} ${DEP_TARGETS} katex.html
 # Benchmarking & profiling.
 #
 
+__setup-benchmark-%: target = $(subst __setup-benchmark-,,$@)
+__setup-benchmark-%: crate = $(word 1,$(subst -, ,${target}))
+__setup-benchmark-%: bin = $(subst ${crate}-,,${target})
+__setup-benchmark-%: source = ${crate}/src/bin/${bin}.rs
+__setup-benchmark-%: ${source}
+	@printf '%s.rs' "${bin}" > "${crate}/src/bin/bench-target"
+
 benchmark-%: target = $(subst benchmark-,,$@)
 benchmark-%: crate = $(word 1,$(subst -, ,${target}))
 benchmark-%: bin = $(subst ${crate}-,,${target})
-benchmark-%: test-and-run-%
+benchmark-%: test-and-run-% __setup-benchmark-%
 	@echo "$(setaf6)>>>>> Benchmarking ${crate}/${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --package ${crate} --bench main --features bench -- --only ${bin} --save-baseline current
-	@critcmp baseline current --filter ${bin}
+	@./cargo-semiquiet.sh bench --package ${crate} --bin bench --features bench -- --save-baseline current
+	@critcmp baseline current --filter ${crate}/${bin}
 
 benchmark-set-baseline-%: target = $(subst benchmark-set-baseline-,,$@)
 benchmark-set-baseline-%: crate = $(word 1,$(subst -, ,${target}))
 benchmark-set-baseline-%: bin = $(subst ${crate}-,,${target})
-benchmark-set-baseline-%: test-and-run-%
+benchmark-set-baseline-%: test-and-run-% __setup-benchmark-%
 	@echo "$(setaf6)>>>>> Updating benchmark baseline for ${crate}/${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --package ${crate} --bench main --features bench -- --only ${bin} --save-baseline baseline
+	@./cargo-semiquiet.sh bench --package ${crate} --bin bench --features bench -- --save-baseline baseline
 
 profile-%: target = $(subst profile-,,$@)
 profile-%: crate = $(word 1,$(subst -, ,${target}))
 profile-%: bin = $(subst ${crate}-,,${target})
-profile-%: test-and-run-%
+profile-%: test-and-run-% __setup-benchmark-%
 	@echo "$(setaf6)>>>>> Profileing ${crate}/${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --package ${crate} --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name current
-	@for f in target/criterion/${bin}_*/profile/current.pb; do \
+	@./cargo-semiquiet.sh bench --package ${crate} --bin bench --features bench -- --profile-time 15 --profile-name current
+	@for f in target/criterion/${crate}_${bin}_*/profile/current.pb; do \
 		name="$${f%/profile/current.pb}"; \
 		name="$${name##*/}"; \
 		name="$${name//_/ }"; \
@@ -148,10 +155,10 @@ profile-%: test-and-run-%
 profile-set-baseline-%: target = $(subst profile-set-baseline-,,$@)
 profile-set-baseline-%: crate = $(word 1,$(subst -, ,${target}))
 profile-set-baseline-%: bin = $(subst ${crate}-,,${target})
-profile-set-baseline-%: test-and-run-%
+profile-set-baseline-%: test-and-run-% __setup-benchmark-%
 	@echo "$(setaf6)>>>>> Updating profile baseline for ${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --package ${crate} --bench main --features bench -- --only ${bin} --profile-time 15 --profile-name baseline
-	@for f in target/criterion/${bin}_*/profile/baseline.pb; do \
+	@./cargo-semiquiet.sh bench --package ${crate} --bin bench --features bench -- --profile-time 15 --profile-name baseline
+	@for f in target/criterion/${crate}_${bin}_*/profile/baseline.pb; do \
 		name="$${f%/profile/baseline.pb}"; \
 		name="$${name##*/}"; \
 		name="$${name//_/ }"; \

@@ -48,9 +48,6 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 #[macro_export]
 macro_rules! setup_multi {
     ($lib:ident) => {
-        $crate::setup_multi!(@inner; $lib, $crate::multi::main);
-    };
-    (@inner; $lib:ident, $entrypoint:path) => {
         $crate::include_chapters!();
 
         pub fn main() {
@@ -58,16 +55,7 @@ macro_rules! setup_multi {
                 chapters: CHAPTERS.clone(),
                 ..*$lib::SERIES
             };
-            $entrypoint(&series);
+            $crate::multi::main(&series);
         }
-    };
-}
-
-/// Setup the benchmark entrypoint.
-#[cfg(feature = "bench")]
-#[macro_export]
-macro_rules! setup_bench {
-    ($lib:ident) => {
-        $crate::setup_multi!(@inner; $lib, $crate::bench::main);
     };
 }

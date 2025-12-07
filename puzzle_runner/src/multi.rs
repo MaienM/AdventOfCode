@@ -16,7 +16,7 @@ use crate::{
     source::{ChapterSources, ChapterSourcesValueParser, Source},
 };
 
-pub static SERIES: OnceLock<Series> = OnceLock::new();
+static SERIES: OnceLock<Series> = OnceLock::new();
 
 /// Create parser for --only/--skip.
 fn create_target_value_parser() -> impl TypedValueParser {
@@ -51,7 +51,7 @@ fn create_target_value_parser() -> impl TypedValueParser {
 }
 
 #[derive(Parser, Debug)]
-pub(super) struct TargetArgs {
+struct TargetArgs {
     /// Only run the listed items.
     ///
     /// This can be either {chapter} for a single chapter, or {chapter}-{part} a single part of a single chapter.
@@ -95,7 +95,7 @@ pub(super) struct TargetArgs {
     use_examples: bool,
 }
 impl TargetArgs {
-    pub(super) fn filtered_chapters(&self) -> Vec<Chapter> {
+    fn filtered_chapters(&self) -> Vec<Chapter> {
         let mut chapters = SERIES.get().unwrap().chapters.clone();
         if let Some(only) = &self.only {
             let only: HashSet<_> = only.iter().flatten().collect();
@@ -116,7 +116,7 @@ impl TargetArgs {
         chapters
     }
 
-    pub(super) fn get_targets(&self, chapters: &[Chapter]) -> Vec<Target> {
+    fn get_targets(&self, chapters: &[Chapter]) -> Vec<Target> {
         let mut targets = Vec::new();
         if self.use_examples {
             for chapter in chapters {
@@ -163,12 +163,12 @@ impl TargetArgs {
     }
 }
 
-pub(super) struct Target {
-    pub(super) chapter: String,
-    pub(super) part: Part,
-    pub(super) source_name: Option<String>,
-    pub(super) input: Source,
-    pub(super) solution: Source,
+struct Target {
+    chapter: String,
+    part: Part,
+    source_name: Option<String>,
+    input: Source,
+    solution: Source,
 }
 
 #[derive(Parser, Debug)]

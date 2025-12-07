@@ -7,14 +7,14 @@ use clap::{CommandFactory, FromArgMatches, Parser, ValueHint};
 use rayon::ThreadPoolBuilder;
 
 use crate::{
-    derived::Chapter,
+    derived::{Chapter, Part},
     runner::{DurationThresholds, InstantTimer, PrintPartResult as _},
     source::{ChapterSources, ChapterSourcesValueParser, source_path_fill_tokens},
 };
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-struct SingleArgs {
+pub(super) struct SingleArgs {
     /// Path to a folder containing the input (`input.txt`) and expected outputs (`partN.txt`).
     ///
     /// The following tokens will be replaced:
@@ -25,7 +25,7 @@ struct SingleArgs {
         default_value = "inputs/{series}/{chapter}",
         value_parser = ChapterSourcesValueParser,
     )]
-    folder: ChapterSources,
+    pub(super) folder: ChapterSources,
 }
 
 const THRESHOLDS: DurationThresholds = DurationThresholds {
@@ -49,24 +49,68 @@ macro_rules! arg_default_value_fill_tokens {
     };
 }
 
+/// A trait for a way to run the parts for a single run.
+pub(super) trait SingleRunner {
+    type Args: Parser;
+
+    /// Get the verb to describe this action.
+    fn verb() -> &'static str {
+        "Running"
+    }
+
+    // Get the sources from the arguments.
+    fn get_sources_arg(args: &mut Self::Args) -> &mut ChapterSources;
+
+    /// Setup based on arguments.
+    fn setup(args: &Self::Args, series: String, chapter: &Chapter) -> Self;
+
+    /// Run a single part.
+    fn run(&mut self, part: &Part, input: &str, solution: Result<Option<String>, String>);
+
+    /// Run after all parts have finished.
+    fn finish(&mut self) {
+    }
+}
+
+struct SingleRunnerImpl;
+impl SingleRunner for SingleRunnerImpl {
+    type Args = SingleArgs;
+
+    fn get_sources_arg(args: &mut Self::Args) -> &mut ChapterSources {
+        &mut args.folder
+    }
+
+    fn setup(_args: &Self::Args, _series: String, _chapter: &Chapter) -> Self {
+        SingleRunnerImpl
+    }
+
+    fn run(&mut self, part: &Part, input: &str, solution: Result<Option<String>, String>) {
+        let result = solution.and_then(|solution| part.run::<InstantTimer>(input, solution));
+        result.print(&format!("Part {}", part.num), &THRESHOLDS, true);
+    }
+}
+
 #[doc(hidden)]
-pub fn main(chapter: &Chapter) {
+pub(super) fn run_single<T: SingleRunner>(chapter: &Chapter) {
     let series = std::env::var("CARGO_PKG_NAME").unwrap();
 
     // Replace the placeholders in the default values.
-    let mut cmd = SingleArgs::command_for_update();
-    cmd = arg_default_value_fill_tokens!(cmd, "folder", series = series, name = chapter.name);
+    let mut cmd = T::Args::command_for_update();
+    cmd = arg_default_value_fill_tokens!(cmd, "folder", series = series, chapter = chapter.name);
 
     // Parse & replace the placeholders in the actual values.
     let mut matches = cmd.get_matches();
-    let args = SingleArgs::from_arg_matches_mut(&mut matches).unwrap();
+    let mut args = T::Args::from_arg_matches_mut(&mut matches).unwrap();
+    let folder = T::get_sources_arg(&mut args);
+    *folder = source_path_fill_tokens!(folder, series = series, chapter = chapter.name);
+    let folder = folder.clone();
 
-    let folder_path =
-        source_path_fill_tokens!(args.folder, series = series, chapter = chapter.name);
-    let input_path = folder_path.input().unwrap();
+    let mut runner = T::setup(&args, series, chapter);
+    let input_path = folder.input().unwrap();
 
     println!(
-        "Running {}{} using input {}...",
+        "{} {}{} using input {}...",
+        T::verb(),
         Cyan.paint(chapter.name),
         chapter
             .title
@@ -86,8 +130,14 @@ pub fn main(chapter: &Chapter) {
     ThreadPoolBuilder::new().build_global().unwrap();
 
     for part in &chapter.parts {
-        let solution = folder_path.part(part.num).and_then(|s| s.read_maybe());
-        let result = solution.and_then(|solution| part.run::<InstantTimer>(&input, solution));
-        result.print(&format!("Part {}", part.num), &THRESHOLDS, true);
+        let solution = folder.part(part.num).and_then(|s| s.read_maybe());
+        runner.run(part, &input, solution);
     }
+
+    runner.finish();
+}
+
+#[doc(hidden)]
+pub fn main(chapter: &Chapter) {
+    run_single::<SingleRunnerImpl>(chapter);
 }
