@@ -2,199 +2,187 @@
 
 use std::{fs, io::ErrorKind, path::PathBuf};
 
-use clap::{
-    builder::{StringValueParser, TypedValueParser},
-    parser::ValueSource,
-};
+/// The result of an operation on a [`Source`] or [`ChapterSources`].
+pub enum IOResult<T> {
+    /// The operation was successful.
+    Ok(T),
+    /// The item was not found.
+    NotFound(String),
+    /// An error occurred.
+    Err(String),
+}
+impl<T> IOResult<T>
+where
+    T: Clone,
+{
+    /// Convert to the contained value in an option, converting [`NotFound`] to [`None`].
+    pub fn to_option(&self) -> Result<Option<T>, String> {
+        match self {
+            IOResult::Ok(contents) => Ok(Some(contents.clone())),
+            IOResult::NotFound(_) => Ok(None),
+            IOResult::Err(err) => Err(err.clone()),
+        }
+    }
+
+    /// Convert to the contained value, converting [`NotFound`] to an error.
+    pub fn to_value(&self) -> Result<T, String> {
+        match self {
+            IOResult::Ok(contents) => Ok(contents.clone()),
+            IOResult::NotFound(path) => Err(format!("{path} does not exist")),
+            IOResult::Err(err) => Err(err.clone()),
+        }
+    }
+}
+impl<T> From<IOResult<T>> for Result<Option<T>, String>
+where
+    T: Clone,
+{
+    fn from(val: IOResult<T>) -> Self {
+        val.to_option()
+    }
+}
+impl<T> From<IOResult<T>> for Result<T, String>
+where
+    T: Clone,
+{
+    fn from(val: IOResult<T>) -> Self {
+        val.to_value()
+    }
+}
+
+/// Join the given paths and return as string.
+fn join_paths(base: &str, tail: &str) -> Result<String, String> {
+    let mut buf = PathBuf::new();
+    buf.push(base);
+    buf.push(tail);
+    buf.to_str()
+        .map(ToOwned::to_owned)
+        .ok_or("failed to join paths".to_owned())
+}
 
 /// The source of a solution input or expected output.
 #[derive(Clone, Debug)]
 pub enum Source {
-    /// A path that was explicitly passed in by the user.
+    /// A path on the filesystem.
     ///
-    /// Any error while reading this will be reported back.
-    ExplicitPath(String),
-
-    /// A path that was automatically chosen by the program.
-    ///
-    /// A "file does not exist" error will be treated as if there was no path, but any other IO error will be reported back to the user.
-    AutomaticPath(String),
+    /// This can be read from and writen to. It can result in [`SourceIOResult::NotFound`].
+    Path(String),
 
     /// An inline value.
+    ///
+    /// This can be read from but not written to. It cannot result in [`SourceIOResult::NotFound`].
     Inline { source: String, contents: String },
-
-    /// No value available.
-    None(
-        /// A description of the purpose of this path.
-        String,
-    ),
 }
 impl Source {
-    fn read_path(path: &str) -> Result<String, (ErrorKind, String)> {
-        fs::read_to_string(path)
-            .map(|contents| contents.strip_suffix('\n').unwrap_or(&contents).to_owned())
-            .map_err(|err| (err.kind(), format!("Failed to read {path}: {err}")))
-    }
-
-    fn write_path(path: &str, contents: &str) -> Result<bool, (ErrorKind, String)> {
-        fs::write(path, contents)
-            .and(Ok(true))
-            .map_err(|err| (err.kind(), format!("Failed to write {path}: {err}")))
-    }
-
-    fn join_paths(base: &str, tail: &str) -> Result<String, String> {
-        let mut buf = PathBuf::new();
-        buf.push(base);
-        buf.push(tail);
-        buf.to_str()
-            .map(ToOwned::to_owned)
-            .ok_or("failed to join paths".to_owned())
-    }
-
-    /// Get the source of the value, if any.
-    pub fn source(&self) -> Result<String, String> {
-        match self {
-            Source::ExplicitPath(path) | Source::AutomaticPath(path) => Ok(path.clone()),
-            Source::Inline { source, .. } => Ok(source.clone()),
-            Source::None(description) => Err(format!("No value for {description}.")),
-        }
-    }
-
-    /// Attempt to read the file at the provided path, returning [`Ok(None)`] when a non-fatal
-    /// error occurs or there is no source to read from.
-    pub fn read_maybe(&self) -> Result<Option<String>, String> {
-        match self {
-            Source::ExplicitPath(path) => Ok(Some(Self::read_path(path).map_err(|(_, e)| e)?)),
-            Source::AutomaticPath(path) => match Self::read_path(path) {
-                Ok(contents) => Ok(Some(contents)),
-                Err((ErrorKind::NotFound, _)) => Ok(None),
-                Err((_, err)) => Err(err),
-            },
-            Source::Inline { contents, .. } => Ok(Some(contents.clone())),
-            Source::None(_) => Ok(None),
-        }
-    }
-
-    /// Attempt to write the file at the provided path, returning [`Ok(false)`] when a non-fatal
-    /// error occurs or there is no file source to write to.
-    pub fn write_maybe(&self, contents: &str) -> Result<bool, String> {
-        match self {
-            Source::ExplicitPath(path) => Ok(Self::write_path(path, contents).map_err(|(_, e)| e)?),
-            Source::AutomaticPath(path) => match Self::write_path(path, contents) {
-                Ok(result) => Ok(result),
-                Err((ErrorKind::NotFound, _)) => Ok(false),
-                Err((_, err)) => Err(err),
-            },
-            _ => Ok(false),
-        }
-    }
-
-    /// Attempt to read the file at the provided path, returning an error if this fails for any reason.
-    pub fn read(&self) -> Result<String, String> {
-        match self {
-            Source::ExplicitPath(path) | Source::AutomaticPath(path) => {
-                Self::read_path(path).map_err(|(_, e)| e)
-            }
-            Source::Inline { contents, .. } => Ok(contents.clone()),
-            Source::None(description) => Err(format!("No value for {description}.")),
-        }
-    }
-
-    /// Mutate the contained path (if any). Does nothing for [`Source::None`].
+    /// Read the contents of the source.
     #[must_use]
-    pub fn mutate_path<F>(&self, f: F) -> Self
-    where
-        F: Fn(String) -> String,
-    {
-        let mut result = self.clone();
-        match result {
-            Source::ExplicitPath(ref mut path) | Source::AutomaticPath(ref mut path) => {
-                *path = f(std::mem::take(path));
-            }
-            _ => {}
+    pub fn read(&self) -> IOResult<String> {
+        match self {
+            Source::Path(path) => match fs::read_to_string(path) {
+                Ok(contents) => {
+                    IOResult::Ok(contents.strip_suffix('\n').unwrap_or(&contents).to_owned())
+                }
+                Err(err) if err.kind() == ErrorKind::NotFound => IOResult::NotFound(path.clone()),
+                Err(err) => IOResult::Err(format!("unable to read {path}: {err}")),
+            },
+            Source::Inline { contents, .. } => IOResult::Ok(contents.clone()),
         }
-        result
     }
 
-    /// Create an instance for a subpath.
-    pub fn join(&self, subpath: &str, purpose: &str) -> Result<Source, String> {
+    /// Replace the contents of the source.
+    #[must_use]
+    pub fn write(&self, contents: &str) -> IOResult<String> {
         match self {
-            Source::ExplicitPath(path) => {
-                Ok(Source::ExplicitPath(Source::join_paths(path, subpath)?))
-            }
-            Source::AutomaticPath(path) => {
-                Ok(Source::AutomaticPath(Source::join_paths(path, subpath)?))
-            }
-            Source::Inline { .. } => Err("Cannot .join on an inline source.".to_owned()),
-            Source::None(_) => Ok(Source::None(purpose.to_owned())),
+            Source::Path(path) => match fs::write(path, contents) {
+                Ok(()) => IOResult::Ok(contents.to_owned()),
+                Err(err) if err.kind() == ErrorKind::NotFound => IOResult::NotFound(path.clone()),
+                Err(err) => IOResult::Err(format!("unable to write {path}: {err}")),
+            },
+            Source::Inline { .. } => IOResult::Err("inline value, cannot be written".to_owned()),
+        }
+    }
+
+    /// Get a human-readable description of the source of the value.
+    #[must_use]
+    pub fn source(&self) -> String {
+        match self {
+            Source::Path(path) => path.clone(),
+            Source::Inline { source, .. } => source.clone(),
+        }
+    }
+
+    /// Make a copy, applying the transformation to the path (if there is one).
+    pub fn transform_path<F>(self, f: F) -> Self
+    where
+        F: FnOnce(String) -> String,
+    {
+        match self {
+            Source::Path(path) => Source::Path(f(path)),
+            value @ Source::Inline { .. } => value,
         }
     }
 }
 
-/// The source of the folder containing a chapter's solution input & expected outputs.
-#[derive(Clone, Debug)]
-pub struct ChapterSources(Source);
-impl ChapterSources {
-    pub fn input(&self) -> Result<Source, String> {
-        self.0.join("input.txt", "The input for the chapter.")
-    }
-
-    pub fn part(&self, num: u8) -> Result<Source, String> {
-        self.0.join(
-            &format!("part{num}.txt"),
-            &format!("The solution for part {num}."),
-        )
-    }
-
-    /// Mutate the contained path (if any). Does nothing for [`Source::None`].
-    #[must_use]
-    pub fn mutate_path<F>(&self, f: F) -> Self
-    where
-        F: Fn(String) -> String,
-    {
-        Self(self.0.mutate_path(f))
-    }
-}
-
-/// Parse argument to [`ChapterSources`].
+/// The set of sources (input & expected results) for a chapter.
 #[derive(Clone)]
-pub struct ChapterSourcesValueParser;
-impl TypedValueParser for ChapterSourcesValueParser {
-    type Value = ChapterSources;
+pub enum ChapterSources {
+    /// A path on the filesystem.
+    ///
+    /// This must point to a directory. The input will refer to `input.txt` in this directory, and
+    /// the parts to `partN.txt`.
+    Path(String),
 
-    fn parse_ref(
-        &self,
-        _cmd: &clap::Command,
-        _arg: Option<&clap::Arg>,
-        _value: &std::ffi::OsStr,
-    ) -> Result<Self::Value, clap::Error> {
-        panic!("Should never be called as parse_ref_ is implemented.");
+    /// An [`Example`](puzzle_runner::derived::Example).
+    Example(Example),
+}
+impl ChapterSources {
+    pub fn input(&self) -> IOResult<Source> {
+        match self {
+            ChapterSources::Path(path) => match join_paths(path, "input.txt") {
+                Ok(path) => IOResult::Ok(Source::Path(path)),
+                Err(err) => IOResult::Err(err),
+            },
+            ChapterSources::Example(example) => IOResult::Ok(Source::Inline {
+                source: example.name.to_owned(),
+                contents: example.input.to_owned(),
+            }),
+        }
     }
 
-    fn parse_ref_(
-        &self,
-        cmd: &clap::Command,
-        arg: Option<&clap::Arg>,
-        value: &std::ffi::OsStr,
-        source: ValueSource,
-    ) -> Result<Self::Value, clap::Error> {
-        let value = StringValueParser::new().parse_ref_(cmd, arg, value, source)?;
+    pub fn part(&self, num: u8) -> IOResult<Source> {
+        match self {
+            ChapterSources::Path(path) => match join_paths(path, &format!("part{num}.txt")) {
+                Ok(path) => IOResult::Ok(Source::Path(path)),
+                Err(err) => IOResult::Err(err),
+            },
+            ChapterSources::Example(example) => {
+                if let Some(contents) = example.parts.get(&num) {
+                    IOResult::Ok(Source::Inline {
+                        source: format!("{} part {num}", example.name),
+                        contents: (*contents).to_owned(),
+                    })
+                } else {
+                    IOResult::NotFound(format!("{} part {num}", example.name))
+                }
+            }
+        }
+    }
 
-        if source == ValueSource::DefaultValue {
-            Ok(ChapterSources(Source::AutomaticPath(value)))
-        } else if value.is_empty() {
-            Ok(ChapterSources(Source::None(
-                arg.map_or("unknown".to_owned(), |a| a.get_id().to_string()),
-            )))
-        } else {
-            Ok(ChapterSources(Source::ExplicitPath(value)))
+    /// Make a copy, applying the transformation to the path (if there is one).
+    pub fn transform_path<F>(self, f: F) -> Self
+    where
+        F: FnOnce(String) -> String,
+    {
+        match self {
+            ChapterSources::Path(path) => ChapterSources::Path(f(path)),
+            value @ ChapterSources::Example(_) => value,
         }
     }
 }
 
 macro_rules! source_path_fill_tokens {
     ($path:expr, $($name:ident = $value:expr),+ $(,)?) => {
-        $path.mutate_path(|p| {
+        $path.transform_path(|p| {
             source_path_fill_tokens!(@replace; p, $($name = $value),+)
         })
     };
@@ -206,3 +194,5 @@ macro_rules! source_path_fill_tokens {
     };
 }
 pub(super) use source_path_fill_tokens;
+
+use crate::derived::Example;

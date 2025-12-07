@@ -101,7 +101,7 @@ pub(super) struct BenchRunner(String, Criterion);
 impl SingleRunner for BenchRunner {
     type Args = BenchArgs;
 
-    fn get_sources_arg(args: &mut Self::Args) -> &mut ChapterSources {
+    fn get_sources_arg(args: &mut Self::Args) -> &String {
         &mut args.single.folder
     }
 

@@ -9,7 +9,7 @@ use rayon::ThreadPoolBuilder;
 use crate::{
     derived::{Chapter, Part, Series},
     runner::{DurationThresholds, InstantTimer, PrintPartResult as _},
-    source::{ChapterSources, ChapterSourcesValueParser, Source, source_path_fill_tokens},
+    source::{ChapterSources, Source, source_path_fill_tokens},
 };
 
 #[derive(Parser, Debug)]
@@ -23,9 +23,8 @@ pub(super) struct SingleArgs {
     #[arg(
         value_hint = ValueHint::DirPath,
         default_value = "inputs/{series}/{chapter}",
-        value_parser = ChapterSourcesValueParser,
     )]
-    pub(super) folder: ChapterSources,
+    pub(super) folder: String,
 }
 
 const THRESHOLDS: DurationThresholds = DurationThresholds {
@@ -54,7 +53,7 @@ pub(super) trait SingleRunner {
     type Args: Parser;
 
     // Get the sources from the arguments.
-    fn get_sources_arg(args: &mut Self::Args) -> &mut ChapterSources;
+    fn get_sources_arg(args: &Self::Args) -> &String;
 
     /// Setup based on arguments.
     fn setup(args: &Self::Args, series: &Series, chapter: &Chapter) -> Self;
@@ -74,8 +73,8 @@ struct SingleRunnerImpl;
 impl SingleRunner for SingleRunnerImpl {
     type Args = SingleArgs;
 
-    fn get_sources_arg(args: &mut Self::Args) -> &mut ChapterSources {
-        &mut args.folder
+    fn get_sources_arg(args: &Self::Args) -> &String {
+        &args.folder
     }
 
     fn setup(_args: &Self::Args, _series: &Series, _chapter: &Chapter) -> Self {
@@ -89,15 +88,15 @@ impl SingleRunner for SingleRunnerImpl {
     fn run(&mut self, part: &Part, input: &str, solution: Result<Source, String>) {
         let result = solution
             .clone()
-            .and_then(|s| part.run::<InstantTimer>(input, s.read_maybe()?));
+            .and_then(|s| part.run::<InstantTimer>(input, s.read().to_option()?));
         result.print(&format!("Part {}", part.num), &THRESHOLDS, true);
 
         if let Ok(result) = result
             && result.solution.is_none()
             && let Ok(solution) = solution
         {
-            let solution = solution.mutate_path(|p| format!("{p}.pending"));
-            if let Ok(true) = solution.write_maybe(&result.result) {
+            let solution = solution.transform_path(|p| format!("{p}.pending"));
+            if solution.write(&result.result).to_value().is_ok() {
                 println!("Saved preliminary result, run `make confirm` if it is correct.");
             }
         }
@@ -113,14 +112,12 @@ pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
 
     // Parse & replace the placeholders in the actual values.
     let mut matches = cmd.get_matches();
-    let mut args = T::Args::from_arg_matches_mut(&mut matches).unwrap();
-    let folder = T::get_sources_arg(&mut args);
-    *folder = source_path_fill_tokens!(folder, series = series.name, chapter = chapter.name);
-    let folder = folder.clone();
+    let args = T::Args::from_arg_matches_mut(&mut matches).unwrap();
+    let folder = ChapterSources::Path(T::get_sources_arg(&args).clone());
+    let folder = source_path_fill_tokens!(folder, series = series.name, chapter = chapter.name);
+    let input_path = folder.input().to_value().unwrap();
 
     let mut runner = T::setup(&args, series, chapter);
-    let input_path = folder.input().unwrap();
-
     runner.print_header(format!(
         "{} {}{} using input {}",
         Purple.paint(series.title),
@@ -128,22 +125,19 @@ pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
         chapter
             .title
             .map_or(String::new(), |t| format!(": {}", Purple.paint(t))),
-        Cyan.paint(input_path.source().unwrap()),
+        Cyan.paint(input_path.source()),
     ));
 
-    let input = match input_path.read() {
-        Ok(input) => input,
-        Err(err) => {
-            println!("{}", Red.paint(err));
-            return;
-        }
+    let input = match input_path.read().to_value() {
+        Ok(contents) => contents,
+        Err(err) => return println!("{}", Red.paint(err)),
     };
 
     // Initialize the thread pool now. This will happen automatically when it's first needed, but if this is inside a solution this will add to the runtime of that solution, unfairly penalizing it for being the first to use rayon while the other solutions that also do so get a free pass.
     ThreadPoolBuilder::new().build_global().unwrap();
 
     for part in &chapter.parts {
-        runner.run(part, &input, folder.part(part.num));
+        runner.run(part, &input, folder.part(part.num).to_value());
     }
 
     runner.finish();

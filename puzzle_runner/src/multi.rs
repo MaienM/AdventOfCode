@@ -13,7 +13,7 @@ use super::source::source_path_fill_tokens;
 use crate::{
     derived::{Chapter, Part, Series},
     runner::{DurationThresholds, InstantTimer, PartResult, PrintPartResult as _, RunResults},
-    source::{ChapterSources, ChapterSourcesValueParser, Source},
+    source::{ChapterSources, Source},
 };
 
 static SERIES: OnceLock<Series> = OnceLock::new();
@@ -84,11 +84,10 @@ struct TargetArgs {
     #[arg(
         long,
         default_value = "inputs/{series}/{chapter}",
-        value_parser = ChapterSourcesValueParser,
         verbatim_doc_comment,
-        conflicts_with = "use_examples",
+        conflicts_with = "use_examples"
     )]
-    folder_pattern: ChapterSources,
+    folder_pattern: String,
 
     /// Run using examples instead of real inputs/results.
     #[arg(long)]
@@ -121,22 +120,17 @@ impl TargetArgs {
         if self.use_examples {
             for chapter in chapters {
                 for example in &chapter.examples {
+                    let source = ChapterSources::Example(example.clone());
                     for part in &chapter.parts {
-                        let Some(solution) = example.parts.get(&part.num) else {
+                        let Some(solution) = source.part(part.num).to_option().unwrap() else {
                             continue;
                         };
                         targets.push(Target {
                             chapter: chapter.name.to_owned(),
                             part: part.clone(),
                             source_name: Some(example.name.to_owned()),
-                            input: Source::Inline {
-                                source: example.name.to_owned(),
-                                contents: example.input.to_owned(),
-                            },
-                            solution: Source::Inline {
-                                source: example.name.to_owned(),
-                                contents: (*solution).to_owned(),
-                            },
+                            input: source.input().to_value().unwrap(),
+                            solution,
                         });
                     }
                 }
@@ -144,7 +138,7 @@ impl TargetArgs {
         } else {
             for chapter in chapters {
                 let folder = source_path_fill_tokens!(
-                    self.folder_pattern,
+                    ChapterSources::Path(self.folder_pattern.clone()),
                     series = SERIES.get().unwrap().name,
                     chapter = chapter.name,
                 );
@@ -153,8 +147,8 @@ impl TargetArgs {
                         chapter: chapter.name.to_owned(),
                         part: part.clone(),
                         source_name: None,
-                        input: folder.input().unwrap(),
-                        solution: folder.part(part.num).unwrap(),
+                        input: folder.input().to_value().unwrap(),
+                        solution: folder.part(part.num).to_value().unwrap(),
                     });
                 }
             }
@@ -214,9 +208,10 @@ pub fn main(series: &Series) {
             }
 
             let result = (|| {
-                target
-                    .part
-                    .run::<InstantTimer>(&target.input.read()?, target.solution.read_maybe()?)
+                target.part.run::<InstantTimer>(
+                    &target.input.read().to_value()?,
+                    target.solution.read().to_option()?,
+                )
             })();
 
             (name, result)
