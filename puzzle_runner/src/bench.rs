@@ -33,20 +33,8 @@ pub(super) struct BenchArgs {
     profile_time: Option<f64>,
 
     /// Save results under a named baseline.
-    #[arg(
-        short = 's',
-        long,
-        default_value_if("baseline", ArgPredicate::IsPresent, None),
-        default_value = "base",
-        conflicts_with = "baseline"
-    )]
+    #[arg(short = 's', long)]
     save_baseline: Option<String>,
-
-    /// Compare to a named baseline.
-    ///
-    /// If any benchmarks do not have the specified baseline this command fails.
-    #[arg(short = 'b', long)]
-    baseline: Option<String>,
 
     /// Set the number of samples to collect.
     #[arg(long, default_value = "100", value_parser = value_parser![u64].range(10..))]
@@ -63,8 +51,6 @@ impl BenchArgs {
 
         if let Some(name) = &self.save_baseline {
             criterion = criterion.save_baseline(name.clone());
-        } else if let Some(name) = &self.baseline {
-            criterion = criterion.retain_baseline(name.clone(), true);
         }
 
         if let Some(time) = self.profile_time {
