@@ -6,8 +6,6 @@ use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err, source_crat
 
 args_struct! {
     struct Args {
-        /// The name of the series.
-        name: String,
         /// The title of the series.
         title: String,
     }
@@ -16,9 +14,7 @@ args_struct! {
 pub fn main(input: TokenStream) -> TokenStream {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
-        if meta.path.is_ident("name") {
-            meta.set_empty_option(&mut builder.name, meta.parse_nonempty_string()?)?;
-        } else if meta.path.is_ident("title") {
+        if meta.path.is_ident("title") {
             meta.set_empty_option(&mut builder.title, meta.parse_nonempty_string()?)?;
         } else {
             return Err(meta.error("unsupported property"));
@@ -26,7 +22,7 @@ pub fn main(input: TokenStream) -> TokenStream {
         Ok(())
     });
     parse_macro_input!(input with args_parser);
-    let Args { name, title } = return_err!(builder.finalize());
+    let Args { title } = return_err!(builder.finalize());
 
     #[cfg(feature = "include-chapters")]
     let (pre, chapters) = (
@@ -36,7 +32,8 @@ pub fn main(input: TokenStream) -> TokenStream {
     #[cfg(not(feature = "include-chapters"))]
     let (pre, chapters) = (quote!(), quote!(Vec::new()));
 
-    let crateident = format_ident!("{}", return_err!(source_crate()));
+    let name = return_err!(source_crate());
+    let crateident = format_ident!("{}", name);
 
     quote! {
         #pre
