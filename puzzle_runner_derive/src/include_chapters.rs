@@ -2,7 +2,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use regex::Regex;
 
-use crate::utils::{find_crate_root, return_err, source_call_site};
+use crate::utils::{find_crate_root, source_call_site};
 
 fn find_chapters() -> Result<Vec<String>, String> {
     let span = source_call_site();
@@ -61,7 +61,7 @@ pub fn include_chapters(force: bool) -> TokenStream2 {
     let mut chapters: Vec<TokenStream2> = Vec::new();
 
     if include_chapters {
-        let files = return_err!(find_chapters());
+        let files = find_chapters().unwrap_or_default();
         for file in files {
             let modident = file
                 .split('/')

@@ -28,8 +28,12 @@ pub fn main(input: TokenStream) -> TokenStream {
     let Args { title } = return_err!(builder.finalize());
 
     let chapters = include_chapters(false);
-    let name = return_err!(source_crate());
-    let crateident = format_ident!("{}", name);
+    let (name, alias) = if let Ok(name) = source_crate() {
+        let crateident = format_ident!("{name}");
+        (name, quote!(extern crate self as #crateident;))
+    } else {
+        (String::new(), quote!())
+    };
 
     quote! {
         #chapters
@@ -44,7 +48,7 @@ pub fn main(input: TokenStream) -> TokenStream {
 
         // Make the current crate available under its external name (which is the name that must be
         // used when referring to it from the bins normally).
-        extern crate self as #crateident;
+        #alias
     }
     .into()
 }

@@ -206,7 +206,19 @@ pub fn main(input: TokenStream) -> TokenStream {
         }
     };
 
-    let crateident = format_ident!("{}", return_err!(source_crate()));
+    let main = if let Ok(name) = source_crate() {
+        let crateident = format_ident!("{name}");
+        quote! {
+            pub fn main() {
+                #[cfg(not(feature = "bench"))]
+                ::puzzle_runner::single::main(&*::#crateident::SERIES, &*CHAPTER);
+                #[cfg(feature = "bench")]
+                ::puzzle_runner::bench::main(&*::#crateident::SERIES, &*CHAPTER);
+            }
+        }
+    } else {
+        quote!(todo!())
+    };
 
     quote!{
         // Include prelude.
@@ -217,13 +229,8 @@ pub fn main(input: TokenStream) -> TokenStream {
         // to the full list used by the multi entrypoint.
         pub(crate) static CHAPTER: ::std::sync::LazyLock<::puzzle_runner::derived::Chapter> = ::std::sync::LazyLock::new(|| #expr );
 
-        // Generate entrypoint that just runs this chapter.
-        pub fn main() {
-            #[cfg(not(feature = "bench"))]
-            ::puzzle_runner::single::main(&*::#crateident::SERIES, &*CHAPTER);
-            #[cfg(feature = "bench")]
-            ::puzzle_runner::bench::main(&*::#crateident::SERIES, &*CHAPTER);
-        }
+        // Entrypoint that just runs this chapter.
+        #main
     }
     .into_token_stream()
     .into()
