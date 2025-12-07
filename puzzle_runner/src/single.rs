@@ -53,16 +53,14 @@ macro_rules! arg_default_value_fill_tokens {
 pub(super) trait SingleRunner {
     type Args: Parser;
 
-    /// Get the verb to describe this action.
-    fn verb() -> &'static str {
-        "Running"
-    }
-
     // Get the sources from the arguments.
     fn get_sources_arg(args: &mut Self::Args) -> &mut ChapterSources;
 
     /// Setup based on arguments.
     fn setup(args: &Self::Args, series: String, chapter: &Chapter) -> Self;
+
+    /// Print the header line at the top for this action.
+    fn print_header(&self, description: String);
 
     /// Run a single part.
     fn run(&mut self, part: &Part, input: &str, solution: Result<Option<String>, String>);
@@ -82,6 +80,10 @@ impl SingleRunner for SingleRunnerImpl {
 
     fn setup(_args: &Self::Args, _series: String, _chapter: &Chapter) -> Self {
         SingleRunnerImpl
+    }
+
+    fn print_header(&self, description: String) {
+        println!("Running {description}...");
     }
 
     fn run(&mut self, part: &Part, input: &str, solution: Result<Option<String>, String>) {
@@ -108,15 +110,14 @@ pub(super) fn run_single<T: SingleRunner>(chapter: &Chapter) {
     let mut runner = T::setup(&args, series, chapter);
     let input_path = folder.input().unwrap();
 
-    println!(
-        "{} {}{} using input {}...",
-        T::verb(),
+    runner.print_header(format!(
+        "{}{} using input {}",
         Cyan.paint(chapter.name),
         chapter
             .title
             .map_or(String::new(), |t| format!(": {}", Purple.paint(t))),
         Cyan.paint(input_path.source().unwrap()),
-    );
+    ));
 
     let input = match input_path.read() {
         Ok(input) => input,

@@ -9,7 +9,7 @@ use std::{
     time::Duration,
 };
 
-use clap::{Parser, builder::ArgPredicate, value_parser};
+use clap::{Parser, value_parser};
 use criterion::{Criterion, profiler::Profiler as CProfiler};
 use pprof::{ProfilerGuard, protos::Message};
 
@@ -100,17 +100,17 @@ pub(super) struct BenchRunner(String, Criterion);
 impl SingleRunner for BenchRunner {
     type Args = BenchArgs;
 
-    fn verb() -> &'static str {
-        "Benchmarking"
-    }
-
     fn get_sources_arg(args: &mut Self::Args) -> &mut crate::source::ChapterSources {
         &mut args.single.folder
     }
 
     fn setup(args: &Self::Args, series: String, chapter: &Chapter) -> Self {
-        println!(); // space between the "benchmarking ..." line and the result blocks
         BenchRunner(format!("{series}/{}", chapter.name), args.build_criterion())
+    }
+
+    fn print_header(&self, description: String) {
+        println!("Benchmarking {description}...");
+        println!();
     }
 
     fn run(&mut self, part: &Part, input: &str, _solution: Result<Option<String>, String>) {
