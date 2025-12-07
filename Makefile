@@ -5,6 +5,7 @@ setaf6 = $(shell tput setaf 6)
 sgr0 = $(shell tput sgr0)
 
 .PHONY: test-libs web-dev docs FORCE
+.SECONDEXPANSION:
 
 targets=$(foreach path,$(wildcard */src/bin/*),$(let crate bin,$(subst /src/bin/, ,${path}),$(subst -${crate},,$(subst .rs,,${crate}-${bin}))))
 
@@ -39,10 +40,9 @@ run-all: run-aoc
 run-%: target = $(subst run-,,$@)
 run-%: crate = $(word 1,$(subst -, ,${target}))
 run-%: bin = $(subst ${crate}-,,${target})
-run-%: input = inputs/${crate}/${bin}/input.txt
-run-%: FORCE ${input}
-	@make --silent ${input}
-
+run-%: name = $(subst /${crate},,${crate}/${bin})
+run-%: input = $(if $(subst ${crate},,${bin}),inputs/${crate}/${bin}/input.txt,)
+run-%: FORCE $${input}
 	@echo "$(setaf6)>>>>> Running ${name} <<<<<$(sgr0)"
 	@./cargo-semiquiet.sh run --release --package ${crate} --bin ${bin}
 
