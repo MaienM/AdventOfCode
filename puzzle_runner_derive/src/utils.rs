@@ -34,6 +34,30 @@ pub fn source_call_site() -> Span {
     span
 }
 
+/// Get the name of the crate that invoked this macro.
+///
+/// See [`source_call_site`] for information on how this resolves nested macros. This assumes that
+/// the name of the directory containing `Cargo.toml` matches the crate name, which is not
+/// necessarily true, but is true for this repostory.
+pub fn source_crate() -> Result<String, String> {
+    let path = source_call_site()
+        .local_file()
+        .ok_or_else(|| "failed to determine crate name".to_owned())?;
+    let path = find_crate_root(&path)?;
+    path.file_name()
+        .ok_or_else(|| {
+            format!(
+                "failed to determine crate name from path {}",
+                path.display()
+            )
+        })
+        .and_then(|n| {
+            n.to_str()
+                .ok_or_else(|| format!("failed to convert path {} to string", n.display()))
+                .map(ToOwned::to_owned)
+        })
+}
+
 /// Find the root of the crate containing the given path.
 pub fn find_crate_root(path: &Path) -> Result<PathBuf, String> {
     let mut crate_root = path.to_path_buf();

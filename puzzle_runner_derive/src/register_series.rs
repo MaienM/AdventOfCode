@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::parse_macro_input;
 
-use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err};
+use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err, source_crate};
 
 args_struct! {
     struct Args {
@@ -36,6 +36,8 @@ pub fn main(input: TokenStream) -> TokenStream {
     #[cfg(not(feature = "include-chapters"))]
     let (pre, chapters) = (quote!(), quote!(Vec::new()));
 
+    let crateident = format_ident!("{}", return_err!(source_crate()));
+
     quote! {
         #pre
 
@@ -46,6 +48,10 @@ pub fn main(input: TokenStream) -> TokenStream {
                 chapters: #chapters,
             }
         });
+
+        // Make the current crate available under its external name (which is the name that must be
+        // used when referring to it from the bins normally).
+        extern crate self as #crateident;
     }
     .into()
 }

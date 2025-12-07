@@ -7,7 +7,7 @@ use clap::{CommandFactory, FromArgMatches, Parser, ValueHint};
 use rayon::ThreadPoolBuilder;
 
 use crate::{
-    derived::{Chapter, Part},
+    derived::{Chapter, Part, Series},
     runner::{DurationThresholds, InstantTimer, PrintPartResult as _},
     source::{ChapterSources, ChapterSourcesValueParser, Source, source_path_fill_tokens},
 };
@@ -57,7 +57,7 @@ pub(super) trait SingleRunner {
     fn get_sources_arg(args: &mut Self::Args) -> &mut ChapterSources;
 
     /// Setup based on arguments.
-    fn setup(args: &Self::Args, series: String, chapter: &Chapter) -> Self;
+    fn setup(args: &Self::Args, series: &Series, chapter: &Chapter) -> Self;
 
     /// Print the header line at the top for this action.
     fn print_header(&self, description: String);
@@ -78,7 +78,7 @@ impl SingleRunner for SingleRunnerImpl {
         &mut args.folder
     }
 
-    fn setup(_args: &Self::Args, _series: String, _chapter: &Chapter) -> Self {
+    fn setup(_args: &Self::Args, _series: &Series, _chapter: &Chapter) -> Self {
         SingleRunnerImpl
     }
 
@@ -105,25 +105,25 @@ impl SingleRunner for SingleRunnerImpl {
 }
 
 #[doc(hidden)]
-pub(super) fn run_single<T: SingleRunner>(chapter: &Chapter) {
-    let series = std::env::var("CARGO_PKG_NAME").unwrap();
-
+pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
     // Replace the placeholders in the default values.
     let mut cmd = T::Args::command_for_update();
-    cmd = arg_default_value_fill_tokens!(cmd, "folder", series = series, chapter = chapter.name);
+    cmd =
+        arg_default_value_fill_tokens!(cmd, "folder", series = series.name, chapter = chapter.name);
 
     // Parse & replace the placeholders in the actual values.
     let mut matches = cmd.get_matches();
     let mut args = T::Args::from_arg_matches_mut(&mut matches).unwrap();
     let folder = T::get_sources_arg(&mut args);
-    *folder = source_path_fill_tokens!(folder, series = series, chapter = chapter.name);
+    *folder = source_path_fill_tokens!(folder, series = series.name, chapter = chapter.name);
     let folder = folder.clone();
 
     let mut runner = T::setup(&args, series, chapter);
     let input_path = folder.input().unwrap();
 
     runner.print_header(format!(
-        "{}{} using input {}",
+        "{} {}{} using input {}",
+        Purple.paint(series.title),
         Cyan.paint(chapter.name),
         chapter
             .title
@@ -150,6 +150,6 @@ pub(super) fn run_single<T: SingleRunner>(chapter: &Chapter) {
 }
 
 #[doc(hidden)]
-pub fn main(chapter: &Chapter) {
-    run_single::<SingleRunnerImpl>(chapter);
+pub fn main(series: &Series, chapter: &Chapter) {
+    run_single::<SingleRunnerImpl>(series, chapter);
 }

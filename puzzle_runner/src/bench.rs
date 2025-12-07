@@ -14,7 +14,7 @@ use criterion::{Criterion, profiler::Profiler as CProfiler};
 use pprof::{ProfilerGuard, protos::Message};
 
 use crate::{
-    derived::{Chapter, Part},
+    derived::{Chapter, Part, Series},
     single::{SingleArgs, SingleRunner, run_single},
     source::{ChapterSources, Source},
 };
@@ -105,8 +105,11 @@ impl SingleRunner for BenchRunner {
         &mut args.single.folder
     }
 
-    fn setup(args: &Self::Args, series: String, chapter: &Chapter) -> Self {
-        BenchRunner(format!("{series}/{}", chapter.name), args.build_criterion())
+    fn setup(args: &Self::Args, series: &Series, chapter: &Chapter) -> Self {
+        BenchRunner(
+            format!("{}/{}", series.name, chapter.name),
+            args.build_criterion(),
+        )
     }
 
     fn print_header(&self, description: String) {
@@ -127,11 +130,11 @@ impl SingleRunner for BenchRunner {
 }
 
 #[doc(hidden)]
-pub fn main(chapter: &Chapter) {
+pub fn main(series: &Series, chapter: &Chapter) {
     // Benchmarks are ran with the directory set to the crate root instead of repository root. This
     // breaks loading inputs (which uses relative paths by default), so we change back to the
     // repository root here.
     env::set_current_dir(env::current_dir().unwrap().parent().unwrap()).unwrap();
 
-    run_single::<BenchRunner>(chapter);
+    run_single::<BenchRunner>(series, chapter);
 }

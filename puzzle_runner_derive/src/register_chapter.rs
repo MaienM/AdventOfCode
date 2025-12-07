@@ -1,7 +1,7 @@
 use std::{env, fs::read_to_string};
 
 use proc_macro::{Span, TokenStream};
-use quote::{ToTokens, quote};
+use quote::{ToTokens, format_ident, quote};
 use syn::{
     Error, Expr, ExprCall, ExprClosure, ExprPath, Item, ItemFn, ItemMod, ItemStatic, Meta,
     PathSegment, Token, parse_file, parse_macro_input, parse_quote,
@@ -11,7 +11,7 @@ use syn::{
 
 use crate::{
     example_input,
-    utils::{ParseNestedMetaExt, args_struct, return_err},
+    utils::{ParseNestedMetaExt, args_struct, return_err, source_crate},
 };
 
 args_struct! {
@@ -206,6 +206,8 @@ pub fn main(input: TokenStream) -> TokenStream {
         }
     };
 
+    let crateident = format_ident!("{}", return_err!(source_crate()));
+
     quote!{
         // Include prelude.
         #[allow(unused_imports)]
@@ -218,9 +220,9 @@ pub fn main(input: TokenStream) -> TokenStream {
         // Generate entrypoint that just runs this chapter.
         pub fn main() {
             #[cfg(not(feature = "bench"))]
-            ::puzzle_runner::single::main(&*CHAPTER);
+            ::puzzle_runner::single::main(&*::#crateident::SERIES, &*CHAPTER);
             #[cfg(feature = "bench")]
-            ::puzzle_runner::bench::main(&*CHAPTER);
+            ::puzzle_runner::bench::main(&*::#crateident::SERIES, &*CHAPTER);
         }
     }
     .into_token_stream()
