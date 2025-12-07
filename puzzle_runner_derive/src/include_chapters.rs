@@ -1,42 +1,20 @@
-use std::env;
-
-use proc_macro::{Span, TokenStream};
+use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use regex::Regex;
 use syn::parse_macro_input;
 
-use crate::utils::return_err;
+use crate::utils::{find_crate_root, return_err, source_call_site};
 
 fn find_chapters() -> Result<Vec<String>, String> {
-    let mut span = Span::call_site();
-    while let Some(parent) = span.parent() {
-        span = parent;
-    }
-    let source_path = span.local_file().ok_or("path of source file is empty")?;
-
-    let mut crate_root = env::current_dir()
-        .map_err(|err| format!("error determining working directory: {err}"))?
-        .join(source_path.clone());
-    loop {
-        if !crate_root.pop() {
-            Err(format!(
-                "failed to traverse up from {}",
-                crate_root.display(),
-            ))?;
-        }
-        crate_root = crate_root
-            .canonicalize()
-            .map_err(|err| format!("failed to resolve {}: {err}", crate_root.display()))?;
-        match crate_root.join("Cargo.toml").try_exists() {
-            Ok(true) => break,
-            Ok(false) => {}
-            Err(err) => Err(format!(
-                "failed to find root of crate for source file {}: {err}",
-                source_path.display(),
-            ))?,
-        }
-    }
+    let span = source_call_site();
+    let path = span
+        .local_file()
+        .ok_or("path of source file is empty".to_owned())?;
+    let path = path
+        .canonicalize()
+        .map_err(|err| format!("failed to resolve {}: {err}", path.display()))?;
+    let crate_root = find_crate_root(&path)?;
     let abs_path = crate_root.join("src").join("bin");
 
     let filename_regex = Regex::new(r"^\d{2}-\d{2}\.rs$").unwrap();

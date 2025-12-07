@@ -1,5 +1,9 @@
-use std::fmt::Debug;
+use std::{
+    fmt::Debug,
+    path::{Path, PathBuf},
+};
 
+use proc_macro::Span;
 use syn::{Error, Lit, meta::ParseNestedMeta};
 
 /// Wrap a Result<T, String> to return on error in a function that returns a [`proc_macro::TokenStream`].
@@ -14,6 +18,45 @@ macro_rules! return_err {
             }
         }
     };
+}
+
+/// Get the location of the macro invocation that eventually lead to the current proc macro being
+/// executed.
+///
+/// That is, if the proc macro's invocation was a result of the expansion of another macro this
+/// will return the location of the call to that other macro, whereas [`Span::call_site`] would
+/// return the location of that other macro's definition.
+pub fn source_call_site() -> Span {
+    let mut span = Span::call_site();
+    while let Some(parent) = span.parent() {
+        span = parent;
+    }
+    span
+}
+
+/// Find the root of the crate containing the given path.
+pub fn find_crate_root(path: &Path) -> Result<PathBuf, String> {
+    let mut crate_root = path.to_path_buf();
+    loop {
+        if !crate_root.pop() {
+            Err(format!(
+                "failed to traverse up from {}",
+                crate_root.display(),
+            ))?;
+        }
+        crate_root = crate_root
+            .canonicalize()
+            .map_err(|err| format!("failed to resolve {}: {err}", crate_root.display()))?;
+        match crate_root.join("Cargo.toml").try_exists() {
+            Ok(true) => break,
+            Ok(false) => {}
+            Err(err) => Err(format!(
+                "failed to find root of crate for source file {}: {err}",
+                path.display(),
+            ))?,
+        }
+    }
+    Ok(crate_root)
 }
 
 pub(crate) trait ParseNestedMetaExt {
