@@ -135,9 +135,12 @@ benchmark-%: test-and-run-% __setup-benchmark-%
 benchmark-set-baseline-%: target = $(subst benchmark-set-baseline-,,$@)
 benchmark-set-baseline-%: crate = $(word 1,$(subst -, ,${target}))
 benchmark-set-baseline-%: bin = $(subst ${crate}-,,${target})
-benchmark-set-baseline-%: test-and-run-% __setup-benchmark-%
-	@echo "$(setaf6)>>>>> Updating benchmark baseline for ${crate}/${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --package ${crate} --bin bench --features bench -- --save-baseline baseline
+benchmark-set-baseline-%:
+	@echo "$(setaf6)>>>>> Setting last benchmark for ${crate}/${bin} as baseline <<<<<$(sgr0)"
+	@for d in target/criterion/${crate}_${bin}_*/current; do \
+		rm -rf "$${d%/current}/baseline"; \
+		mv "$$d" "$${d%/current}/baseline"; \
+	done
 
 profile-%: target = $(subst profile-,,$@)
 profile-%: crate = $(word 1,$(subst -, ,${target}))
@@ -155,14 +158,10 @@ profile-%: test-and-run-% __setup-benchmark-%
 profile-set-baseline-%: target = $(subst profile-set-baseline-,,$@)
 profile-set-baseline-%: crate = $(word 1,$(subst -, ,${target}))
 profile-set-baseline-%: bin = $(subst ${crate}-,,${target})
-profile-set-baseline-%: test-and-run-% __setup-benchmark-%
-	@echo "$(setaf6)>>>>> Updating profile baseline for ${bin} <<<<<$(sgr0)"
-	@./cargo-semiquiet.sh bench --package ${crate} --bin bench --features bench -- --profile-time 15 --profile-name baseline
-	@for f in target/criterion/${crate}_${bin}_*/profile/baseline.pb; do \
-		name="$${f%/profile/baseline.pb}"; \
-		name="$${name##*/}"; \
-		name="$${name//_/ }"; \
-		pprofme upload "$$f" --description="$$name @ $$(stat --format '%y' "$$f") (baseline)"; \
+profile-set-baseline-%:
+	@echo "$(setaf6)>>>>> Setting last profile for ${bin} as baseline <<<<<$(sgr0)"
+	@for f in target/criterion/${crate}_${bin}_*/profile/current.pb; do \
+		mv "$$f" "$${f%/current.pb}/baseline.pb"; \
 	done
 
 #
