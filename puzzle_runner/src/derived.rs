@@ -1,6 +1,8 @@
 //! Structures used for the data that is injected by the macros in `puzzle_runner_derive`.
 
-use std::{collections::HashMap, ops::Deref};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
+
+use crate::controller::Controller;
 
 /// A single puzzle series. See [`puzzle_runner#Chapter`].
 #[derive(Clone)]
@@ -18,6 +20,10 @@ pub struct Series {
 
     /// The chapters in the series.
     pub chapters: Vec<Chapter>,
+
+    /// The controller that handles actions for this series.
+    #[cfg_attr(feature = "wasm", serde(skip_serializing))]
+    pub controller: Arc<Box<dyn Controller>>,
 }
 
 /// A single chapter in a [`Series`]. See [`puzzle_runner#Series`].
