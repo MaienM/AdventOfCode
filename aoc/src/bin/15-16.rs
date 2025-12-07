@@ -54,3 +54,28 @@ pub fn part1(input: &str) -> u16 {
     }
     panic!("Should never happen.");
 }
+
+pub fn part2(input: &str) -> u16 {
+    let aunts = parse_input(input);
+    let wanted = hash_map![
+        "children" => 3..=3,
+        "cats" => 8..=u8::MAX,
+        "samoyeds" => 2..=2,
+        "pomeranians" => 0..=2,
+        "akitas" => 0..=0,
+        "vizslas" => 0..=0,
+        "goldfish" => 0..=4,
+        "trees" => 4..=u8::MAX,
+        "cars" => 2..=2,
+        "perfumes" => 1..=1,
+    ];
+    'aunt: for aunt in aunts {
+        for (compound, count) in aunt.compounds {
+            if !wanted[compound].contains(&count) {
+                continue 'aunt;
+            }
+        }
+        return aunt.num;
+    }
+    panic!("Should never happen.");
+}
