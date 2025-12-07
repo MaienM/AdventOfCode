@@ -4,7 +4,7 @@ setaf1 = $(shell tput setaf 1)
 setaf6 = $(shell tput setaf 6)
 sgr0 = $(shell tput sgr0)
 
-.PHONY: test-libs web-dev docs FORCE
+.PHONY: test-libs web-dev docs confirm FORCE
 .SECONDEXPANSION:
 
 targets=$(foreach path,$(wildcard */src/bin/*),$(let crate bin,$(subst /src/bin/, ,${path}),$(subst -${crate},,$(subst .rs,,${crate}-${bin}))))
@@ -74,6 +74,13 @@ test-libs:
 	@LLVM_COV_FLAGS='--show-directory-coverage' \
 	 cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --html
 	@cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --lcov --output-path target/llvm-cov/lcov
+
+confirm:
+	@find inputs -type f -name '*.pending' | while read -r file; do \
+		target="$${file%.pending}"; \
+		echo "Confirming $$target."; \
+		mv "$$file" "$$target"; \
+	done
 
 #
 # Documentation.

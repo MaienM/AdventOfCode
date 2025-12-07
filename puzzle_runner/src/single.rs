@@ -9,7 +9,7 @@ use rayon::ThreadPoolBuilder;
 use crate::{
     derived::{Chapter, Part},
     runner::{DurationThresholds, InstantTimer, PrintPartResult as _},
-    source::{ChapterSources, ChapterSourcesValueParser, source_path_fill_tokens},
+    source::{ChapterSources, ChapterSourcesValueParser, Source, source_path_fill_tokens},
 };
 
 #[derive(Parser, Debug)]
@@ -63,7 +63,7 @@ pub(super) trait SingleRunner {
     fn print_header(&self, description: String);
 
     /// Run a single part.
-    fn run(&mut self, part: &Part, input: &str, solution: Result<Option<String>, String>);
+    fn run(&mut self, part: &Part, input: &str, solution: Result<Source, String>);
 
     /// Run after all parts have finished.
     fn finish(&mut self) {
@@ -86,9 +86,21 @@ impl SingleRunner for SingleRunnerImpl {
         println!("Running {description}...");
     }
 
-    fn run(&mut self, part: &Part, input: &str, solution: Result<Option<String>, String>) {
-        let result = solution.and_then(|solution| part.run::<InstantTimer>(input, solution));
+    fn run(&mut self, part: &Part, input: &str, solution: Result<Source, String>) {
+        let result = solution
+            .clone()
+            .and_then(|s| part.run::<InstantTimer>(input, s.read_maybe()?));
         result.print(&format!("Part {}", part.num), &THRESHOLDS, true);
+
+        if let Ok(result) = result
+            && result.solution.is_none()
+            && let Ok(solution) = solution
+        {
+            let solution = solution.mutate_path(|p| format!("{p}.pending"));
+            if let Ok(true) = solution.write_maybe(&result.result) {
+                println!("Saved preliminary result, run `make confirm` if it is correct.");
+            }
+        }
     }
 }
 
@@ -131,8 +143,7 @@ pub(super) fn run_single<T: SingleRunner>(chapter: &Chapter) {
     ThreadPoolBuilder::new().build_global().unwrap();
 
     for part in &chapter.parts {
-        let solution = folder.part(part.num).and_then(|s| s.read_maybe());
-        runner.run(part, &input, solution);
+        runner.run(part, &input, folder.part(part.num));
     }
 
     runner.finish();

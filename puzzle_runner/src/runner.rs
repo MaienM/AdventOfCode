@@ -41,7 +41,7 @@ static SYMBOL_INCORRECT: LazyLock<String> = LazyLock::new(|| Red.paint("✘").to
 static SYMBOL_ERROR: LazyLock<String> = LazyLock::new(|| Red.paint("⚠").to_string());
 
 /// The result of successfully running a [`Part`].
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 #[cfg_attr(
     feature = "wasm",
     derive(serde::Serialize, tsify::Tsify),

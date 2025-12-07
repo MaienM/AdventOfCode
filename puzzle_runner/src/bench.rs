@@ -16,6 +16,7 @@ use pprof::{ProfilerGuard, protos::Message};
 use crate::{
     derived::{Chapter, Part},
     single::{SingleArgs, SingleRunner, run_single},
+    source::{ChapterSources, Source},
 };
 
 #[derive(Parser, Debug)]
@@ -100,7 +101,7 @@ pub(super) struct BenchRunner(String, Criterion);
 impl SingleRunner for BenchRunner {
     type Args = BenchArgs;
 
-    fn get_sources_arg(args: &mut Self::Args) -> &mut crate::source::ChapterSources {
+    fn get_sources_arg(args: &mut Self::Args) -> &mut ChapterSources {
         &mut args.single.folder
     }
 
@@ -113,7 +114,7 @@ impl SingleRunner for BenchRunner {
         println!();
     }
 
-    fn run(&mut self, part: &Part, input: &str, _solution: Result<Option<String>, String>) {
+    fn run(&mut self, part: &Part, input: &str, _solution: Result<Source, String>) {
         let name = format!("{}/{}", self.0, part.num);
         self.1.bench_function(&name, |b| {
             b.iter(|| (part.implementation)(input));

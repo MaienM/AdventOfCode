@@ -1,6 +1,6 @@
 //! Handle inputs for solutions from various sources.
 
-use std::{fs::read_to_string, io::ErrorKind, path::PathBuf};
+use std::{fs, io::ErrorKind, path::PathBuf};
 
 use clap::{
     builder::{StringValueParser, TypedValueParser},
@@ -31,9 +31,15 @@ pub enum Source {
 }
 impl Source {
     fn read_path(path: &str) -> Result<String, (ErrorKind, String)> {
-        read_to_string(path)
+        fs::read_to_string(path)
             .map(|contents| contents.strip_suffix('\n').unwrap_or(&contents).to_owned())
             .map_err(|err| (err.kind(), format!("Failed to read {path}: {err}")))
+    }
+
+    fn write_path(path: &str, contents: &str) -> Result<bool, (ErrorKind, String)> {
+        fs::write(path, contents)
+            .and(Ok(true))
+            .map_err(|err| (err.kind(), format!("Failed to write {path}: {err}")))
     }
 
     fn join_paths(base: &str, tail: &str) -> Result<String, String> {
@@ -54,7 +60,8 @@ impl Source {
         }
     }
 
-    /// Attempt to read the file at the provided path, returning [`None`] when a non-fatal error occurs.
+    /// Attempt to read the file at the provided path, returning [`Ok(None)`] when a non-fatal
+    /// error occurs or there is no source to read from.
     pub fn read_maybe(&self) -> Result<Option<String>, String> {
         match self {
             Source::ExplicitPath(path) => Ok(Some(Self::read_path(path).map_err(|(_, e)| e)?)),
@@ -65,6 +72,20 @@ impl Source {
             },
             Source::Inline { contents, .. } => Ok(Some(contents.clone())),
             Source::None(_) => Ok(None),
+        }
+    }
+
+    /// Attempt to write the file at the provided path, returning [`Ok(false)`] when a non-fatal
+    /// error occurs or there is no file source to write to.
+    pub fn write_maybe(&self, contents: &str) -> Result<bool, String> {
+        match self {
+            Source::ExplicitPath(path) => Ok(Self::write_path(path, contents).map_err(|(_, e)| e)?),
+            Source::AutomaticPath(path) => match Self::write_path(path, contents) {
+                Ok(result) => Ok(result),
+                Err((ErrorKind::NotFound, _)) => Ok(false),
+                Err((_, err)) => Err(err),
+            },
+            _ => Ok(false),
         }
     }
 
