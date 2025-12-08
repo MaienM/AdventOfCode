@@ -6,6 +6,8 @@ import Context from './context';
 import ResultComponent from './Result';
 import type { Example, Result } from './worker';
 
+const trimNewlines = (input: string) => input.replace(/\n*$/, '');
+
 /**
  * Component to display and run a single chapter.
  */
@@ -41,7 +43,7 @@ export default () => {
 				series.name,
 				chapter.name,
 				part.num,
-				input.trimEnd(),
+				trimNewlines(input),
 				example?.parts.get(part.num),
 			);
 			setResults((current) => ({
@@ -82,14 +84,14 @@ export default () => {
 						setExample(undefined);
 					}}
 					onBlur={(_) => {
-						setInput(input.trimEnd());
+						setInput(trimNewlines(input));
 						setExample(undefined);
 					}}
 					onPaste={(event) => {
 						const input = event.target as HTMLTextAreaElement;
 						if (input.selectionStart === 0 && input.selectionEnd === input.value.length) {
 							event.preventDefault();
-							const text = event.clipboardData.getData('text/plain').trimEnd();
+							const text = trimNewlines(event.clipboardData.getData('text/plain'));
 							setInput(text);
 							setExample(undefined);
 						}
