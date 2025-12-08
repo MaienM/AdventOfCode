@@ -20,6 +20,7 @@ num.workspace = true
 memoize = { git = "https://github.com/MaienM/memoize", version = "0.4.2" }
 itertools.workspace = true
 md-5 = "=0.10.6"
+reqwest = { version = "0.12.24", default-features = false, features = ["charset", "http2", "system-proxy", "blocking", "cookies", "rustls-tls-native-roots"] }
 
 [dev-dependencies]
 pretty_assertions = "=1.4.1"
