@@ -83,6 +83,47 @@ pub fn part1(input: &str) -> usize {
     part1impl(input, 1000)
 }
 
+fn part2(input: &str) -> usize {
+    let boxes = parse_input(input);
+    let len = boxes.len();
+    let connections = boxes
+        .iter()
+        .tuple_combinations()
+        .map(|(a, b)| (distance(a, b), a, b))
+        .sorted_unstable();
+    let mut circuits: Vec<HashSet<Point3>> = Vec::new();
+    for (_, a, b) in connections {
+        let circuit_a = circuits.iter().find_position(|c| c.contains(a));
+        let circuit_b = circuits.iter().find_position(|c| c.contains(b));
+        match (circuit_a, circuit_b) {
+            (None, None) => {
+                circuits.push(hash_set![*a, *b]);
+            }
+            (None, Some((idx, _))) => {
+                circuits[idx].insert(*a);
+            }
+            (Some((idx, _)), None) => {
+                circuits[idx].insert(*b);
+            }
+            (Some((ia, _)), Some((ib, _))) => match ia.cmp(&ib) {
+                Ordering::Less => {
+                    let to_merge = circuits.swap_remove(ib);
+                    circuits[ia].extend(to_merge);
+                }
+                Ordering::Equal => {}
+                Ordering::Greater => {
+                    let to_merge = circuits.swap_remove(ia);
+                    circuits[ib].extend(to_merge);
+                }
+            },
+        }
+        if circuits.len() == 1 && circuits.first().unwrap().len() == len {
+            return a.x * b.x;
+        }
+    }
+    panic!("Should never happen.");
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -90,7 +131,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input]
+    #[example_input(part2 = 25_272)]
     static EXAMPLE_INPUT: &str = "
         162,817,812
         57,618,57
