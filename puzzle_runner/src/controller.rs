@@ -1,6 +1,8 @@
 //! A controller handles generic actions (e.g., getting inputs, validating results) for a specific
 //! series.
 
+use crate::derived::Chapter;
+
 /// The actions for a controller. This should be implemented manually.
 #[allow(clippy::missing_errors_doc)]
 pub trait Controller: Send + Sync {
@@ -8,6 +10,12 @@ pub trait Controller: Send + Sync {
     fn new() -> ControllerResult<Self>
     where
         Self: Sized;
+
+    /// Get the input for a chapter.
+    fn get_input(&self, chapter: &Chapter) -> ControllerResult<String> {
+        let _ = chapter;
+        Err(ControllerError::NotImplemented)
+    }
 }
 
 /// The result of a controller action.

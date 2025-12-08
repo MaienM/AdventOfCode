@@ -90,15 +90,62 @@ impl Source {
     }
 
     /// Replace the contents of the source.
+    ///
+    /// This will automatically create missing parent directories.
     #[must_use]
     pub fn write(&self, contents: &str) -> IOResult<String> {
         match self {
-            Source::Path(path) => match fs::write(path, contents) {
-                Ok(()) => IOResult::Ok(contents.to_owned()),
-                Err(err) if err.kind() == ErrorKind::NotFound => IOResult::NotFound(path.clone()),
-                Err(err) => IOResult::Err(format!("unable to write {path}: {err}")),
-            },
+            Source::Path(path) => {
+                if let Some(parent) = PathBuf::from(path).parent() {
+                    match fs::create_dir_all(parent) {
+                        Ok(_) => {}
+                        Err(err) => {
+                            return IOResult::Err(format!(
+                                "failed to create parent directory {}: {err}",
+                                parent.display()
+                            ));
+                        }
+                    }
+                }
+                match fs::write(path, contents) {
+                    Ok(()) => IOResult::Ok(contents.to_owned()),
+                    Err(err) if err.kind() == ErrorKind::NotFound => {
+                        IOResult::NotFound(path.clone())
+                    }
+                    Err(err) => IOResult::Err(format!("unable to write {path}: {err}")),
+                }
+            }
             Source::Inline { .. } => IOResult::Err("inline value, cannot be written".to_owned()),
+        }
+    }
+
+    /// Read the contents of the source if available. If it isn't and this source supports writing
+    /// then the provided function will be called and the source will be initialized (written) with
+    /// the results.
+    #[must_use]
+    pub fn read_or_init<F, E>(&self, f: F) -> IOResult<String>
+    where
+        F: FnOnce() -> Result<String, E>,
+        E: Into<String>,
+    {
+        match self.read() {
+            IOResult::NotFound(path) if self.can_write() => match f() {
+                Ok(contents) => self.write(&contents),
+                Err(err) => IOResult::Err(format!(
+                    "{path} does not exist & failed to initialize: {}",
+                    err.into()
+                )),
+            },
+            value => value,
+        }
+    }
+
+    /// Whether this source supports write operations.
+    #[must_use]
+    pub fn can_write(&self) -> bool {
+        match self {
+            Source::Path(_) => true,
+            Source::Inline { .. } => false,
         }
     }
 
