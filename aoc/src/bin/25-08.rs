@@ -25,49 +25,44 @@ fn distance(a: &Point3, b: &Point3) -> usize {
     sqrt(a.x.abs_diff(b.x).pow(2) + a.y.abs_diff(b.y).pow(2) + a.z.abs_diff(b.z).pow(2))
 }
 
-// fn distance(a: &Point3, b: &Point3) -> usize {
-//     (f64::sqrt(
-//         (a.x.abs_diff(b.x).pow(2) + a.y.abs_diff(b.y).pow(2) + a.z.abs_diff(b.z).pow(2)) as f64,
-//     ) * 100000.0) as usize
-// }
+fn add_connection(circuits: &mut Vec<HashSet<Point3>>, a: &Point3, b: &Point3) {
+    let circuit_a = circuits.iter().find_position(|c| c.contains(a));
+    let circuit_b = circuits.iter().find_position(|c| c.contains(b));
+    match (circuit_a, circuit_b) {
+        (None, None) => {
+            circuits.push(hash_set![*a, *b]);
+        }
+        (None, Some((idx, _))) => {
+            circuits[idx].insert(*a);
+        }
+        (Some((idx, _)), None) => {
+            circuits[idx].insert(*b);
+        }
+        (Some((ia, _)), Some((ib, _))) => match ia.cmp(&ib) {
+            Ordering::Less => {
+                let to_merge = circuits.swap_remove(ib);
+                circuits[ia].extend(to_merge);
+            }
+            Ordering::Equal => {}
+            Ordering::Greater => {
+                let to_merge = circuits.swap_remove(ia);
+                circuits[ib].extend(to_merge);
+            }
+        },
+    }
+}
 
 fn part1impl(input: &str, connections: usize) -> usize {
     let boxes = parse_input(input);
-    let mut todo = connections;
-    let mut connections = boxes
+    let pairs = boxes
         .iter()
         .tuple_combinations()
         .map(|(a, b)| (distance(a, b), a, b))
-        .sorted_unstable();
+        .sorted_unstable()
+        .take(connections);
     let mut circuits: Vec<HashSet<Point3>> = Vec::new();
-    while todo > 0
-        && let Some((_, a, b)) = connections.next()
-    {
-        let circuit_a = circuits.iter().find_position(|c| c.contains(a));
-        let circuit_b = circuits.iter().find_position(|c| c.contains(b));
-        match (circuit_a, circuit_b) {
-            (None, None) => {
-                circuits.push(hash_set![*a, *b]);
-            }
-            (None, Some((idx, _))) => {
-                circuits[idx].insert(*a);
-            }
-            (Some((idx, _)), None) => {
-                circuits[idx].insert(*b);
-            }
-            (Some((ia, _)), Some((ib, _))) => match ia.cmp(&ib) {
-                Ordering::Less => {
-                    let to_merge = circuits.swap_remove(ib);
-                    circuits[ia].extend(to_merge);
-                }
-                Ordering::Equal => {}
-                Ordering::Greater => {
-                    let to_merge = circuits.swap_remove(ia);
-                    circuits[ib].extend(to_merge);
-                }
-            },
-        }
-        todo -= 1;
+    for (_, a, b) in pairs {
+        add_connection(&mut circuits, a, b);
     }
     circuits
         .into_iter()
@@ -85,39 +80,16 @@ pub fn part1(input: &str) -> usize {
 
 fn part2(input: &str) -> usize {
     let boxes = parse_input(input);
-    let len = boxes.len();
-    let connections = boxes
+    let all = boxes.len();
+    let pairs = boxes
         .iter()
         .tuple_combinations()
         .map(|(a, b)| (distance(a, b), a, b))
         .sorted_unstable();
     let mut circuits: Vec<HashSet<Point3>> = Vec::new();
-    for (_, a, b) in connections {
-        let circuit_a = circuits.iter().find_position(|c| c.contains(a));
-        let circuit_b = circuits.iter().find_position(|c| c.contains(b));
-        match (circuit_a, circuit_b) {
-            (None, None) => {
-                circuits.push(hash_set![*a, *b]);
-            }
-            (None, Some((idx, _))) => {
-                circuits[idx].insert(*a);
-            }
-            (Some((idx, _)), None) => {
-                circuits[idx].insert(*b);
-            }
-            (Some((ia, _)), Some((ib, _))) => match ia.cmp(&ib) {
-                Ordering::Less => {
-                    let to_merge = circuits.swap_remove(ib);
-                    circuits[ia].extend(to_merge);
-                }
-                Ordering::Equal => {}
-                Ordering::Greater => {
-                    let to_merge = circuits.swap_remove(ia);
-                    circuits[ib].extend(to_merge);
-                }
-            },
-        }
-        if circuits.len() == 1 && circuits.first().unwrap().len() == len {
+    for (_, a, b) in pairs {
+        add_connection(&mut circuits, a, b);
+        if circuits.len() == 1 && circuits.first().unwrap().len() == all {
             return a.x * b.x;
         }
     }
