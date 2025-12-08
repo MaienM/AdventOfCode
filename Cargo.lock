@@ -140,6 +140,7 @@ dependencies = [
  "pretty_assertions",
  "puzzle_lib",
  "puzzle_runner",
+ "regex",
  "reqwest",
 ]
 
