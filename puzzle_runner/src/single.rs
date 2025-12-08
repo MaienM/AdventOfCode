@@ -128,7 +128,10 @@ pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
         Cyan.paint(input_path.source()),
     ));
 
-    let input = match input_path.read().to_value() {
+    let input = match input_path
+        .read_or_init(|| series.controller.get_input(chapter))
+        .to_value()
+    {
         Ok(contents) => contents,
         Err(err) => return println!("{}", Red.paint(err)),
     };

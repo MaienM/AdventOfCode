@@ -102,6 +102,36 @@ impl Source {
         }
     }
 
+    /// Read the contents of the source if available. If it isn't and this source supports writing
+    /// then the provided function will be called and the source will be initialized (written) with
+    /// the results.
+    #[must_use]
+    pub fn read_or_init<F, E>(&self, f: F) -> IOResult<String>
+    where
+        F: FnOnce() -> Result<String, E>,
+        E: Into<String>,
+    {
+        match self.read() {
+            IOResult::NotFound(path) if self.can_write() => match f() {
+                Ok(contents) => self.write(&contents),
+                Err(err) => IOResult::Err(format!(
+                    "{path} does not exist & failed to initialize: {}",
+                    err.into()
+                )),
+            },
+            value => value,
+        }
+    }
+
+    /// Whether this source supports write operations.
+    #[must_use]
+    pub fn can_write(&self) -> bool {
+        match self {
+            Source::Path(_) => true,
+            Source::Inline { .. } => false,
+        }
+    }
+
     /// Get a human-readable description of the source of the value.
     #[must_use]
     pub fn source(&self) -> String {
