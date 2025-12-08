@@ -1319,6 +1319,12 @@ mod tests {
     }
 
     #[test]
+    #[should_panic = "cannot convert character 'a' to a number"]
+    fn parse_chars_custom_type_error() {
+        parse!("1a" => [_items chars as i8]);
+    }
+
+    #[test]
     fn parse_chars_custom_collection() {
         parse!("12" => [items chars into (HashSet<_>)]);
         assert_eq!(items, HashSet::from(['1', '2']));
