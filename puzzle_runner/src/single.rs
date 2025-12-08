@@ -2,15 +2,23 @@
 
 use std::time::Duration;
 
-use ansi_term::Colour::{Cyan, Purple, Red};
+use ansi_term::Colour::{Cyan, Green, Purple, Red};
 use clap::{CommandFactory, FromArgMatches, Parser, ValueHint};
 use rayon::ThreadPoolBuilder;
 
 use crate::{
     derived::{Chapter, Part, Series},
     runner::{DurationThresholds, InstantTimer, PrintPartResult as _},
-    source::{ChapterSources, Source, source_path_fill_tokens},
+    source::{ChapterSources, IOResult, Source, source_path_fill_tokens},
 };
+
+/// Check whether a value should be submitted.
+///
+/// This rejects any unlikely values (empty string, 0, and 1, as well as any values containing a
+/// newline).
+fn is_plausible_result(result: &str) -> bool {
+    !(["", "0", "1"].contains(&result) || result.contains('\n'))
+}
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -24,7 +32,11 @@ pub(super) struct SingleArgs {
         value_hint = ValueHint::DirPath,
         default_value = "inputs/{series}/{chapter}",
     )]
-    pub(super) folder: String,
+    folder: String,
+
+    /// Whether to auto-submit answers.
+    #[arg(action)]
+    submit: bool,
 }
 
 const THRESHOLDS: DurationThresholds = DurationThresholds {
@@ -52,11 +64,11 @@ macro_rules! arg_default_value_fill_tokens {
 pub(super) trait SingleRunner {
     type Args: Parser;
 
-    // Get the sources from the arguments.
-    fn get_sources_arg(args: &Self::Args) -> &String;
+    // Get the [`SingleArgs`] from the arguments.
+    fn get_single_args(args: &Self::Args) -> &SingleArgs;
 
     /// Setup based on arguments.
-    fn setup(args: &Self::Args, series: &Series, chapter: &Chapter) -> Self;
+    fn setup(args: &Self::Args, series: &'static Series, chapter: &'static Chapter) -> Self;
 
     /// Print the header line at the top for this action.
     fn print_header(&self, description: String);
@@ -69,16 +81,28 @@ pub(super) trait SingleRunner {
     }
 }
 
-struct SingleRunnerImpl;
+struct SingleRunnerImpl {
+    submit: bool,
+    series: &'static Series,
+    chapter: &'static Chapter,
+}
 impl SingleRunner for SingleRunnerImpl {
     type Args = SingleArgs;
 
-    fn get_sources_arg(args: &Self::Args) -> &String {
-        &args.folder
+    fn get_single_args(args: &Self::Args) -> &SingleArgs {
+        args
     }
 
-    fn setup(_args: &Self::Args, _series: &Series, _chapter: &Chapter) -> Self {
-        SingleRunnerImpl
+    fn setup(
+        args: &Self::Args,
+        series: &'static Series,
+        chapter: &'static Chapter,
+    ) -> SingleRunnerImpl {
+        SingleRunnerImpl {
+            submit: args.submit,
+            series,
+            chapter,
+        }
     }
 
     fn print_header(&self, description: String) {
@@ -94,17 +118,58 @@ impl SingleRunner for SingleRunnerImpl {
         if let Ok(result) = result
             && result.solution.is_none()
             && let Ok(solution) = solution
+            && is_plausible_result(&result.result)
         {
+            // The result is not yet confirmed, so attempt to submit & save it.
+            if self.submit && is_plausible_result(&result.result) {
+                match self
+                    .series
+                    .controller
+                    .validate_result(self.chapter, part, &result.result)
+                {
+                    Ok(Ok(())) => {
+                        println!("{}", Green.paint("Result is correct!"));
+                        match solution.write(&result.result) {
+                            IOResult::Ok(_) => {
+                                println!("Saved result to {}.", Cyan.paint(solution.source()));
+                            }
+                            IOResult::NotFound(_) => {
+                                println!("Failed to save to {}.", Cyan.paint(solution.source()));
+                            }
+                            IOResult::Err(err) => {
+                                println!(
+                                    "Failed to save to {}: {}.",
+                                    Cyan.paint(solution.source()),
+                                    Red.paint(err)
+                                );
+                            }
+                        }
+                    }
+                    Ok(Err(err)) => {
+                        println!("{}", Red.paint("Result is incorrect:"));
+                        println!("{err}");
+                    }
+                    Err(err) => {
+                        println!(
+                            "Result could not be validated automatically: {}.",
+                            Red.paint(String::from(err))
+                        );
+                    }
+                }
+            }
+
             let solution = solution.transform_path(|p| format!("{p}.pending"));
             if solution.write(&result.result).to_value().is_ok() {
-                println!("Saved preliminary result, run `make confirm` if it is correct.");
+                println!(
+                    "Saved preliminary result, validate manually and run `make confirm` if it is correct."
+                );
             }
         }
     }
 }
 
 #[doc(hidden)]
-pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
+pub(super) fn run_single<T: SingleRunner>(series: &'static Series, chapter: &'static Chapter) {
     // Replace the placeholders in the default values.
     let mut cmd = T::Args::command_for_update();
     cmd =
@@ -113,7 +178,7 @@ pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
     // Parse & replace the placeholders in the actual values.
     let mut matches = cmd.get_matches();
     let args = T::Args::from_arg_matches_mut(&mut matches).unwrap();
-    let folder = ChapterSources::Path(T::get_sources_arg(&args).clone());
+    let folder = ChapterSources::Path(T::get_single_args(&args).folder.clone());
     let folder = source_path_fill_tokens!(folder, series = series.name, chapter = chapter.name);
     let input_path = folder.input().to_value().unwrap();
 
@@ -147,6 +212,6 @@ pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
 }
 
 #[doc(hidden)]
-pub fn main(series: &Series, chapter: &Chapter) {
+pub fn main(series: &'static Series, chapter: &'static Chapter) {
     run_single::<SingleRunnerImpl>(series, chapter);
 }

@@ -101,11 +101,11 @@ pub(super) struct BenchRunner(String, Criterion);
 impl SingleRunner for BenchRunner {
     type Args = BenchArgs;
 
-    fn get_sources_arg(args: &mut Self::Args) -> &String {
-        &mut args.single.folder
+    fn get_single_args(args: &Self::Args) -> &SingleArgs {
+        &args.single
     }
 
-    fn setup(args: &Self::Args, series: &Series, chapter: &Chapter) -> Self {
+    fn setup(args: &Self::Args, series: &'static Series, chapter: &'static Chapter) -> Self {
         BenchRunner(
             format!("{}/{}", series.name, chapter.name),
             args.build_criterion(),
@@ -130,7 +130,7 @@ impl SingleRunner for BenchRunner {
 }
 
 #[doc(hidden)]
-pub fn main(series: &Series, chapter: &Chapter) {
+pub fn main(series: &'static Series, chapter: &'static Chapter) {
     // Benchmarks are ran with the directory set to the crate root instead of repository root. This
     // breaks loading inputs (which uses relative paths by default), so we change back to the
     // repository root here.

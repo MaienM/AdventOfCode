@@ -1,4 +1,4 @@
-use crate::derived::Chapter;
+use crate::derived::{Chapter, Part};
 
 #[derive(Debug)]
 pub enum ControllerError {
@@ -31,6 +31,17 @@ pub trait Controller: Send + Sync {
     /// Get the input for a chapter.
     fn get_input(&self, chapter: &Chapter) -> ControllerResult<String> {
         let _ = chapter;
+        Err(ControllerError::NotImplemented)
+    }
+
+    /// Validate the result for a part.
+    fn validate_result(
+        &self,
+        chapter: &Chapter,
+        part: &Part,
+        result: &str,
+    ) -> ControllerResult<Result<(), String>> {
+        let _ = (chapter, part, result);
         Err(ControllerError::NotImplemented)
     }
 }
