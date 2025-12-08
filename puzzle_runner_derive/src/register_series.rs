@@ -30,7 +30,13 @@ pub fn main(input: TokenStream) -> TokenStream {
     let chapters = include_chapters(false);
     let (name, alias) = if let Ok(name) = source_crate() {
         let crateident = format_ident!("{name}");
-        (name, quote!(extern crate self as #crateident;))
+        (
+            name,
+            quote! {
+                #[cfg(not(any(test, doctest)))]
+                extern crate self as #crateident;
+            },
+        )
     } else {
         (String::new(), quote!())
     };

@@ -84,9 +84,9 @@ pub fn include_chapters(force: bool) -> TokenStream2 {
         pub static CHAPTERS: ::std::sync::LazyLock<Vec<::puzzle_runner::derived::Chapter>> = ::std::sync::LazyLock::new(|| {
             // Get the chapters.
             let chapters: Vec<::puzzle_runner::derived::Chapter> = {
-                #[cfg(test)]
+                #[cfg(any(test, doctest))]
                 { Vec::new() }
-                #[cfg(not(test))]
+                #[cfg(not(any(test, doctest)))]
                 { vec![ #(#chapters),* ] }
             };
 
@@ -106,7 +106,7 @@ pub fn include_chapters(force: bool) -> TokenStream2 {
         });
 
         /// The chapters.
-        #[cfg(not(test))]
+        #[cfg(not(any(test, doctest)))]
         pub mod chapters {
             #(#mods)*
         }
