@@ -77,8 +77,11 @@
                 cargo-expand
                 cargo-machete
                 inputs'.fenix.packages.rust-analyzer
-                gnumake
                 rust
+
+                # Building.
+                gnumake
+                expect # unbuffer
 
                 # Tests.
                 cargo-llvm-cov
@@ -95,11 +98,6 @@
                 nodePackages.eslint_d
                 nodePackages.npm
                 nodePackages.typescript-language-server
-
-                cmake
-                fontconfig
-                pkg-config
-                expect # unbuffer
               ];
 
               shellHook = ''
