@@ -4,7 +4,7 @@ members = [
 	"aoc",
 	"puzzle_lib",
 	"puzzle_runner",
-	"puzzle_runner_derive",
+	"puzzle_runner/derive",
 	"puzzle_wasm",
 ]
 
