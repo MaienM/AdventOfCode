@@ -9,11 +9,10 @@ use clap::{
 };
 use rayon::ThreadPoolBuilder;
 
-use super::source::source_path_fill_tokens;
 use crate::{
     derived::{Chapter, Part, Series},
     runner::{DurationThresholds, InstantTimer, PartResult, PrintPartResult as _, RunResults},
-    source::{ChapterSources, Source},
+    source::{ChapterSources, Source, source_path_fill_tokens},
 };
 
 static SERIES: OnceLock<Series> = OnceLock::new();

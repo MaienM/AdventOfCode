@@ -29,11 +29,9 @@
 #[doc(hidden)]
 extern crate self as puzzle_runner;
 
-pub mod bench;
+pub mod __internal;
 pub mod derived;
-pub mod multi;
 pub mod runner;
-pub mod single;
 mod source;
 
 pub use puzzle_runner_derive::{example_input, register_chapter, register_series, setup_main};

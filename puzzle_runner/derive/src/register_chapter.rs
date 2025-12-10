@@ -211,9 +211,9 @@ pub fn main(input: TokenStream) -> TokenStream {
         quote! {
             pub fn main() {
                 #[cfg(not(feature = "bench"))]
-                ::puzzle_runner::single::main(&*::#crateident::SERIES, &*CHAPTER);
+                ::puzzle_runner::__internal::single::main(&*::#crateident::SERIES, &*CHAPTER);
                 #[cfg(feature = "bench")]
-                ::puzzle_runner::bench::main(&*::#crateident::SERIES, &*CHAPTER);
+                ::puzzle_runner::__internal::bench::main(&*::#crateident::SERIES, &*CHAPTER);
             }
         }
     } else {

@@ -18,7 +18,7 @@ pub fn main(input: TokenStream) -> TokenStream {
                     chapters: CHAPTERS.clone(),
                     ..*::#crateident::SERIES
                 };
-                ::puzzle_runner::multi::main(&series);
+                ::puzzle_runner::__internal::multi::main(&series);
             }
         }
     } else {

@@ -14,9 +14,9 @@ use criterion::{Criterion, profiler::Profiler as CProfiler};
 use pprof::{ProfilerGuard, protos::Message};
 
 use crate::{
+    __internal::single::{SingleArgs, SingleRunner, run_single},
     derived::{Chapter, Part, Series},
-    single::{SingleArgs, SingleRunner, run_single},
-    source::{ChapterSources, Source},
+    source::Source,
 };
 
 #[derive(Parser, Debug)]
@@ -101,8 +101,8 @@ pub(super) struct BenchRunner(String, Criterion);
 impl SingleRunner for BenchRunner {
     type Args = BenchArgs;
 
-    fn get_sources_arg(args: &mut Self::Args) -> &String {
-        &mut args.single.folder
+    fn get_sources_arg(args: &Self::Args) -> &String {
+        &args.single.folder
     }
 
     fn setup(args: &Self::Args, series: &Series, chapter: &Chapter) -> Self {
