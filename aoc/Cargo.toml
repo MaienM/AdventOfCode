@@ -20,6 +20,7 @@ num.workspace = true
 memoize = { git = "https://github.com/MaienM/memoize", version = "0.4.2" }
 itertools.workspace = true
 md-5 = "=0.10.6"
+good_lp = { version = "1.14.2", default-features = false, features = ["microlp"] }
 
 [dev-dependencies]
 pretty_assertions = "=1.4.1"

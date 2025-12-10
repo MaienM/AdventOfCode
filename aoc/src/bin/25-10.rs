@@ -5,11 +5,15 @@ use std::{
     collections::{BinaryHeap, HashSet},
 };
 
+use good_lp::{
+    Expression, ProblemVariables, Solution as _, SolverModel as _, default_solver, variable,
+};
+
 #[derive(Debug, Eq, PartialEq)]
 struct Machine {
     lights: Vec<bool>,
     buttons: Vec<Vec<usize>>,
-    requirements: Vec<usize>,
+    joltages: Vec<u16>,
 }
 
 fn parse_input(input: &str) -> Vec<Machine> {
@@ -28,15 +32,15 @@ fn parse_input(input: &str) -> Vec<Machine> {
                     => indexes
                 ]
                 " {"
-                [requirements split on ',' as usize]
+                [joltages split on ',' as u16]
                 '}'
             }
-            => Machine { lights, buttons, requirements }
+            => Machine { lights, buttons, joltages }
         ]
     } => machines)
 }
 
-fn find_fewest_presses(machine: &Machine) -> usize {
+fn find_fewest_presses_lights(machine: &Machine) -> usize {
     let mut target = 0;
     for (idx, state) in machine.lights.iter().enumerate() {
         if *state {
@@ -70,9 +74,56 @@ fn find_fewest_presses(machine: &Machine) -> usize {
     panic!("Should never happen.");
 }
 
+fn find_fewest_presses_joltages(machine: &Machine) -> usize {
+    let mut vars = ProblemVariables::new();
+
+    // Add variables for the buttons.
+    let button_vars: Vec<_> = machine
+        .buttons
+        .iter()
+        .map(|_| vars.add(variable().min(0).integer()))
+        .collect();
+
+    // Setup problem with minimal presses as the goal.
+    let mut problem = vars
+        .minimise(button_vars.iter().sum::<Expression>())
+        .using(default_solver);
+
+    // Add expression for each joltage (sum of the presses of the buttons == joltage).
+    for (jidx, joltage) in machine.joltages.iter().enumerate() {
+        let expr = machine
+            .buttons
+            .iter()
+            .enumerate()
+            .filter_map(|(bidx, button)| {
+                if button.contains(&jidx) {
+                    Some(button_vars[bidx])
+                } else {
+                    None
+                }
+            })
+            .sum::<Expression>();
+        println!("{expr:?}");
+        problem = problem.with(expr.eq(*joltage));
+    }
+
+    // Solve.
+    let solution = problem.solve().unwrap();
+    button_vars
+        .into_iter()
+        .map(|v| solution.value(v))
+        .sum::<f64>()
+        .round() as usize
+}
+
 pub fn part1(input: &str) -> usize {
     let machines = parse_input(input);
-    machines.iter().map(find_fewest_presses).sum()
+    machines.par_iter().map(find_fewest_presses_lights).sum()
+}
+
+pub fn part2(input: &str) -> usize {
+    let machines = parse_input(input);
+    machines.iter().map(find_fewest_presses_joltages).sum()
 }
 
 #[cfg(test)]
@@ -82,7 +133,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 7)]
+    #[example_input(part1 = 7, part2 = 33)]
     static EXAMPLE_INPUT: &str = "
         [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
         [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
