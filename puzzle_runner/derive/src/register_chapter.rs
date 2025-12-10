@@ -17,9 +17,9 @@ use crate::{
 args_struct! {
     struct Args {
         /// The book that the chapter is in.
-        book: Option<String> = None,
+        book: Option<String> = initial None,
         /// The title of the chapter.
-        title: Option<String> = None,
+        title: Option<String> = initial None,
     }
 }
 
@@ -177,9 +177,9 @@ pub fn main(input: TokenStream) -> TokenStream {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("book") {
-            meta.set_empty_option(&mut builder.book, Some(meta.parse_nonempty_string()?))?;
+            meta.set_empty_option(&mut builder.book, meta.parse_nonempty_string()?)?;
         } else if meta.path.is_ident("title") {
-            meta.set_empty_option(&mut builder.title, Some(meta.parse_nonempty_string()?))?;
+            meta.set_empty_option(&mut builder.title, meta.parse_nonempty_string()?)?;
         } else {
             return Err(meta.error("unsupported property"));
         }

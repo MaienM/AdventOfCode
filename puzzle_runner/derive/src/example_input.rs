@@ -13,11 +13,11 @@ use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err};
 args_struct! {
     struct Args {
         /// The indentation that should be stripped from the start of each line.
-        indent: String = " ".repeat(8),
+        indent: String = default " ".repeat(8),
         /// The expected results for the parts.
-        parts: HashMap<u8, Expr> = HashMap::new(),
+        parts: HashMap<u8, Expr> = initial HashMap::new(),
         /// Whether to generate tests for the example.
-        test: bool = true,
+        test: bool = default true,
     }
 }
 
@@ -115,14 +115,7 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
             && let Some(num) = ident.to_string().strip_prefix("part")
             && let Ok(num) = num.parse()
         {
-            if builder.parts.is_none() {
-                builder.parts = Some(HashMap::new());
-            }
-            builder
-                .parts
-                .as_mut()
-                .unwrap()
-                .insert(num, meta.value()?.parse()?);
+            builder.parts.insert(num, meta.value()?.parse()?);
         } else {
             return Err(meta.error("unsupported property"));
         }

@@ -127,7 +127,7 @@ macro_rules! args_struct {
         struct $name:ident {
             $(
                 $(#[$varmeta:meta])*
-                $var:ident: $type:ty $(= $default:expr)?
+                $var:ident: $type:ty $(= $defaulttype:ident $default:expr)?
             ),+
             $(,)?
         }
@@ -143,31 +143,45 @@ macro_rules! args_struct {
             impl $name {
                 #[allow(private_interfaces)]
                 pub fn build() -> [<$name Builder>] {
-                    [<$name Builder>]::default()
+                    [<$name Builder>] {
+                        $(
+                            $var: $crate::utils::args_struct!(@build_default; $($defaulttype $default)?)
+                        ),+
+                    }
                 }
             }
 
-            #[derive(Default)]
             struct [<$name Builder>] {
                 $(
-                    pub $var: Option<$type>
+                    pub $var: $crate::utils::args_struct!(@build_define; $($defaulttype)? $type)
                 ),+
             }
             impl [<$name Builder>] {
-                /// Convert into
-                /// [`Args`].
+                /// Convert into args.
                 pub fn finalize(self) -> Result<Args, String> {
-                    Ok(Args {
+                    Ok($name {
                         $(
-                            $var: self.$var$(.or(Some($default)))?.ok_or_else(|| {
-                                format!("{} must be set", stringify!($var))
-                            })?
+                            $var: $crate::utils::args_struct!(@build_set; self.$var => $($defaulttype $default)?)
                         ),+
                     })
                 }
             }
         }
-    }
+    };
+
+    (@build_define; default $type:ty) => (Option<$type>);
+    (@build_define; initial $type:ty) => ($type);
+    (@build_define; $type:ty) => (Option<$type>);
+
+    (@build_default; $(default $default:expr)?) => (Default::default());
+    (@build_default; initial $default:expr) => ($default);
+
+    (@build_set; $expr:expr => $(default $default:expr)?) => {
+        $expr$(.or(Some($default)))?.ok_or_else(|| {
+            format!("{} must be set", stringify!($var))
+        })?
+    };
+    (@build_set; $expr:expr => initial $default:expr) => ($expr);
 }
 
 #[allow(unused_imports)]
