@@ -103,7 +103,6 @@ fn find_fewest_presses_joltages(machine: &Machine) -> usize {
                 }
             })
             .sum::<Expression>();
-        println!("{expr:?}");
         problem = problem.with(expr.eq(*joltage));
     }
 
