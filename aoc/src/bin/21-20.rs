@@ -178,7 +178,8 @@ fn do_step<const SIZE: usize>(algorithm: &Algorithm, mut state: State<SIZE>) -> 
     State::new(new_lit_points, new_bounds, new_outside_bounds)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (algorithm, mut state) = parse_input::<108>(input);
     for _ in 0..2 {
         state = do_step(&algorithm, state);
@@ -186,7 +187,8 @@ pub fn part1(input: &str) -> usize {
     state.points.count_lit()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (algorithm, mut state) = parse_input::<300>(input);
     for _ in 0..50 {
         state = do_step(&algorithm, state);

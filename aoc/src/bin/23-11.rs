@@ -62,11 +62,13 @@ fn solve(input: &str, expansion: usize) -> usize {
     sum_of_distances(&map)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     solve(input, 1)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     solve(input, 999_999)
 }
 

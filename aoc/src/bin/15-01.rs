@@ -6,12 +6,14 @@ fn parse_input(input: &str) -> Vec<i16> {
     } => moves)
 }
 
-pub fn part1(input: &str) -> i16 {
+#[register_part]
+fn part1(input: &str) -> i16 {
     let moves = parse_input(input);
     moves.into_iter().sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let moves = parse_input(input);
     let mut floor = 0;
     for (i, mov) in moves.into_iter().enumerate() {

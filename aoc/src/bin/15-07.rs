@@ -87,13 +87,15 @@ fn solve(mut instructions: VecDeque<Instruction<'_>>) -> HashMap<&str, u16> {
     wires
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let instructions = parse_input(input);
     let wires = solve(instructions);
     wires["a"]
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let instructions = parse_input(input);
     let mut instructions_without_b: VecDeque<Instruction> = instructions
         .iter()

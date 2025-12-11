@@ -32,7 +32,8 @@ fn parse_input(input: &str) -> Vec<Instruction> {
     parse!(input => { [instructions split on ')' try as Instruction] } => instructions)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let instructions = parse_input(input);
     instructions
         .into_iter()
@@ -43,7 +44,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let instructions = parse_input(input);
     let mut result = 0;
     let mut enabled = true;

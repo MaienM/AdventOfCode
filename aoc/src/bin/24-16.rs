@@ -116,12 +116,14 @@ fn count_tiles_on_best_paths(grid: &Grid, start: &Point2, end: &Point2) -> usize
         .count()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (grid, start, end) = parse_input(input);
     find_path(&grid, &start, &end)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (grid, start, end) = parse_input(input);
     count_tiles_on_best_paths(&grid, &start, &end)
 }

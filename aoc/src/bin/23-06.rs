@@ -22,7 +22,8 @@ fn find_win_options(race: &Race) -> usize {
     race.duration + 1 - 2 * first
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let races = parse_input(input);
     let mut result = 1;
     for race in races {
@@ -31,7 +32,8 @@ pub fn part1(input: &str) -> usize {
     result
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let races = parse_input(&input.replace(' ', "").replace(':', ": "));
     find_win_options(races.first().unwrap())
 }

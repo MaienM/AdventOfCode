@@ -78,13 +78,15 @@ fn get_counts(points: &[Point]) -> HashMap<Point, u16> {
     neighbour_counts
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let points = parse_input(input);
     let neighbour_counts = get_counts(&points);
     neighbour_counts.into_values().sum()
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let points = parse_input(input);
     let mut neighbour_counts = get_counts(&points);
     let mut cooling = 0;

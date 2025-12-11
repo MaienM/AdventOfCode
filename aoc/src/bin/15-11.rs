@@ -73,11 +73,13 @@ fn next_valid_password(input: &str, times: u8) -> String {
     password.iter().join("")
 }
 
-pub fn part1(input: &str) -> String {
+#[register_part]
+fn part1(input: &str) -> String {
     next_valid_password(input, 1)
 }
 
-pub fn part2(input: &str) -> String {
+#[register_part]
+fn part2(input: &str) -> String {
     next_valid_password(input, 2)
 }
 

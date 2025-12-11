@@ -68,7 +68,8 @@ fn get_stack_tops(stacks: &Stacks) -> String {
         .collect()
 }
 
-pub fn part1(input: &str) -> String {
+#[register_part]
+fn part1(input: &str) -> String {
     let (mut stacks, moves) = parse_input(input);
     for move_ in moves {
         do_move_9000(&mut stacks, &move_);
@@ -76,7 +77,8 @@ pub fn part1(input: &str) -> String {
     get_stack_tops(&stacks)
 }
 
-pub fn part2(input: &str) -> String {
+#[register_part]
+fn part2(input: &str) -> String {
     let (mut stacks, moves) = parse_input(input);
     for move_ in moves {
         do_move_9001(&mut stacks, &move_);

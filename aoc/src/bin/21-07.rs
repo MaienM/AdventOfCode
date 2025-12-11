@@ -64,12 +64,14 @@ fn find_optimum(positions: &[i32], get_cost: fn(&[i32], i32) -> i32) -> i32 {
     }
 }
 
-pub fn part1(input: &str) -> i32 {
+#[register_part]
+fn part1(input: &str) -> i32 {
     let positions = parse_input(input);
     find_optimum(&positions, get_cost_linear)
 }
 
-pub fn part2(input: &str) -> i32 {
+#[register_part]
+fn part2(input: &str) -> i32 {
     let positions = parse_input(input);
     find_optimum(&positions, get_cost_exponential)
 }

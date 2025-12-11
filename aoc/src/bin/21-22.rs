@@ -147,7 +147,8 @@ fn parse_input(input: &str) -> Vec<Step> {
     } => steps)
 }
 
-pub fn part1(input: &str) -> u64 {
+#[register_part]
+fn part1(input: &str) -> u64 {
     let steps = parse_input(input);
     let mut manager = RegionalManager(Vec::new());
 
@@ -167,7 +168,8 @@ pub fn part1(input: &str) -> u64 {
     manager.count_enabled()
 }
 
-pub fn part2(input: &str) -> u64 {
+#[register_part]
+fn part2(input: &str) -> u64 {
     let steps = parse_input(input);
     let mut manager = RegionalManager(Vec::new());
 

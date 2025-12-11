@@ -30,7 +30,8 @@ fn find_paths_from(graph: &Graph, from: &str) -> usize {
         .sum()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let graph = parse_input(input);
     find_paths_from(&graph, "you")
 }
@@ -53,7 +54,8 @@ fn find_paths_from_through(graph: &Graph, from: &str, mut flags: u8) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let graph = parse_input(input);
     find_paths_from_through(&graph, "svr", 0)
 }

@@ -33,12 +33,14 @@ fn from_snafu(num: &str) -> u64 {
     result as u64
 }
 
-pub fn part1(input: &str) -> String {
+#[register_part]
+fn part1(input: &str) -> String {
     parse!(input => [numbers split on '\n' with from_snafu]);
     to_snafu(numbers.into_iter().sum())
 }
 
-pub fn part2(_input: &str) -> &'static str {
+#[register_part]
+fn part2(_input: &str) -> &'static str {
     "I did it!"
 }
 

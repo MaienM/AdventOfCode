@@ -52,7 +52,8 @@ fn parse_input(input: &str) -> HashMap<&str, Job<'_>> {
     } => monkeys)
 }
 
-pub fn part1(input: &str) -> u64 {
+#[register_part]
+fn part1(input: &str) -> u64 {
     let mut jobs = parse_input(input);
     let mut results: HashMap<&str, u64> = HashMap::new();
 
@@ -85,7 +86,8 @@ pub fn part1(input: &str) -> u64 {
     *results.get("root").unwrap()
 }
 
-pub fn part2(input: &str) -> u64 {
+#[register_part]
+fn part2(input: &str) -> u64 {
     let mut jobs = parse_input(input);
     let mut results: HashMap<&str, u64> = HashMap::new();
 

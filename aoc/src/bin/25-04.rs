@@ -20,14 +20,16 @@ fn can_remove(grid: &Grid, (p, v): (&Point2, &bool)) -> bool {
         < 4
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let grid = parse_input(input);
     grid.iter_pairs()
         .filter(|(p, v)| can_remove(&grid, (*p, *v)))
         .count()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let mut grid = parse_input(input);
     let mut removed = 0;
     loop {

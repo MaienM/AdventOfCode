@@ -292,12 +292,14 @@ fn parse_input(input: &str) -> Board<2> {
     })
 }
 
-pub fn part1(input: &str) -> u32 {
+#[register_part]
+fn part1(input: &str) -> u32 {
     let board = parse_input(input);
     get_best_moveset_cost(&board)
 }
 
-pub fn part2(input: &str) -> u32 {
+#[register_part]
+fn part2(input: &str) -> u32 {
     let board = parse_input(input);
     let board = Board::<4> {
         hallway: board.hallway,

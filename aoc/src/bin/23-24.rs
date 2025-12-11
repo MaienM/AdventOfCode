@@ -84,12 +84,14 @@ fn count_intersections(hailstones: &[Hailstone], range: Range<f64>) -> usize {
     count
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let hailstones = parse_input(input);
     count_intersections(&hailstones, 200_000_000_000_000f64..400_000_000_000_000f64)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let hailstones = parse_input(input);
 
     // Let Xn, Yn, Zn be the starting position of stone N, and XVn, YVn and ZVn be the velocity of the same stone. Let N = 0 for the thrown stone, and N = 1.. for the hailstones from the input file. Let Tn be the time when stone N intersects with the thrown stone.

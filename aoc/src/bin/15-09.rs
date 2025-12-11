@@ -45,7 +45,8 @@ fn optimize_locations(edges: Vec<(&str, &str, usize)>) -> Graph {
     }
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let edges = parse_input(input);
     let Graph {
         edges,
@@ -75,7 +76,8 @@ pub fn part1(input: &str) -> usize {
     panic!("Should never happen");
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let edges = parse_input(input);
     let Graph {
         edges,

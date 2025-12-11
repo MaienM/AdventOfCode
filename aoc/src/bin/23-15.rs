@@ -42,12 +42,14 @@ fn hash(value: &str) -> usize {
     hash
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let steps = parse_input(input);
     steps.into_iter().map(hash).sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let steps = parse_input(input).into_iter().map(parse_step);
     let mut boxes: [Vec<Lens>; 256] = [EMPTY_VEC; 256];
     for step in steps {

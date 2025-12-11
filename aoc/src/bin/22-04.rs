@@ -32,7 +32,8 @@ fn ranges_overlap(left: &Range, right: &Range) -> bool {
         || right.contains(left.end())
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let pairs = parse_input(input);
     pairs
         .into_iter()
@@ -40,7 +41,8 @@ pub fn part1(input: &str) -> usize {
         .count()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let pairs = parse_input(input);
     pairs
         .into_iter()

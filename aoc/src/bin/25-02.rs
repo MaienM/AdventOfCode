@@ -20,7 +20,8 @@ fn valid_id_1(id: usize) -> bool {
     id / mul != id % mul
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let ranges = parse_input(input);
     ranges
         .into_iter()
@@ -48,7 +49,8 @@ fn valid_id_2(id: usize) -> bool {
     true
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let ranges = parse_input(input);
     ranges
         .into_iter()

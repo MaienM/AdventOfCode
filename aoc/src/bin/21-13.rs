@@ -79,13 +79,15 @@ fn format_grid(grid: &Grid) -> String {
     result
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (mut grid, instructions) = parse_input(input);
     grid = do_fold(grid, instructions.into_iter().next().unwrap());
     grid.into_iter_points().count()
 }
 
-pub fn part2(input: &str) -> String {
+#[register_part]
+fn part2(input: &str) -> String {
     let (mut grid, instructions) = parse_input(input);
     for axis in instructions {
         grid = do_fold(grid, axis);

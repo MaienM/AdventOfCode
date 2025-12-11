@@ -130,13 +130,15 @@ fn calculate_load(grid: &Grid) -> usize {
         .sum()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let mut grid = parse_input(input);
     slide_north(&mut grid);
     calculate_load(&grid)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let mut grid = parse_input(input);
     let hasher = RandomState::new();
     let mut cache = HashMap::new();

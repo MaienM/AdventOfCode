@@ -63,7 +63,8 @@ fn get_unmarked_sum(state: &BoardState) -> u16 {
         .sum()
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let (draws, boards) = parse_input(input);
     let mut states: Vec<BoardState> = boards.into_iter().map(init_board_state).collect();
     for draw in draws {
@@ -78,7 +79,8 @@ pub fn part1(input: &str) -> u16 {
     panic!("Bingo night ended, no one won.");
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let (draws, boards) = parse_input(input);
     let mut states: Vec<BoardState> = boards.into_iter().map(init_board_state).collect();
     for draw in draws {

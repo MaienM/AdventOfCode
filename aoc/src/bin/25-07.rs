@@ -14,7 +14,8 @@ fn parse_input(input: &str) -> (Grid, Point2) {
     } => (grid, start))
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (grid, start) = parse_input(input);
     let mut split = 0;
     let mut beams: Vec<_> = (0..grid.width()).map(|_| false).collect();
@@ -32,7 +33,8 @@ pub fn part1(input: &str) -> usize {
     split
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (grid, start) = parse_input(input);
     let mut beams: Vec<_> = (0..grid.width()).map(|_| 0).collect();
     beams[start.x] = 1;

@@ -26,7 +26,8 @@ fn parse_input(input: &str) -> Vec<Instruction> {
     } => instructions)
 }
 
-pub fn part1(input: &str) -> i64 {
+#[register_part]
+fn part1(input: &str) -> i64 {
     let instructions = parse_input(input);
     let mut hpos = 0;
     let mut vpos = 0;
@@ -41,7 +42,8 @@ pub fn part1(input: &str) -> i64 {
     (hpos * vpos).into()
 }
 
-pub fn part2(input: &str) -> i64 {
+#[register_part]
+fn part2(input: &str) -> i64 {
     let instructions = parse_input(input);
     let mut aim = 0;
     let mut hpos = 0;

@@ -58,7 +58,8 @@ fn count_overlapping_points(linedefs: Vec<LineDef>) -> i16 {
     count
 }
 
-pub fn part1(input: &str) -> i16 {
+#[register_part]
+fn part1(input: &str) -> i16 {
     let linedefs = parse_input(input)
         .into_iter()
         .filter(|linedef| linedef.0.x == linedef.1.x || linedef.0.y == linedef.1.y)
@@ -66,7 +67,8 @@ pub fn part1(input: &str) -> i16 {
     count_overlapping_points(linedefs)
 }
 
-pub fn part2(input: &str) -> i16 {
+#[register_part]
+fn part2(input: &str) -> i16 {
     let linedefs = parse_input(input);
     count_overlapping_points(linedefs)
 }

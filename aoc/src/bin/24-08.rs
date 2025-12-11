@@ -27,7 +27,8 @@ fn parse_input(input: &str) -> (HashMap<char, Vec<Point>>, Point) {
     (map, bounds)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (map, bounds) = parse_input(input);
     let mut antinodes = SparsePointSet::default()
         .with_boundaries((Point2::new(0, 0)..=bounds).into())
@@ -42,7 +43,8 @@ pub fn part1(input: &str) -> usize {
     antinodes.iter_points().count()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (map, bounds) = parse_input(input);
     let mut antinodes = SparsePointSet::default()
         .with_boundaries((Point2::new(0, 0)..=bounds).into())

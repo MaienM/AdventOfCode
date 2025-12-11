@@ -21,7 +21,8 @@ fn parse_input(input: &str) -> Vec<(Direction, u16)> {
     } => rotations)
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let instructions = parse_input(input);
     let mut location = 50;
     let mut hits = 0;
@@ -41,7 +42,8 @@ pub fn part1(input: &str) -> u16 {
     hits
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let instructions = parse_input(input);
     let mut location = 50;
     let mut hits = 0;

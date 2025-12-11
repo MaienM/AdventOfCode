@@ -96,7 +96,8 @@ fn find_valid_options(
     result
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let records = parse_input(input);
     records
         .into_par_iter()
@@ -104,7 +105,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let records = parse_input(input);
 
     records

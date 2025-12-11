@@ -187,7 +187,8 @@ fn find_longest_path(graph: &mut Graph, from: Point2, to: Point2) -> isize {
     find_longest_path_inner(graph, &abort_if, 0, from, to)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let grid = parse_input(input);
     let start = Point2::new(1, 0);
     let end = Point2::new(grid.width() - 2, grid.height() - 1);
@@ -195,7 +196,8 @@ pub fn part1(input: &str) -> usize {
     find_longest_path(&mut graph, start, end) as usize
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let grid = parse_input(input);
     let start = Point2::new(1, 0);
     let end = Point2::new(grid.width() - 2, grid.height() - 1);

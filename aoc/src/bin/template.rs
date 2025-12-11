@@ -6,7 +6,8 @@ fn parse_input(input: &str) -> Vec<usize> {
     } => _nums)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let _nums = parse_input(input);
     1
 }

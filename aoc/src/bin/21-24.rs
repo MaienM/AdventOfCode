@@ -267,7 +267,8 @@ fn get_pairs(instructions: &[Instruction]) -> Vec<Pair> {
     pairs
 }
 
-pub fn part1(input: &str) -> String {
+#[register_part]
+fn part1(input: &str) -> String {
     let instructions = parse_input(input);
     let pairs = get_pairs(&instructions);
 
@@ -291,7 +292,8 @@ pub fn part1(input: &str) -> String {
     panic!("Failed to find solution.");
 }
 
-pub fn part2(input: &str) -> String {
+#[register_part]
+fn part2(input: &str) -> String {
     let instructions = parse_input(input);
     let pairs = get_pairs(&instructions);
 

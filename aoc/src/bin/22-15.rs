@@ -71,7 +71,8 @@ fn count_known_at_y(sensors: Vec<Sensor>, y: isize) -> usize {
     ranges.into_iter().map(|r| r.len()).sum()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let sensors = parse_input(input);
     count_known_at_y(sensors, 2_000_000)
 }
@@ -103,7 +104,8 @@ fn get_beacon(sensors: &Vec<Sensor>, range: isize) -> Point {
     Point::new(0, 0)
 }
 
-pub fn part2(input: &str) -> isize {
+#[register_part]
+fn part2(input: &str) -> isize {
     let sensors = parse_input(input);
     let point = get_beacon(&sensors, 4_000_000);
     point.x * 4_000_000 + point.y

@@ -39,7 +39,8 @@ fn test(equation: &Equation, do_concat: bool) -> bool {
     test_inner(equation, equation.1[0], 1, do_concat)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let equations = parse_input(input);
     equations
         .into_par_iter()
@@ -48,7 +49,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let equations = parse_input(input);
     equations
         .into_par_iter()

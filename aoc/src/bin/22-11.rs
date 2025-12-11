@@ -81,12 +81,14 @@ fn monkey_business(monkeys: &mut [Monkey], rounds: usize, therapy: impl Fn(u64) 
     counter.pop().unwrap() * counter.pop().unwrap()
 }
 
-pub fn part1(input: &str) -> u64 {
+#[register_part]
+fn part1(input: &str) -> u64 {
     let mut monkeys = parse_input(input);
     monkey_business(&mut monkeys, 20, |worry| worry / 3)
 }
 
-pub fn part2(input: &str) -> u64 {
+#[register_part]
+fn part2(input: &str) -> u64 {
     let mut monkeys = parse_input(input);
     let modulo = monkeys.iter().map(|m| m.test).reduce(|l, r| l * r).unwrap();
     monkey_business(&mut monkeys, 10_000, |worry| worry % modulo)

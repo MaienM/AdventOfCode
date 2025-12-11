@@ -95,13 +95,15 @@ fn price_bulk(region: &Region) -> usize {
     sides * region.len()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let grid = parse_input(input);
     let regions = find_regions(&grid);
     regions.iter().map(price_normal).sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let grid = parse_input(input);
     let regions = find_regions(&grid);
     regions.iter().map(price_bulk).sum()

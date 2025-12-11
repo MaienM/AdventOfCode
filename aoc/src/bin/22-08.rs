@@ -64,7 +64,8 @@ fn count_visible_from_treehouse(grid: &Grid, start: Point, direction: Direction2
     count
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let grid = parse_input(input);
 
     let mut visible = HashSet::new();
@@ -97,7 +98,8 @@ pub fn part1(input: &str) -> usize {
     visible.len()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let grid = parse_input(input);
     let dimensions = Point::new(grid.width() as u8, grid.height() as u8);
     (0..dimensions.x)

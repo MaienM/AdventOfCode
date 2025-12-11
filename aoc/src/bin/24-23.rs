@@ -11,7 +11,8 @@ fn parse_input(input: &str) -> Vec<(&str, &str)> {
     } => pairs)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let pairs = parse_input(input);
     let mut graph: HashMap<&str, Vec<&str>> = HashMap::new();
     for (lhs, rhs) in pairs {
@@ -35,7 +36,8 @@ pub fn part1(input: &str) -> usize {
         .count()
 }
 
-pub fn part2(input: &str) -> String {
+#[register_part]
+fn part2(input: &str) -> String {
     let pairs = parse_input(input);
     let mut graph: HashMap<&str, HashSet<&str>> = HashMap::new();
     for (lhs, rhs) in pairs {

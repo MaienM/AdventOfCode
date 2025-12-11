@@ -43,13 +43,15 @@ fn get_coordinates(numbers: &[i64]) -> i64 {
     numbers[(1000 + offset) % len] + numbers[(2000 + offset) % len] + numbers[(3000 + offset) % len]
 }
 
-pub fn part1(input: &str) -> i64 {
+#[register_part]
+fn part1(input: &str) -> i64 {
     let numbers = parse_input(input);
     let numbers = mix(numbers, 1);
     get_coordinates(&numbers)
 }
 
-pub fn part2(input: &str) -> i64 {
+#[register_part]
+fn part2(input: &str) -> i64 {
     let numbers = parse_input(input);
     let numbers = numbers.into_iter().map(|n| n * 811_589_153).collect();
     let numbers = mix(numbers, 10);

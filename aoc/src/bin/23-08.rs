@@ -56,12 +56,14 @@ fn run_until(
     panic!("Should never happen");
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let instructions = parse_input(input);
     run_until(&instructions, 0, "AAA", |c| c == "ZZZ").0
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let instructions = Arc::new(parse_input(input));
     instructions
         .maps

@@ -127,12 +127,14 @@ fn calc(codes: &[&str], robots: usize) -> usize {
         .sum()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let codes = parse_input(input);
     calc(&codes, 3)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let codes = parse_input(input);
     calc(&codes, 26)
 }

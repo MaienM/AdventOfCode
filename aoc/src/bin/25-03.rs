@@ -6,7 +6,8 @@ fn parse_input(input: &str) -> Vec<Vec<u8>> {
     } => banks)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let banks = parse_input(input);
     banks
         .into_iter()
@@ -21,7 +22,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let banks = parse_input(input);
     banks
         .into_iter()

@@ -2,7 +2,8 @@ puzzle_runner::register_chapter!(book = "2015", title = "The Ideal Stocking Stuf
 
 use md5::{Digest, Md5};
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     (0..usize::MAX)
         .into_par_iter()
         .by_exponential_blocks()
@@ -16,7 +17,8 @@ pub fn part1(input: &str) -> usize {
         .unwrap()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     (0..usize::MAX)
         .into_par_iter()
         .by_exponential_blocks()

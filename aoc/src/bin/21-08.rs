@@ -205,7 +205,8 @@ fn calculate_line_number(line: &Line) -> u32 {
     .sum::<usize>() as u32
 }
 
-pub fn part1(input: &str) -> u32 {
+#[register_part]
+fn part1(input: &str) -> u32 {
     let lines = parse_input(input);
     lines
         .iter()
@@ -215,7 +216,8 @@ pub fn part1(input: &str) -> u32 {
         .count() as u32
 }
 
-pub fn part2(input: &str) -> u32 {
+#[register_part]
+fn part2(input: &str) -> u32 {
     let lines = parse_input(input);
     lines.iter().map(calculate_line_number).sum::<u32>() as u32
 }

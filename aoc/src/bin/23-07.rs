@@ -61,7 +61,8 @@ fn calculate_total_winnings(hands: Vec<Hand>, calculate_score: fn(Hand) -> (u8, 
         .sum()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let hands = parse_input(input);
     calculate_total_winnings(hands, |hand| {
         let mut groups = [0usize; 15];
@@ -92,7 +93,8 @@ pub fn part1(input: &str) -> usize {
     })
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let hands = parse_input(input);
     calculate_total_winnings(hands, |hand| {
         let mut groups = [0usize; 15];

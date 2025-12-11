@@ -75,7 +75,8 @@ fn sand_fill(points: &mut Points, current: Point, void_start: isize) -> Sand {
     Sand::AtRest
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let mut points = parse_input(input);
     let void_start = points.iter().map(|p| p.y).max().unwrap();
     let size_start = points.len();
@@ -86,7 +87,8 @@ pub fn part1(input: &str) -> usize {
     points.len() - size_start
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let mut points = parse_input(input);
     let floor = points.iter().map(|p| p.y).max().unwrap() + 2;
     for x in -(floor + 1)..=floor {

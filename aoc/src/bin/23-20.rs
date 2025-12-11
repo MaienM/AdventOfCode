@@ -139,7 +139,8 @@ fn calculate_counter_period(input: &Input, start: &str) -> usize {
     sum
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let mut input = parse_input(input);
     let mut low_total = 0;
     let mut high_total = 0;
@@ -154,7 +155,8 @@ pub fn part1(input: &str) -> usize {
 // Each of the targets of the broadcaster is a separate subgraph. Each of these subgraphs contains a long chain of flip-flops and a single central conjunction, which some (but not all) the flip-flops connect to. Together these elements function as a counter, with each consecutive flip-flop represening another bit of the number. Once all the bits that connect back to the conjunction are set to true the conjunction will send out a pulse and then reset the counter.
 //
 // The conjunctions of these subgraphs combine in another conjunction that leads to the target, which will receive a pulse when all counters reset at the same time.
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let input = parse_input(input);
     input
         .broadcaster

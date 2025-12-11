@@ -23,7 +23,8 @@ fn look_and_say(nums: Vec<u8>) -> Vec<u8> {
     result
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let mut nums = parse_input(input);
     for _ in 0..40 {
         nums = look_and_say(nums);
@@ -31,7 +32,8 @@ pub fn part1(input: &str) -> usize {
     nums.len()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let mut nums = parse_input(input);
     for _ in 0..50 {
         nums = look_and_say(nums);

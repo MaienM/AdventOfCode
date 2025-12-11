@@ -122,13 +122,15 @@ fn solve_from_position(
     results.into_iter_data().filter(|v| *v).count()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let grid = parse_input(input);
     let bounds = Point::new(grid.width(), grid.height());
     solve_from_position(&grid, &bounds, Point::new(0, 0), Direction::East)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let grid = Arc::new(parse_input(input));
     let bounds = Arc::new(Point::new(grid.width(), grid.height()));
 

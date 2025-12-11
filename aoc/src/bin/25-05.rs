@@ -10,7 +10,8 @@ fn parse_input(input: &str) -> (Vec<RangeInclusive<usize>>, Vec<usize>) {
     } => (ranges, ingredients))
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (ranges, ingredients) = parse_input(input);
     ingredients
         .into_iter()
@@ -18,7 +19,8 @@ pub fn part1(input: &str) -> usize {
         .count()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (ranges, _) = parse_input(input);
     let mut ranges = ranges
         .into_iter()

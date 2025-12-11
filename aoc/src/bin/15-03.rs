@@ -18,7 +18,8 @@ fn parse_input(input: &str) -> Vec<Direction2> {
     } => directions)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let directions = parse_input(input);
     let mut visited = HashSet::new();
     let mut current = Point2::new(0, 0);
@@ -30,7 +31,8 @@ pub fn part1(input: &str) -> usize {
     visited.len()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let directions = parse_input(input);
     let mut visited = HashSet::new();
     let mut current = [Point2::new(0, 0), Point2::new(0, 0)];

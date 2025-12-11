@@ -70,7 +70,8 @@ fn pathfind(
     }
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let (grid, start, end) = parse_input(input);
     pathfind(
         &grid,
@@ -80,7 +81,8 @@ pub fn part1(input: &str) -> u16 {
     )
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let (grid, _, end) = parse_input(input);
     pathfind(
         &grid,

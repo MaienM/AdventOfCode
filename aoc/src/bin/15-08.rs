@@ -31,14 +31,16 @@ fn count_escape(input: &str) -> usize {
         .sum::<usize>()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     input
         .lines()
         .map(|line| line.len() - count_unescape(line))
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     input
         .lines()
         .map(|line| count_escape(line) - line.len())

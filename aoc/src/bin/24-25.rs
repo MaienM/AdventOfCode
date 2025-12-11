@@ -23,7 +23,8 @@ fn parse_input(input: &str) -> (Vec<HMap>, Vec<HMap>) {
     (locks, keys)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (locks, keys) = parse_input(input);
     let mut result = 0;
     for lock in &locks {
@@ -39,7 +40,8 @@ pub fn part1(input: &str) -> usize {
     result
 }
 
-pub fn part2(_input: &str) -> &'static str {
+#[register_part]
+fn part2(_input: &str) -> &'static str {
     "I did it!"
 }
 

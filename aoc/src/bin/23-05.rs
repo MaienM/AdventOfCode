@@ -120,13 +120,15 @@ fn find_lowest_location_ranges(seeds: Vec<Range<usize>>, maps: &HashMap<&str, Ma
     items.into_iter().map(|r| r.start).min().unwrap()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let input = parse_input(input);
     #[allow(clippy::range_plus_one)]
     find_lowest_location(input)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let input = parse_input(input);
     find_lowest_location_ranges(
         input

@@ -41,7 +41,8 @@ fn part1impl(reindeer: Vec<Reindeer>, elapsed: u16) -> u16 {
         .unwrap()
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let reindeer = parse_input(input);
     part1impl(reindeer, 2503)
 }
@@ -81,7 +82,8 @@ fn part2impl(reindeer: Vec<Reindeer>, elapsed: u16) -> u16 {
     points.into_iter().max().unwrap()
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let reindeer = parse_input(input);
     part2impl(reindeer, 2503)
 }

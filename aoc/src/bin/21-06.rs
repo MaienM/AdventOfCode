@@ -38,13 +38,15 @@ fn pass_days(state: State, days: u64) -> State {
     state
 }
 
-pub fn part1(input: &str) -> u64 {
+#[register_part]
+fn part1(input: &str) -> u64 {
     let mut state = parse_input(input);
     state = pass_days(state, 80);
     state.iter().sum()
 }
 
-pub fn part2(input: &str) -> u64 {
+#[register_part]
+fn part2(input: &str) -> u64 {
     let mut state = parse_input(input);
     state = pass_days(state, 256);
     state.iter().sum()

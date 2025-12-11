@@ -35,12 +35,14 @@ fn solve(nums: Vec<usize>, cycles: usize) -> usize {
     map.into_values().sum()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let stones = parse_input(input);
     solve(stones, 25)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let stones = parse_input(input);
     solve(stones, 75)
 }

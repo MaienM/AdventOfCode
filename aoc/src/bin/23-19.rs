@@ -142,7 +142,8 @@ fn parse_input(input: &str) -> Input<'_> {
     } => Input { workflows, parts })
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let input = parse_input(input);
     input
         .parts
@@ -227,7 +228,8 @@ fn count_accepted(
     sum
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let input = parse_input(input);
     count_accepted(&input, "in", 1..=4000, 1..=4000, 1..=4000, 1..=4000)
 }

@@ -29,7 +29,8 @@ fn part1impl(input: &str, liters: u8) -> u16 {
     count_options(&containers, liters)
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     part1impl(input, 150)
 }
 
@@ -59,7 +60,8 @@ fn part2impl(input: &str, liters: u8) -> u16 {
     min_options(&containers, liters, 0).1
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     part2impl(input, 150)
 }
 

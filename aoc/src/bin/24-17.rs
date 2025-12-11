@@ -93,7 +93,8 @@ fn run(mut registers: Registers, operations: &[u8]) -> Vec<u8> {
     output
 }
 
-pub fn part1(input: &str) -> String {
+#[register_part]
+fn part1(input: &str) -> String {
     let (registers, operations) = parse_input(input);
     let output = run(registers, &operations);
     output
@@ -103,7 +104,8 @@ pub fn part1(input: &str) -> String {
         .join(",")
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (mut registers, operations) = parse_input(input);
 
     // Each loop in the program register A will be shift by 3 (modulo 8). As a result of this each output number depends on exactly 3 bits of the input number. This means we can simply increment until the last number matches what we want, and then shift by 3 and start working on the next 3 bits for the second-to-last number, and so on.

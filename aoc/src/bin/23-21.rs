@@ -107,12 +107,14 @@ fn solve(grid: &Grid, start: &Point, steps: usize) -> usize {
     result
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (grid, start) = parse_input(input);
     solve(&grid, &start, 64)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (grid, start) = parse_input(input);
     solve(&grid, &start, 26_501_365)
 }

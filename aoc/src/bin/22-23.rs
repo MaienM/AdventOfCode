@@ -125,7 +125,8 @@ fn cycle(state: &mut State) {
     state.directions.push(direction);
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let elves = parse_input(input);
     let mut state = State {
         elves,
@@ -143,7 +144,8 @@ pub fn part1(input: &str) -> usize {
     ((x_max - x_min + 1) * (y_max - y_min + 1)) as usize - state.elves.len()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let elves = parse_input(input);
     let mut prev = elves.clone();
     let mut state = State {

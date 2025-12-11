@@ -105,13 +105,15 @@ fn dot(gates: &Gates, swaps: Vec<Vec<&str>>) {
     file.write_all(b"}").unwrap();
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (mut wires, gates) = parse_input(input);
     solve(&mut wires, &gates, Vec::new());
     to_decimal(&wires, 'z')
 }
 
-pub fn part2(input: &str) -> String {
+#[register_part]
+fn part2(input: &str) -> String {
     let (mut wires, gates) = parse_input(input);
     let swaps = vec![
         vec!["z15", "qnw"],

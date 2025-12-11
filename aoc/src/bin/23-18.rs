@@ -166,12 +166,14 @@ fn swap_instructions(instructions: Vec<Instruction>) -> Vec<Instruction> {
         .collect()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let instructions = parse_input(input);
     solve(&instructions)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let instructions = parse_input(input);
     let instructions = swap_instructions(instructions);
     solve(&instructions)

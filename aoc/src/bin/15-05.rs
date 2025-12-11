@@ -33,7 +33,8 @@ fn is_nice_1(string: &str) -> bool {
     has_double && vowels >= 3
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let strings = parse_input(input);
     strings.into_iter().filter(|s| is_nice_1(s)).count()
 }
@@ -68,7 +69,8 @@ fn is_nice_2(string: &str) -> bool {
     false
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let strings = parse_input(input);
     strings.into_iter().filter(|s| is_nice_2(s)).count()
 }

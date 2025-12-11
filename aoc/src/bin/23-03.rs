@@ -64,7 +64,8 @@ fn parse_input(input: &str) -> (Vec<Symbol>, Vec<Number>) {
     (symbols, numbers)
 }
 
-pub fn part1(input: &str) -> u32 {
+#[register_part]
+fn part1(input: &str) -> u32 {
     let (symbols, numbers) = parse_input(input);
     numbers
         .into_iter()
@@ -83,7 +84,8 @@ pub fn part1(input: &str) -> u32 {
         .sum()
 }
 
-pub fn part2(input: &str) -> u32 {
+#[register_part]
+fn part2(input: &str) -> u32 {
     let (symbols, numbers) = parse_input(input);
     let mut gears: HashMap<Point, Vec<u32>> =
         symbols.iter().map(|s| (s.point, Vec::new())).collect();

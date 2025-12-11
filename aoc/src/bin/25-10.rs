@@ -115,12 +115,14 @@ fn find_fewest_presses_joltages(machine: &Machine) -> usize {
         .round() as usize
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let machines = parse_input(input);
     machines.par_iter().map(find_fewest_presses_lights).sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let machines = parse_input(input);
     machines.iter().map(find_fewest_presses_joltages).sum()
 }

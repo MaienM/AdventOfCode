@@ -44,7 +44,8 @@ fn do_round(grid: &mut Grid) -> u16 {
     flash_count
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let mut grid = parse_input(input);
     let mut flashes = 0u16;
     for _ in 0..100 {
@@ -53,7 +54,8 @@ pub fn part1(input: &str) -> u16 {
     flashes
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let mut grid = parse_input(input);
     for round in 1.. {
         if do_round(&mut grid) == 100 {

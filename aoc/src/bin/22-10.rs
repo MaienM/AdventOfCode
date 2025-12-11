@@ -43,7 +43,8 @@ fn run_instructions(instructions: Vec<Instruction>, callback: &mut impl FnMut(us
     }
 }
 
-pub fn part1(input: &str) -> i16 {
+#[register_part]
+fn part1(input: &str) -> i16 {
     let instructions = parse_input(input);
     let mut signal: i16 = 0;
     run_instructions(instructions, &mut |cycle, x| {
@@ -54,7 +55,8 @@ pub fn part1(input: &str) -> i16 {
     signal
 }
 
-pub fn part2(input: &str) -> String {
+#[register_part]
+fn part2(input: &str) -> String {
     let instructions = parse_input(input);
     let mut output = String::new();
     run_instructions(instructions, &mut |cycle, x| {

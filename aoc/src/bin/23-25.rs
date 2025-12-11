@@ -20,7 +20,8 @@ fn parse_input(input: &str) -> Graph<'_> {
     map
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let graph = parse_input(input);
 
     // Flood fill starting at a random node, continuing until there are exactly three unvisited neighbors, all of which neighbor only a single of our currently covered nodes.
@@ -60,7 +61,8 @@ pub fn part1(input: &str) -> usize {
         .unwrap()
 }
 
-pub fn part2(_input: &str) -> &'static str {
+#[register_part]
+fn part2(_input: &str) -> &'static str {
     "I did it!"
 }
 

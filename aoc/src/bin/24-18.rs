@@ -40,7 +40,8 @@ fn part1impl(input: &str, count: usize, end: Point2) -> usize {
     run(&coordinates[..count], end).unwrap()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     part1impl(input, 1024, Point2::new(70, 70))
 }
 
@@ -51,7 +52,8 @@ fn part2impl(input: &str, end: Point2) -> String {
     format!("{},{}", point.x, point.y)
 }
 
-pub fn part2(input: &str) -> String {
+#[register_part]
+fn part2(input: &str) -> String {
     part2impl(input, Point2::new(70, 70))
 }
 

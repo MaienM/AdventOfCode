@@ -23,12 +23,14 @@ fn predict(sequence: &[isize]) -> (isize, isize) {
     (sequence[0] - step.0, cur + step.1)
 }
 
-pub fn part1(input: &str) -> isize {
+#[register_part]
+fn part1(input: &str) -> isize {
     let lists = parse_input(input);
     lists.into_iter().map(|list| predict(&list).1).sum()
 }
 
-pub fn part2(input: &str) -> isize {
+#[register_part]
+fn part2(input: &str) -> isize {
     let lists = parse_input(input);
     lists.into_iter().map(|list| predict(&list).0).sum()
 }

@@ -249,7 +249,8 @@ fn calculate_geode_production(blueprint: &Blueprint, cycles: u16) -> u16 {
         .unwrap()
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let blueprints = parse_input(input);
     blueprints
         .par_iter()
@@ -258,7 +259,8 @@ pub fn part1(input: &str) -> u16 {
         .sum()
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let blueprints = parse_input(input);
     blueprints
         .par_iter()

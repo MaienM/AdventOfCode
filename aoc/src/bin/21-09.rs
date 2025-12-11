@@ -31,7 +31,8 @@ fn expand_basin(grid: &Grid, basin: &mut Basin, point: Point2) {
     }
 }
 
-pub fn part1(input: &str) -> u32 {
+#[register_part]
+fn part1(input: &str) -> u32 {
     let grid = parse_input(input);
     get_low_points(&grid)
         .into_iter()
@@ -39,7 +40,8 @@ pub fn part1(input: &str) -> u32 {
         .sum()
 }
 
-pub fn part2(input: &str) -> u32 {
+#[register_part]
+fn part2(input: &str) -> u32 {
     let grid = parse_input(input);
     let mut basin_sizes = get_low_points(&grid)
         .into_iter()

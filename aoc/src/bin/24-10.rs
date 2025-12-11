@@ -57,7 +57,8 @@ fn find_trails_to_summits(grid: &Grid, current: &Point2, target_height: u8) -> u
         .sum()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let grid = parse_input(input);
     grid.iter_pairs()
         .filter(|(_, height)| **height == 0)
@@ -70,7 +71,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let grid = parse_input(input);
     grid.iter_pairs()
         .filter(|(_, height)| **height == 0)

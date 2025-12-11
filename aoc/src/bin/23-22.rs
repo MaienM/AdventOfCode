@@ -70,7 +70,8 @@ fn drop_all(mut bricks: Vec<Brick>) -> impl Iterator<Item = HashSet<usize>> {
     })
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let bricks = parse_input(input);
     let mut can_be_disintegrated: Vec<_> = (0..=bricks.len()).map(|_| true).collect();
     for resting_on in drop_all(bricks) {
@@ -84,7 +85,8 @@ pub fn part1(input: &str) -> usize {
     can_be_disintegrated.into_iter().filter(|v| *v).count()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let bricks = parse_input(input);
     let mut foundations: Vec<HashSet<usize>> = Vec::new();
     foundations.push(HashSet::new());

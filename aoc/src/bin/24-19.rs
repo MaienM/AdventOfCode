@@ -23,7 +23,8 @@ fn try_design(design: &str, idx: usize, patterns: &[&str]) -> bool {
     false
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (patterns, designs) = parse_input(input);
     designs
         .into_iter()
@@ -49,7 +50,8 @@ fn count_designs(cache: &mut HashMap<String, usize>, design: &str, patterns: &[&
     count
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (patterns, designs) = parse_input(input);
     let mut cache = HashMap::new();
     designs

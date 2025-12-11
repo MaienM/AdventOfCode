@@ -99,13 +99,15 @@ fn defragment(filesystem: &mut Vec<Item>, move_whole_files: bool) {
     }
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let mut filesystem = parse_input(input);
     defragment(&mut filesystem, false);
     checksum(&filesystem)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let mut filesystem = parse_input(input);
     defragment(&mut filesystem, true);
     checksum(&filesystem)

@@ -36,7 +36,8 @@ fn parse_input(input: &str) -> Vec<Instruction> {
     } => instructions)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let instructions = parse_input(input);
     let mut grid = FullGrid::new_default(1000, 1000);
     for (action, range) in instructions {
@@ -61,7 +62,8 @@ pub fn part1(input: &str) -> usize {
     grid.into_iter_data().filter(|v| *v).count()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let instructions = parse_input(input);
     let mut grid = FullGrid::<u8>::new_default(1000, 1000);
     for (action, range) in instructions {

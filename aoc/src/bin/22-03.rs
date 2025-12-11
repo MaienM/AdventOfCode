@@ -29,7 +29,8 @@ fn parse_input(input: &str) -> Vec<Rucksack> {
     } => rucksacks)
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let rucksacks = parse_input(input);
     let commonalities = rucksacks
         .iter()
@@ -37,7 +38,8 @@ pub fn part1(input: &str) -> u16 {
     commonalities.into_iter().copied().map(get_priority).sum()
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let mut rucksacks = parse_input(input).into_iter();
     let mut sum = 0u16;
     loop {

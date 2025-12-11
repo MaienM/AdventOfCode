@@ -17,7 +17,8 @@ fn parse_input(input: &str) -> Vec<Card> {
     } => cards)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let cards = parse_input(input);
     cards
         .into_iter()
@@ -31,7 +32,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> u64 {
+#[register_part]
+fn part2(input: &str) -> u64 {
     let cards = parse_input(input);
     let mut sum = 0u64;
     let mut copies: HashMap<usize, u32> = HashMap::new();

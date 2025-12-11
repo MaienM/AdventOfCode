@@ -17,7 +17,8 @@ fn next_num(mut num: usize) -> usize {
     num
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let nums = parse_input(input);
     nums.into_par_iter()
         .map(|mut num| {
@@ -29,7 +30,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let nums = parse_input(input);
     let price_by_deltas: Vec<_> = nums
         .into_par_iter()

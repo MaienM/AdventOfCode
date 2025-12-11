@@ -121,7 +121,8 @@ fn resolve(packet: Packet) -> u64 {
     }
 }
 
-pub fn part1(input: &str) -> u64 {
+#[register_part]
+fn part1(input: &str) -> u64 {
     let mut bits = parse_input(input);
     let mut remaining = vec![parse_packet(&mut bits)];
     let mut result = 0u64;
@@ -139,7 +140,8 @@ pub fn part1(input: &str) -> u64 {
     result
 }
 
-pub fn part2(input: &str) -> u64 {
+#[register_part]
+fn part2(input: &str) -> u64 {
     let mut bits = parse_input(input);
     let packet = parse_packet(&mut bits);
     resolve(packet)

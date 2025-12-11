@@ -40,7 +40,8 @@ fn calculate_generator_rating(mut nums: Vec<Vec<u8>>, use_most_common: bool) -> 
     bits_to_decimal(&nums[0])
 }
 
-pub fn part1(input: &str) -> u32 {
+#[register_part]
+fn part1(input: &str) -> u32 {
     let nums = parse_input(input);
     let most_common_per_pos = get_most_common_per_position(&nums);
 
@@ -53,7 +54,8 @@ pub fn part1(input: &str) -> u32 {
     gamma * epsilon
 }
 
-pub fn part2(input: &str) -> u32 {
+#[register_part]
+fn part2(input: &str) -> u32 {
     let nums = parse_input(input);
 
     let oxygen = calculate_generator_rating(nums.clone(), true);

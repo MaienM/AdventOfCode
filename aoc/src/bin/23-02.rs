@@ -41,7 +41,8 @@ fn parse_input(input: &str) -> Vec<Game> {
     } => games)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let games = parse_input(input);
     games
         .into_iter()
@@ -54,7 +55,8 @@ pub fn part1(input: &str) -> usize {
         .sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let games = parse_input(input);
     games
         .into_iter()

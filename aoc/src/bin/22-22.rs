@@ -438,13 +438,15 @@ fn map_faces_cube(grid: &Grid) -> Directions {
         .unwrap()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (grid, actions) = parse_input(input);
     let directions = map_faces_grid(&grid);
     process(grid, actions, directions)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (grid, actions) = parse_input(input);
     let directions = map_faces_cube(&grid);
     process(grid, actions, directions)

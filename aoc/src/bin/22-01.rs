@@ -9,12 +9,14 @@ fn parse_input(input: &str) -> Vec<u32> {
     } => elves)
 }
 
-pub fn part1(input: &str) -> u32 {
+#[register_part]
+fn part1(input: &str) -> u32 {
     let data = parse_input(input);
     data.into_iter().max().unwrap()
 }
 
-pub fn part2(input: &str) -> u32 {
+#[register_part]
+fn part2(input: &str) -> u32 {
     let mut data = parse_input(input);
     data.sort_unstable_by(|a, b| b.cmp(a));
     data[0] + data[1] + data[2]

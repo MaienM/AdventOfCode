@@ -15,12 +15,14 @@ fn count_incrementing(nums: &[u16]) -> usize {
         .count()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let nums = parse_input(input);
     count_incrementing(&nums)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let nums = parse_input(input);
     let sums: Vec<_> = nums
         .into_iter()

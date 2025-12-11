@@ -46,7 +46,8 @@ fn find_wincondition(game: &Game) -> Option<u64> {
     }
 }
 
-pub fn part1(input: &str) -> u64 {
+#[register_part]
+fn part1(input: &str) -> u64 {
     let games = parse_input(input);
     games
         .into_iter()
@@ -54,7 +55,8 @@ pub fn part1(input: &str) -> u64 {
         .sum()
 }
 
-pub fn part2(input: &str) -> u64 {
+#[register_part]
+fn part2(input: &str) -> u64 {
     let games = parse_input(input);
     games
         .into_iter()

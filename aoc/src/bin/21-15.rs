@@ -59,12 +59,14 @@ fn grow_grid(grid: Grid) -> Grid {
     new_grid
 }
 
-pub fn part1(input: &str) -> i16 {
+#[register_part]
+fn part1(input: &str) -> i16 {
     let grid = parse_input(input);
     calculate_path(&grid)
 }
 
-pub fn part2(input: &str) -> i16 {
+#[register_part]
+fn part2(input: &str) -> i16 {
     let grid = parse_input(input);
     let grid = grow_grid(grid);
     calculate_path(&grid)

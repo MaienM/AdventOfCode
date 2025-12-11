@@ -65,7 +65,8 @@ fn ends_up_at_target(mut xvel: i16, mut yvel: i16, target: &TargetArea) -> bool 
     false
 }
 
-pub fn part1(input: &str) -> i16 {
+#[register_part]
+fn part1(input: &str) -> i16 {
     let target = parse_input(input);
     /*
      * X and Y are completely independent, so we can just ignore X for this part.
@@ -83,7 +84,8 @@ pub fn part1(input: &str) -> i16 {
     y
 }
 
-pub fn part2(input: &str) -> i16 {
+#[register_part]
+fn part2(input: &str) -> i16 {
     let target = parse_input(input);
     /*
      * Despite having instructions on how to handle negative X velocities these will never get us to our goal, so we need not consider them. The highest x velocity that could be suitable is one that would get us to the right edge in one step, which is target.x.1.

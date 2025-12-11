@@ -30,7 +30,8 @@ fn parse_input(input: &str) -> Vec<Aunt<'_>> {
     } => aunts)
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let aunts = parse_input(input);
     let wanted = hash_map![
         "children" => 3,
@@ -55,7 +56,8 @@ pub fn part1(input: &str) -> u16 {
     panic!("Should never happen.");
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let aunts = parse_input(input);
     let wanted = hash_map![
         "children" => 3..=3,

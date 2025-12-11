@@ -39,7 +39,8 @@ fn is_safe_dampened(report: &mut Vec<usize>) -> Option<()> {
     None
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let mut reports = parse_input(input);
     reports
         .iter_mut()
@@ -50,7 +51,8 @@ pub fn part1(input: &str) -> usize {
         .count()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let mut reports = parse_input(input);
     reports
         .iter_mut()

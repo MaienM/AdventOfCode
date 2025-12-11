@@ -53,7 +53,8 @@ fn test_x_mas(grid: &Grid, tl: Point2) -> bool {
             || test_mas(grid, Point2::new(tl.x, tl.y + 2), Direction2X::NorthEast))
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let grid = parse_input(input);
     let dimensions = Point2::new(grid.width(), grid.height());
     let mut result = 0;
@@ -68,7 +69,8 @@ pub fn part1(input: &str) -> usize {
     result
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let grid = parse_input(input);
     let dimensions = Point2::new(grid.width(), grid.height());
     let mut result = 0;

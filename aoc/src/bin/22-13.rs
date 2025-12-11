@@ -70,7 +70,8 @@ fn compare(left: &Item, right: &Item) -> Ordering {
     }
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let pairs = parse_input(input);
     let mut result = 0;
     for (i, (left, right)) in pairs.into_iter().enumerate() {
@@ -81,7 +82,8 @@ pub fn part1(input: &str) -> usize {
     result
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let mut packets: Vec<Item> = parse_input(input)
         .into_iter()
         .flat_map(|p| [p.0, p.1])

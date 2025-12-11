@@ -242,13 +242,15 @@ fn dump_as_dot(valves: &Valves) {
     writeln!(&mut file, "}}").unwrap();
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let valves = parse_input(input);
     // dump_as_dot(&valves);
     run_cycles::<1>(&valves, 30)
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let valves = parse_input(input);
     run_cycles::<2>(&valves, 26)
 }

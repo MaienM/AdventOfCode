@@ -130,12 +130,14 @@ fn check_loop(mut guard: Point2, obstacles: &Grid, extra_obstacle: &Point2) -> b
     false
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (guard, obstacles, bounds) = parse_input(input);
     get_path_out(guard, &obstacles, &bounds).len()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (guard, obstacles, bounds) = parse_input(input);
     get_path_out(guard, &obstacles, &bounds)
         .into_par_iter()

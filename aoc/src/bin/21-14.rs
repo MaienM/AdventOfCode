@@ -67,7 +67,8 @@ fn get_polymer_char_counts(polymer: &Polymer) -> HashMap<char, u64> {
     char_counts
 }
 
-pub fn part1(input: &str) -> u64 {
+#[register_part]
+fn part1(input: &str) -> u64 {
     let (mut polymer, rules) = parse_input(input);
     for _ in 0..10 {
         polymer = do_step(polymer, &rules);
@@ -76,7 +77,8 @@ pub fn part1(input: &str) -> u64 {
     counts.values().max().unwrap() - counts.values().min().unwrap()
 }
 
-pub fn part2(input: &str) -> u64 {
+#[register_part]
+fn part2(input: &str) -> u64 {
     let (mut polymer, rules) = parse_input(input);
     for _ in 0..40 {
         polymer = do_step(polymer, &rules);

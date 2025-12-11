@@ -151,14 +151,16 @@ fn find_loop(map: &Grid, start: Point2) -> Vec<Point2> {
     mainloop
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let mut map = parse_input(input);
     let start = extract_start(&mut map);
     let mainloop = find_loop(&map, start);
     mainloop.len() / 2
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let mut map = parse_input(input);
     let start = extract_start(&mut map);
     let mainloop: HashSet<_> = find_loop(&map, start).into_iter().collect();

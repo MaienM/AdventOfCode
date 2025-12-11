@@ -50,12 +50,14 @@ fn solve(rules: Vec<Rule>) -> i16 {
         .unwrap()
 }
 
-pub fn part1(input: &str) -> i16 {
+#[register_part]
+fn part1(input: &str) -> i16 {
     let rules = parse_input(input);
     solve(rules)
 }
 
-pub fn part2(input: &str) -> i16 {
+#[register_part]
+fn part2(input: &str) -> i16 {
     let mut rules = parse_input(input);
     rules.push(("Me", rules.first().unwrap().0, 0));
     solve(rules)

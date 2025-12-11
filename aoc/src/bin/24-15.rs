@@ -43,7 +43,8 @@ fn parse_input(input: &str) -> (GridSingle, Moves, Point2) {
     } => (grid, moves, start))
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (mut grid, moves, mut current) = parse_input(input);
     for mov in moves {
         let next = current + mov;
@@ -107,7 +108,8 @@ fn print(grid: &GridDouble, current: &Point2) {
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (grid, moves, mut current) = parse_input(input);
     let mut grid: GridDouble = grid
         .into_iter_rows()

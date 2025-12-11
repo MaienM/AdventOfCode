@@ -74,11 +74,13 @@ fn read_item<I: Iterator<Item = char>>(
     }
 }
 
-pub fn part1(input: &str) -> isize {
+#[register_part]
+fn part1(input: &str) -> isize {
     read_item(&mut input.chars().peekable(), false).unwrap()
 }
 
-pub fn part2(input: &str) -> isize {
+#[register_part]
+fn part2(input: &str) -> isize {
     read_item(&mut input.chars().peekable(), true).unwrap()
 }
 

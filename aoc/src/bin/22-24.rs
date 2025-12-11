@@ -164,14 +164,16 @@ fn navigate(map: &mut Map, start: Point, end: Point) -> usize {
     }
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let mut map = parse_input(input);
     let start = map.start;
     let end = map.end;
     navigate(&mut map, start, end)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let mut map = parse_input(input);
     let start = map.start;
     let end = map.end;

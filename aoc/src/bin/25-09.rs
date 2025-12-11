@@ -22,7 +22,8 @@ fn minmax(a: usize, b: usize) -> (usize, usize) {
     if a < b { (a, b) } else { (b, a) }
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let points = parse_input(input);
     points
         .into_iter()
@@ -32,7 +33,8 @@ pub fn part1(input: &str) -> usize {
         .unwrap()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let points = parse_input(input);
     let mut lines: Vec<Line> = Vec::new();
     for (a, b) in points.iter().zip(points.iter().cycle().skip(1)) {

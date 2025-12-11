@@ -85,14 +85,16 @@ fn get_dir_sizes(matches: &mut Vec<usize>, entry: &Entry) {
     }
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let root = parse_input(input);
     let mut sizes = vec![];
     get_dir_sizes(&mut sizes, &root);
     sizes.into_iter().filter(|s| s <= &100_000).sum()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let root = parse_input(input);
     let space_needed = 30_000_000 - (70_000_000 - root.size());
     let mut sizes = vec![];

@@ -102,12 +102,14 @@ fn find_path(grid: &Grid, min_before_turn: u8, max_before_turn: u8) -> usize {
     panic!("Unable to find path to end, this should never happen.");
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let grid = parse_input(input);
     find_path(&grid, 0, 3)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let grid = parse_input(input);
     find_path(&grid, 4, 10)
 }

@@ -70,11 +70,13 @@ pub fn part1impl(input: &str, bounds: Point, seconds: isize) -> usize {
     safety_score(&robots, &bounds)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     part1impl(input, Point::new(101, 103), 100)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let robots = parse_input(input);
     let bounds = Point::new(101, 103);
     (0..isize::MAX)

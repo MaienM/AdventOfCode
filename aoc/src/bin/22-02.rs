@@ -74,12 +74,14 @@ fn parse_input_part2(input: &str) -> Vec<Round> {
     } => rounds)
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let rounds = parse_input_part1(input);
     rounds.iter().map(Round::score).sum()
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let rounds = parse_input_part2(input);
     rounds.iter().map(Round::score).sum()
 }

@@ -89,12 +89,14 @@ fn find_optimal<const C: usize>(
         .unwrap()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let ingredients = parse_input(input);
     find_optimal(&ingredients.into_values().collect_vec(), 100, [0, 0, 0, 0])
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let ingredients = parse_input(input);
     find_optimal(
         &ingredients.into_values().collect_vec(),

@@ -107,13 +107,15 @@ fn count_paths_to_end<'a>(
     results
 }
 
-pub fn part1(input: &str) -> u32 {
+#[register_part]
+fn part1(input: &str) -> u32 {
     let mut graph = parse_input(input);
     graph.flatten_big_nodes();
     count_paths_to_end(&graph, &mut Vec::new(), NAME_START, true)
 }
 
-pub fn part2(input: &str) -> u32 {
+#[register_part]
+fn part2(input: &str) -> u32 {
     let mut graph = parse_input(input);
     graph.flatten_big_nodes();
     count_paths_to_end(&graph, &mut Vec::new(), NAME_START, false)

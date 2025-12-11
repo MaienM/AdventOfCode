@@ -74,10 +74,12 @@ fn part1impl(input: &str, connections: usize) -> usize {
         .unwrap()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     part1impl(input, 1000)
 }
 
+#[register_part]
 fn part2(input: &str) -> usize {
     let boxes = parse_input(input);
     let all = boxes.len();

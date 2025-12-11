@@ -16,11 +16,13 @@ fn find_marker(sequence: &str, length: usize) -> usize {
     panic!("Did not find marker.");
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     find_marker(input, 4)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     find_marker(input, 14)
 }
 

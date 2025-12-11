@@ -37,7 +37,8 @@ fn reorder(update: &mut [u16], rules: &[(u16, u16)]) {
     });
 }
 
-pub fn part1(input: &str) -> u16 {
+#[register_part]
+fn part1(input: &str) -> u16 {
     let (rules, updates) = parse_input(input);
     updates
         .into_par_iter()
@@ -46,7 +47,8 @@ pub fn part1(input: &str) -> u16 {
         .sum()
 }
 
-pub fn part2(input: &str) -> u16 {
+#[register_part]
+fn part2(input: &str) -> u16 {
     let (rules, updates) = parse_input(input);
     updates
         .into_par_iter()

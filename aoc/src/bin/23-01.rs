@@ -27,12 +27,14 @@ fn parse_input_with_words(input: &str) -> Vec<u32> {
     )
 }
 
-pub fn part1(input: &str) -> u32 {
+#[register_part]
+fn part1(input: &str) -> u32 {
     let input = parse_input(input);
     input.iter().sum()
 }
 
-pub fn part2(input: &str) -> u32 {
+#[register_part]
+fn part2(input: &str) -> u32 {
     let input = parse_input_with_words(input);
     input.iter().sum()
 }

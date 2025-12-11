@@ -13,7 +13,8 @@ fn parse_input(input: &str) -> (Vec<usize>, Vec<usize>) {
     (leftlist, rightlist)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let (mut left, mut right) = parse_input(input);
     left.sort_unstable();
     right.sort_unstable();
@@ -24,7 +25,8 @@ pub fn part1(input: &str) -> usize {
     diff
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let (left, right) = parse_input(input);
     let rcounts = right.into_iter().count_occurences();
     let mut score = 0;

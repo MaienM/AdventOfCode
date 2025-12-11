@@ -58,11 +58,13 @@ fn solve(input: &str, with_smudge: bool) -> usize {
         .sum()
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     solve(input, false)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     solve(input, true)
 }
 

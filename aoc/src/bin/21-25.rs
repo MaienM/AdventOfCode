@@ -51,7 +51,8 @@ where
     }
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let grid = parse_input(input);
     let mut grid = WrappingGrid::from(grid);
 
@@ -71,7 +72,8 @@ pub fn part1(input: &str) -> usize {
     panic!("Should never happen.");
 }
 
-pub fn part2(_input: &str) -> &'static str {
+#[register_part]
+fn part2(_input: &str) -> &'static str {
     "I did it!"
 }
 

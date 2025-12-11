@@ -41,7 +41,8 @@ fn follow(follower: &Point, leader: &Point) -> Point {
     }
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     let moves = parse_input(input);
     let mut head = Point::new(0, 0);
     let mut tail = Point::new(0, 0);
@@ -57,7 +58,8 @@ pub fn part1(input: &str) -> usize {
     visited.len()
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     let moves = parse_input(input);
     let mut chain = [Point::new(0, 0); 10];
     let mut visited = HashSet::<Point>::new();

@@ -71,7 +71,8 @@ fn part1impl(input: &str, min_save: usize) -> usize {
     find_cheat_paths(&grid, &start, &end, 2, min_save)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     part1impl(input, 100)
 }
 
@@ -80,7 +81,8 @@ fn part2impl(input: &str, min_save: usize) -> usize {
     find_cheat_paths(&grid, &start, &end, 20, min_save)
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     part2impl(input, 100)
 }
 

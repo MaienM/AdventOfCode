@@ -262,11 +262,13 @@ fn simulate(input: &str, cycles: u64) -> (usize, HashSet<Point>) {
     (top, points)
 }
 
-pub fn part1(input: &str) -> usize {
+#[register_part]
+fn part1(input: &str) -> usize {
     simulate(input, 2_022).0
 }
 
-pub fn part2(input: &str) -> usize {
+#[register_part]
+fn part2(input: &str) -> usize {
     simulate(input, 1_000_000_000_000).0
 }
 

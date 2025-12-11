@@ -9,7 +9,8 @@ fn parse_input(input: &str) -> Vec<[u16; 3]> {
     } => boxes)
 }
 
-pub fn part1(input: &str) -> u32 {
+#[register_part]
+fn part1(input: &str) -> u32 {
     let boxes = parse_input(input);
     boxes
         .into_iter()
@@ -20,7 +21,8 @@ pub fn part1(input: &str) -> u32 {
         .sum()
 }
 
-pub fn part2(input: &str) -> u32 {
+#[register_part]
+fn part2(input: &str) -> u32 {
     let boxes = parse_input(input);
     boxes
         .into_iter()
