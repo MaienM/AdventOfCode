@@ -1,6 +1,6 @@
 puzzle_runner::register_chapter!(book = "2025", title = "Reactor");
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 use memoize::memoize;
 
@@ -19,19 +19,20 @@ fn parse_input(input: &str) -> Graph<'_> {
     } => graph)
 }
 
+#[memoize(Ignore: graph, Map: from -> String)]
+fn find_paths_from(graph: &Graph, from: &str) -> usize {
+    if from == "out" {
+        return 1;
+    }
+    graph[from]
+        .iter()
+        .map(|edge| find_paths_from(graph, edge))
+        .sum()
+}
+
 pub fn part1(input: &str) -> usize {
     let graph = parse_input(input);
-    let mut queue = VecDeque::new();
-    queue.push_back("you");
-    let mut result = 0;
-    while let Some(node) = queue.pop_front() {
-        if node == "out" {
-            result += 1;
-            continue;
-        }
-        queue.extend(&graph[node]);
-    }
-    result
+    find_paths_from(&graph, "you")
 }
 
 #[memoize(Ignore: graph, Map: from -> String)]
