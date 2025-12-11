@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2024", title = "Keypad Conundrum");
+puzzle_runner::register_chapter!(book = 2024, title = "Keypad Conundrum");
 
 use std::{cmp::Ordering, collections::HashMap, sync::LazyLock, vec::Vec};
 

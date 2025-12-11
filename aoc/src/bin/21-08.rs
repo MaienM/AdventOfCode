@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2021", title = "Seven Segment Search");
+puzzle_runner::register_chapter!(book = 2021, title = "Seven Segment Search");
 
 /*
  * Overview:

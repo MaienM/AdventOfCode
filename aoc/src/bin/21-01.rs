@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2021", title = "Sonar Sweep");
+puzzle_runner::register_chapter!(book = 2021, title = "Sonar Sweep");
 
 use itertools::Itertools;
 

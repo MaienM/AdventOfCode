@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2024", title = "Print Queue");
+puzzle_runner::register_chapter!(book = 2024, title = "Print Queue");
 
 use std::cmp::Ordering;
 

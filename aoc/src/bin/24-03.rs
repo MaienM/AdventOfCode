@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2024", title = "Mull It Over");
+puzzle_runner::register_chapter!(book = 2024, title = "Mull It Over");
 
 #[derive(Debug, Eq, PartialEq)]
 enum Instruction {

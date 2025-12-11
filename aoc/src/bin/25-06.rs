@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2025", title = "Trash Compactor");
+puzzle_runner::register_chapter!(book = 2025, title = "Trash Compactor");
 
 #[derive(Debug, Eq, PartialEq)]
 enum Operator {

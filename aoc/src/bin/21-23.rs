@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2021", title = "Amphipod");
+puzzle_runner::register_chapter!(book = 2021, title = "Amphipod");
 
 use std::{
     collections::{BTreeSet, BinaryHeap},

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2024", title = "Race Condition");
+puzzle_runner::register_chapter!(book = 2024, title = "Race Condition");
 
 use std::collections::BinaryHeap;
 

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2023", title = "Sand Slabs");
+puzzle_runner::register_chapter!(book = 2023, title = "Sand Slabs");
 
 use std::{collections::HashSet, ops::RangeInclusive};
 

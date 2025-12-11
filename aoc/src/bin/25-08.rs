@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2025", title = "Playground");
+puzzle_runner::register_chapter!(book = 2025, title = "Playground");
 
 use std::{cmp::Ordering, collections::HashSet};
 

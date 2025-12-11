@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2021", title = "Syntax Scoring");
+puzzle_runner::register_chapter!(book = 2021, title = "Syntax Scoring");
 
 fn parse_input(input: &str) -> Vec<&str> {
     parse!(input => { [lines split on '\n'] } => lines)

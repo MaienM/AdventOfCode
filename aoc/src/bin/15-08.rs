@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2015", title = "Matchsticks");
+puzzle_runner::register_chapter!(book = 2015, title = "Matchsticks");
 
 fn count_unescape(input: &str) -> usize {
     let mut iter = input.chars();

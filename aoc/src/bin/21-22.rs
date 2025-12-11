@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2021", title = "Reactor Reboot");
+puzzle_runner::register_chapter!(book = 2021, title = "Reactor Reboot");
 
 use std::{fmt::Debug, ops::RangeInclusive};
 

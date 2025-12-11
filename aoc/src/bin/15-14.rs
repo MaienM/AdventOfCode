@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2015", title = "Reindeer Olympics");
+puzzle_runner::register_chapter!(book = 2015, title = "Reindeer Olympics");
 
 use std::iter::repeat_n;
 

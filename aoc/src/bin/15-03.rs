@@ -1,5 +1,5 @@
 puzzle_runner::register_chapter!(
-    book = "2015",
+    book = 2015,
     title = "Perfectly Spherical Houses in a Vacuum",
 );
 

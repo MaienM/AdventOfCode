@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2023", title = "Point of Incidence");
+puzzle_runner::register_chapter!(book = 2023, title = "Point of Incidence");
 
 type Grid = Vec<Vec<bool>>;
 

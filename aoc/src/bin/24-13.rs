@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2024", title = "Claw Contraption");
+puzzle_runner::register_chapter!(book = 2024, title = "Claw Contraption");
 
 use puzzle_lib::{matrix::Matrix, point::Point2};
 

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2024", title = "Warehouse Woes");
+puzzle_runner::register_chapter!(book = 2024, title = "Warehouse Woes");
 
 use puzzle_lib::{
     grid::FullGrid,

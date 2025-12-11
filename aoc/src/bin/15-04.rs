@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2015", title = "The Ideal Stocking Stuffer");
+puzzle_runner::register_chapter!(book = 2015, title = "The Ideal Stocking Stuffer");
 
 use md5::{Digest, Md5};
 

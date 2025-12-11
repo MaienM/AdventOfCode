@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2021", title = "Beacon Scanner");
+puzzle_runner::register_chapter!(book = 2021, title = "Beacon Scanner");
 
 use std::{
     collections::{BTreeSet, HashSet},

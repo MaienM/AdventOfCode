@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2023", title = "Hot Springs");
+puzzle_runner::register_chapter!(book = 2023, title = "Hot Springs");
 
 use std::collections::HashMap;
 

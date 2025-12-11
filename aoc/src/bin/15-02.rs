@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2015", title = "I Was Told There Would Be No Math");
+puzzle_runner::register_chapter!(book = 2015, title = "I Was Told There Would Be No Math");
 
 fn parse_input(input: &str) -> Vec<[u16; 3]> {
     parse!(input => {

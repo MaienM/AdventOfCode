@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2015", title = "Some Assembly Required");
+puzzle_runner::register_chapter!(book = 2015, title = "Some Assembly Required");
 
 use std::collections::{HashMap, VecDeque};
 

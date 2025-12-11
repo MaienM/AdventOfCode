@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2024", title = "Code Chronicle");
+puzzle_runner::register_chapter!(book = 2024, title = "Code Chronicle");
 
 type HMap = [u8; 5];
 

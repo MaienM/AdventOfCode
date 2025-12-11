@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = "2021", title = "Transparent Origami");
+puzzle_runner::register_chapter!(book = 2021, title = "Transparent Origami");
 
 use puzzle_lib::{grid::SparsePointSet, point::Point2};
 
