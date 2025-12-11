@@ -130,7 +130,7 @@ impl ParseNestedMetaExt for ParseNestedMeta<'_> {
 }
 
 macro_rules! args_struct {
-    {
+    {$(
         $(#[$structmeta:meta])*
         struct $name:ident {
             $(
@@ -139,13 +139,13 @@ macro_rules! args_struct {
             ),+
             $(,)?
         }
-    } => {
-        ::paste::paste!{
+    )+} => {
+        ::paste::paste!{$(
             $(#[$structmeta])*
             pub struct $name {
                 $(
                     $(#[$varmeta])*
-                    pub $var: $type
+                    $var: $type
                 ),+
             }
             impl $name {
@@ -161,12 +161,12 @@ macro_rules! args_struct {
 
             struct [<$name Builder>] {
                 $(
-                    pub $var: $crate::utils::args_struct!(@build_define; $($defaulttype)? $type)
+                    $var: $crate::utils::args_struct!(@build_define; $($defaulttype)? $type)
                 ),+
             }
             impl [<$name Builder>] {
                 /// Convert into args.
-                pub fn finalize(self) -> Result<Args, String> {
+                pub fn finalize(self) -> Result<$name, String> {
                     Ok($name {
                         $(
                             $var: $crate::utils::args_struct!(@build_set; self.$var => $($defaulttype $default)?)
@@ -174,7 +174,7 @@ macro_rules! args_struct {
                     })
                 }
             }
-        }
+        )+}
     };
 
     (@build_define; default $type:ty) => (Option<$type>);

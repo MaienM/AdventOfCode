@@ -4,8 +4,8 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, format_ident, quote};
 use syn::{
-    Error, Expr, ItemStatic, Lit, LitStr, parse::Parser, parse_macro_input, parse_quote,
-    spanned::Spanned,
+    Error, Expr, ItemStatic, Lit, LitStr, meta::ParseNestedMeta, parse::Parser, parse_macro_input,
+    parse_quote, spanned::Spanned,
 };
 
 use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err};
@@ -14,11 +14,42 @@ args_struct! {
     struct Args {
         /// The indentation that should be stripped from the start of each line.
         indent: String = default " ".repeat(8),
-        /// The expected results for the parts.
-        parts: HashMap<u8, Expr> = initial HashMap::new(),
+        /// The settings for the parts.
+        parts: HashMap<u8, PartArgsBuilder> = initial HashMap::new(),
         /// Whether to generate tests for the example.
         test: bool = default true,
     }
+    struct PartArgs {
+        /// The expected result for this part.
+        expected: String,
+        /// The additional argument to pass in when processing the example input.
+        arg: Option<Expr> = initial None,
+    }
+}
+
+fn dedent(text: String, indent: &str) -> Result<String, String> {
+    if !text.contains('\n') {
+        return Ok(text);
+    }
+
+    let text = text
+        .strip_prefix('\n')
+        .ok_or_else(|| "must begin with a newline".to_owned())?;
+    let text = text
+        .trim_end_matches(' ')
+        .strip_suffix('\n')
+        .ok_or_else(|| "must end with a newline".to_owned())?;
+
+    let mut lines = Vec::new();
+    for line in text.split('\n') {
+        lines.push(match line {
+            "" => "",
+            line => line.strip_prefix(indent).ok_or_else(|| {
+                format!("non-empty line doesn't start with indent ({indent:?}): {line:?}")
+            })?,
+        });
+    }
+    Ok(lines.join("\n"))
 }
 
 struct ExampleStringParser<'a>(&'a str);
@@ -31,33 +62,7 @@ impl Parser for ExampleStringParser<'_> {
         let span = tokens.span();
         let text = syn::parse::<LitStr>(tokens.into())?.value();
 
-        if !text.contains('\n') {
-            return Ok(text);
-        }
-
-        let text = text
-            .strip_prefix('\n')
-            .ok_or_else(|| Error::new(span, "must begin with a newline"))?;
-        let text = text
-            .trim_end_matches(' ')
-            .strip_suffix('\n')
-            .ok_or_else(|| Error::new(span, "must end with a newline"))?;
-
-        let mut lines = Vec::new();
-        for line in text.split('\n') {
-            lines.push(match line {
-                "" => "",
-                line => line.strip_prefix(indent).ok_or_else(|| {
-                    Error::new(
-                        span,
-                        format!("non-empty line doesn't start with indent ({indent:?}): {line:?}"),
-                    )
-                })?,
-            });
-        }
-        let text = lines.join("\n");
-
-        Ok(text)
+        dedent(text, indent).map_err(|e| Error::new(span, e))
     }
 }
 
@@ -71,51 +76,53 @@ macro_rules! parse_string_expr {
     };
 }
 
-macro_rules! parse_part_arg {
-    ($expr:expr, $indent:expr) => {
-        {
-            let part: &Expr = $expr;
-            match part {
-                Expr::Lit(lit) => match &lit.lit {
-                    Lit::Str(lit) => {
-                        let string = parse_string_expr!(lit, $indent);
-                        parse_quote!(#string)
-                    }
-                    Lit::Int(lit) => {
-                        let num = lit.base10_digits();
-                        parse_quote!(#num)
-                    }
-                    Lit::Float(lit) => {
-                        let num = lit.base10_digits();
-                        parse_quote!(#num)
-                    }
-                    lit => {
-                        parse_quote!(stringify!(#lit))
-                    }
-                },
-                _ => panic!("Part solution {part:?} cannot be converted to a static string."),
-            }
-        }
-    };
+fn parse_indent(meta: &ParseNestedMeta) -> Result<String, Error> {
+    match meta.value()?.parse::<Lit>()? {
+        Lit::Str(indent) => Ok(indent.value()),
+        Lit::Int(n) => Ok(" ".repeat(n.base10_parse()?)),
+        _ => Err(meta.error("unsupported value, must be either a string or an integer")),
+    }
 }
 
 pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("indent") {
-            let value = match meta.value()?.parse::<Lit>()? {
-                Lit::Str(indent) => Ok(indent.value()),
-                Lit::Int(n) => Ok(" ".repeat(n.base10_parse()?)),
-                _ => Err(meta.error("unsupported value, must be either a string or an integer")),
-            }?;
-            meta.set_empty_option(&mut builder.indent, value)?;
+            meta.set_empty_option(&mut builder.indent, parse_indent(&meta)?)?;
         } else if meta.path.is_ident("notest") {
             meta.set_empty_option(&mut builder.test, false)?;
         } else if let Some(ident) = meta.path.get_ident()
             && let Some(num) = ident.to_string().strip_prefix("part")
             && let Ok(num) = num.parse()
         {
-            builder.parts.insert(num, meta.value()?.parse()?);
+            let mut part = PartArgs::build();
+            part.expected = Some(meta.parse_stringify()?);
+            builder.parts.insert(num, part);
+        } else if let Some(first) = meta.path.segments.first()
+            && first.arguments.is_empty()
+            && let Some(num) = first.ident.to_string().strip_prefix("part")
+            && let Ok(num) = num.parse::<u8>()
+        {
+            let part = builder
+                .parts
+                .get_mut(&num)
+                .ok_or_else(|| meta.error(format!("must appear after part{num} argument")))?;
+            let name = if meta.path.segments.len() == 2
+                && let Some(ident) = meta.path.segments.last()
+                && ident.arguments.is_empty()
+            {
+                ident.ident.to_string()
+            } else {
+                return Err(meta.error("unsupported property"));
+            };
+            match name.as_str() {
+                "arg" => {
+                    meta.set_empty_option(&mut part.arg, meta.value()?.parse()?)?;
+                }
+                _ => {
+                    return Err(meta.error("unsupported property"));
+                }
+            }
         } else {
             return Err(meta.error("unsupported property"));
         }
@@ -123,6 +130,12 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     });
     parse_macro_input!(input with args_parser);
     let args = return_err!(builder.finalize());
+    let mut parts = HashMap::new();
+    for (num, part) in args.parts {
+        let mut part = return_err!(part.finalize());
+        part.expected = return_err!(dedent(part.expected, &format!("{}    ", args.indent)));
+        parts.insert(num, part);
+    }
 
     let mut example = parse_macro_input!(annotated_item as ItemStatic);
     if example.ty != parse_quote!(&str) {
@@ -131,18 +144,15 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
             .into();
     }
     {
-        let result_indent = format!("{}    ", args.indent);
-
         let name = example.ident.to_string();
         let input = parse_string_expr!(example.expr, &args.indent);
-        let parts = {
-            let mut parts = Vec::new();
-            for (num, part) in &args.parts {
-                let part: Expr = parse_part_arg!(part, &result_indent);
-                parts.push(quote!(map.insert(#num, #part);));
-            }
-            parts
-        };
+        let parts: Vec<_> = parts
+            .iter()
+            .map(|(num, part)| {
+                let expected = &part.expected;
+                quote!(map.insert(#num, #expected);)
+            })
+            .collect();
         *example.expr = parse_quote! {
             ::std::sync::LazyLock::new(||
                 ::puzzle_runner::derived::Example {
@@ -162,15 +172,19 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let mut result = quote!(#example);
 
     if args.test {
-        for num in args.parts.keys() {
+        for (num, part) in parts {
             let var_ident = &example.ident;
             let fn_ident = format_ident!("{}_part{}", var_ident.to_string().to_lowercase(), num);
-            let part = format_ident!("part{num}");
+            let partident = format_ident!("part{num}");
+            let arg = match part.arg {
+                Some(arg) => quote!(, #arg),
+                None => quote!(),
+            };
             result.extend(quote! {
                 #[cfg(test)]
                 #[test]
                 fn #fn_ident() {
-                    assert_eq!(#part(#var_ident.input).to_string(), #var_ident.parts[&#num]);
+                    assert_eq!(#partident(#var_ident.input #arg).to_string(), #var_ident.parts[&#num]);
                 }
             });
         }

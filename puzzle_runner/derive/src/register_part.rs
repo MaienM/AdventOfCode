@@ -2,11 +2,27 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{Expr, ItemFn, Visibility, parse_macro_input};
 
-use crate::utils::return_err;
+use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err};
+
+args_struct! {
+    struct Args {
+        /// The additional argument to pass in when processing the real input.
+        arg: Option<Expr> = initial None,
+    }
+}
 
 pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    let args_parser = syn::meta::parser(|meta| Err(meta.error("unsupported property")));
+    let mut builder = Args::build();
+    let args_parser = syn::meta::parser(|meta| {
+        if meta.path.is_ident("arg") {
+            meta.set_empty_option(&mut builder.arg, meta.value()?.parse::<Expr>()?)?;
+        } else {
+            return Err(meta.error("unsupported property"));
+        }
+        Ok(())
+    });
     parse_macro_input!(input with args_parser);
+    let Args { arg } = return_err!(builder.finalize());
 
     let part = parse_macro_input!(annotated_item as ItemFn);
     let ident = part.sig.ident.clone();
@@ -25,10 +41,15 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
 
     let const_ident = format_ident!("PART{num}");
 
+    let arg = match arg {
+        Some(arg) => quote!(, #arg),
+        None => quote!(),
+    };
+
     quote! {
         static #const_ident: ::puzzle_runner::derived::Part = ::puzzle_runner::derived::Part {
             num: #num,
-            implementation: |input| (#ident(input)).to_string(),
+            implementation: |input| (#ident(input #arg)).to_string(),
         };
 
         #part
