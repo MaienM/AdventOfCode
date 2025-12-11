@@ -1195,6 +1195,7 @@ name = "puzzle_runner"
 version = "0.0.0"
 dependencies = [
  "ansi_term",
+ "cfg-if",
  "clap",
  "criterion 0.8.0",
  "pprof",

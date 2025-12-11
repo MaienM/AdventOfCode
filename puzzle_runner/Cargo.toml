@@ -29,8 +29,9 @@ include-chapters = [
 
 [dependencies]
 ansi_term = "=0.12.1"
-puzzle_runner_derive = { path = "./derive" }
+cfg-if = "1.0.4"
 clap = { version = "=4.5.53", features = ["derive", "string"] }
+puzzle_runner_derive = { path = "./derive" }
 rayon.workspace = true
 
 # for bench

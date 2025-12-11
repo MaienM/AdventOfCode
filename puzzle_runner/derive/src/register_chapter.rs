@@ -239,10 +239,13 @@ pub fn main(input: TokenStream) -> TokenStream {
         let crateident = format_ident!("{name}");
         quote! {
             pub fn main() {
-                #[cfg(not(feature = "bench"))]
-                ::puzzle_runner::__internal::single::main(&*::#crateident::SERIES, &*CHAPTER);
-                #[cfg(feature = "bench")]
-                ::puzzle_runner::__internal::bench::main(&*::#crateident::SERIES, &*CHAPTER);
+                ::puzzle_runner::__internal::cfg_if! {
+                    if #[cfg(feature = "bench")] {
+                        ::puzzle_runner::__internal::bench::main(&*::#crateident::SERIES, &*CHAPTER);
+                    } else {
+                        ::puzzle_runner::__internal::single::main(&*::#crateident::SERIES, &*CHAPTER);
+                    }
+                }
             }
         }
     } else {

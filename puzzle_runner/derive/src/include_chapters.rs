@@ -84,10 +84,13 @@ pub fn include_chapters(force: bool) -> TokenStream2 {
         pub static CHAPTERS: ::std::sync::LazyLock<Vec<::puzzle_runner::derived::Chapter>> = ::std::sync::LazyLock::new(|| {
             // Get the chapters.
             let chapters: Vec<::puzzle_runner::derived::Chapter> = {
-                #[cfg(any(test, doctest))]
-                { Vec::new() }
-                #[cfg(not(any(test, doctest)))]
-                { vec![ #(#chapters),* ] }
+                ::puzzle_runner::__internal::cfg_if! {
+                    if #[cfg(any(test, doctest))] {
+                        { Vec::new() }
+                    } else {
+                        { vec![ #(#chapters),* ] }
+                    }
+                }
             };
 
             // Validate that the titles are unique.

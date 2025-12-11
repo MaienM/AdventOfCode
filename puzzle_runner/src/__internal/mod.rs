@@ -6,3 +6,5 @@
 pub mod bench;
 pub mod multi;
 pub mod single;
+
+pub use cfg_if::cfg_if;
