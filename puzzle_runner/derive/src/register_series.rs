@@ -18,7 +18,7 @@ pub fn main(input: TokenStream) -> TokenStream {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("title") {
-            meta.set_empty_option(&mut builder.title, meta.parse_nonempty_string()?)?;
+            meta.set_empty_option(&mut builder.title, meta.parse_stringify_nonempty()?)?;
         } else {
             return Err(meta.error("unsupported property"));
         }

@@ -5,6 +5,7 @@
 mod example_input;
 mod include_chapters;
 mod register_chapter;
+mod register_part;
 mod register_series;
 mod setup_main;
 mod utils;
@@ -40,6 +41,14 @@ pub fn setup_main(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn register_chapter(input: TokenStream) -> TokenStream {
     register_chapter::main(input)
+}
+
+/// Register the function as a puzzle part.
+///
+/// Must used in a chapter that has been registered with [`register_chapter`].
+#[proc_macro_attribute]
+pub fn register_part(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    register_part::main(input, annotated_item)
 }
 
 /// Mark an attribute as an example input.

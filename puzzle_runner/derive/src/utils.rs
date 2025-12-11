@@ -89,8 +89,11 @@ pub(crate) trait ParseNestedMetaExt {
     where
         T: Debug;
 
-    /// Parse a nonempty string value.
-    fn parse_nonempty_string(&self) -> Result<String, Error>;
+    /// Parse a string or number into a string value.
+    fn parse_stringify(&self) -> Result<String, Error>;
+
+    /// As [`parse_stringify`], but rejects empty strings.
+    fn parse_stringify_nonempty(&self) -> Result<String, Error>;
 }
 impl ParseNestedMetaExt for ParseNestedMeta<'_> {
     fn set_empty_option<T>(&self, target: &mut Option<T>, value: T) -> Result<(), Error>
@@ -108,16 +111,21 @@ impl ParseNestedMetaExt for ParseNestedMeta<'_> {
         }
     }
 
-    fn parse_nonempty_string(&self) -> Result<String, Error> {
+    fn parse_stringify(&self) -> Result<String, Error> {
         match self.value()?.parse::<Lit>()? {
-            Lit::Str(value) => {
-                if value.value().is_empty() {
-                    return Err(self.error("cannot be empty"));
-                }
-                Ok(value.value())
-            }
-            _ => Err(self.error("unsupported value, must be a string")),
+            Lit::Str(lit) => Ok(lit.value()),
+            Lit::Int(lit) => Ok(lit.base10_digits().to_string()),
+            Lit::Float(lit) => Ok(lit.base10_digits().to_string()),
+            _ => Err(self.error("unsupported value, must be a string or number"))?,
         }
+    }
+
+    fn parse_stringify_nonempty(&self) -> Result<String, Error> {
+        let result = self.parse_stringify()?;
+        if result.is_empty() {
+            return Err(self.error("cannot be empty"));
+        }
+        Ok(result)
     }
 }
 
