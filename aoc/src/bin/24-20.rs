@@ -66,24 +66,16 @@ fn find_cheat_paths(
         .sum()
 }
 
-fn part1impl(input: &str, min_save: usize) -> usize {
+#[register_part(arg = 100)]
+fn part1(input: &str, min_save: usize) -> usize {
     let (grid, start, end) = parse_input(input);
     find_cheat_paths(&grid, &start, &end, 2, min_save)
 }
 
-#[register_part]
-fn part1(input: &str) -> usize {
-    part1impl(input, 100)
-}
-
-fn part2impl(input: &str, min_save: usize) -> usize {
+#[register_part(arg = 100)]
+fn part2(input: &str, min_save: usize) -> usize {
     let (grid, start, end) = parse_input(input);
     find_cheat_paths(&grid, &start, &end, 20, min_save)
-}
-
-#[register_part]
-fn part2(input: &str) -> usize {
-    part2impl(input, 100)
 }
 
 #[cfg(test)]
@@ -93,7 +85,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 44, part2 = 285, notest)]
+    #[example_input(part1 = 44, part1::arg = 1, part2 = 285, part2::arg = 50)]
     static EXAMPLE_INPUT: &str = "
         ###############
         #...#...#.....#
@@ -184,17 +176,5 @@ mod tests {
         );
         vec![1, 2];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_test_1() {
-        let actual = part1impl(&EXAMPLE_INPUT, 1).to_string();
-        assert_eq!(actual, EXAMPLE_INPUT.parts[&1]);
-    }
-
-    #[test]
-    fn example_test_2() {
-        let actual = part2impl(&EXAMPLE_INPUT, 50).to_string();
-        assert_eq!(actual, EXAMPLE_INPUT.parts[&2]);
     }
 }

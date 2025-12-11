@@ -52,7 +52,8 @@ fn add_connection(circuits: &mut Vec<HashSet<Point3>>, a: &Point3, b: &Point3) {
     }
 }
 
-fn part1impl(input: &str, connections: usize) -> usize {
+#[register_part(arg = 1000)]
+fn part1(input: &str, connections: usize) -> usize {
     let boxes = parse_input(input);
     let pairs = boxes
         .iter()
@@ -72,11 +73,6 @@ fn part1impl(input: &str, connections: usize) -> usize {
         .take(3)
         .reduce(|a, b| a * b)
         .unwrap()
-}
-
-#[register_part]
-fn part1(input: &str) -> usize {
-    part1impl(input, 1000)
 }
 
 #[register_part]
@@ -105,7 +101,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part2 = 25_272)]
+    #[example_input(part1 = 40, part1::arg = 10, part2 = 25_272)]
     static EXAMPLE_INPUT: &str = "
         162,817,812
         57,618,57
@@ -128,9 +124,4 @@ mod tests {
         984,92,344
         425,690,689
     ";
-
-    #[test]
-    fn example_input_part1() {
-        assert_eq!(part1impl(&EXAMPLE_INPUT, 10), 40);
-    }
 }

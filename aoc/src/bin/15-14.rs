@@ -30,7 +30,9 @@ fn parse_input(input: &str) -> Vec<Reindeer<'_>> {
     } => reindeer)
 }
 
-fn part1impl(reindeer: Vec<Reindeer>, elapsed: u16) -> u16 {
+#[register_part(arg = 2503)]
+fn part1(input: &str, elapsed: u16) -> u16 {
+    let reindeer = parse_input(input);
     reindeer
         .into_iter()
         .map(|r| {
@@ -41,13 +43,9 @@ fn part1impl(reindeer: Vec<Reindeer>, elapsed: u16) -> u16 {
         .unwrap()
 }
 
-#[register_part]
-fn part1(input: &str) -> u16 {
+#[register_part(arg = 2503)]
+fn part2(input: &str, elapsed: u16) -> u16 {
     let reindeer = parse_input(input);
-    part1impl(reindeer, 2503)
-}
-
-fn part2impl(reindeer: Vec<Reindeer>, elapsed: u16) -> u16 {
     let mut cycles: Vec<_> = reindeer
         .into_iter()
         .map(|r| {
@@ -82,12 +80,6 @@ fn part2impl(reindeer: Vec<Reindeer>, elapsed: u16) -> u16 {
     points.into_iter().max().unwrap()
 }
 
-#[register_part]
-fn part2(input: &str) -> u16 {
-    let reindeer = parse_input(input);
-    part2impl(reindeer, 2503)
-}
-
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -95,7 +87,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input]
+    #[example_input(part1 = 1120, part1::arg = 1000, part2 = 689, part2::arg = 1000)]
     static EXAMPLE_INPUT: &str = "
         Comet can fly 14 km/s for 10 seconds, but then must rest for 127 seconds.
         Dancer can fly 16 km/s for 11 seconds, but then must rest for 162 seconds.
@@ -119,17 +111,5 @@ mod tests {
             },
         ];
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        let reindeer = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(part1impl(reindeer, 1000), 1120);
-    }
-
-    #[test]
-    fn example_part2() {
-        let reindeer = parse_input(&EXAMPLE_INPUT);
-        assert_eq!(part2impl(reindeer, 1000), 689);
     }
 }

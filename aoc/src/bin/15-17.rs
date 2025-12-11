@@ -24,14 +24,10 @@ fn count_options(containers: &[u8], left: u8) -> u16 {
     }
 }
 
-fn part1impl(input: &str, liters: u8) -> u16 {
+#[register_part(arg = 150)]
+fn part1(input: &str, liters: u8) -> u16 {
     let containers = parse_input(input);
     count_options(&containers, liters)
-}
-
-#[register_part]
-fn part1(input: &str) -> u16 {
-    part1impl(input, 150)
 }
 
 fn min_options(containers: &[u8], left: u8, used: u8) -> (u8, u16) {
@@ -55,14 +51,10 @@ fn min_options(containers: &[u8], left: u8, used: u8) -> (u8, u16) {
     }
 }
 
-fn part2impl(input: &str, liters: u8) -> u16 {
+#[register_part(arg = 150)]
+fn part2(input: &str, liters: u8) -> u16 {
     let containers = parse_input(input);
     min_options(&containers, liters, 0).1
-}
-
-#[register_part]
-fn part2(input: &str) -> u16 {
-    part2impl(input, 150)
 }
 
 #[cfg(test)]
@@ -72,7 +64,7 @@ mod tests {
 
     use super::*;
 
-    #[example_input]
+    #[example_input(part1 = 4, part1::arg = 25, part2 = 3, part2::arg = 25)]
     static EXAMPLE_INPUT: &str = "
         20
         15
@@ -80,14 +72,4 @@ mod tests {
         5
         5
     ";
-
-    #[test]
-    fn example_input_part1() {
-        assert_eq!(part1impl(&EXAMPLE_INPUT, 25), 4);
-    }
-
-    #[test]
-    fn example_input_part2() {
-        assert_eq!(part2impl(&EXAMPLE_INPUT, 25), 3);
-    }
 }

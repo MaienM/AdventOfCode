@@ -64,15 +64,11 @@ fn is_drawing(robots: &[Robot], bounds: &Point, seconds: isize) -> bool {
     true
 }
 
-pub fn part1impl(input: &str, bounds: Point, seconds: isize) -> usize {
+#[register_part(arg = (Point::new(101, 103), 100))]
+fn part1(input: &str, (bounds, seconds): (Point, isize)) -> usize {
     let mut robots = parse_input(input);
     simulate(&mut robots, &bounds, seconds);
     safety_score(&robots, &bounds)
-}
-
-#[register_part]
-fn part1(input: &str) -> usize {
-    part1impl(input, Point::new(101, 103), 100)
 }
 
 #[register_part]
@@ -93,7 +89,10 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 12, notest)]
+    #[example_input(
+        part1 = 12,
+        part1::arg = (Point::new(11, 7), 100),
+    )]
     static EXAMPLE_INPUT: &str = "
         p=0,4 v=3,-3
         p=6,3 v=-1,-3
@@ -141,13 +140,6 @@ mod tests {
         let mut robots = initial_robots.clone();
         simulate(&mut robots, &bounds, 5);
         assert_eq!(robots[0].position, expected);
-    }
-
-    #[test]
-    fn example_part1() {
-        let actual = part1impl(&EXAMPLE_INPUT, Point::new(11, 7), 100);
-        let expected = 12;
-        assert_eq!(actual, expected);
     }
 
     #[test]

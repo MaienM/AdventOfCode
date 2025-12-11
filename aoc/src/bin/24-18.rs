@@ -35,26 +35,18 @@ fn run(walls: &[Point2], end: Point2) -> Option<usize> {
     }
 }
 
-fn part1impl(input: &str, count: usize, end: Point2) -> usize {
+#[register_part(arg = (1024, Point2::new(70, 70)))]
+fn part1(input: &str, (count, end): (usize, Point2)) -> usize {
     let coordinates = parse_input(input);
     run(&coordinates[..count], end).unwrap()
 }
 
-#[register_part]
-fn part1(input: &str) -> usize {
-    part1impl(input, 1024, Point2::new(70, 70))
-}
-
-fn part2impl(input: &str, end: Point2) -> String {
+#[register_part(arg = Point2::new(70, 70))]
+fn part2(input: &str, end: Point2) -> String {
     let coordinates = parse_input(input);
     let idx = (0..coordinates.len()).partition_point(|v| run(&coordinates[..v], end).is_none());
     let point = coordinates[idx.unwrap() - 1];
     format!("{},{}", point.x, point.y)
-}
-
-#[register_part]
-fn part2(input: &str) -> String {
-    part2impl(input, Point2::new(70, 70))
 }
 
 #[cfg(test)]
@@ -64,7 +56,12 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 22, part2 = "6,1", notest)]
+    #[example_input(
+        part1 = 22,
+        part1::arg = (12, Point2::new(6, 6)),
+        part2 = "6,1",
+        part2::arg = Point2::new(6, 6),
+    )]
     static EXAMPLE_INPUT: &str = "
         5,4
         4,2
@@ -92,16 +89,4 @@ mod tests {
         1,6
         2,0
     ";
-
-    #[test]
-    fn example_test_1() {
-        let actual = part1impl(&EXAMPLE_INPUT, 12, Point2::new(6, 6)).to_string();
-        assert_eq!(actual, EXAMPLE_INPUT.parts[&1]);
-    }
-
-    #[test]
-    fn example_test_2() {
-        let actual = part2impl(&EXAMPLE_INPUT, Point2::new(6, 6));
-        assert_eq!(actual, EXAMPLE_INPUT.parts[&2]);
-    }
 }
