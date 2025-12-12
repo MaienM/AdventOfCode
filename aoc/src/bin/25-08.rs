@@ -91,7 +91,7 @@ fn part2(input: &str) -> usize {
             return a.x * b.x;
         }
     }
-    panic!("Should never happen.");
+    never!();
 }
 
 #[cfg(test)]

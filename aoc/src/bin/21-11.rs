@@ -62,7 +62,7 @@ fn part2(input: &str) -> u16 {
             return round;
         }
     }
-    panic!("How did you get here?");
+    never!();
 }
 
 #[cfg(test)]

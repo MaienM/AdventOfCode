@@ -289,7 +289,7 @@ fn part1(input: &str) -> String {
             return inputs.iter().join("");
         }
     }
-    panic!("Failed to find solution.");
+    never!();
 }
 
 #[register_part]
@@ -314,7 +314,7 @@ fn part2(input: &str) -> String {
             return inputs.iter().join("");
         }
     }
-    panic!("Failed to find solution.");
+    never!();
 }
 
 #[cfg(test)]

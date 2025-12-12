@@ -22,7 +22,7 @@ fn part2(input: &str) -> usize {
             return i + 1;
         }
     }
-    panic!("Should never happen.");
+    never!();
 }
 
 #[cfg(test)]

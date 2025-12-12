@@ -69,7 +69,7 @@ fn part1(input: &str) -> u64 {
         }
     }
 
-    panic!("Should not happen");
+    never!();
 }
 
 #[register_part]

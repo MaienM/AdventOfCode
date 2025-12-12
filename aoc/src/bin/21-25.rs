@@ -69,7 +69,7 @@ fn part1(input: &str) -> usize {
         }
         last_hash = hash;
     }
-    panic!("Should never happen.");
+    never!();
 }
 
 #[register_part]

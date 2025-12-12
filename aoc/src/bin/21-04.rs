@@ -76,7 +76,7 @@ fn part1(input: &str) -> u16 {
             }
         }
     }
-    panic!("Bingo night ended, no one won.");
+    never!();
 }
 
 #[register_part]
@@ -101,7 +101,7 @@ fn part2(input: &str) -> u16 {
             states.swap_remove(idx.to_owned());
         }
     }
-    panic!("Bingo night ended, some boards never won.");
+    never!();
 }
 
 #[cfg(test)]

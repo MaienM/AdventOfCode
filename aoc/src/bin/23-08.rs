@@ -53,7 +53,7 @@ fn run_until(
             return (steps, current.clone());
         }
     }
-    panic!("Should never happen");
+    never!();
 }
 
 #[register_part]

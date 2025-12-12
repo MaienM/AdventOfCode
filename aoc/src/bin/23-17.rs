@@ -99,7 +99,7 @@ fn find_path(grid: &Grid, min_before_turn: u8, max_before_turn: u8) -> usize {
             });
         }
     }
-    panic!("Unable to find path to end, this should never happen.");
+    never!();
 }
 
 #[register_part]

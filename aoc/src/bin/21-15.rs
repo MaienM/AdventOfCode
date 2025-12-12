@@ -34,7 +34,7 @@ fn calculate_path(grid: &Grid) -> i16 {
             }
         }
     }
-    panic!("Should never happen.");
+    never!();
 }
 
 fn grow_grid(grid: Grid) -> Grid {

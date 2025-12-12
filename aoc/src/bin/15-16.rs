@@ -53,7 +53,7 @@ fn part1(input: &str) -> u16 {
         }
         return aunt.num;
     }
-    panic!("Should never happen.");
+    never!();
 }
 
 #[register_part]
@@ -79,5 +79,5 @@ fn part2(input: &str) -> u16 {
         }
         return aunt.num;
     }
-    panic!("Should never happen.");
+    never!();
 }

@@ -71,7 +71,7 @@ fn find_fewest_presses_lights(machine: &Machine) -> usize {
             states.push((Reverse(presses + 1), lights, idx));
         }
     }
-    panic!("Should never happen.");
+    never!();
 }
 
 fn find_fewest_presses_joltages(machine: &Machine) -> usize {

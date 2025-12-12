@@ -266,7 +266,7 @@ fn get_best_moveset_cost<const SEATS: usize>(board: &Board<SEATS>) -> u32 {
         seen.insert(board);
     }
 
-    panic!("Should never happen.");
+    never!();
 }
 
 fn parse_input(input: &str) -> Board<2> {

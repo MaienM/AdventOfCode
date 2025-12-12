@@ -104,7 +104,7 @@ fn part2(input: &str) -> usize {
             return idx1 * (i + 1);
         }
     }
-    panic!();
+    never!();
 }
 
 #[cfg(test)]

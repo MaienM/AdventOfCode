@@ -168,7 +168,7 @@ fn part2(input: &str) -> usize {
             })
             .unwrap();
     }
-    panic!("Should never happen.");
+    never!();
 }
 
 #[cfg(test)]

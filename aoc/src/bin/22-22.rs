@@ -37,7 +37,7 @@ impl Grid {
                 return point;
             }
         }
-        panic!();
+        never!();
     }
 }
 

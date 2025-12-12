@@ -13,7 +13,7 @@ fn find_marker(sequence: &str, length: usize) -> usize {
             return i + length;
         }
     }
-    panic!("Did not find marker.");
+    never!();
 }
 
 #[register_part]

@@ -73,7 +73,7 @@ fn part1(input: &str) -> usize {
             }
         }
     }
-    panic!("Should never happen");
+    never!();
 }
 
 #[register_part]
