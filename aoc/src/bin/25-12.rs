@@ -58,6 +58,11 @@ fn part1(input: &str) -> usize {
         .count()
 }
 
+#[register_part]
+fn part2(_input: &str) -> &'static str {
+    "I did it!"
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
