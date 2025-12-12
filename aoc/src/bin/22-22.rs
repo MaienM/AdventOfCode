@@ -96,7 +96,7 @@ fn parse_input(input: &str) -> (Grid, Actions) {
                     }
                 }
             }
-            _ => panic!("Invalid path char {c:?}"),
+            _ => invalid!(path char c),
         }
     }
 
@@ -117,7 +117,7 @@ impl From<i16> for Rotation {
             n if n == Rotation::Quarter as i16 => Rotation::Quarter,
             n if n == Rotation::Half as i16 => Rotation::Half,
             n if n == Rotation::ThreeQuarters as i16 => Rotation::ThreeQuarters,
-            n => panic!("Invalid rotation {n}."),
+            n => invalid!(rotation n),
         }
     }
 }
@@ -149,7 +149,7 @@ impl Add<Rotation> for Direction {
             n if n == Direction::Down as u8 => Direction::Down,
             n if n == Direction::Left as u8 => Direction::Left,
             n if n == Direction::Right as u8 => Direction::Right,
-            _ => panic!(),
+            n => invalid!(direction n),
         }
     }
 }

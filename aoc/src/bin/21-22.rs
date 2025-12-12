@@ -130,7 +130,7 @@ fn parse_input(input: &str) -> Vec<Step> {
         match value {
             "on" => true,
             "off" => false,
-            _ => panic!("Bad input ({value:?}), no cookie."),
+            _ => invalid!(value value),
         }
     }
 

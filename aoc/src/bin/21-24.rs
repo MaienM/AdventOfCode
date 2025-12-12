@@ -135,7 +135,7 @@ impl From<&str> for Instruction {
             "div" => Instruction::Div(registry, rhs),
             "mod" => Instruction::Mod(registry, rhs),
             "eql" => Instruction::Eql(registry, rhs),
-            v => panic!("Invalid instruction {v}."),
+            v => invalid!(instruction v),
         }
     }
 }

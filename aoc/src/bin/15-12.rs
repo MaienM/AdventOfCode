@@ -14,7 +14,7 @@ fn read_array<I: Iterator<Item = char>>(chars: &mut Peekable<I>, ignore_red: boo
         match chars.next() {
             Some(']') => break,
             Some(',') => {}
-            c => panic!("Unexpected {c:?}"),
+            c => invalid!(symbol c),
         }
     }
     sum
@@ -42,7 +42,7 @@ fn read_object<I: Iterator<Item = char>>(chars: &mut Peekable<I>, ignore_red: bo
         match chars.next() {
             Some('}') => break,
             Some(',') => {}
-            c => panic!("Unexpected {c:?}"),
+            c => invalid!(symbol c),
         }
     }
     if ignore { 0 } else { sum }
@@ -70,7 +70,7 @@ fn read_item<I: Iterator<Item = char>>(
                 .join("");
             Ok(format!("{start}{rest}").parse().unwrap())
         }
-        c => panic!("Unexpected {c:?}"),
+        c => invalid!(symbol c),
     }
 }
 

@@ -22,7 +22,7 @@ fn parse_input(input: &str) -> Vec<Instruction> {
             match &line[0..4] {
                 "addx" => Instruction::AddX(line[5..].parse().unwrap()),
                 "noop" => Instruction::NoOp,
-                _ => panic!(),
+                v => invalid!(instruction v),
             }
         }]
     } => instructions)

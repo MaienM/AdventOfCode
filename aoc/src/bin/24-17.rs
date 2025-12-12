@@ -24,7 +24,7 @@ impl From<u8> for Instruction {
             5 => Self::Out,
             6 => Self::Bdv,
             7 => Self::Cdv,
-            _ => panic!("Invalid opcode {value}."),
+            _ => invalid!(opcode value),
         }
     }
 }

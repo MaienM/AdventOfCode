@@ -51,7 +51,7 @@ fn part2(input: &str) -> u16 {
                 sum += get_priority(*badge);
             }
             (None, None, None) => return sum,
-            _ => panic!("Got partial group"),
+            v => invalid!(partial group v),
         }
     }
 }

@@ -29,7 +29,7 @@ impl From<(Direction, Direction)> for Tile {
             (Direction::South, Direction::West) | (Direction::East, Direction::North) => {
                 Tile::NorthWest
             }
-            _ => panic!("Invalid corner {value:?}."),
+            _ => invalid!(corner value),
         }
     }
 }
@@ -40,7 +40,7 @@ fn parse_direction(value: &str) -> Direction {
         "R" => Direction::East,
         "D" => Direction::South,
         "L" => Direction::West,
-        _ => panic!("Invalid direction {value:?}."),
+        _ => invalid!(direction value),
     }
 }
 
@@ -155,7 +155,7 @@ fn swap_instructions(instructions: Vec<Instruction>) -> Vec<Instruction> {
                 "1" => Direction::South,
                 "2" => Direction::West,
                 "3" => Direction::North,
-                d => panic!("Invalid direction {d:?}."),
+                d => invalid!(direction d),
             };
             Instruction {
                 direction,

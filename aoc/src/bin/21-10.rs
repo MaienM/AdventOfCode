@@ -32,9 +32,7 @@ fn part1(input: &str) -> u64 {
                         ']' => 57,
                         '}' => 1197,
                         '>' => 25137,
-                        _ => {
-                            panic!("Invalid character {chr}.");
-                        }
+                        _ => invalid!(character chr),
                     };
                     break;
                 }
@@ -70,7 +68,7 @@ fn part2(input: &str) -> u64 {
                 '}' => 3,
                 '>' => 4,
                 _ => {
-                    panic!("Invalid character {chr}.");
+                    invalid!(character chr);
                 }
             };
         }

@@ -13,6 +13,6 @@ pub use crate::parser::parse;
 pub use crate::{
     ext::*,
     grid::{PointBoundaries, PointCollection, PointDataCollection, PointOnlyCollection},
-    never,
+    invalid, never,
     point::{PointRange, WrappablePointRange},
 };

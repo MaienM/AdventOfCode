@@ -30,16 +30,16 @@ fn parse_input_lines<'a>(
         let mut parts = line.unwrap().split(' ');
         match parts.nth(1).unwrap() {
             "cd" => match parts.next().unwrap() {
-                "/" => return "/",
-                ".." => return "..",
+                path @ ("/" | "..") => return path,
                 name => {
-                    let Some(Entry::Dir(subdir)) = dir.get_mut(name) else {
-                        panic!()
+                    let subdir = match dir.get_mut(name) {
+                        Some(Entry::Dir(subdir)) => subdir,
+                        v => panic!("Cannot cd into non-directory {name} ({v:?})."),
                     };
                     match parse_input_lines(subdir, lines) {
                         "/" => return "/",
                         ".." => {}
-                        _ => panic!(),
+                        v => invalid!(result path v),
                     }
                 }
             },
@@ -58,7 +58,7 @@ fn parse_input_lines<'a>(
                     };
                 }
             }
-            _ => panic!(),
+            v => invalid!(operand v),
         }
     }
 }

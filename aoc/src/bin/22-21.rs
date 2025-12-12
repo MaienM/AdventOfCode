@@ -40,11 +40,11 @@ fn parse_input(input: &str) -> HashMap<&str, Job<'_>> {
                             "-" => Operation::Rem,
                             "*" => Operation::Mul,
                             "/" => Operation::Div,
-                            _ => panic!(),
+                            _ => invalid!(operand op),
                         },
                         rhs,
                     ),
-                    _ => panic!(),
+                    _ => invalid!(job job),
                 };
                 (name, job)
             }
@@ -79,7 +79,7 @@ fn part1(input: &str) -> u64 {
                 }
                 true
             }
-            Job::Number(_) => panic!(),
+            Job::Number(_) => invalid!(job job),
         });
     }
 
@@ -118,7 +118,7 @@ fn part2(input: &str) -> u64 {
                 }
                 true
             }
-            Job::Number(_) => panic!(),
+            Job::Number(_) => invalid!(job job),
         });
         if jobs.len() == before {
             break;
@@ -136,7 +136,7 @@ fn part2(input: &str) -> u64 {
                 (*results.get(rhs).unwrap(), jobs.remove_entry(lhs).unwrap())
             }
         }
-        Job::Number(_) => panic!(),
+        Job::Number(_) => invalid!(root root),
     };
     loop {
         current = match current {
@@ -169,10 +169,10 @@ fn part2(input: &str) -> u64 {
                     (Option::None, Operation::Div, Option::Some(rhs)) => {
                         (wanted_result * rhs, jobs.remove_entry(lhs).unwrap())
                     }
-                    expr => panic!("{expr:?}"),
+                    expr => invalid!(expression expr),
                 }
             }
-            _ => panic!("{current:?}"),
+            _ => invalid!(state current),
         };
     }
 }

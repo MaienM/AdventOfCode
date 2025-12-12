@@ -43,7 +43,7 @@ impl<'a> From<Vec<&'a str>> for Gate<'a> {
             3 if value[1] == "OR" => Gate::Or(value[0], value[2]),
             3 if value[1] == "LSHIFT" => Gate::LShift(value[0], value[2].parse().unwrap()),
             3 if value[1] == "RSHIFT" => Gate::RShift(value[0], value[2].parse().unwrap()),
-            _ => panic!("Invalid gate definition: {}", value.join(" ")),
+            _ => invalid!(gate definition value.join(" ")),
         }
     }
 }

@@ -40,7 +40,7 @@ fn parse_input(input: &str) -> Vec<Monkey> {
                     ("+", rhs) => Operation::Add(rhs.parse().unwrap()),
                     ("*", "old") => Operation::Square,
                     ("*", rhs) => Operation::Mul(rhs.parse().unwrap()),
-                    _ => panic!("Invalid operation {operand} {rhs}"),
+                    v => invalid!(operation v),
                 };
                 Monkey {
                     items,

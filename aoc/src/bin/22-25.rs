@@ -9,7 +9,7 @@ fn to_snafu(mut num: u64) -> String {
             2 => ('2', 2),
             3 => ('=', -2),
             4 => ('-', -1),
-            _ => panic!(),
+            v => invalid!(num v),
         };
         chars.push(chr);
         num = ((num as i64 - diff) / 5) as u64;
@@ -26,7 +26,7 @@ fn from_snafu(num: &str) -> u64 {
             '2' => 2,
             '-' => -1,
             '=' => -2,
-            _ => panic!(),
+            v => invalid!(num v),
         };
         result = result * 5 + value;
     }

@@ -36,7 +36,7 @@ fn parse_line(line: &str) -> Item {
             '0'..='9' => {
                 number = Option::Some(number.unwrap_or(0) * 10 + chr.to_digit(10).unwrap() as u8);
             }
-            _ => panic!("Unexpected character {chr}"),
+            _ => invalid!(character chr),
         }
     }
     list.pop().unwrap()

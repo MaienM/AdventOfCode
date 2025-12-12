@@ -39,7 +39,7 @@ fn parse_input(input: &str) -> Vec<Problem<'_>> {
         let operator = match problem.pop().unwrap().trim() {
             "+" => Operator::Add,
             "*" => Operator::Mul,
-            v => panic!("Invalid operator {v}."),
+            v => invalid!(operator v),
         };
         problems.push((problem, operator));
     }

@@ -19,7 +19,7 @@ fn parse_direction(input: &str) -> Direction2 {
         "D" => Direction2::South,
         "L" => Direction2::West,
         "R" => Direction2::East,
-        _ => panic!(),
+        d => invalid!(direction d),
     }
 }
 

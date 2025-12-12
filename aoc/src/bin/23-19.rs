@@ -31,7 +31,7 @@ impl From<&str> for Var {
             "a" => Var::A,
             "m" => Var::M,
             "s" => Var::S,
-            _ => panic!("Unknown variable {value:?}."),
+            _ => invalid!(variable value),
         }
     }
 }
@@ -46,7 +46,7 @@ impl From<&str> for Op {
         match value {
             ">" => Op::Gt,
             "<" => Op::Lt,
-            _ => panic!("Unknown operator {value:?}."),
+            _ => invalid!(operator value),
         }
     }
 }
