@@ -131,7 +131,7 @@ pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
     let input = match input_path
         .read_or_init(|| {
             println!("Downloading input...");
-            series.controller.get_input(chapter)
+            series.controller.get_input(chapter.name)
         })
         .to_value()
     {

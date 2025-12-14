@@ -4,6 +4,7 @@
 #![doc(hidden)]
 
 pub mod bench;
+pub mod controller;
 pub mod multi;
 pub mod single;
 

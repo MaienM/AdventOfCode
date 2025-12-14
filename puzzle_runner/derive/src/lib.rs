@@ -5,6 +5,7 @@
 mod example_input;
 mod include_chapters;
 mod register_chapter;
+mod register_controller;
 mod register_part;
 mod register_series;
 mod setup_main;
@@ -61,4 +62,12 @@ pub fn register_part(input: TokenStream, annotated_item: TokenStream) -> TokenSt
 #[proc_macro_attribute]
 pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     example_input::main(input, annotated_item)
+}
+
+/// Register the struct as a controller for the series.
+///
+/// Each series can only have at most one controller.
+#[proc_macro_attribute]
+pub fn register_controller(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    register_controller::main(input, annotated_item)
 }

@@ -36,7 +36,8 @@ pub mod runner;
 mod source;
 
 pub use puzzle_runner_derive::{
-    example_input, register_chapter, register_part, register_series, setup_main,
+    example_input, register_chapter, register_controller, register_part, register_series,
+    setup_main,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
