@@ -16,7 +16,7 @@ pub fn main(input: TokenStream) -> TokenStream {
             pub fn main() {
                 let series = ::puzzle_runner::derived::Series {
                     chapters: CHAPTERS.clone(),
-                    ..*::#crateident::SERIES
+                    ..::#crateident::SERIES.clone()
                 };
                 ::puzzle_runner::__internal::multi::main(&series);
             }

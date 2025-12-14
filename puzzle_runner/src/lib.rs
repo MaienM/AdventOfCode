@@ -30,6 +30,7 @@
 extern crate self as puzzle_runner;
 
 pub mod __internal;
+pub mod controller;
 pub mod derived;
 pub mod runner;
 mod source;
