@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Expr, parse_macro_input};
+use syn::parse_macro_input;
 
 use crate::{
     include_chapters::include_chapters,
@@ -11,8 +11,8 @@ args_struct! {
     struct Args {
         /// The title of the series.
         title: String,
-        /// The controller for the series.
-        controller: Expr = default ::syn::parse_quote!(::puzzle_runner::controller::DefaultController),
+        /// Whether the series has a controller.
+        controller: bool = default false,
     }
 }
 
@@ -22,7 +22,7 @@ pub fn main(input: TokenStream) -> TokenStream {
         if meta.path.is_ident("title") {
             meta.set_empty_option(&mut builder.title, meta.parse_stringify_nonempty()?)?;
         } else if meta.path.is_ident("controller") {
-            meta.set_empty_option(&mut builder.controller, meta.value()?.parse()?)?;
+            meta.set_empty_option(&mut builder.controller, true)?;
         } else {
             return Err(meta.error("unsupported property"));
         }
@@ -31,22 +31,31 @@ pub fn main(input: TokenStream) -> TokenStream {
     parse_macro_input!(input with args_parser);
     let Args { title, controller } = return_err!(builder.finalize());
 
-    let chapters = include_chapters(false);
-    let (name, alias) = if let Ok(name) = source_crate() {
+    let mut prefix = include_chapters(false);
+
+    let name = if let Ok(name) = source_crate() {
         let crateident = format_ident!("{name}");
-        (
-            name,
-            quote! {
-                #[cfg(not(any(test, doctest)))]
-                extern crate self as #crateident;
-            },
-        )
+        prefix = quote! {
+            #prefix
+
+            // Make the current crate available under its external name (which is the name that must be
+            // used when referring to it from the bins normally).
+            #[cfg(not(any(test, doctest)))]
+            extern crate self as #crateident;
+        };
+        name
     } else {
-        (String::new(), quote!())
+        String::new()
+    };
+
+    let controller = if controller && !name.is_empty() {
+        quote!(::puzzle_runner::__internal::controller::BinController)
+    } else {
+        quote!(::puzzle_runner::controller::DefaultController)
     };
 
     quote! {
-        #chapters
+        #prefix
 
         pub static SERIES: ::std::sync::LazyLock<::puzzle_runner::derived::Series> = ::std::sync::LazyLock::new(|| {
             ::puzzle_runner::derived::Series {
@@ -58,10 +67,6 @@ pub fn main(input: TokenStream) -> TokenStream {
                 )),
             }
         });
-
-        // Make the current crate available under its external name (which is the name that must be
-        // used when referring to it from the bins normally).
-        #alias
     }
     .into()
 }

@@ -1,6 +1,8 @@
 //! A controller handles generic actions (e.g., getting inputs, validating results) for a specific
 //! series.
 
+use serde::{Deserialize, Serialize};
+
 /// The actions for a controller. This should be implemented manually.
 #[allow(clippy::missing_errors_doc)]
 pub trait Controller: Send + Sync {
@@ -23,7 +25,7 @@ pub type ControllerResult<T> = Result<T, ControllerError>;
 ///
 /// Any error type that implements [`ToString`] can be cast into this with the `?` operator, and
 /// it in turn can be cast into a [`String`] in the same manner.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ControllerError {
     NotImplemented,
     Err(String),

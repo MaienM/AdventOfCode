@@ -19,7 +19,7 @@ run-%: target = $(subst run-,,$@)
 run-%: crate = $(word 1,$(subst -, ,${target}))
 run-%: bin = $(subst ${crate}-,,${target})
 run-%: name = $(subst /${crate},,${crate}/${bin})
-run-%: FORCE
+run-%: FORCE controller-$${crate}
 	echo "$(setaf6)>>>>> Running ${name} <<<<<$(sgr0)"
 	./cargo-semiquiet.sh run --release --package ${crate} --bin ${bin}
 
@@ -51,6 +51,10 @@ test-libs:
 	LLVM_COV_FLAGS='--show-directory-coverage' \
 	 cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --html
 	cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --lcov --output-path target/llvm-cov/lcov
+
+controller-%: crate = $(subst controller-,,$@)
+controller-%: $${crate}/src/bin/controller.rs $(shell find puzzle_runner -type f -print)
+	./cargo-semiquiet.sh build --release --package ${crate} --bin controller
 
 confirm:
 	find inputs -type f -name '*.pending' | while read -r file; do \
