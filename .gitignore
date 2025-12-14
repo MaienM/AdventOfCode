@@ -1,6 +1,6 @@
 .leaderboard*
 .pre-commit-config.yaml
-.session
+.*-session
 inputs/
 target/
 web/*_wasm

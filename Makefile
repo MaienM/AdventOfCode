@@ -1,5 +1,3 @@
-RUST_BACKTRACE ?= 0
-
 setaf1 = $(shell tput setaf 1)
 setaf6 = $(shell tput setaf 6)
 sgr0 = $(shell tput sgr0)
@@ -9,27 +7,6 @@ sgr0 = $(shell tput sgr0)
 .SECONDEXPANSION:
 
 targets=$(foreach path,$(wildcard */src/bin/*),$(let crate bin,$(subst /src/bin/, ,${path}),$(subst -${crate},,$(subst .rs,,${crate}-${bin}))))
-
-#
-# Files downloaded from the AoC website.
-#
-
-.session:
-	echo "Please create a file named .session containing your session cookie." >&2
-	exit 1
-
-inputs/aoc/%/input.txt: bin = $(patsubst inputs/aoc/%/input.txt,%,$@)
-inputs/aoc/%/input.txt: nameparts = $(subst -, ,${bin})
-inputs/aoc/%/input.txt: year = $(word 1,${nameparts})
-inputs/aoc/%/input.txt: day = $(patsubst 0%,%,$(word 2,${nameparts}))
-inputs/aoc/%/input.txt: .session
-	echo "$(setaf6)>>>>> Downloading input for ${bin} <<<<<$(sgr0)"
-	mkdir -p $(dir $@)
-	curl \
-		-H "Cookie: session=$$(cat .session)" \
-		--fail \
-		--output $@ \
-		"https://adventofcode.com/20${year}/day/${day}/input"
 
 #
 # Basic run/test commands.
@@ -42,8 +19,7 @@ run-%: target = $(subst run-,,$@)
 run-%: crate = $(word 1,$(subst -, ,${target}))
 run-%: bin = $(subst ${crate}-,,${target})
 run-%: name = $(subst /${crate},,${crate}/${bin})
-run-%: input = $(if $(subst ${crate},,${bin}),inputs/${crate}/${bin}/input.txt,)
-run-%: FORCE $${input}
+run-%: FORCE
 	echo "$(setaf6)>>>>> Running ${name} <<<<<$(sgr0)"
 	./cargo-semiquiet.sh run --release --package ${crate} --bin ${bin}
 

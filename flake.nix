@@ -102,6 +102,8 @@
 
               shellHook = ''
                 ${config.pre-commit.settings.shellHook}
+
+                export AOC_SESSION_COOKIE_FILE="$PWD/.aoc-session"
               '';
 
               NODE_OPTIONS = "--openssl-legacy-provider";
