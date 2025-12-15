@@ -16,7 +16,7 @@ use pprof::{ProfilerGuard, protos::Message};
 use crate::{
     __internal::single::{SingleArgs, SingleRunner, run_single},
     derived::{Chapter, Part, Series},
-    source::Source,
+    source::ChapterSources,
 };
 
 #[derive(Parser, Debug)]
@@ -117,7 +117,7 @@ impl SingleRunner for BenchRunner {
         println!();
     }
 
-    fn run(&mut self, part: &Part, input: &str, _solution: Result<Source, String>) {
+    fn run(&mut self, part: &Part, input: &str, _sources: &ChapterSources) {
         let name = format!("{}/{}", self.0, part.num);
         self.1.bench_function(&name, |b| {
             b.iter(|| (part.implementation)(input));

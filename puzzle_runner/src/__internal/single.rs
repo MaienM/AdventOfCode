@@ -9,7 +9,7 @@ use rayon::ThreadPoolBuilder;
 use crate::{
     derived::{Chapter, Part, Series},
     runner::{DurationThresholds, InstantTimer, PrintPartResult as _},
-    source::{ChapterSources, Source, source_path_fill_tokens},
+    source::{ChapterSources, IOResult, PartFileType, source_path_fill_tokens},
 };
 
 #[derive(Parser, Debug)]
@@ -62,7 +62,7 @@ pub(super) trait SingleRunner {
     fn print_header(&self, description: String);
 
     /// Run a single part.
-    fn run(&mut self, part: &Part, input: &str, solution: Result<Source, String>);
+    fn run(&mut self, part: &Part, input: &str, sources: &ChapterSources);
 
     /// Run after all parts have finished.
     fn finish(&mut self) {
@@ -85,20 +85,23 @@ impl SingleRunner for SingleRunnerImpl {
         println!("Running {description}...");
     }
 
-    fn run(&mut self, part: &Part, input: &str, solution: Result<Source, String>) {
-        let result = solution
-            .clone()
-            .and_then(|s| part.run::<InstantTimer>(input, s.read().to_option()?));
+    fn run(&mut self, part: &Part, input: &str, sources: &ChapterSources) {
+        let result = sources
+            .part(part.num, PartFileType::Result)
+            .to_option()
+            .and_then(|s| {
+                part.run::<InstantTimer>(input, s.and_then(|s| s.read().to_option().unwrap()))
+            });
         result.print(&format!("Part {}", part.num), &THRESHOLDS, true);
 
         if let Ok(result) = result
             && result.solution.is_none()
-            && let Ok(solution) = solution
+            && let IOResult::Ok(pending) = sources.part(part.num, PartFileType::Pending)
+            && pending.write(&result.result).to_value().is_ok()
         {
-            let solution = solution.transform_path(|p| format!("{p}.pending"));
-            if solution.write(&result.result).to_value().is_ok() {
-                println!("Saved preliminary result, run `make confirm` if it is correct.");
-            }
+            println!(
+                "Saved preliminary result, run `make submit` to validate it or `make confirm` to mark it as correct."
+            );
         }
     }
 }
@@ -143,7 +146,7 @@ pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
     ThreadPoolBuilder::new().build_global().unwrap();
 
     for part in &chapter.parts {
-        runner.run(part, &input, folder.part(part.num).to_value());
+        runner.run(part, &input, &folder);
     }
 
     runner.finish();

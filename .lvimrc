@@ -31,6 +31,10 @@ function! s:TestRun()
 	endif
 endfunction
 
+function! s:Submit()
+	call VimuxRunCommandOnce("make submit")
+endfunction
+
 function! s:Bench(baseline)
 	if !s:GetFileInfo()
 		return
@@ -110,6 +114,7 @@ endfunction
 augroup LVIMRC
 	au!
 	au BufEnter *.rs nnoremap <buffer> <leader>rt :call <SID>TestRun()<CR>
+	au BufEnter *.rs nnoremap <buffer> <leader>rs :call <SID>Submit()<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>rb :call <SID>Bench(v:false)<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>rB :call <SID>Bench(v:true)<CR>
 	au BufEnter *.rs nnoremap <buffer> <leader>rp :call <SID>Profile(v:false)<CR>

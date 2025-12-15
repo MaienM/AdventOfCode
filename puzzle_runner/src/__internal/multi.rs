@@ -12,7 +12,7 @@ use rayon::ThreadPoolBuilder;
 use crate::{
     derived::{Chapter, Part, Series},
     runner::{DurationThresholds, InstantTimer, PartResult, PrintPartResult as _, RunResults},
-    source::{ChapterSources, Source, source_path_fill_tokens},
+    source::{ChapterSources, PartFileType, Source, source_path_fill_tokens},
 };
 
 static SERIES: OnceLock<Series> = OnceLock::new();
@@ -121,7 +121,11 @@ impl TargetArgs {
                 for example in &chapter.examples {
                     let source = ChapterSources::Example(example.clone());
                     for part in &chapter.parts {
-                        let Some(solution) = source.part(part.num).to_option().unwrap() else {
+                        let Some(solution) = source
+                            .part(part.num, PartFileType::Result)
+                            .to_option()
+                            .unwrap()
+                        else {
                             continue;
                         };
                         targets.push(Target {
@@ -147,7 +151,10 @@ impl TargetArgs {
                         part: part.clone(),
                         source_name: None,
                         input: folder.input().to_value().unwrap(),
-                        solution: folder.part(part.num).to_value().unwrap(),
+                        solution: folder
+                            .part(part.num, PartFileType::Result)
+                            .to_value()
+                            .unwrap(),
                     });
                 }
             }

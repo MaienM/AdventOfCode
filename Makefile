@@ -56,6 +56,16 @@ controller-%: crate = $(subst controller-,,$@)
 controller-%: $${crate}/src/bin/controller.rs $(shell find puzzle_runner -type f -print)
 	./cargo-semiquiet.sh build --release --package ${crate} --bin controller
 
+submit:
+	find inputs -type f -name '*.pending' | while read -r file; do \
+		IFS='/' read -ra parts <<<"$${file%.pending}"; \
+		crate="$${parts[1]}"; \
+		chapter="$${parts[2]}"; \
+		part="$${parts[3]#part}"; \
+		echo "Submitting $$crate chapter $$chapter pars $$part."; \
+		cargo run -p $$crate --bin controller -- validate-result $$chapter $$part $$(cat $$file); \
+	done
+
 confirm:
 	find inputs -type f -name '*.pending' | while read -r file; do \
 		target="$${file%.pending}"; \

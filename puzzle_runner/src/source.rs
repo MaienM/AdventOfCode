@@ -119,6 +119,21 @@ impl Source {
         }
     }
 
+    /// Delete the source.
+    #[must_use]
+    pub fn delete(&self) -> IOResult<()> {
+        match self {
+            Source::Path(path) => match fs::remove_file(path) {
+                Ok(()) => IOResult::Ok(()),
+                Err(err) if err.kind() == ErrorKind::NotFound => IOResult::NotFound(path.clone()),
+                Err(err) => IOResult::Err(format!("unable to delete {path}: {err}")),
+            },
+            Source::Inline { source, .. } => {
+                IOResult::Err(format!("cannot delete value from {source}"))
+            }
+        }
+    }
+
     /// Read the contents of the source if available. If it isn't and this source supports writing
     /// then the provided function will be called and the source will be initialized (written) with
     /// the results.
@@ -196,20 +211,29 @@ impl ChapterSources {
         }
     }
 
-    pub fn part(&self, num: u8) -> IOResult<Source> {
+    pub fn part(&self, num: u8, file: PartFileType) -> IOResult<Source> {
         match self {
-            ChapterSources::Path(path) => match join_paths(path, &format!("part{num}.txt")) {
-                Ok(path) => IOResult::Ok(Source::Path(path)),
-                Err(err) => IOResult::Err(err),
-            },
+            ChapterSources::Path(path) => {
+                let suffix = match file {
+                    PartFileType::Result => ".txt",
+                    PartFileType::Incorrect => ".incorrect",
+                    PartFileType::Pending => ".pending",
+                };
+                match join_paths(path, &format!("part{num}{suffix}")) {
+                    Ok(path) => IOResult::Ok(Source::Path(path)),
+                    Err(err) => IOResult::Err(err),
+                }
+            }
             ChapterSources::Example(example) => {
-                if let Some(contents) = example.parts.get(&num) {
+                if file == PartFileType::Result
+                    && let Some(contents) = example.parts.get(&num)
+                {
                     IOResult::Ok(Source::Inline {
                         source: format!("{} part {num}", example.name),
                         contents: (*contents).to_owned(),
                     })
                 } else {
-                    IOResult::NotFound(format!("{} part {num}", example.name))
+                    IOResult::NotFound(format!("{} part {num} ({file:?})", example.name))
                 }
             }
         }
@@ -225,6 +249,17 @@ impl ChapterSources {
             value @ ChapterSources::Example(_) => value,
         }
     }
+}
+
+/// The various associated files for the expected results for a part.
+#[derive(Debug, Eq, PartialEq)]
+pub enum PartFileType {
+    /// The known-to-be-correct result.
+    Result,
+    /// The list of known-to-be-incorrect results.
+    Incorrect,
+    /// A pending result that has yet to be verified.
+    Pending,
 }
 
 macro_rules! source_path_fill_tokens {
