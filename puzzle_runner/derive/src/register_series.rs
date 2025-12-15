@@ -57,13 +57,21 @@ pub fn main(input: TokenStream) -> TokenStream {
     quote! {
         #prefix
 
+        ::puzzle_runner::__internal::cfg_if! {
+            if #[cfg(feature = "bench")] {
+                type Controller = ::puzzle_runner::controller::DefaultController;
+            } else {
+                type Controller = #controller;
+            }
+        }
+
         pub static SERIES: ::std::sync::LazyLock<::puzzle_runner::derived::Series> = ::std::sync::LazyLock::new(|| {
             ::puzzle_runner::derived::Series {
                 name: #name,
                 title: #title,
                 chapters: CHAPTERS.clone(),
                 controller: ::std::sync::Arc::new(::std::boxed::Box::new(
-                    <#controller as ::puzzle_runner::controller::Controller>::new().unwrap()
+                    <Controller as ::puzzle_runner::controller::Controller>::new().unwrap()
                 )),
             }
         });
