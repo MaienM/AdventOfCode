@@ -36,7 +36,11 @@ function! s:Bench(baseline)
 		return
 	end
 	if s:type == "bin" && s:scope == "chapter"
-		call VimuxRunCommand("clear; make benchmark-" . (a:baseline ? "set-baseline-" : "") . s:target)
+		if a:baseline
+			call VimuxRunCommandOnce("clear; make benchmark-set-baseline-" . s:target)
+		else
+			call VimuxRunCommand("clear; make benchmark-" . s:target)
+		end
 	else
 		echo "No benchmarks for this file."
 	endif
@@ -47,7 +51,11 @@ function! s:Profile(baseline)
 		return
 	end
 	if s:type == "bin" && s:scope == "chapter"
-		call VimuxRunCommand("clear; make profile-" . (a:baseline ? "set-baseline-" : "") . s:target)
+		if a:baseline
+			call VimuxRunCommandOnce("clear; make profile-set-baseline-" . s:target)
+		else
+			call VimuxRunCommand("clear; make profile-" . s:target)
+		end
 	else
 		echo "No benchmarks for this file."
 	endif
