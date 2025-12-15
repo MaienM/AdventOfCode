@@ -21,18 +21,18 @@ pub trait Controller: Send + Sync {
 
     /// Validate the result for a part.
     ///
-    /// This uses [`validate_result_impl`] & the files for the part as defined in [`PartFileType`]
-    /// to create a complete flow.
+    /// This uses [`Controller::validate_result_impl`] & the files for the part to create a
+    /// complete flow.
     ///
-    /// If the [`PartFileType::Result`] file exists this will simply compare against it & base the
-    /// outcome on that. Else, if the [`PartFileType::Incorrect`] file exists & the result is in it
-    /// the outcome will be negative. In both cases [`validate_result_impl`] will be skipped.
+    /// If the known-good file exists this will simply compare against it & base the outcome on
+    /// that. Else, if the known-bad file exists & the result is in it the outcome will be
+    /// negative. In both cases [`Controller::validate_result_impl`] will be skipped.
     ///
-    /// If the result cannot be validated based on the existing files [`validate_result_impl`] will
-    /// be called. If the outcome of this is that result is valid the [`PartFileType::Result`] file
-    /// will be created and the [`PartFileType::Incorrect`] & [`PartFileType::Pending`] files will
-    /// be deleted (if they exist). If the outcome is that the result is invalid it will be added
-    /// to the [`PartFileType::Incorrect`] file (creating it if it does not yet exist).
+    /// If the result cannot be validated based on the existing files
+    /// [`Controller::validate_result_impl`] will be called. If the outcome of this is that result
+    /// is valid the known-good file will be created and the known-bad & pending files will be
+    /// deleted (if they exist). If the outcome is that the result is invalid it will be added to
+    /// the known-bad file (creating it if it does not yet exist).
     fn validate_result(
         &self,
         chapter: &str,
@@ -107,9 +107,9 @@ pub trait Controller: Send + Sync {
 
     /// Validate the result for a part.
     ///
-    /// In most cases this should not be called directly and [`validate_result`] should be used
-    /// instead, which includes caching to avoid performing unneccesary validations against outside
-    /// services.
+    /// In most cases this should not be called directly and [`Controller::validate_result`] should
+    /// be used instead, which includes caching to avoid performing unneccesary validations against
+    /// outside services.
     fn validate_result_impl(
         &self,
         chapter: &str,
