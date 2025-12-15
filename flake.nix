@@ -141,6 +141,11 @@
                   enable = true;
                   package = rust;
                 };
+                cargo-docs = {
+                  enable = true;
+                  entry = "make docs";
+                  pass_filenames = false;
+                };
                 cargo-machete = {
                   enable = true;
                   entry = "cargo machete";
