@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
+use proc_macro2::Span as Span2;
 use quote::{format_ident, quote};
-use syn::{ItemStruct, parse_macro_input};
+use syn::{ItemStruct, Token, Visibility, parse_macro_input};
 
 use crate::utils::{find_crate_root, return_err, source_call_site, source_crate};
 
@@ -17,6 +18,10 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     }
 
     let item = parse_macro_input!(annotated_item as ItemStruct);
+    if item.vis != Visibility::Public(Token![pub](Span2::call_site())) {
+        return_err!(Err("should be public"));
+    }
+
     let ident = &item.ident;
 
     let main = if let Ok(name) = source_crate() {
@@ -37,6 +42,9 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     quote! {
         #item
         #main
+
+        #[cfg(target_arch = "wasm32")]
+        pub use #ident as TheController;
     }
     .into()
 }

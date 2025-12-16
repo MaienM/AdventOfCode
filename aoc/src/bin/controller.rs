@@ -5,9 +5,9 @@ use pollster::FutureExt;
 use puzzle_runner::controller::{Controller, ControllerResult};
 
 #[puzzle_runner::register_controller]
-struct AoCController {
+pub struct AoCController {
     url: &'static str,
-    cookie: String,
+    cookie: Result<String, String>,
 }
 impl AoCController {
     fn chapter_url(&self, chapter: &str, stem: &str) -> ControllerResult<String> {
@@ -39,8 +39,14 @@ impl Controller for AoCController {
     fn new() -> ControllerResult<Self> {
         let url = "https://adventofcode.com";
 
-        let session = fs::read_to_string(env::var("AOC_SESSION_COOKIE_FILE")?)?;
-        let cookie = format!("session={}", session.trim());
+        #[cfg(target_arch = "wasm32")]
+        let cookie =
+            Err("actions requiring authentication are not available in the web version".to_owned());
+        #[cfg(not(target_arch = "wasm32"))]
+        let cookie = env::var("AOC_SESSION_COOKIE_FILE")
+            .map_err(|e| e.to_string())
+            .and_then(|p| fs::read_to_string(p).map_err(|e| e.to_string()))
+            .map(|session| format!("session={}", session.trim()));
 
         Ok(Self { url, cookie })
     }
@@ -48,7 +54,7 @@ impl Controller for AoCController {
     fn get_input(&self, chapter: &str) -> ControllerResult<String> {
         let url = self.chapter_url(chapter, "input")?;
         let mut request = Request::get(url);
-        request.headers.insert("cookie", self.cookie.clone());
+        request.headers.insert("cookie", self.cookie.clone()?);
         let response = fetch_async(request).block_on()?;
         let text = response.text().ok_or("empty response")?;
         Ok(text.strip_suffix('\n').unwrap_or(text).to_owned())
@@ -62,7 +68,7 @@ impl Controller for AoCController {
     ) -> ControllerResult<(bool, String)> {
         let url = self.chapter_url(chapter, "answer")?;
         let mut request = Request::post(url, format!("level={part}&answer={result}").into_bytes());
-        request.headers.insert("cookie", self.cookie.clone());
+        request.headers.insert("cookie", self.cookie.clone()?);
         let response = fetch_async(request).block_on()?;
         let html = response.text().ok_or("empty response")?;
 

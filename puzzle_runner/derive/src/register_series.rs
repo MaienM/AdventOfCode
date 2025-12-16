@@ -58,8 +58,12 @@ pub fn main(input: TokenStream) -> TokenStream {
         #prefix
 
         ::puzzle_runner::__internal::cfg_if! {
-            if #[cfg(any(feature = "bench", target_arch = "wasm32"))] {
+            if #[cfg(feature = "bench")] {
                 type Controller = ::puzzle_runner::controller::DefaultController;
+            } else if #[cfg(target_arch = "wasm32")] {
+                #[path = "bin/controller.rs"]
+                mod controller;
+                type Controller = controller::TheController;
             } else {
                 type Controller = #controller;
             }
