@@ -101,14 +101,19 @@ function! s:OpenWebsite()
 	if !s:GetFileInfo()
 		return
 	end
-	if s:crate != "aoc" || s:type != "bin" || s:scope != "chapter"
+	if s:type != "bin" || s:scope != "chapter"
 		echo "No URL available for this file."
 		return
 	end
-	let l:parts = split(s:name, "-")
-	let l:year = "20" . l:parts[0]
-	let l:day = substitute(l:parts[1], "^0", "", "")
-	call system("xdg-open https://adventofcode.com/" . l:year . "/day/" . l:day)
+	let l:cmd = "cargo run -p " . s:crate . " --bin controller -- chapter-url " . s:name
+	let l:output = systemlist(l:cmd)
+	let l:url = l:output[len(l:output) - 1]
+	if l:url =~ "https://.*"
+		call system("xdg-open " . l:url)
+	else
+		echo "Unable to determine URL for this file."
+		call VimuxRunCommand(l:cmd)
+	fi
 endfunction
 
 augroup LVIMRC
