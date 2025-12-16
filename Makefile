@@ -94,9 +94,9 @@ target/doc-parts/stdlib/%: target/stdlib
 
 DEP_TARGETS = $(foreach dep,$(shell cargo tree --depth 1 -e normal --prefix none | cut -d' ' -f1),target/doc-parts/dep/$(dep))
 target/doc-parts/dep/%: name = $(notdir $@)
-target/doc-parts/dep/%: version = $(shell cargo tree --depth 1 -e normal --prefix none | grep -E "^${name} " | cut -d' ' -f2 | sed 's/^v//')
+target/doc-parts/dep/%: version = $(shell cargo tree --depth 1 -e normal --prefix none | grep -E "^${name} " | cut -d' ' -f2 | sed 's/^v//' | head -n1)
 target/doc-parts/dep/%: Cargo.toml Cargo.lock katex.html
-	echo "Building docs for ${name}..."
+	echo "Building docs for ${name} ${version}..."
 	rm -rf target/doc
 	RUSTDOCFLAGS="--html-in-header $$PWD/katex.html -Z unstable-options -D warnings --merge none --parts-out-dir $$PWD/$@" \
 	 cargo -Z unstable-options doc --lib --no-deps -p "${name}@${version}"
