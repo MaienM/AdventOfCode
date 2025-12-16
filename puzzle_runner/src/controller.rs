@@ -13,6 +13,12 @@ pub trait Controller: Send + Sync {
     where
         Self: Sized;
 
+    /// Get the URL for a chapter.
+    fn chapter_url(&self, chapter: &str) -> ControllerResult<String> {
+        let _ = chapter;
+        Err(ControllerError::NotImplemented)
+    }
+
     /// Get the input for a chapter.
     fn get_input(&self, chapter: &str) -> ControllerResult<String> {
         let _ = chapter;

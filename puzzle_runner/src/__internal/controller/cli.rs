@@ -45,6 +45,8 @@ struct GlobalArgs {
 enum Command {
     /// Show the series' definition/metadata.
     Info(Info),
+    /// Get the URL for one of the chapters.
+    ChapterURL(ChapterURL),
     /// Download the input for one of the chapters.
     GetInput(GetInput),
     /// Validate the result of one of the parts.
@@ -72,6 +74,24 @@ impl Handler for Info {
     fn output(&self, series: &Series, _result: Self::Output) -> ControllerResult<()> {
         println!("Name: {}", series.name);
         println!("Title: {}", series.title);
+        Ok(())
+    }
+}
+
+#[derive(Parser, Debug)]
+struct ChapterURL {
+    #[command(flatten)]
+    chapter: ChapterArgs,
+}
+impl Handler for ChapterURL {
+    type Output = String;
+
+    fn execute(&self, series: &Series) -> ControllerResult<Self::Output> {
+        series.controller.chapter_url(&self.chapter.chapter)
+    }
+
+    fn output(&self, _series: &Series, url: Self::Output) -> ControllerResult<()> {
+        println!("{url}");
         Ok(())
     }
 }
@@ -163,6 +183,7 @@ pub fn main(series: &Series) {
     let gargs = GlobalArgs::parse();
     match gargs.command {
         Command::Info(ref args) => run(series, &gargs, args),
+        Command::ChapterURL(ref args) => run(series, &gargs, args),
         Command::GetInput(ref args) => run(series, &gargs, args),
         Command::ValidateResult(ref args) => run(series, &gargs, args),
     }

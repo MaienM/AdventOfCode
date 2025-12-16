@@ -56,6 +56,10 @@ impl Controller for BinController {
         Ok(Self(bin))
     }
 
+    fn chapter_url(&self, chapter: &str) -> ControllerResult<String> {
+        self.run(&["chapter-url", chapter])
+    }
+
     fn get_input(&self, chapter: &str) -> ControllerResult<String> {
         self.run(&["get-input", chapter])
     }
