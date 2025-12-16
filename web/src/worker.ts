@@ -40,7 +40,6 @@ class WorkerImpl {
 		await this.initWASMPromise;
 		try {
 			const result = puzzles.run(series, chapter, part, input, expected);
-			console.log(result.duration);
 			const transformed = {
 				success: true,
 				message: result.result,
@@ -55,6 +54,11 @@ class WorkerImpl {
 				duration: 0,
 			};
 		}
+	}
+
+	async chapterURL(series: string, chapter: string): Promise<string> {
+		await this.initWASMPromise;
+		return puzzles.chapter_url(series, chapter);
 	}
 }
 

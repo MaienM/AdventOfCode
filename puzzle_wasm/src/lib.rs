@@ -3,7 +3,7 @@
 use std::{collections::HashMap, sync::LazyLock, time::Duration};
 
 use puzzle_runner::{
-    derived::Series,
+    derived::{Chapter, Part, Series},
     runner::{PartResult, Timer},
 };
 use wasm_bindgen::prelude::*;
@@ -25,6 +25,29 @@ static SERIES: LazyLock<HashMap<&'static str, &Series>> = LazyLock::new(|| {
     }
     map
 });
+
+fn get_series(name: &str) -> Result<&&Series, String> {
+    SERIES
+        .get(name)
+        .ok_or_else(|| format!("Cannot find series {name}."))
+}
+
+fn get_chapter<'a>(series: &'a Series, name: &str) -> Result<&'a Chapter, String> {
+    series
+        .chapters
+        .iter()
+        .find(|c| c.name == name)
+        .ok_or_else(|| format!("Cannot find chapter {name} in series {}", series.name))
+}
+
+fn get_part<'a>(series: &Series, chapter: &'a Chapter, num: u8) -> Result<&'a Part, String> {
+    chapter.parts.iter().find(|p| p.num == num).ok_or_else(|| {
+        format!(
+            "Cannot find part {num} in chapter {} in series {}",
+            chapter.name, series.name
+        )
+    })
+}
 
 mod time {
     use std::time::Duration;
@@ -93,8 +116,8 @@ pub fn all() -> JsValue {
 ///
 /// # Errors
 ///
-/// Will return `Err` if the [`Series`], [`Chapter`](puzzle_runner::derived::Chapter) or
-/// [`Part`](puzzle_runner::derived::Part) cannot be found, or if running it causes a panic.
+/// Will return `Err` if the [`Series`], [`Chapter`] or [`Part`] cannot be found, or if running it
+/// causes a panic.
 #[wasm_bindgen]
 pub fn run(
     series: &str,
@@ -103,17 +126,25 @@ pub fn run(
     input: &str,
     solution: Option<String>,
 ) -> PartResult {
-    let part = if let Some(series) = SERIES.get(series)
-        && let Some(chapter) = series.chapters.iter().find(|c| c.name == chapter)
-        && let Some(part) = chapter.parts.iter().find(|p| p.num == part)
-    {
-        part
-    } else {
-        return Err(format!(
-            "Cannot find implementation for {series}/{chapter}/part{part}."
-        ));
-    };
+    let series = get_series(series)?;
+    let chapter = get_chapter(series, chapter)?;
+    let part = get_part(series, chapter, part)?;
     part.run::<PerformanceTimer>(input, solution)
+}
+
+/// Get the URL for a chapter.
+///
+/// This is just a wrapper around
+/// [`Controller::chapter_url`](puzzle_runner::controller::Controller::chapter_url).
+///
+/// # Errors
+///
+/// Will return `Err` if the [`Series`] cannot be found, or if the chapter name is in a form that
+/// is not valid for the series.
+#[wasm_bindgen]
+pub fn chapter_url(series: &str, chapter: &str) -> Result<String, String> {
+    let series = get_series(series)?;
+    Ok(series.controller.chapter_url(chapter)?)
 }
 
 /// Setup the panic handler.
