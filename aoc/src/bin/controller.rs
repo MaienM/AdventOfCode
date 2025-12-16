@@ -10,14 +10,18 @@ pub struct AoCController {
     cookie: Result<String, String>,
 }
 impl AoCController {
-    fn chapter_url(&self, chapter: &str, stem: &str) -> ControllerResult<String> {
+    fn format_chapter_url(&self, chapter: &str, stem: Option<&str>) -> ControllerResult<String> {
         let (year, day) = chapter
             .split_once('-')
             .ok_or_else(|| format!("failed to parse year/day from chapter name {chapter}"))?;
         let year = 2000 + year.parse::<i32>()?;
         let day = day.parse::<u32>()?;
 
-        Ok(format!("{}/{year}/day/{day}/{stem}", self.url))
+        let mut url = format!("{}/{year}/day/{day}", self.url);
+        if let Some(stem) = stem {
+            url = format!("{url}/{stem}");
+        }
+        Ok(url)
     }
 
     fn extract_text(html: &str) -> ControllerResult<String> {
@@ -51,8 +55,12 @@ impl Controller for AoCController {
         Ok(Self { url, cookie })
     }
 
+    fn chapter_url(&self, chapter: &str) -> ControllerResult<String> {
+        self.format_chapter_url(chapter, None)
+    }
+
     fn get_input(&self, chapter: &str) -> ControllerResult<String> {
-        let url = self.chapter_url(chapter, "input")?;
+        let url = self.format_chapter_url(chapter, Some("input"))?;
         let mut request = Request::get(url);
         request.headers.insert("cookie", self.cookie.clone()?);
         let response = fetch_async(request).block_on()?;
@@ -66,7 +74,7 @@ impl Controller for AoCController {
         part: u8,
         result: &str,
     ) -> ControllerResult<(bool, String)> {
-        let url = self.chapter_url(chapter, "answer")?;
+        let url = self.format_chapter_url(chapter, Some("answer"))?;
         let mut request = Request::post(url, format!("level={part}&answer={result}").into_bytes());
         request.headers.insert("cookie", self.cookie.clone()?);
         let response = fetch_async(request).block_on()?;
