@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::parse_macro_input;
+use syn::{Type, parse_macro_input};
 
 use crate::{
     include_chapters::include_chapters,
@@ -11,8 +11,8 @@ args_struct! {
     struct Args {
         /// The title of the series.
         title: String,
-        /// Whether the series has a controller.
-        controller: bool = default false,
+        /// The controller for the series.
+        controller: Type,
     }
 }
 
@@ -22,7 +22,7 @@ pub fn main(input: TokenStream) -> TokenStream {
         if meta.path.is_ident("title") {
             meta.set_empty_option(&mut builder.title, meta.parse_stringify_nonempty()?)?;
         } else if meta.path.is_ident("controller") {
-            meta.set_empty_option(&mut builder.controller, true)?;
+            meta.set_empty_option(&mut builder.controller, meta.value()?.parse()?)?;
         } else {
             return Err(meta.error("unsupported property"));
         }
@@ -48,26 +48,8 @@ pub fn main(input: TokenStream) -> TokenStream {
         String::new()
     };
 
-    let controller = if controller && !name.is_empty() {
-        quote!(::puzzle_runner::__internal::controller::BinController)
-    } else {
-        quote!(::puzzle_runner::controller::DefaultController)
-    };
-
     quote! {
         #prefix
-
-        ::puzzle_runner::__internal::cfg_if! {
-            if #[cfg(feature = "bench")] {
-                type Controller = ::puzzle_runner::controller::DefaultController;
-            } else if #[cfg(target_arch = "wasm32")] {
-                #[path = "bin/controller.rs"]
-                mod controller;
-                type Controller = controller::TheController;
-            } else {
-                type Controller = #controller;
-            }
-        }
 
         pub static SERIES: ::std::sync::LazyLock<::puzzle_runner::derived::Series> = ::std::sync::LazyLock::new(|| {
             ::puzzle_runner::derived::Series {
@@ -75,7 +57,7 @@ pub fn main(input: TokenStream) -> TokenStream {
                 title: #title,
                 chapters: CHAPTERS.clone(),
                 controller: ::std::sync::Arc::new(::std::boxed::Box::new(
-                    <Controller as ::puzzle_runner::controller::Controller>::new().unwrap()
+                    <#controller as ::puzzle_runner::controller::Controller>::new().unwrap()
                 )),
             }
         });

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::source::{ChapterSources, IOResult, PartFileType};
 
-/// The actions for a controller. This should be implemented manually.
+/// The actions for a controller.
 #[allow(clippy::missing_errors_doc)]
 pub trait Controller: Send + Sync {
     /// Create a new instance of the controller.

@@ -19,7 +19,7 @@ run-%: target = $(subst run-,,$@)
 run-%: crate = $(word 1,$(subst -, ,${target}))
 run-%: bin = $(subst ${crate}-,,${target})
 run-%: name = $(subst /${crate},,${crate}/${bin})
-run-%: FORCE controller-$${crate}
+run-%: FORCE target/release/httpclient
 	echo "$(setaf6)>>>>> Running ${name} <<<<<$(sgr0)"
 	./cargo-semiquiet.sh run --release --package ${crate} --bin ${bin}
 
@@ -52,18 +52,18 @@ test-libs:
 	 cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --html
 	cargo llvm-cov report --doctests --ignore-filename-regex '${ignore}' --lcov --output-path target/llvm-cov/lcov
 
-controller-%: crate = $(subst controller-,,$@)
-controller-%: $${crate}/src/bin/controller.rs $(shell find puzzle_runner -type f -print)
-	./cargo-semiquiet.sh build --release --package ${crate} --bin controller
+target/release/httpclient: Cargo.lock puzzle_runner/Cargo.toml $(shell find puzzle_runner/src/http -type f -print) puzzle_runner/src/bin/httpclient.rs
+	cargo build --package puzzle_runner --bin httpclient --release
 
-submit:
+submit: target/release/httpclient
+	cargo build --package puzzle_runner --bin httpclient --release
 	find inputs -type f -name '*.pending' | while read -r file; do \
 		IFS='/' read -ra parts <<<"$${file%.pending}"; \
 		crate="$${parts[1]}"; \
 		chapter="$${parts[2]}"; \
 		part="$${parts[3]#part}"; \
 		echo "Submitting $$crate chapter $$chapter pars $$part."; \
-		cargo run -p $$crate --bin controller -- validate-result $$chapter $$part $$(cat $$file); \
+		cargo run --package $$crate --bin controller --release -- validate-result $$chapter $$part $$(cat $$file); \
 	done
 
 confirm:

@@ -5,9 +5,9 @@
 mod example_input;
 mod include_chapters;
 mod register_chapter;
-mod register_controller;
 mod register_part;
 mod register_series;
+mod setup_controller;
 mod setup_main;
 mod utils;
 
@@ -30,6 +30,14 @@ pub fn register_series(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn setup_main(input: TokenStream) -> TokenStream {
     setup_main::main(input)
+}
+
+/// Register the controller entrypoint for the crate.
+///
+/// Must be used in the controller binary for the crate (which should be `bin/controller.rs`).
+#[proc_macro]
+pub fn setup_controller(input: TokenStream) -> TokenStream {
+    setup_controller::main(input)
 }
 
 /// Register the binary crate as a puzzle chapter.
@@ -62,12 +70,4 @@ pub fn register_part(input: TokenStream, annotated_item: TokenStream) -> TokenSt
 #[proc_macro_attribute]
 pub fn example_input(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     example_input::main(input, annotated_item)
-}
-
-/// Register the struct as a controller for the series.
-///
-/// Each series can only have at most one controller.
-#[proc_macro_attribute]
-pub fn register_controller(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
-    register_controller::main(input, annotated_item)
 }
