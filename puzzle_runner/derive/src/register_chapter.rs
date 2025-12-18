@@ -1,7 +1,8 @@
 use std::{env, fs::read_to_string};
 
 use proc_macro::{Span, TokenStream};
-use quote::{ToTokens, format_ident, quote};
+use proc_macro2::TokenStream as TokenStream2;
+use quote::{ToTokens, quote};
 use syn::{
     Attribute, Error, Expr, ExprCall, ExprClosure, ExprPath, Item, ItemFn, ItemMod, ItemStatic,
     Meta, PathSegment, Token, parse_file, parse_macro_input, parse_quote,
@@ -11,7 +12,7 @@ use syn::{
 
 use crate::{
     example_input, register_part,
-    utils::{ParseNestedMetaExt, args_struct, return_err, source_crate},
+    utils::{ParseNestedMetaExt, args_struct, get_series_and_controller, return_err},
 };
 
 args_struct! {
@@ -87,7 +88,7 @@ impl ChapterScanner {
         scanner
     }
 
-    pub(crate) fn to_expr(&self, args: Args) -> Expr {
+    pub(crate) fn to_expr(&self, args: Args) -> TokenStream2 {
         let ChapterScanner {
             name,
             parts,
@@ -97,12 +98,12 @@ impl ChapterScanner {
         let Args { book, title } = args;
 
         let book: Expr = match book {
-            Some(book) => parse_quote!(Some(#book)),
+            Some(book) => parse_quote!(Some(#book.to_owned())),
             None => parse_quote!(None),
         };
 
         let title: Expr = match title {
-            Some(title) => parse_quote!(Some(#title)),
+            Some(title) => parse_quote!(Some(#title.to_owned())),
             None => parse_quote!(None),
         };
 
@@ -117,15 +118,13 @@ impl ChapterScanner {
             .strip_prefix(&format!("{root_path}/"))
             .unwrap_or(&self.source_path);
 
-        parse_quote! {
-            ::puzzle_runner::derived::Chapter {
-                name: #name,
-                book: #book,
-                title: #title,
-                source_path: #source_path,
-                parts: vec![ #(#parts),* ],
-                examples: vec![ #(#examples),* ],
-            }
+        quote! {
+            builder.name(#name);
+            builder.book(#book);
+            builder.title(#title);
+            builder.source_path(#source_path);
+            builder.parts(vec![ #(#parts),* ]);
+            builder.examples(vec![ #(#examples),* ]);
         }
     }
 
@@ -178,7 +177,7 @@ impl<'ast> Visit<'ast> for ChapterScanner {
 
     fn visit_item_static(&mut self, node: &'ast ItemStatic) {
         // Check if this item is an expanded part.
-        if node.ty == parse_quote!(::puzzle_runner::derived::Part) {
+        if node.ty == parse_quote!(::std::sync::LazyLock<::puzzle_runner::derived::Part>) {
             let ident = &node.ident;
             self.parts.push(parse_quote!(#ident.clone()));
         }
@@ -235,22 +234,7 @@ pub fn main(input: TokenStream) -> TokenStream {
         }
     };
 
-    let main = if let Ok(name) = source_crate() {
-        let crateident = format_ident!("{name}");
-        quote! {
-            pub fn main() {
-                ::puzzle_runner::__internal::cfg_if! {
-                    if #[cfg(feature = "bench")] {
-                        ::puzzle_runner::__internal::bench::main(&*::#crateident::SERIES, &*CHAPTER);
-                    } else {
-                        ::puzzle_runner::__internal::single::main(&*::#crateident::SERIES, &*CHAPTER);
-                    }
-                }
-            }
-        }
-    } else {
-        quote!(todo!())
-    };
+    let (series, controller) = get_series_and_controller();
 
     quote!{
         // Include prelude && register_part.
@@ -260,10 +244,23 @@ pub fn main(input: TokenStream) -> TokenStream {
 
         // Store metadata in a static. This is used in the main method below, but it's also copied
         // to the full list used by the multi entrypoint.
-        pub(crate) static CHAPTER: ::std::sync::LazyLock<::puzzle_runner::derived::Chapter> = ::std::sync::LazyLock::new(|| #expr );
+        pub(crate) static CHAPTER: ::std::sync::LazyLock<::puzzle_runner::derived::Chapter> = ::std::sync::LazyLock::new(|| {
+            let mut builder = ::puzzle_runner::derived::ChapterBuilder::default();
+            #expr
+            #controller.process_chapter(&mut builder).unwrap();
+            builder.build().unwrap()
+        });
 
         // Entrypoint that just runs this chapter.
-        #main
+        pub fn main() {
+            ::puzzle_runner::__internal::cfg_if! {
+                if #[cfg(feature = "bench")] {
+                    ::puzzle_runner::__internal::bench::main(&#series, &*CHAPTER);
+                } else {
+                    ::puzzle_runner::__internal::single::main(&#series, &*CHAPTER);
+                }
+            }
+        }
     }
     .into_token_stream()
     .into()

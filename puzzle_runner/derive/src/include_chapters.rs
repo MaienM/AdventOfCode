@@ -96,7 +96,7 @@ pub fn include_chapters(force: bool) -> TokenStream2 {
             // Validate that the titles are unique.
             let mut seen = ::std::collections::HashMap::new();
             for chapter in &chapters {
-                let Some(title) = chapter.title else { continue };
+                let Some(ref title) = chapter.title else { continue };
 
                 if let Some(other_bin) = seen.insert(title, chapter.name) {
                     panic!(

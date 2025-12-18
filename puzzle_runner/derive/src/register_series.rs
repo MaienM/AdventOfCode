@@ -51,15 +51,20 @@ pub fn main(input: TokenStream) -> TokenStream {
     quote! {
         #prefix
 
+        pub static CONTROLLER: ::std::sync::LazyLock<::std::sync::Arc<::std::boxed::Box<dyn ::puzzle_runner::controller::Controller>>> = ::std::sync::LazyLock::new(|| {
+            ::std::sync::Arc::new(::std::boxed::Box::new(
+                <#controller as ::puzzle_runner::controller::Controller>::new().unwrap()
+            ))
+        });
+
         pub static SERIES: ::std::sync::LazyLock<::puzzle_runner::derived::Series> = ::std::sync::LazyLock::new(|| {
-            ::puzzle_runner::derived::Series {
-                name: #name,
-                title: #title,
-                chapters: CHAPTERS.clone(),
-                controller: ::std::sync::Arc::new(::std::boxed::Box::new(
-                    <#controller as ::puzzle_runner::controller::Controller>::new().unwrap()
-                )),
-            }
+            let mut builder = ::puzzle_runner::derived::SeriesBuilder::default();
+            builder.name(#name);
+            builder.title(#title.to_owned());
+            builder.chapters(CHAPTERS.clone());
+            builder.controller(CONTROLLER.clone());
+            CONTROLLER.process_series(&mut builder).unwrap();
+            builder.build().unwrap()
         });
     }
     .into()

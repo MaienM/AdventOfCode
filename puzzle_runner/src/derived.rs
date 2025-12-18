@@ -2,21 +2,24 @@
 
 use std::{collections::HashMap, ops::Deref, sync::Arc};
 
+use derive_builder::Builder;
+
 use crate::controller::Controller;
 
 /// A single puzzle series. See [`puzzle_runner#Chapter`].
-#[derive(Clone)]
+#[derive(Clone, Builder)]
 #[cfg_attr(
     feature = "wasm",
     derive(serde::Serialize, tsify::Tsify),
     tsify(into_wasm_abi, missing_as_null)
 )]
+#[builder(field(public))]
 pub struct Series {
     /// The name of crate containing the series.
     pub name: &'static str,
 
     /// The title of the series.
-    pub title: &'static str,
+    pub title: String,
 
     /// The chapters in the series.
     pub chapters: Vec<Chapter>,
@@ -27,21 +30,22 @@ pub struct Series {
 }
 
 /// A single chapter in a [`Series`]. See [`puzzle_runner#Series`].
-#[derive(Clone)]
+#[derive(Clone, Builder)]
 #[cfg_attr(
     feature = "wasm",
     derive(serde::Serialize, tsify::Tsify),
     tsify(into_wasm_abi, missing_as_null)
 )]
+#[builder(field(public))]
 pub struct Chapter {
     /// The name of the binary containing the chapter.
     pub name: &'static str,
 
     /// The book this chapter is part of.
-    pub book: Option<&'static str>,
+    pub book: Option<String>,
 
     /// The title of the chapter.
-    pub title: Option<&'static str>,
+    pub title: Option<String>,
 
     /// The path of the source file, relative to the root of the repository.
     pub source_path: &'static str,
@@ -54,12 +58,13 @@ pub struct Chapter {
 }
 
 /// A single part in a [`Chapter`]. See [`puzzle_runner#Part`].
-#[derive(Clone)]
+#[derive(Clone, Builder)]
 #[cfg_attr(
     feature = "wasm",
     derive(serde::Serialize, tsify::Tsify),
     tsify(into_wasm_abi, missing_as_null)
 )]
+#[builder(field(public))]
 pub struct Part {
     /// The number of the part.
     pub num: u8,
@@ -70,12 +75,13 @@ pub struct Part {
 }
 
 /// An example input for a chapter.
-#[derive(Clone)]
+#[derive(Clone, Builder)]
 #[cfg_attr(
     feature = "wasm",
     derive(serde::Serialize, tsify::Tsify),
     tsify(into_wasm_abi, missing_as_null)
 )]
+#[builder(field(public))]
 pub struct Example {
     /// The name of the example.
     pub name: &'static str,

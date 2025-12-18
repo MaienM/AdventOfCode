@@ -123,10 +123,11 @@ pub(super) fn run_single<T: SingleRunner>(series: &Series, chapter: &Chapter) {
     let mut runner = T::setup(&args, series, chapter);
     runner.print_header(format!(
         "{} {}{} using input {}",
-        Purple.paint(series.title),
+        Purple.paint(&series.title),
         Cyan.paint(chapter.name),
         chapter
             .title
+            .as_ref()
             .map_or(String::new(), |t| format!(": {}", Purple.paint(t))),
         Cyan.paint(input_path.source()),
     ));

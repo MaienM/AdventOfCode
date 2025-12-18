@@ -3,7 +3,10 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::source::{ChapterSources, IOResult, PartFileType};
+use crate::{
+    derived::{ChapterBuilder, ExampleBuilder, PartBuilder, SeriesBuilder},
+    source::{ChapterSources, IOResult, PartFileType},
+};
 
 /// The actions for a controller.
 #[allow(clippy::missing_errors_doc)]
@@ -12,6 +15,54 @@ pub trait Controller: Send + Sync {
     fn new() -> ControllerResult<Self>
     where
         Self: Sized;
+
+    /// Process metadata for the entire [`Series`](puzzle_runner::derived::Series).
+    ///
+    /// All nested items will already have been processed before this is called.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the series is invalid.
+    fn process_series(&self, series: &mut SeriesBuilder) -> ControllerResult<()> {
+        let _ = series;
+        Ok(())
+    }
+
+    /// Process metadata for a [`Chapter`](puzzle_runner::derived::Chapter).
+    ///
+    /// All nested items will already have been processed before this is called.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the chapter is invalid.
+    fn process_chapter(&self, chapter: &mut ChapterBuilder) -> ControllerResult<()> {
+        let _ = chapter;
+        Ok(())
+    }
+
+    /// Process metadata for a [`Part`](puzzle_runner::derived::Part).
+    ///
+    /// All nested items will already have been processed before this is called.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the part is invalid.
+    fn process_part(&self, part: &mut PartBuilder) -> ControllerResult<()> {
+        let _ = part;
+        Ok(())
+    }
+
+    /// Process metadata for an [`Example`](puzzle_runner::derived::Example).
+    ///
+    /// All nested items will already have been processed before this is called.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the example is invalid.
+    fn process_example(&self, example: &mut ExampleBuilder) -> ControllerResult<()> {
+        let _ = example;
+        Ok(())
+    }
 
     /// Get the URL for a chapter.
     fn chapter_url(&self, chapter: &str) -> ControllerResult<String> {

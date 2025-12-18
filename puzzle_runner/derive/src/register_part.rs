@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{Expr, ItemFn, Visibility, parse_macro_input};
 
-use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err};
+use crate::utils::{ParseNestedMetaExt as _, args_struct, get_series_and_controller, return_err};
 
 args_struct! {
     struct Args {
@@ -39,6 +39,7 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
         return_err!(Err("should be private"));
     }
 
+    let (_, controller) = get_series_and_controller();
     let const_ident = format_ident!("PART{num}");
 
     let arg = match arg {
@@ -47,10 +48,13 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     };
 
     quote! {
-        static #const_ident: ::puzzle_runner::derived::Part = ::puzzle_runner::derived::Part {
-            num: #num,
-            implementation: |input| (#ident(input #arg)).to_string(),
-        };
+        static #const_ident: ::std::sync::LazyLock<::puzzle_runner::derived::Part> = ::std::sync::LazyLock::new(|| {
+            let mut builder = ::puzzle_runner::derived::PartBuilder::default();
+            builder.num(#num);
+            builder.implementation(|input| (#ident(input #arg)).to_string());
+            #controller.process_part(&mut builder).unwrap();
+            builder.build().unwrap()
+        });
 
         #part
     }

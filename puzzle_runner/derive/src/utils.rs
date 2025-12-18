@@ -4,7 +4,8 @@ use std::{
 };
 
 use proc_macro::Span;
-use syn::{Error, Lit, meta::ParseNestedMeta};
+use quote::format_ident;
+use syn::{Error, Expr, Lit, meta::ParseNestedMeta, parse_quote};
 
 /// Wrap a Result<T, String> to return on error in a function that returns a [`proc_macro::TokenStream`].
 macro_rules! return_err {
@@ -81,6 +82,27 @@ pub fn find_crate_root(path: &Path) -> Result<PathBuf, String> {
         }
     }
     Ok(crate_root)
+}
+
+/// Get expressions that refer to the series' [`puzzle_runner::derived::Series`] &
+/// [`puzzle_runner::controller::Controller`].
+pub fn get_series_and_controller() -> (Expr, Expr) {
+    if let Ok(name) = source_crate() {
+        let crateident = format_ident!("{name}");
+        (
+            parse_quote!(*::#crateident::SERIES),
+            parse_quote!(::#crateident::CONTROLLER),
+        )
+    } else {
+        (
+            parse_quote!(
+                ::puzzle_runner::derived::SeriesBuilder::default()
+                    .build()
+                    .unwrap()
+            ),
+            parse_quote!(::puzzle_runner::controller::DefaultController),
+        )
+    }
 }
 
 pub(crate) trait ParseNestedMetaExt {

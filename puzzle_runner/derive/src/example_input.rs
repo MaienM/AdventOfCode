@@ -8,7 +8,7 @@ use syn::{
     parse_quote, spanned::Spanned,
 };
 
-use crate::utils::{ParseNestedMetaExt as _, args_struct, return_err};
+use crate::utils::{ParseNestedMetaExt as _, args_struct, get_series_and_controller, return_err};
 
 args_struct! {
     struct Args {
@@ -148,6 +148,7 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
             .into();
     }
     {
+        let (_, controller) = get_series_and_controller();
         let name = example.ident.to_string();
         let input = parse_string_expr!(example.expr, &args.indent);
         let parts: Vec<_> = parts
@@ -158,17 +159,18 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
             })
             .collect();
         *example.expr = parse_quote! {
-            ::std::sync::LazyLock::new(||
-                ::puzzle_runner::derived::Example {
-                    name: #name,
-                    input: #input,
-                    parts: {
-                        let mut map = ::std::collections::HashMap::new();
-                        #(#parts)*
-                        map
-                    },
-                }
-            )
+            ::std::sync::LazyLock::new(|| {
+                let mut builder = ::puzzle_runner::derived::ExampleBuilder::default();
+                builder.name(#name);
+                builder.input(#input);
+                builder.parts({
+                    let mut map = ::std::collections::HashMap::new();
+                    #(#parts)*
+                    map
+                });
+                #controller.process_example(&mut builder).unwrap();
+                builder.build().unwrap()
+            })
         };
         *example.ty = parse_quote!(::std::sync::LazyLock<::puzzle_runner::derived::Example>);
     };
