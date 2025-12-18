@@ -68,9 +68,10 @@ submit: target/release/httpclient
 
 confirm:
 	find inputs -type f -name '*.pending' | while read -r file; do \
-		target="$${file%.pending}"; \
-		echo "Confirming $$target."; \
-		mv "$$file" "$$target"; \
+		name="$${file%.pending}"; \
+		echo "Confirming $$name."; \
+		mv "$$file" "$$name.txt"; \
+		rm -f "$$name.incorrect"; \
 	done
 
 #
