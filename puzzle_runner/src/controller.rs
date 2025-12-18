@@ -47,7 +47,7 @@ pub trait Controller: Send + Sync {
         sources: &ChapterSources,
     ) -> ControllerResult<(bool, String)> {
         // If there is a result file we can base the outcome entirely on that.
-        let resultfile = sources.part(part, PartFileType::Result).to_value()?;
+        let resultfile = sources.part(part, &PartFileType::Result).to_value()?;
         if let IOResult::Ok(expected) = resultfile.read() {
             return if result == expected {
                 Ok((
@@ -67,7 +67,7 @@ pub trait Controller: Send + Sync {
         }
 
         // Load the incorrect file, & determine the outcome if the result is already in that list.
-        let incorrectfile = sources.part(part, PartFileType::Incorrect).to_value()?;
+        let incorrectfile = sources.part(part, &PartFileType::Incorrect).to_value()?;
         let mut incorrect = if let IOResult::Ok(incorrect) = incorrectfile.read()
             && let Ok(incorrect) = serde_json::from_str::<Vec<String>>(&incorrect)
         {
@@ -98,7 +98,7 @@ pub trait Controller: Send + Sync {
             resultfile.write(result).to_value()?;
             incorrectfile.delete().to_option()?;
             sources
-                .part(part, PartFileType::Pending)
+                .part(part, &PartFileType::Pending)
                 .to_value()?
                 .delete()
                 .to_option()?;

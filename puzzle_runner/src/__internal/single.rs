@@ -87,7 +87,7 @@ impl SingleRunner for SingleRunnerImpl {
 
     fn run(&mut self, part: &Part, input: &str, sources: &ChapterSources) {
         let result = sources
-            .part(part.num, PartFileType::Result)
+            .part(part.num, &PartFileType::Result)
             .to_option()
             .and_then(|s| {
                 part.run::<InstantTimer>(input, s.and_then(|s| s.read().to_option().unwrap()))
@@ -96,7 +96,7 @@ impl SingleRunner for SingleRunnerImpl {
 
         if let Ok(result) = result
             && result.solution.is_none()
-            && let IOResult::Ok(pending) = sources.part(part.num, PartFileType::Pending)
+            && let IOResult::Ok(pending) = sources.part(part.num, &PartFileType::Pending)
             && pending.write(&result.result).to_value().is_ok()
         {
             println!(

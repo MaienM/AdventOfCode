@@ -84,7 +84,7 @@ fn parse_indent(meta: &ParseNestedMeta) -> Result<String, Error> {
     }
 }
 
-pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+fn parse_args(input: TokenStream) -> Result<Args, String> {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("indent") {
@@ -128,8 +128,12 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
         }
         Ok(())
     });
-    parse_macro_input!(input with args_parser);
-    let args = return_err!(builder.finalize());
+    args_parser.parse(input).map_err(|e| e.to_string())?;
+    builder.finalize()
+}
+
+pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
+    let args = return_err!(parse_args(input));
     let mut parts = HashMap::new();
     for (num, part) in args.parts {
         let mut part = return_err!(part.finalize());

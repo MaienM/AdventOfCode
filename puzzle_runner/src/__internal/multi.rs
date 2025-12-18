@@ -122,7 +122,7 @@ impl TargetArgs {
                     let source = ChapterSources::Example(example.clone());
                     for part in &chapter.parts {
                         let Some(solution) = source
-                            .part(part.num, PartFileType::Result)
+                            .part(part.num, &PartFileType::Result)
                             .to_option()
                             .unwrap()
                         else {
@@ -152,7 +152,7 @@ impl TargetArgs {
                         source_name: None,
                         input: folder.input().to_value().unwrap(),
                         solution: folder
-                            .part(part.num, PartFileType::Result)
+                            .part(part.num, &PartFileType::Result)
                             .to_value()
                             .unwrap(),
                     });

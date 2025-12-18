@@ -98,7 +98,7 @@ impl Source {
             Source::Path(path) => {
                 if let Some(parent) = PathBuf::from(path).parent() {
                     match fs::create_dir_all(parent) {
-                        Ok(_) => {}
+                        Ok(()) => {}
                         Err(err) => {
                             return IOResult::Err(format!(
                                 "failed to create parent directory {}: {err}",
@@ -211,7 +211,7 @@ impl ChapterSources {
         }
     }
 
-    pub fn part(&self, num: u8, file: PartFileType) -> IOResult<Source> {
+    pub fn part(&self, num: u8, file: &PartFileType) -> IOResult<Source> {
         match self {
             ChapterSources::Path(path) => {
                 let suffix = match file {
@@ -225,7 +225,7 @@ impl ChapterSources {
                 }
             }
             ChapterSources::Example(example) => {
-                if file == PartFileType::Result
+                if file == &PartFileType::Result
                     && let Some(contents) = example.parts.get(&num)
                 {
                     IOResult::Ok(Source::Inline {
