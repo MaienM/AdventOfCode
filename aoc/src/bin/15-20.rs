@@ -11,6 +11,22 @@ fn part1(input: &str) -> usize {
         .unwrap()
 }
 
+#[register_part]
+fn part2(input: &str) -> usize {
+    let threshold: usize = input.parse().unwrap();
+    (0..usize::MAX)
+        .into_par_iter()
+        .by_exponential_blocks()
+        .find_first(|num| {
+            let sum = (usize::max(1, num / 50)..=(num / 2))
+                .filter(|i| num % i == 0 && i * 50 >= *num)
+                .sum::<usize>()
+                + num;
+            sum * 11 > threshold
+        })
+        .unwrap()
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
