@@ -13,17 +13,17 @@ use crate::utils::{ParseNestedMetaExt as _, args_struct, get_series_and_controll
 args_struct! {
     struct Args {
         /// The indentation that should be stripped from the start of each line.
-        indent: String = default " ".repeat(8),
+        indent: String = " ".repeat(8),
         /// The settings for the parts.
-        parts: HashMap<u8, PartArgsBuilder> = initial HashMap::new(),
+        parts: Map<u8, PartArgsBuilder>,
         /// Whether to generate tests for the example.
-        test: bool = default true,
+        test: bool = true,
     }
     struct PartArgs {
         /// The expected result for this part.
         expected: String,
         /// The additional argument to pass in when processing the example input.
-        arg: Option<Expr> = initial None,
+        arg: Option<Expr>,
     }
 }
 
@@ -88,20 +88,20 @@ fn parse_args(input: TokenStream) -> Result<Args, String> {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("indent") {
-            meta.set_empty_option(&mut builder.indent, parse_indent(&meta)?)?;
+            meta.map_err(builder.indent(parse_indent(&meta)?))?;
         } else if meta.path.is_ident("notest") {
-            meta.set_empty_option(&mut builder.test, false)?;
+            meta.map_err(builder.test(false))?;
         } else if let Some(ident) = meta.path.get_ident()
             && let Some(num) = ident.to_string().strip_prefix("part")
             && let Ok(num) = num.parse()
         {
             let mut part = PartArgs::build();
-            part.expected = Some(meta.parse_stringify()?);
-            builder.parts.insert(num, part);
+            meta.map_err(part.expected(meta.parse_stringify()?))?;
+            meta.map_err(builder.parts_insert(num, part))?;
         } else if let Some(first) = meta.path.segments.first()
             && first.arguments.is_empty()
             && let Some(num) = first.ident.to_string().strip_prefix("part")
-            && let Ok(num) = num.parse::<u8>()
+            && let Ok(num) = num.parse()
         {
             let part = builder
                 .parts
@@ -117,7 +117,7 @@ fn parse_args(input: TokenStream) -> Result<Args, String> {
             };
             match name.as_str() {
                 "arg" => {
-                    meta.set_empty_option(&mut part.arg, meta.value()?.parse()?)?;
+                    meta.map_err(part.arg(meta.value()?.parse()?))?;
                 }
                 _ => {
                     return Err(meta.error("unsupported property"));

@@ -7,7 +7,7 @@ use crate::utils::{ParseNestedMetaExt as _, args_struct, get_series_and_controll
 args_struct! {
     struct Args {
         /// The additional argument to pass in when processing the real input.
-        arg: Option<Expr> = initial None,
+        arg: Option<Expr>,
     }
 }
 
@@ -15,7 +15,7 @@ pub fn main(input: TokenStream, annotated_item: TokenStream) -> TokenStream {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("arg") {
-            meta.set_empty_option(&mut builder.arg, meta.value()?.parse::<Expr>()?)?;
+            meta.map_err(builder.arg(meta.value()?.parse()?))?;
         } else {
             return Err(meta.error("unsupported property"));
         }

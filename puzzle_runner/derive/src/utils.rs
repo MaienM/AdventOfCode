@@ -1,7 +1,4 @@
-use std::{
-    fmt::Debug,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use proc_macro::Span;
 use quote::format_ident;
@@ -106,10 +103,8 @@ pub fn get_series_and_controller() -> (Expr, Expr) {
 }
 
 pub(crate) trait ParseNestedMetaExt {
-    /// Store the parsed value into an option, erroring if it is already set.
-    fn set_empty_option<T>(&self, target: &mut Option<T>, value: T) -> Result<(), Error>
-    where
-        T: Debug;
+    /// Convert a Result<..., String> to Result<..., Error>.
+    fn map_err<T>(&self, err: Result<T, String>) -> Result<T, Error>;
 
     /// Parse a string or number into a string value.
     fn parse_stringify(&self) -> Result<String, Error>;
@@ -118,19 +113,8 @@ pub(crate) trait ParseNestedMetaExt {
     fn parse_stringify_nonempty(&self) -> Result<String, Error>;
 }
 impl ParseNestedMetaExt for ParseNestedMeta<'_> {
-    fn set_empty_option<T>(&self, target: &mut Option<T>, value: T) -> Result<(), Error>
-    where
-        T: Debug,
-    {
-        if let Some(value) = target {
-            Err(self.error(format!(
-                "duplicate value for {}, first value {value:?}",
-                self.path.get_ident().unwrap()
-            )))
-        } else {
-            *target = Some(value);
-            Ok(())
-        }
+    fn map_err<T>(&self, err: Result<T, String>) -> Result<T, Error> {
+        err.map_err(|e| self.error(e))
     }
 
     fn parse_stringify(&self) -> Result<String, Error> {
@@ -157,7 +141,7 @@ macro_rules! args_struct {
         struct $name:ident {
             $(
                 $(#[$varmeta:meta])*
-                $var:ident: $type:ty $(= $defaulttype:ident $default:expr)?
+                $var:ident: $type:ident $(<$($typeargs:ty),+>)? $(= $default:expr)?
             ),+
             $(,)?
         }
@@ -167,23 +151,20 @@ macro_rules! args_struct {
             pub struct $name {
                 $(
                     $(#[$varmeta])*
-                    $var: $type
+                    $var: $crate::utils::args_struct!(@type; $type $(<$($typeargs),+>)?)
                 ),+
             }
             impl $name {
                 #[allow(private_interfaces)]
                 pub fn build() -> [<$name Builder>] {
-                    [<$name Builder>] {
-                        $(
-                            $var: $crate::utils::args_struct!(@build_default; $($defaulttype $default)?)
-                        ),+
-                    }
+                    [<$name Builder>]::default()
                 }
             }
 
+            #[derive(Default)]
             struct [<$name Builder>] {
                 $(
-                    $var: $crate::utils::args_struct!(@build_define; $($defaulttype)? $type)
+                    $var: $crate::utils::args_struct!(@builder_type; $type $(<$($typeargs),+>)?)
                 ),+
             }
             impl [<$name Builder>] {
@@ -191,27 +172,74 @@ macro_rules! args_struct {
                 pub fn finalize(self) -> Result<$name, String> {
                     Ok($name {
                         $(
-                            $var: $crate::utils::args_struct!(@build_set; self.$var => $($defaulttype $default)?)
+                            $var: $crate::utils::args_struct!(@builder_finalize; self.$var => $type $($default)?)
                         ),+
                     })
                 }
+
+                $(
+                    $crate::utils::args_struct!(@builder_setters; $var as $type $(<$($typeargs),+>)?);
+                )+
             }
         )+}
     };
 
-    (@build_define; default $type:ty) => (Option<$type>);
-    (@build_define; initial $type:ty) => ($type);
-    (@build_define; $type:ty) => (Option<$type>);
+    (@type; List $($args:tt)+) => (::std::vec::Vec $($args)+);
+    (@type; Map $($args:tt)+) => (::std::collections::HashMap $($args)+);
+    (@type; $type:ty) => ($type);
 
-    (@build_default; $(default $default:expr)?) => (Default::default());
-    (@build_default; initial $default:expr) => ($default);
+    (@builder_type; Option $($args:tt)+) => (Option $($args)+);
+    (@builder_type; List $($args:tt)+) => (::std::vec::Vec $($args)+);
+    (@builder_type; Map $($args:tt)+) => (::std::collections::HashMap $($args)+);
+    (@builder_type; $($type:tt)+) => (Option<$($type)+>);
 
-    (@build_set; $expr:expr => $(default $default:expr)?) => {
-        $expr$(.or(Some($default)))?.ok_or_else(|| {
+    (@builder_setters; $var:ident as Option<$type:ty>) => {
+        $crate::utils::args_struct!(@builder_setters; $var as $type);
+    };
+    (@builder_setters; $var:ident as List<$type:ty>) => {
+        ::paste::paste! {
+            pub fn [<$var _push>](&mut self, item: $type)
+            {
+                self.$var.push(item);
+            }
+        }
+    };
+    (@builder_setters; $var:ident as Map<$ktype:ty, $vtype:ty>) => {
+        ::paste::paste! {
+            pub fn [<$var _insert>](&mut self, key: $ktype, value: $vtype) -> Result<(), String>
+            {
+                if self.$var.contains_key(&key) {
+                    return Err(format!("{}.{key} has already been set", stringify!($var)));
+                }
+                self.$var.insert(key, value);
+                Ok(())
+            }
+        }
+    };
+    (@builder_setters; $var:ident as $type:ty) => {
+        ::paste::paste! {
+            pub fn $var(&mut self, value: $type) -> Result<(), String>
+            {
+                if self.$var.is_some() {
+                    return Err(format!("{} has already been set", stringify!($var)));
+                }
+                self.$var = Some(value);
+                Ok(())
+            }
+        }
+    };
+
+    (@builder_finalize; $expr:expr => Option $($default:expr)?) => ($expr);
+    (@builder_finalize; $expr:expr => List $($default:expr)?) => ($expr);
+    (@builder_finalize; $expr:expr => Map $($default:expr)?) => ($expr);
+    (@builder_finalize; $expr:expr => $type:ident $default:expr) => {
+        $expr.unwrap_or_else(|| $default)
+    };
+    (@builder_finalize; $self:ident.$var:ident => $type:ident) => {
+        $self.$var.ok_or_else(|| {
             format!("{} must be set", stringify!($var))
         })?
     };
-    (@build_set; $expr:expr => initial $default:expr) => ($expr);
 }
 
 #[allow(unused_imports)]
