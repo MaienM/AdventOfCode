@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2023, title = "Aplenty");
+puzzle_runner::register_chapter!(title = "Aplenty");
 
 use std::{collections::HashMap, ops::RangeInclusive};
 

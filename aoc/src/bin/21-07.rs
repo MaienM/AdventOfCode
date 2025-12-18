@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2021, title = "The Treachery of Whales");
+puzzle_runner::register_chapter!(title = "The Treachery of Whales");
 
 fn parse_input(input: &str) -> Vec<i32> {
     parse!(input => {

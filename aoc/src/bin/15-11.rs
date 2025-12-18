@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2015, title = "Corporate Policy");
+puzzle_runner::register_chapter!(title = "Corporate Policy");
 
 type Password = Vec<char>;
 

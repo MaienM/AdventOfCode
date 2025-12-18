@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2021, title = "Lanternfish");
+puzzle_runner::register_chapter!(title = "Lanternfish");
 
 type State = [u64; 9];
 

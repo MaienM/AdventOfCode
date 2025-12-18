@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2023, title = "Lens Library");
+puzzle_runner::register_chapter!(title = "Lens Library");
 
 const EMPTY_VEC: Vec<Lens> = Vec::new();
 

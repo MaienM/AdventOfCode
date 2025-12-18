@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2021, title = "Dirac Dice");
+puzzle_runner::register_chapter!(title = "Dirac Dice");
 
 fn parse_input(input: &str) -> [u64; 2] {
     parse!(input => {

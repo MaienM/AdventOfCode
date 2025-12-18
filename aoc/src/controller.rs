@@ -2,6 +2,7 @@ use std::{env, fs};
 
 use puzzle_runner::{
     controller::{Controller, ControllerResult},
+    derived::ChapterBuilder,
     http::HTTPRequest,
 };
 
@@ -18,13 +19,17 @@ impl AoCController {
         Ok(())
     }
 
-    fn format_chapter_url(chapter: &str, stem: Option<&str>) -> ControllerResult<String> {
-        let (year, day) = chapter
+    fn parse_name(name: &str) -> ControllerResult<(u16, u8)> {
+        let (year, day) = name
             .split_once('-')
-            .ok_or_else(|| format!("failed to parse year/day from chapter name {chapter}"))?;
-        let year = 2000 + year.parse::<i32>()?;
-        let day = day.parse::<u32>()?;
+            .ok_or_else(|| format!("failed to parse year/day from chapter name {name}"))?;
+        let year = 2000 + year.parse::<u16>()?;
+        let day = day.parse::<u8>()?;
+        Ok((year, day))
+    }
 
+    fn format_chapter_url(chapter: &str, stem: Option<&str>) -> ControllerResult<String> {
+        let (year, day) = Self::parse_name(chapter)?;
         let mut url = format!("{BASE_URL}/{year}/day/{day}");
         if let Some(stem) = stem {
             url = format!("{url}/{stem}");
@@ -59,6 +64,14 @@ impl Controller for AoCController {
             .map(|session| format!("session={}", session.trim()));
 
         Ok(Self { cookie })
+    }
+
+    fn process_chapter(&self, chapter: &mut ChapterBuilder) -> ControllerResult<()> {
+        assert!(chapter.book == Some(None));
+        let (year, _) = Self::parse_name(chapter.name.unwrap())?;
+        chapter.book(Some(year.to_string()));
+
+        Ok(())
     }
 
     fn chapter_url(&self, chapter: &str) -> ControllerResult<String> {

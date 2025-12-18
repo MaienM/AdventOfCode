@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2022, title = "Hill Climbing Algorithm");
+puzzle_runner::register_chapter!(title = "Hill Climbing Algorithm");
 
 use std::{
     cmp::Ordering,

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2022, title = "Monkey in the Middle");
+puzzle_runner::register_chapter!(title = "Monkey in the Middle");
 
 #[derive(Debug, PartialEq, Eq)]
 enum Operation {

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2025, title = "Medicine for Rudolph");
+puzzle_runner::register_chapter!(title = "Medicine for Rudolph");
 
 use std::{
     cmp::Reverse,

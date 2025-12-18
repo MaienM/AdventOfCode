@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2024, title = "Historian Hysteria");
+puzzle_runner::register_chapter!(title = "Historian Hysteria");
 
 fn parse_input(input: &str) -> (Vec<usize>, Vec<usize>) {
     let mut leftlist = Vec::new();

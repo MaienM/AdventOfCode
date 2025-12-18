@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2015, title = "Infinite Elves and Infinite Houses");
+puzzle_runner::register_chapter!(title = "Infinite Elves and Infinite Houses");
 
 #[register_part]
 fn part1(input: &str) -> usize {

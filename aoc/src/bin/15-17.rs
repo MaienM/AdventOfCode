@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2015, title = "No Such Thing as Too Much");
+puzzle_runner::register_chapter!(title = "No Such Thing as Too Much");
 
 use std::cmp::Ordering;
 

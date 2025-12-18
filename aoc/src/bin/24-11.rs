@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2024, title = "Plutonian Pebbles");
+puzzle_runner::register_chapter!(title = "Plutonian Pebbles");
 
 use std::collections::HashMap;
 

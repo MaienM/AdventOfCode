@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2024, title = "Reindeer Maze");
+puzzle_runner::register_chapter!(title = "Reindeer Maze");
 
 use std::collections::{BinaryHeap, HashMap, HashSet};
 

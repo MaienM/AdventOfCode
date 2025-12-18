@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2023, title = "Wait For It");
+puzzle_runner::register_chapter!(title = "Wait For It");
 
 #[derive(Debug, PartialEq)]
 struct Race {

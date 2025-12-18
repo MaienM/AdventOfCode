@@ -1,7 +1,4 @@
-puzzle_runner::register_chapter!(
-    book = 2015,
-    title = "Perfectly Spherical Houses in a Vacuum",
-);
+puzzle_runner::register_chapter!(title = "Perfectly Spherical Houses in a Vacuum");
 
 use std::collections::HashSet;
 

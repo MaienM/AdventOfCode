@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2025, title = "Printing Department");
+puzzle_runner::register_chapter!(title = "Printing Department");
 
 use puzzle_lib::{grid::FullGrid, point::Point2};
 

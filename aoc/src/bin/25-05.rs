@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2025, title = "Cafeteria");
+puzzle_runner::register_chapter!(title = "Cafeteria");
 
 use std::ops::RangeInclusive;
 

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2021, title = "Snailfish");
+puzzle_runner::register_chapter!(title = "Snailfish");
 
 use std::collections::LinkedList;
 

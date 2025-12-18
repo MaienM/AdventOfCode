@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2023, title = "If You Give A Seed A Fertilizer");
+puzzle_runner::register_chapter!(title = "If You Give A Seed A Fertilizer");
 
 use std::{collections::HashMap, mem, ops::Range};
 

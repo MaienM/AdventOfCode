@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2024, title = "Red-Nosed Reports");
+puzzle_runner::register_chapter!(title = "Red-Nosed Reports");
 
 use std::mem;
 

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2015, title = "Elves Look, Elves Say");
+puzzle_runner::register_chapter!(title = "Elves Look, Elves Say");
 
 fn parse_input(input: &str) -> Vec<u8> {
     parse!(input => { [nums chars as u8] } => nums)

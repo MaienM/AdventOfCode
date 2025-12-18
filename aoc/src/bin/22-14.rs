@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2022, title = "Regolith Reservoir");
+puzzle_runner::register_chapter!(title = "Regolith Reservoir");
 
 use std::collections::HashSet;
 

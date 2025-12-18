@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2021, title = "Binary Diagnostic");
+puzzle_runner::register_chapter!(title = "Binary Diagnostic");
 
 fn parse_input(input: &str) -> Vec<Vec<u8>> {
     parse!(input => {

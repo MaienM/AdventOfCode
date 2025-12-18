@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2022, title = "Supply Stacks");
+puzzle_runner::register_chapter!(title = "Supply Stacks");
 
 use std::collections::VecDeque;
 

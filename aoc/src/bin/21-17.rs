@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2021, title = "Trick Shot");
+puzzle_runner::register_chapter!(title = "Trick Shot");
 
 use derive_new::new;
 

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2023, title = "Haunted Wasteland");
+puzzle_runner::register_chapter!(title = "Haunted Wasteland");
 
 use std::{collections::HashMap, sync::Arc};
 

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2025, title = "Christmas Tree Farm");
+puzzle_runner::register_chapter!(title = "Christmas Tree Farm");
 
 type Shape = [[bool; 3]; 3];
 

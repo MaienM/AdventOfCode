@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2015, title = "Like a GIF For Your Yard");
+puzzle_runner::register_chapter!(title = "Like a GIF For Your Yard");
 
 use puzzle_lib::{grid::FullGrid, point::Point2};
 

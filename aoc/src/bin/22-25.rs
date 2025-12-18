@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2022, title = "Full of Hot Air");
+puzzle_runner::register_chapter!(title = "Full of Hot Air");
 
 fn to_snafu(mut num: u64) -> String {
     let mut chars = Vec::new();

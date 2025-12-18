@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2024, title = "Hoof It");
+puzzle_runner::register_chapter!(title = "Hoof It");
 
 use std::collections::HashSet;
 

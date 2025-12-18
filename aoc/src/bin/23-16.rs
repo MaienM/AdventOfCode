@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2023, title = "The Floor Will Be Lava");
+puzzle_runner::register_chapter!(title = "The Floor Will Be Lava");
 
 use std::{collections::HashSet, sync::Arc};
 

@@ -1,4 +1,4 @@
-puzzle_runner::register_chapter!(book = 2024, title = "Chronospatial Computer");
+puzzle_runner::register_chapter!(title = "Chronospatial Computer");
 
 type Registers = [usize; 3];
 
