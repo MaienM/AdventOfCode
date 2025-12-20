@@ -4,8 +4,8 @@ use proc_macro::{Span, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, quote};
 use syn::{
-    Attribute, Error, Expr, ExprCall, ExprClosure, ExprPath, Item, ItemFn, ItemMod, ItemStatic,
-    Meta, PathSegment, Token, parse_file, parse_macro_input, parse_quote,
+    Attribute, Error, Expr, ExprCall, ExprClosure, ExprPath, Ident, Item, ItemFn, ItemMod,
+    ItemStatic, Meta, PathSegment, Token, parse_file, parse_macro_input, parse_quote,
     punctuated::Punctuated,
     visit::{self, Visit},
 };
@@ -17,10 +17,8 @@ use crate::{
 
 args_struct! {
     struct Args {
-        /// The book that the chapter is in.
-        book: Option<String>,
-        /// The title of the chapter.
-        title: Option<String>,
+        /// Metadata to pass directly to the builder.
+        metadata: Map<Ident, Expr>,
     }
 }
 
@@ -88,24 +86,13 @@ impl ChapterScanner {
         scanner
     }
 
-    pub(crate) fn to_expr(&self, args: Args) -> TokenStream2 {
+    pub(crate) fn to_expr(&self) -> TokenStream2 {
         let ChapterScanner {
             name,
             parts,
             examples,
             ..
         } = self;
-        let Args { book, title } = args;
-
-        let book: Expr = match book {
-            Some(book) => parse_quote!(Some(#book.to_owned())),
-            None => parse_quote!(None),
-        };
-
-        let title: Expr = match title {
-            Some(title) => parse_quote!(Some(#title.to_owned())),
-            None => parse_quote!(None),
-        };
 
         let root_path = env::current_dir()
             .map_err(|err| format!("error determining working directory: {err}"))
@@ -120,8 +107,6 @@ impl ChapterScanner {
 
         quote! {
             builder.name(#name);
-            builder.book(#book);
-            builder.title(#title);
             builder.source_path(#source_path);
             builder.parts(vec![ #(#parts),* ]);
             builder.examples(vec![ #(#examples),* ]);
@@ -204,19 +189,15 @@ impl<'ast> Visit<'ast> for ChapterScanner {
 pub fn main(input: TokenStream) -> TokenStream {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
-        if meta.path.is_ident("book") {
-            meta.map_err(builder.book(meta.parse_stringify_nonempty()?))?;
-        } else if meta.path.is_ident("title") {
-            meta.map_err(builder.title(meta.parse_stringify_nonempty()?))?;
-        } else {
-            return Err(meta.error("unsupported property"));
+        if let Some(key) = meta.path.get_ident() {
+            meta.map_err(builder.metadata_insert(key.clone(), meta.value()?.parse()?))?;
         }
         Ok(())
     });
     parse_macro_input!(input with args_parser);
     let args = return_err!(builder.finalize());
 
-    let expr = match Span::call_site().local_file() {
+    let scanner_expressions = match Span::call_site().local_file() {
         Some(path) => {
             let scanner = ChapterScanner::scan_file(path.to_str().unwrap());
             if scanner.first_item != FirstItem::Register {
@@ -227,12 +208,17 @@ pub fn main(input: TokenStream) -> TokenStream {
                 .to_compile_error()
                 .into();
             }
-            scanner.to_expr(args)
+            scanner.to_expr()
         }
         None => {
             parse_quote! { ::core::todo!() }
         }
     };
+
+    let metadata_expressions = args
+        .metadata
+        .into_iter()
+        .map(|(k, v)| quote!(builder.#k(#v);));
 
     let (series, controller) = get_series_and_controller();
 
@@ -246,7 +232,8 @@ pub fn main(input: TokenStream) -> TokenStream {
         // to the full list used by the multi entrypoint.
         pub(crate) static CHAPTER: ::std::sync::LazyLock<::puzzle_runner::derived::Chapter> = ::std::sync::LazyLock::new(|| {
             let mut builder = ::puzzle_runner::derived::ChapterBuilder::default();
-            #expr
+            #scanner_expressions
+            #(#metadata_expressions)*
             #controller.process_chapter(&mut builder).unwrap();
             builder.build().unwrap()
         });

@@ -67,9 +67,9 @@ impl Controller for AoCController {
     }
 
     fn process_chapter(&self, chapter: &mut ChapterBuilder) -> ControllerResult<()> {
-        assert!(chapter.book == Some(None));
+        assert!(chapter.book.is_none());
         let (year, _) = Self::parse_name(chapter.name.unwrap())?;
-        chapter.book(Some(year.to_string()));
+        chapter.book(year.to_string());
 
         Ok(())
     }

@@ -19,6 +19,7 @@ pub struct Series {
     pub name: &'static str,
 
     /// The title of the series.
+    #[builder(setter(into))]
     pub title: String,
 
     /// The chapters in the series.
@@ -42,9 +43,11 @@ pub struct Chapter {
     pub name: &'static str,
 
     /// The book this chapter is part of.
+    #[builder(setter(into, strip_option), default)]
     pub book: Option<String>,
 
     /// The title of the chapter.
+    #[builder(setter(into, strip_option), default)]
     pub title: Option<String>,
 
     /// The path of the source file, relative to the root of the repository.

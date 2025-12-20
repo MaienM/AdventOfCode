@@ -108,9 +108,6 @@ pub(crate) trait ParseNestedMetaExt {
 
     /// Parse a string or number into a string value.
     fn parse_stringify(&self) -> Result<String, Error>;
-
-    /// As [`parse_stringify`], but rejects empty strings.
-    fn parse_stringify_nonempty(&self) -> Result<String, Error>;
 }
 impl ParseNestedMetaExt for ParseNestedMeta<'_> {
     fn map_err<T>(&self, err: Result<T, String>) -> Result<T, Error> {
@@ -124,14 +121,6 @@ impl ParseNestedMetaExt for ParseNestedMeta<'_> {
             Lit::Float(lit) => Ok(lit.base10_digits().to_string()),
             _ => Err(self.error("unsupported value, must be a string or number"))?,
         }
-    }
-
-    fn parse_stringify_nonempty(&self) -> Result<String, Error> {
-        let result = self.parse_stringify()?;
-        if result.is_empty() {
-            return Err(self.error("cannot be empty"));
-        }
-        Ok(result)
     }
 }
 

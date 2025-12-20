@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Type, parse_macro_input};
+use syn::{Expr, Ident, Type, parse_macro_input};
 
 use crate::{
     include_chapters::include_chapters,
@@ -9,27 +9,30 @@ use crate::{
 
 args_struct! {
     struct Args {
-        /// The title of the series.
-        title: String,
         /// The controller for the series.
         controller: Type,
+        /// Metadata to pass directly to the builder.
+        metadata: Map<Ident, Expr>,
     }
 }
 
 pub fn main(input: TokenStream) -> TokenStream {
     let mut builder = Args::build();
     let args_parser = syn::meta::parser(|meta| {
-        if meta.path.is_ident("title") {
-            meta.map_err(builder.title(meta.parse_stringify_nonempty()?))?;
-        } else if meta.path.is_ident("controller") {
+        if meta.path.is_ident("controller") {
             meta.map_err(builder.controller(meta.value()?.parse()?))?;
+        } else if let Some(key) = meta.path.get_ident() {
+            meta.map_err(builder.metadata_insert(key.clone(), meta.value()?.parse()?))?;
         } else {
             return Err(meta.error("unsupported property"));
         }
         Ok(())
     });
     parse_macro_input!(input with args_parser);
-    let Args { title, controller } = return_err!(builder.finalize());
+    let Args {
+        controller,
+        metadata,
+    } = return_err!(builder.finalize());
 
     let mut prefix = include_chapters(false);
 
@@ -48,6 +51,8 @@ pub fn main(input: TokenStream) -> TokenStream {
         String::new()
     };
 
+    let metadata_expressions = metadata.into_iter().map(|(k, v)| quote!(builder.#k(#v);));
+
     quote! {
         #prefix
 
@@ -60,7 +65,7 @@ pub fn main(input: TokenStream) -> TokenStream {
         pub static SERIES: ::std::sync::LazyLock<::puzzle_runner::derived::Series> = ::std::sync::LazyLock::new(|| {
             let mut builder = ::puzzle_runner::derived::SeriesBuilder::default();
             builder.name(#name);
-            builder.title(#title.to_owned());
+            #(#metadata_expressions)*
             builder.chapters(CHAPTERS.clone());
             builder.controller(CONTROLLER.clone());
             CONTROLLER.process_series(&mut builder).unwrap();
