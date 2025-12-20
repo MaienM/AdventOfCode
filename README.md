@@ -1,8 +1,8 @@
-# Advent of Code
+# Puzzles
 
 ## Webassembly
 
-You can run the precompiled webassembly version in the browser [here](https://maienm.github.io/AdventOfCode). The performance of this is (obviously) worse than when running it natively, but (depending on the solution and browser used) this might only be by as little as 20%.
+You can run the precompiled webassembly version in the browser [here](https://maienm.github.io/Puzzles). The performance of this is (obviously) worse than when running it natively, but (depending on the solution and browser used) this might only be by as little as 20%.
 
 Chromium based browsers will yield better runtimes and more accurate timings than Firefox.
 

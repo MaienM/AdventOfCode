@@ -1,7 +1,7 @@
 {
-  "name": "@maienm/advent-of-code",
+  "name": "@maienm/puzzles",
   "version": "0.0.0",
-  "description": "My solutions to the Advent of Code puzzles.",
+  "description": "My solutions for programming puzzles such as Advent of Code.",
   "main": "index.js",
   "scripts": {
     "build": "webpack --config webpack.config.js",
@@ -9,21 +9,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MaienM/AdventOfCode.git"
+    "url": "git+https://github.com/MaienM/Puzzles.git"
   },
   "keywords": [
     "webassembly",
     "wasm",
     "rust",
-    "webpack",
-    "advent-of-code"
+    "webpack"
   ],
   "author": "Michon van Dooren",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/MaienM/AdventOfCode/issues"
+    "url": "https://github.com/MaienM/Puzzles/issues"
   },
-  "homepage": "https://github.com/MaienM/AdventOfCode",
+  "homepage": "https://github.com/MaienM/Puzzles",
   "dependencies": {
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
