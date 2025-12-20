@@ -1,8 +1,8 @@
-import { GitHub } from '@mui/icons-material';
+import { ArrowBack, GitHub } from '@mui/icons-material';
 import { AppBar, Container, Grid, IconButton, Toolbar, Typography } from '@mui/material';
 import { groupBy } from 'lodash-es';
 import * as React from 'react';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import CalendarView from './CalendarView';
 import Context from './context';
 
@@ -19,8 +19,17 @@ export default () => {
 		<>
 			<AppBar position="static">
 				<Toolbar>
-					<Typography variant="h6" sx={{ flexGrow: 1 }}>
-						Advent of Code
+					<IconButton
+						edge="start"
+						color="inherit"
+						aria-label="close"
+						component={Link}
+						to="/"
+					>
+						<ArrowBack />
+					</IconButton>
+					<Typography variant="h6" sx={{ ml: 2, flexGrow: 1 }}>
+						{series.title}
 					</Typography>
 					<IconButton
 						color="inherit"

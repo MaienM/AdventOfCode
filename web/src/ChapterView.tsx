@@ -1,4 +1,4 @@
-import { ArrowBack, KeyboardArrowDown, Publish, Source, StarRate } from '@mui/icons-material';
+import { ArrowBack, KeyboardArrowDown, Public, Publish, Source } from '@mui/icons-material';
 import { Button, IconButton, Menu, MenuItem, Stack, TextField, Toolbar, Typography } from '@mui/material';
 import * as React from 'react';
 import { Link, useParams } from 'react-router';
@@ -159,7 +159,7 @@ export default () => {
 						? (
 							<Button
 								variant="outlined"
-								startIcon={<StarRate />}
+								startIcon={<Public />}
 								href={chapter.url}
 								target="blank"
 								rel="noopener"

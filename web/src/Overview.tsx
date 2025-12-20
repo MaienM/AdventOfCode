@@ -1,10 +1,10 @@
-import { GitHub } from '@mui/icons-material';
+import { GitHub, List, Public } from '@mui/icons-material';
 import {
 	AppBar,
+	Button,
 	Card,
-	CardActionArea,
+	CardActions,
 	CardContent,
-	CardHeader,
 	Container,
 	IconButton,
 	Stack,
@@ -42,16 +42,39 @@ export default () => {
 				<Stack>
 					{Array.from(context.series.values()).map((series) => (
 						<Card key={series.name}>
-							<CardActionArea
-								component={Link}
-								to={`/${series.name}`}
-							>
-								<CardContent>
-									<Typography variant="h4">
-										{series.title}
-									</Typography>
-								</CardContent>
-							</CardActionArea>
+							<CardContent>
+								<Typography variant="h4">
+									{series.title}
+								</Typography>
+								{series.description
+									? (
+										<Typography variant="body2">
+											{series.description}
+										</Typography>
+									)
+									: null}
+							</CardContent>
+							<CardActions>
+								<Button
+									component={Link}
+									to={`/${series.name}`}
+									startIcon={<List />}
+								>
+									View puzzles
+								</Button>
+								{series.url
+									? (
+										<Button
+											href={series.url}
+											target="blank"
+											rel="noopener"
+											startIcon={<Public />}
+										>
+											Visit website
+										</Button>
+									)
+									: null}
+							</CardActions>
 						</Card>
 					))}
 				</Stack>

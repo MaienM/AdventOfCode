@@ -22,6 +22,14 @@ pub struct Series {
     #[builder(setter(into))]
     pub title: String,
 
+    /// The description of the series.
+    #[builder(setter(into, strip_option), default)]
+    pub description: Option<String>,
+
+    /// The URL for the website for the series.
+    #[builder(setter(into, strip_option), default)]
+    pub url: Option<String>,
+
     /// The chapters in the series.
     pub chapters: Vec<Chapter>,
 
