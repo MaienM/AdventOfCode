@@ -61,7 +61,7 @@ impl HTTPRequest {
     ///
     /// This adds the following headers (unless they are already set):
     ///
-    /// ```
+    /// ```text
     /// Content-Type: application/x-www-form-urlencoded
     /// ```
     pub fn set_body_form<K: ToString, V: ToString, I: IntoIterator<Item = (K, V)>>(
@@ -81,10 +81,14 @@ impl HTTPRequest {
     ///
     /// This adds the following headers (unless they are already set):
     ///
-    /// ```
+    /// ```text
     /// Accept: application/json
     /// Content-Type: application/json
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if serializing the object fails.
     pub fn set_body_json<T: Serialize>(&mut self, data: T) -> Result<(), String> {
         self.body = serde_json::to_vec(&data).map_err(|e| e.to_string())?;
 
