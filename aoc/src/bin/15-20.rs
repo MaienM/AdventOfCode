@@ -1,28 +1,36 @@
 puzzle_runner::register_chapter!(title = "Infinite Elves and Infinite Houses");
 
-#[register_part]
-fn part1(input: &str) -> usize {
+#[register_part(arg = 2*2*3*3*5*7)]
+fn part1(input: &str, step: usize) -> usize {
     let threshold: usize = input.parse().unwrap();
-    let elfsum = threshold / 10;
-    (0..usize::MAX)
+    let threshold = threshold.div_ceil(10);
+    (step..threshold)
         .into_par_iter()
-        .by_exponential_blocks()
-        .find_first(|num| (1..=(num / 2)).filter(|i| num % i == 0).sum::<usize>() + num >= elfsum)
+        .step_by(step)
+        .find_first(|num| {
+            (2..=(num / 2))
+                .filter(|i| num.is_multiple_of(*i))
+                .sum::<usize>()
+                + num
+                + 1
+                >= threshold
+        })
         .unwrap()
 }
 
-#[register_part]
-fn part2(input: &str) -> usize {
+#[register_part(arg = 2*2*3*3*5*7)]
+fn part2(input: &str, step: usize) -> usize {
     let threshold: usize = input.parse().unwrap();
-    (0..usize::MAX)
+    let threshold = threshold.div_ceil(11);
+    (step..threshold)
         .into_par_iter()
-        .by_exponential_blocks()
+        .step_by(step)
         .find_first(|num| {
             let sum = (usize::max(1, num / 50)..=(num / 2))
                 .filter(|i| num % i == 0 && i * 50 >= *num)
                 .sum::<usize>()
                 + num;
-            sum * 11 > threshold
+            sum >= threshold
         })
         .unwrap()
 }
@@ -34,9 +42,9 @@ mod tests {
 
     use super::*;
 
-    #[example_input(part1 = 6)]
+    #[example_input(part1 = 6, part1::arg = 2)]
     static EXAMPLE_INPUT_1: &str = "100";
 
-    #[example_input(part1 = 8)]
+    #[example_input(part1 = 8, part1::arg = 2)]
     static EXAMPLE_INPUT_2: &str = "150";
 }
