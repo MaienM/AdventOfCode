@@ -50,6 +50,10 @@ pub struct Chapter {
     #[builder(setter(into, strip_option), default)]
     pub title: Option<String>,
 
+    /// The URL for the chapter on the website for the series.
+    #[builder(setter(into, strip_option), default)]
+    pub url: Option<String>,
+
     /// The path of the source file, relative to the root of the repository.
     pub source_path: &'static str,
 

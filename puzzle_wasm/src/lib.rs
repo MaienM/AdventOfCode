@@ -132,21 +132,6 @@ pub fn run(
     part.run::<PerformanceTimer>(input, solution)
 }
 
-/// Get the URL for a chapter.
-///
-/// This is just a wrapper around
-/// [`Controller::chapter_url`](puzzle_runner::controller::Controller::chapter_url).
-///
-/// # Errors
-///
-/// Will return `Err` if the [`Series`] cannot be found, or if the chapter name is in a form that
-/// is not valid for the series.
-#[wasm_bindgen]
-pub fn chapter_url(series: &str, chapter: &str) -> Result<String, String> {
-    let series = get_series(series)?;
-    Ok(series.controller.chapter_url(chapter)?)
-}
-
 /// Setup the panic handler.
 #[wasm_bindgen]
 pub fn init_panic_handler() {

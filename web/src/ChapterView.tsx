@@ -5,7 +5,6 @@ import { Link, useParams } from 'react-router';
 import Context from './context';
 import ResultComponent from './Result';
 import type { Example, Result } from './worker';
-import { useAsync } from 'react-async-hook';
 
 const trimNewlines = (input: string) => input.replace(/\n*$/, '');
 
@@ -20,7 +19,6 @@ export default () => {
 		() => series.chapters.find((chapter) => chapter.name === params.chapter),
 		[series, params.chapter],
 	);
-	const url = useAsync(context.worker.chapterURL.bind(context.worker), [series.name, chapter.name]);
 
 	const [input, setInput] = React.useState<string>(chapter.examples[0]?.input ?? '');
 	const [example, setExample] = React.useState<Example | undefined>(chapter.examples[0]);
@@ -157,15 +155,19 @@ export default () => {
 					>
 						View source
 					</Button>
-					<Button
-						variant="outlined"
-						startIcon={<StarRate />}
-						href={url.result}
-						target="blank"
-						rel="noopener"
-					>
-						View puzzle
-					</Button>
+					{chapter.url
+						? (
+							<Button
+								variant="outlined"
+								startIcon={<StarRate />}
+								href={chapter.url}
+								target="blank"
+								rel="noopener"
+							>
+								View puzzle
+							</Button>
+						)
+						: null}
 				</Stack>
 
 				{chapter.parts.map((part) => (

@@ -234,6 +234,9 @@ pub fn main(input: TokenStream) -> TokenStream {
             let mut builder = ::puzzle_runner::derived::ChapterBuilder::default();
             #scanner_expressions
             #(#metadata_expressions)*
+            if builder.url.is_none() && let Some(name) = builder.name {
+                builder.url(#controller.chapter_url(name).unwrap());
+            }
             #controller.process_chapter(&mut builder).unwrap();
             builder.build().unwrap()
         });

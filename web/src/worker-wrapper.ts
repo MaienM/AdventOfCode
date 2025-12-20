@@ -40,9 +40,4 @@ export class WorkerWrapper implements Worker {
 		}
 		return result;
 	}
-
-	/** @inheritdoc */
-	async chapterURL(series: string, chapter: string): Promise<string> {
-		return this.getWorker().chapterURL(series, chapter);
-	}
 }

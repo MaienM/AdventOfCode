@@ -55,11 +55,6 @@ class WorkerImpl {
 			};
 		}
 	}
-
-	async chapterURL(series: string, chapter: string): Promise<string> {
-		await this.initWASMPromise;
-		return puzzles.chapter_url(series, chapter);
-	}
 }
 
 export type Worker = Omit<WorkerImpl, 'initWASM' | 'initWASMPromise'>;
