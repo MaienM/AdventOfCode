@@ -168,13 +168,13 @@
                 eslint-custom = {
                   enable = true;
                   name = "eslint";
-                  entry = "sh -c 'cd web && ./node_modules/.bin/eslint --fix'";
-                  files = "web/.*\\.(tsx?|jsx?|mjs|cjs)$";
+                  entry = "sh -c 'cd puzzle_web/frontend && ./node_modules/.bin/eslint --fix'";
+                  files = "puzzle_web/frontend/.*\\.(tsx?|jsx?|mjs|cjs)$";
                 };
                 dprint = {
                   enable = true;
                   name = "dprint";
-                  entry = "sh -c 'cd web && dprint check'";
+                  entry = "sh -c 'cd puzzle_web/frontend && dprint check'";
                   inherit (eslint-custom) files;
                 };
               };

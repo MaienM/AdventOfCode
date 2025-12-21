@@ -5,7 +5,7 @@ members = [
 	"puzzle_lib",
 	"puzzle_runner",
 	"puzzle_runner/derive",
-	"puzzle_wasm",
+	"puzzle_web/wasm",
 ]
 
 [workspace.package]

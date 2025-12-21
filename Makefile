@@ -105,7 +105,7 @@ target/doc-parts/dep/%: Cargo.toml Cargo.lock katex.html
 target/doc-parts/dep/aoc: $(shell find aoc -type f -print)
 target/doc-parts/dep/puzzle_lib: $(shell find puzzle_lib -type f -print)
 target/doc-parts/dep/puzzle_runner: $(shell find puzzle_runner -type f -print)
-target/doc-parts/dep/puzzle_wasm: $(shell find puzzle_wasm -type f -print)
+target/doc-parts/dep/puzzle_wasm: $(shell find puzzle_web/wasm -type f -print)
 
 docs: ${STDLIB_TARGETS} ${DEP_TARGETS} katex.html
 	echo "Building combined docs..."
@@ -170,23 +170,23 @@ profile-set-baseline-%:
 
 target/debug/wasm-pkg: flags = --dev
 target/release/wasm-pkg: flags = --release
-target/%/wasm-pkg: $(shell find aoc puzzle_wasm/Cargo.toml puzzle_wasm/src web/src -type f -print)
+target/%/wasm-pkg: $(shell find aoc puzzle_web/wasm -type f -print)
 	rm -rf $@
-	wasm-pack build ./puzzle_wasm --target web --out-dir "$$PWD/$@" ${flags} 
+	wasm-pack build ./puzzle_web/wasm --target web --out-dir "$$PWD/$@" ${flags} 
 
 web-dev: target/debug/wasm-pkg
-	ln -sfT "$$PWD/$<" web/puzzle_wasm
+	ln -sfT "$$PWD/$<" puzzle_web/frontend/puzzle_wasm
 	( true \
-		&& cd web \
+		&& cd puzzle_web/frontend \
 		&& npm install \
 		&& npm run start \
 	)
 
 target/release/web: target/release/wasm-pkg
 	rm -rf $@
-	ln -sfT "$$PWD/$<" web/puzzle_wasm
+	ln -sfT "$$PWD/$<" puzzle_web/frontend/puzzle_wasm
 	( true \
-		&& cd web \
+		&& cd puzzle_web/frontend \
 		&& npm install \
 		&& npm run build \
 	)

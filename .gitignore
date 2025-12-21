@@ -3,6 +3,6 @@
 .*-session
 inputs/
 target/
-web/*_wasm
-web/node_modules/
+puzzle_web/frontend/puzzle_wasm
+puzzle_web/frontend/node_modules/
 */src/bin/bench-target
