@@ -144,26 +144,40 @@ fn is_win(player: &Entity, boss: &Entity) -> bool {
     (player.hp.div_ceil(boss_effective_damage)) >= (boss.hp.div_ceil(player_effective_damage))
 }
 
-#[register_part(arg = 100)]
-fn part1(input: &str, hp: u16) -> u16 {
-    let boss = parse_input(input);
+#[inline]
+fn options(hp: u16) -> impl Iterator<Item = (u16, Entity)> {
     let options = iproduct!(
         WEAPONS.iter(),
         ARMORS.iter(),
         RINGS.iter().tuple_combinations()
     );
-    options
-        .map(|(w, a, (r1, r2))| {
-            let cost = w.cost + a.cost + r1.cost + r2.cost;
-            let entity = Entity {
-                hp,
-                damage: w.damage + a.damage + r1.damage + r2.damage,
-                armor: w.armor + a.armor + r1.armor + r2.armor,
-            };
-            (cost, entity)
-        })
+    options.map(move |(w, a, (r1, r2))| {
+        let cost = w.cost + a.cost + r1.cost + r2.cost;
+        let entity = Entity {
+            hp,
+            damage: w.damage + a.damage + r1.damage + r2.damage,
+            armor: w.armor + a.armor + r1.armor + r2.armor,
+        };
+        (cost, entity)
+    })
+}
+
+#[register_part(arg = 100)]
+fn part1(input: &str, hp: u16) -> u16 {
+    let boss = parse_input(input);
+    options(hp)
         .sort_by_key(|(c, _)| *c)
         .find(|(_, e)| is_win(e, &boss))
+        .unwrap()
+        .0
+}
+
+#[register_part(arg = 100)]
+fn part2(input: &str, hp: u16) -> u16 {
+    let boss = parse_input(input);
+    options(hp)
+        .sort_by_key(|(c, _)| u16::MAX - *c)
+        .find(|(_, e)| !is_win(e, &boss))
         .unwrap()
         .0
 }
